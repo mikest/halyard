@@ -2,5 +2,5 @@ extends Node
 
 
 func _ready() -> void:
-	var example := ExampleClass.new()
+	var example := VerletRope.new()
 	example.print_type(example)
