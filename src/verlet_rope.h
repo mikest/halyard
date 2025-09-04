@@ -20,13 +20,13 @@ class VerletRope : public GeometryInstance3D {
 
 	// Rope particle, segments connect between particles.
 	struct Particle {
-		Vector3 pos_prev = Vector3();
-		Vector3 pos_cur = Vector3();
-		Vector3 accel = Vector3();
+		Vector3 pos_prev = Vector3(0, 0, 0);
+		Vector3 pos_cur = Vector3(0, 0, 0);
+		Vector3 accel = Vector3(0, 0, 0);
 
-		Vector3 T = Vector3();
-		Vector3 N = Vector3();
-		Vector3 B = Vector3();
+		Vector3 T = Vector3(0, 0, 0);
+		Vector3 N = Vector3(0, 0, 0);
+		Vector3 B = Vector3(0, 0, 0);
 
 		bool attached = false;
 
@@ -34,40 +34,46 @@ class VerletRope : public GeometryInstance3D {
 		~Particle() = default;
 	};
 
+	// internal state
 	LocalVector<Particle> _particles;
 	bool _dirty = true;
 	double _time = 0.0;
 	double _simulation_delta = 0.0;
 
-	float rope_width = 1.0;
-	float rope_length = 2.0;
+	// rope geometry
+	int rope_particles = 10;
+	float rope_width = 0.25;
+	float rope_length = 4.0;
 	int rope_sides = 6;
 	float rope_twist = 0.25;
+	int rope_lod = 1;
+	Ref<Material> material = nullptr;
+	NodePath start_cap;
+	NodePath end_cap;
 
+	// initial simulation
 	bool attach_start = true;
-	int preprocess_iterations = 1;
-	float preprocess_delta = 1 / 60.0;
+	int preprocess_iterations = 5;
+	float preprocess_delta = 1 / 30.0;
 
+	// simulation parameters
 	bool simulate = true;
-	int simulation_particles = 10;
 	float simulation_rate = 60.0;
 	int stiffness_iterations = 2;
 	float stiffness = 0.9;
 
+	// forces
 	bool apply_wind = false;
 	float wind_scale = 20.0;
 	Vector3 wind = Vector3(1, 0, 0);
+	Ref<FastNoiseLite> wind_noise = nullptr;
 
 	bool apply_gravity = true;
-	// Vector3 gravity = Vector3(0, -9.8, 0);
-	Vector3 gravity = Vector3(0, -0.1, 0);
+	Vector3 gravity = Vector3(0, -9.8, 0);
 	float gravity_scale = 1.0;
 
 	bool apply_damping = true;
 	float damping_factor = 100.0;
-
-	Ref<Material> material = nullptr;
-	Ref<FastNoiseLite> wind_noise = nullptr;
 
 protected:
 	static void _bind_methods();
@@ -78,11 +84,13 @@ protected:
 	void _create_rope();
 	void _build_particles(const Vector3 &end_location, const Vector3 &global_position, const Vector3 &initial_accel, int particle_count, float segment_length);
 	void _compute_parallel_transport(LocalVector<Transform3D> &frames);
+	void _compute_particle_normals();
 	PackedVector3Array _get_simulation_particles(int index);
 	Pair<Vector3, Vector3> _catmull_interpolate(const Vector3 &p0, const Vector3 &p1, const Vector3 &p2, const Vector3 &p3, float tension, float t);
 
 	void _emit_tube(LocalVector<Transform3D> &frames, int sides, float radius, PackedVector3Array &V, PackedVector3Array &N, PackedVector2Array &UV1);
 	void _emit_endcap(bool front, const Transform3D &frame, int sides, float radius, PackedVector3Array &V, PackedVector3Array &N, PackedVector2Array &UV1);
+	void _align_cap_node(const NodePath &path, Transform3D xform);
 
 	float get_current_rope_length() const;
 	float _get_average_segment_length() const;
@@ -116,6 +124,58 @@ public:
 
 	Ref<ArrayMesh> get_baked_mesh() const;
 
-	void VerletRope::set_material(const Ref<Material> &p_material);
-	Ref<Material> VerletRope::get_material() const;
+// Getter/Setter macros for properties
+#define PROPERTY_GET(m_type, m_prop) \
+	const m_type &get_##m_prop() const { return m_prop; }
+#define PROPERTY_SET(m_type, m_prop, m_update) \
+	void set_##m_prop(const m_type &val) {     \
+		if (val != m_prop) {                   \
+			m_prop = val;                      \
+			m_update;                          \
+		}                                      \
+	}
+#define PROPERTY_GET_SET(m_type, m_prop, m_update) \
+	PROPERTY_GET(m_type, m_prop)                   \
+	PROPERTY_SET(m_type, m_prop, m_update)
+
+	// Exported Properties
+	PROPERTY_GET_SET(int, rope_particles, _create_rope())
+	PROPERTY_GET_SET(float, rope_width, _queue_rebuild())
+	PROPERTY_GET_SET(float, rope_length, _queue_rebuild())
+	PROPERTY_GET_SET(int, rope_sides, _queue_rebuild())
+	PROPERTY_GET_SET(float, rope_twist, _queue_rebuild())
+	PROPERTY_GET_SET(int, rope_lod, _queue_rebuild())
+
+	void set_material(const Ref<Material> &p_material);
+	Ref<Material> get_material() const;
+
+	PROPERTY_GET_SET(NodePath, start_cap, {})
+	PROPERTY_GET_SET(NodePath, end_cap, {})
+
+	// initial simulation
+	PROPERTY_GET_SET(int, preprocess_iterations, {})
+	PROPERTY_GET_SET(float, preprocess_delta, {})
+
+	// simulation parameters
+	PROPERTY_GET_SET(bool, simulate, {})
+	PROPERTY_GET_SET(float, simulation_rate, {})
+	PROPERTY_GET_SET(int, stiffness_iterations, {})
+	PROPERTY_GET_SET(float, stiffness, {})
+
+	// forces
+	// bool apply_wind = false;
+	// float wind_scale = 20.0;
+	// Vector3 wind = Vector3(1, 0, 0);
+	// Ref<FastNoiseLite> wind_noise = nullptr;
+
+	PROPERTY_GET_SET(bool, apply_gravity, {})
+	PROPERTY_GET_SET(Vector3, gravity, {})
+	PROPERTY_GET_SET(float, gravity_scale, {})
+
+	PROPERTY_GET_SET(bool, apply_damping, {})
+	PROPERTY_GET_SET(float, damping_factor, {})
 };
+
+#undef PROPERTY_GET
+#undef PROPERTY_SET
+#undef PROPERTY_GET_SET

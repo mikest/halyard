@@ -9,5 +9,19 @@ albedo_texture = ExtResource("1_2jas5")
 [node name="Node" type="Node3D"]
 
 [node name="VerletRope" type="VerletRope" parent="."]
+rope_width = 1.0
+rope_length = 8.0
+rope_twist = 0.5
+rope_lod = 4
 material = SubResource("StandardMaterial3D_6gkck")
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.023011, 4.495771, 0.5915384)
+start_cap = NodePath("../CSGCylinder3D")
+end_cap = NodePath("../CSGTorus3D")
+stiffness = 0.999
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.924295, 1.5113721, -0.7766577)
+
+[node name="CSGCylinder3D" type="CSGCylinder3D" parent="."]
+transform = Transform3D(-0.6411661, 0.76553786, -0.053458445, 0.7655379, 0.63320196, -0.1140484, -0.053458374, -0.11404844, -0.99203587, 5.924295, 1.5113721, -0.7766577)
+height = 1.0
+
+[node name="CSGTorus3D" type="CSGTorus3D" parent="."]
+transform = Transform3D(-0.23116088, 0.94083375, 0.24778326, 0.97167116, 0.23612924, 0.0099038705, -0.04919098, 0.24305324, -0.9687649, -1.1834121, -1.9021153, -1.0318187)

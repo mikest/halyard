@@ -16,9 +16,55 @@ void VerletRope::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_baked_mesh"), &VerletRope::get_baked_mesh);
 	// ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "baked_mesh", PROPERTY_HINT_RESOURCE_TYPE, "", PROPERTY_USAGE_READ_ONLY, "ArrayMesh"), "", "get_baked_mesh");
 
+#define STR(x) #x
+#define EXPORT_PROPERTY(m_type, m_property)                                                                \
+	ClassDB::bind_method(D_METHOD(STR(set_##m_property), STR(m_property)), &VerletRope::set_##m_property); \
+	ClassDB::bind_method(D_METHOD(STR(get_##m_property)), &VerletRope::get_##m_property);                  \
+	ADD_PROPERTY(PropertyInfo(m_type, #m_property), STR(set_##m_property), STR(get_##m_property))
+
+	EXPORT_PROPERTY(Variant::INT, rope_particles);
+	EXPORT_PROPERTY(Variant::FLOAT, rope_width);
+	EXPORT_PROPERTY(Variant::FLOAT, rope_length);
+	EXPORT_PROPERTY(Variant::INT, rope_sides);
+	EXPORT_PROPERTY(Variant::FLOAT, rope_twist);
+	EXPORT_PROPERTY(Variant::INT, rope_lod);
+
 	ClassDB::bind_method(D_METHOD("set_material", "material"), &VerletRope::set_material);
 	ClassDB::bind_method(D_METHOD("get_material"), &VerletRope::get_material);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "material", PROPERTY_HINT_RESOURCE_TYPE, "Material"), "set_material", "get_material");
+
+	EXPORT_PROPERTY(Variant::NODE_PATH, start_cap);
+	EXPORT_PROPERTY(Variant::NODE_PATH, end_cap);
+
+	// initial simulation
+	ADD_GROUP("Preprocess Simulation", "preprocess_");
+	EXPORT_PROPERTY(Variant::INT, preprocess_iterations);
+	EXPORT_PROPERTY(Variant::FLOAT, preprocess_delta);
+
+	// simulation parameters
+	ADD_GROUP("Simulation", "");
+	EXPORT_PROPERTY(Variant::BOOL, simulate);
+	EXPORT_PROPERTY(Variant::FLOAT, simulation_rate);
+	EXPORT_PROPERTY(Variant::INT, stiffness_iterations);
+	EXPORT_PROPERTY(Variant::FLOAT, stiffness);
+
+	// forces
+	ADD_GROUP("Forces", "");
+
+	// bool apply_wind = false;
+	// float wind_scale = 20.0;
+	// Vector3 wind = Vector3(1, 0, 0);
+	// Ref<FastNoiseLite> wind_noise = nullptr;
+
+	EXPORT_PROPERTY(Variant::BOOL, apply_gravity);
+	EXPORT_PROPERTY(Variant::VECTOR3, gravity);
+	EXPORT_PROPERTY(Variant::FLOAT, gravity_scale);
+
+	EXPORT_PROPERTY(Variant::BOOL, apply_damping);
+	EXPORT_PROPERTY(Variant::FLOAT, damping_factor);
+
+#undef EXPORT_PROPERTY
+#undef STR
 }
 
 void VerletRope::_notification(int p_what) {
@@ -42,6 +88,8 @@ void VerletRope::_ready(void) {
 }
 
 void VerletRope::_process(double delta) {
+	// cancel out rotations
+	set_global_transform(Transform3D(Basis(), get_global_position()));
 }
 
 void VerletRope::_physics_process(double delta) {
@@ -59,7 +107,6 @@ void VerletRope::_physics_process(double delta) {
 	if (simulate) {
 		_apply_forces();
 		_verlet_process(_simulation_delta);
-		_verlet_process(0.16);
 		_apply_constraints();
 
 		_queue_rebuild();
@@ -100,7 +147,7 @@ void VerletRope::_create_rope() {
 			end_location,
 			global_position,
 			acceleration,
-			simulation_particles,
+			rope_particles,
 			segment);
 
 	Particle &start = _particles[0];
@@ -116,6 +163,7 @@ void VerletRope::_create_rope() {
 		_apply_constraints();
 	}
 
+	_compute_particle_normals();
 	_queue_rebuild();
 }
 
@@ -165,10 +213,36 @@ const int Z = 2;
 
 Transform3D _align_up(const Transform3D &in_xform, const Vector3 &normal) {
 	Transform3D xform = in_xform;
-	xform.basis[Y] = normal;
-	xform.basis[X] = -xform.basis[Z].cross(normal);
+
+	xform.basis.set_column(Y, normal);
+	xform.basis.set_column(X, -in_xform.basis.get_column(Z).cross(normal));
 	xform.basis = xform.basis.orthonormalized();
 	return xform;
+}
+
+void VerletRope::_compute_particle_normals() {
+	auto origin = get_global_position();
+
+	auto start = _particles[0];
+	start.T = (_particles[1].pos_cur - start.pos_cur).normalized();
+	start.N = (start.pos_cur - origin).normalized();
+	start.B = start.N.cross(start.T).normalized();
+	_particles[0] = start;
+
+	auto end_index = _particles.size() - 1;
+	auto end = _particles[end_index];
+	end.T = (end.pos_cur - _particles[end_index - 1].pos_cur).normalized();
+	end.N = (end.pos_cur - origin).normalized();
+	end.B = end.N.cross(end.T).normalized();
+	_particles[end_index] = end;
+
+	for (int i = 1; i < _particles.size() - 1; i++) {
+		auto particle = _particles[i];
+		particle.T = (_particles[i + 1].pos_cur - _particles[i - 1].pos_cur).normalized();
+		particle.N = (particle.pos_cur - origin).normalized();
+		particle.B = particle.N.cross(particle.T).normalized();
+		_particles[i] = particle;
+	}
 }
 
 // compute a stable normal/binormal frame using parallel transport to reduce twisting
@@ -176,51 +250,34 @@ Transform3D _align_up(const Transform3D &in_xform, const Vector3 &normal) {
 void VerletRope::_compute_parallel_transport(LocalVector<Transform3D> &frames) {
 	auto count = frames.size();
 	if (count > 0) {
-		Vector3 ref; // reference we'll use to align the rest of the frames
-		Vector3 T;
-		Vector3 N;
-		Vector3 B;
+		// initial tangent
+		Vector3 T = frames[0].basis.get_column(Y).normalized();
 
-		if (false) {
-			// initial tangent
-			T = frames[0].basis[Y].normalized();
+		// // use the basis for our rope start aligned to the first tangent
+		// // as the reference frame. this keeps the normals and U coordinate
+		// // from swinging wildly when the curvature changes orientation
+		Basis global_basis = get_global_basis();
+		auto basis_y = -global_basis.get_column(Y);
+		global_basis.rotate_to_align(basis_y, T);
+		Vector3 ref = global_basis.get_column(Y);
 
-			// choose an arbitrary reference not parallel to t0
-			ref = Vector3(0, 1, 0); // Vector3.UP
-			if (abs(T.dot(ref)) > 0.999)
-				ref = Vector3(0, 0, -1); // Vector3.MODEL_FRONT
+		// FIXME: this will spin wildly when tilted 90 off x & y axis.
 
-			// project ref onto plane perpendicular to t0
-			N = (ref - T * ref.dot(T));
-			if (N.length() <= 0.0)
-				N = Vector3(1, 0, 0);
-			N = N.normalized();
+		Vector3 N = global_basis.get_column(X);
+		Vector3 B = global_basis.get_column(Z);
 
-			B = T.cross(N).normalized();
-		} else {
-			// use the basis for our rope start aligned to the first tangent
-			// as the reference frame. this keeps the normals and U coordinate
-			// from swinging wildly when the curvature changes orientation
-
-			Transform3D global_tansform = get_global_transform();
-			auto gb = _align_up(global_tansform, frames[0].basis[Y].normalized()).basis;
-			ref = -gb[Y];
-			N = gb[X];
-			B = -gb[Z];
-		}
-
-		frames[0].basis[X] = N;
-		frames[0].basis[Z] = B;
+		frames[0].basis.set_column(X, N);
+		frames[0].basis.set_column(Z, B);
 
 		// parallel transport subsequent normals
 		for (int i = 1; i < count; i++) {
-			T = frames[i].basis[Y].normalized();
-			auto prev_N = frames[i - 1].basis[X];
+			T = frames[i].basis.get_column(Y).normalized();
+			auto prev_N = frames[i - 1].basis.get_column(X);
 
 			// project previous normal onto plane perpendicular to new tangent
 			auto proj = prev_N - T * prev_N.dot(T);
 			if (Math::is_zero_approx(proj.length())) { // degenerate case, reproject using ref fallback
-				proj = (ref - T * ref.dot(T));
+				proj = ref - T * ref.dot(T);
 				if (Math::is_zero_approx(proj.length())) {
 					proj = prev_N;
 				}
@@ -229,8 +286,8 @@ void VerletRope::_compute_parallel_transport(LocalVector<Transform3D> &frames) {
 			N = proj.normalized();
 			B = T.cross(N).normalized();
 
-			frames[i].basis[X] = N;
-			frames[i].basis[Z] = B;
+			frames[i].basis.set_column(X, N);
+			frames[i].basis.set_column(Z, B);
 		}
 	}
 }
@@ -248,89 +305,160 @@ void VerletRope::_emit_tube(LocalVector<Transform3D> &frames, int sides, float r
 		total_length = 1.0;
 
 	// number of V repeats along the rope is based on rope width and twist factor
-	float repeats = rope_length / rope_width * rope_twist;
+	const float repeats = rope_length / rope_width * rope_twist;
 
 	for (int i = 0; i < frames.size() - 1; i++) {
-		auto pos = frames[i].origin;
-		auto next_pos = frames[i + 1].origin;
+		const auto &pos = frames[i].origin;
+		const auto &next_pos = frames[i + 1].origin;
 
-		auto norm = frames[i].basis[X];
-		auto binorm = frames[i].basis[Z];
-		auto next_norm = frames[i + 1].basis[X];
-		auto next_binorm = frames[i + 1].basis[Z];
+		const auto &norm = frames[i].basis.get_column(X);
+		const auto &binorm = frames[i].basis.get_column(Z);
+		const auto &next_norm = frames[i + 1].basis.get_column(X);
+		const auto &next_binorm = frames[i + 1].basis.get_column(Z);
 
-		auto v = (cum_lengths[i] / total_length) * repeats;
-		auto next_v = (cum_lengths[i + 1] / total_length) * repeats;
+		const auto v = (cum_lengths[i] / total_length) * repeats;
+		const auto next_v = (cum_lengths[i + 1] / total_length) * repeats;
 
 		// loop one extra to close the seam (repeat first vertex)
+		// for the first and the last row.
 		for (int j = 0; j < sides + 1; j++) {
-			auto wrap_j = j % sides;
-			auto angle = Math_TAU * float(wrap_j) / float(sides);
-			auto ca = cos(angle);
-			auto sa = sin(angle);
+			const auto wrap_j = j % sides;
+			const auto angle = Math_TAU * float(wrap_j) / float(sides);
+			const auto ca = cos(angle);
+			const auto sa = sin(angle);
 
-			auto offset = (binorm * ca + norm * sa) * radius;
-			auto next_offset = (next_binorm * ca + next_norm * sa) * radius;
+			const auto offset = (binorm * ca + norm * sa) * radius;
+			const auto next_offset = (next_binorm * ca + next_norm * sa) * radius;
 
-			auto normal = offset.normalized();
-			auto next_normal = next_offset.normalized();
+			const auto normal = offset.normalized();
+			const auto next_normal = next_offset.normalized();
 
 			// U goes 0..1 around the tube; use j so the final seam vertex reaches 1.0;
-			auto u = float(j) / float(sides);
-
-			// reverse winding: emit next vertex then current vertex per pair
-			V.push_back(next_pos + next_offset);
-			N.push_back(next_normal);
-			UV1.push_back(Vector2(u, next_v));
+			const auto u = float(j) / float(sides);
 
 			V.push_back(pos + offset);
 			N.push_back(normal);
 			UV1.push_back(Vector2(u, v));
 
-			// _add_vertex_with_normal_and_uv(next_pos + next_offset, next_normal, Vector2(u, next_v))
-			// _add_vertex_with_normal_and_uv(pos + offset, normal, Vector2(u, v))
+			V.push_back(next_pos + next_offset);
+			N.push_back(next_normal);
+			UV1.push_back(Vector2(u, next_v));
 		}
 	}
 }
 
-void _emit_endcap(bool front, const Transform3D &frame, int sides, float radius, PackedVector3Array &V, PackedVector3Array &N, PackedVector2Array &UV1) {
+void VerletRope::_emit_endcap(bool front, const Transform3D &frame, int sides, float radius, PackedVector3Array &mesh_v, PackedVector3Array &mesh_n, PackedVector2Array &mesh_uv1) {
+	Vector3 center = frame.origin;
+	Vector3 T = frame.basis.get_column(Y);
+	Vector3 N = frame.basis.get_column(X);
+	Vector3 B = frame.basis.get_column(Z);
+
+	// UV to be aligned radially around the rope edge as a function of the side count
+	float u_width = 1.0 / sides;
+	Vector3 center_normal = T.normalized() * (front ? -1.0 : 1.0);
+
+	// emit triangles for end cap
+	for (int j = 0; j < sides; j++) {
+		float angle_a = Math_TAU * float(j) / float(sides);
+		float ca_a = cos(angle_a);
+		float sa_a = sin(angle_a);
+		Vector3 a = center + (B * ca_a + N * sa_a) * radius;
+		Vector2 uv_a = Vector2(j * u_width, 0);
+
+		int k = (j + 1) % sides;
+		float angle_b = Math_TAU * float(k) / float(sides);
+		float ca_b = cos(angle_b);
+		float sa_b = sin(angle_b);
+		Vector3 b = center + (B * ca_b + N * sa_b) * radius;
+		Vector2 uv_b = Vector2((j + 1) * u_width, 0);
+
+		// center UV moves with the triangle
+		Vector2 center_uv = Vector2(j * u_width, 0);
+
+		// front vs back face
+		mesh_v.push_back(center);
+		mesh_n.push_back(center_normal);
+		mesh_uv1.push_back(center_uv);
+
+		if (front) {
+			// be then a
+			mesh_v.push_back(b);
+			mesh_n.push_back(center_normal);
+			mesh_uv1.push_back(uv_b);
+
+			mesh_v.push_back(a);
+			mesh_n.push_back(center_normal);
+			mesh_uv1.push_back(uv_a);
+
+		} else {
+			// a then b
+			mesh_v.push_back(a);
+			mesh_n.push_back(center_normal);
+			mesh_uv1.push_back(uv_a);
+
+			mesh_v.push_back(b);
+			mesh_n.push_back(center_normal);
+			mesh_uv1.push_back(uv_b);
+		}
+	}
+}
+
+void VerletRope::_align_cap_node(const NodePath &path, Transform3D xform) {
+	auto cap_scale = Vector3(rope_width, rope_width, rope_width);
+	Node *node = get_node_or_null(path);
+	if (node && node->is_class("Node3D")) {
+		Node3D *node3d = (Node3D *)node;
+		if (node3d->is_visible()) {
+			node3d->set_global_transform(get_global_transform() * xform.orthonormalized());
+			node3d->set_scale(cap_scale);
+		}
+	}
 }
 
 void VerletRope::_rebuild_mesh() {
 	_generated_mesh->clear_surfaces();
 
+	// recompute normal, tangents, and binormals
+	_compute_particle_normals();
+
 	// build the tranform frames from the catmull spline
 	Vector3 global_position = get_global_position();
 	LocalVector<Transform3D> frames;
 	for (int i = 0; i < _particles.size() - 1; i++) {
-		auto particles = _get_simulation_particles(i);
-		auto p0 = particles[0];
-		auto p1 = particles[1];
-		auto p2 = particles[2];
-		auto p3 = particles[3];
+		const auto particles = _get_simulation_particles(i);
+		const auto &p0 = particles[0];
+		const auto &p1 = particles[1];
+		const auto &p2 = particles[2];
+		const auto &p3 = particles[3];
 
 		// 	auto step := get_draw_subdivision_step(camera_position, i);
 		float step = 1.0;
 		float t = 0.0;
 
+		// adjustable lod
+		if (rope_lod > 0)
+			step = 1.0 / float(rope_lod);
+
 		// sample out the catmull spline into points and tangents
 		while (t <= 1.0) {
 			auto current_result = _catmull_interpolate(p0, p1, p2, p3, 0.0, t);
-			auto current_position = current_result.first;
-			auto current_tangent = current_result.second;
+			auto position = current_result.first;
+			auto tangent = current_result.second;
 
 			// store sampled position and tangent; compute a stable frame after sampling
-			current_position -= global_position;
+			position -= global_position;
 			// Transform3D for each point.
 			// Tangent is Y
 			// Normal is X, calculated in parallel transport
 			// Binormal is Z, calculated in parallel transport
-			frames.push_back(Transform3D(Basis(Vector3(0, 0, 0), current_tangent, Vector3(0, 0, 0)), current_position));
+			Vector3 zero = Vector3(0, 0, 0);
+			frames.push_back(Transform3D(Basis(zero, tangent, zero), position));
 			t += step;
 		}
 	}
 
-	if (frames.size()) {
+	// Need at least two frames to draw a rope
+	if (frames.size() >= 2) {
 		_compute_parallel_transport(frames);
 
 		// tube parameters. set the number of sides based on rope width
@@ -342,7 +470,7 @@ void VerletRope::_rebuild_mesh() {
 		auto radius = rope_width * 0.5;
 
 		// override
-		if (rope_sides >= 3) {
+		if (rope_sides >= 0) {
 			sides = rope_sides;
 		}
 
@@ -350,31 +478,14 @@ void VerletRope::_rebuild_mesh() {
 		PackedVector3Array norms;
 		PackedVector2Array uv1s;
 
+		_emit_endcap(true, frames[0], sides, radius, verts, norms, uv1s);
+		_align_cap_node(start_cap, frames[0]);
+
 		_emit_tube(frames, sides, radius, verts, norms, uv1s);
 
-		/*
-		// add end caps as a separate triangles surface to close the rope ends
-		auto cap_scale := Vector3(rope_width, rope_width, rope_width);
-		if (startcap_mesh && startcap_mesh.visible)
-			{startcap_mesh.position = frames[0].origin;
-			startcap_mesh.basis = frames[0].basis;
-			startcap_mesh.scale = cap_scale;}
-		else
-			{_emit_endcap(true, frames[0], sides, radius);}
-
 		auto idx = frames.size() - 1;
-		if (endcap_mesh && endcap_mesh.visible)
-			{endcap_mesh.position = frames[idx].origin;
-
-			// flip the normal to mirror the orientation
-			auto end_basis := frames[idx].basis;
-			end_basis.x *= -1;
-			endcap_mesh.basis = end_basis;
-
-			endcap_mesh.scale = cap_scale;}
-		else
-			{_emit_endcap(false, frames[idx], sides, radius);}
-		*/
+		_emit_endcap(false, frames[idx], sides, radius, verts, norms, uv1s);
+		_align_cap_node(end_cap, frames[idx]);
 
 		// generate the catmull interpolation for the segments.
 		Array arrays;
@@ -405,7 +516,7 @@ PackedVector3Array VerletRope::_get_simulation_particles(int index) {
 	p[1] = _particles[index].pos_cur;
 	p[2] = _particles[index + 1].pos_cur;
 
-	if (index == simulation_particles - 2)
+	if (index == rope_particles - 2)
 		p[3] = _particles[index + 1].pos_cur + (_particles[index + 1].T * segment_length);
 	else
 		p[3] = _particles[index + 2].pos_cur;
@@ -443,8 +554,8 @@ float VerletRope::_get_average_segment_length() const {
 void VerletRope::_stiff_rope() {
 	for (int j = 0; j < stiffness_iterations; j++) {
 		for (int i = 0; i < _particles.size() - 1; i++) {
-			Particle &p0 = _particles[i];
-			Particle &p1 = _particles[i + 1];
+			Particle p0 = _particles[i];
+			Particle p1 = _particles[i + 1];
 
 			Vector3 segment = p1.pos_cur - p0.pos_cur;
 			float stretch = segment.length() - _get_average_segment_length();
@@ -460,25 +571,37 @@ void VerletRope::_stiff_rope() {
 				p1.pos_cur -= half_stretch;
 			}
 
-			// _particles[i] = p0;
-			// _particles[i + 1] = p1;
+			_particles[i] = p0;
+			_particles[i + 1] = p1;
 		}
 	}
 }
 
 void VerletRope::_verlet_process(float delta) {
-	for (Particle &p : _particles) {
-		if (p.attached)
+	// for (Particle &p : _particles) {
+	for (int i = 0; i < _particles.size(); i++) {
+		Particle p = _particles[i];
+
+		if (p.attached) {
 			continue;
+		}
 
 		Vector3 position_current_copy = p.pos_cur;
 		p.pos_cur = (2.0 * p.pos_cur) - p.pos_prev + (delta * delta * p.accel);
 		p.pos_prev = position_current_copy;
+
+		_particles[i] = p;
 	}
 }
 
 void VerletRope::_apply_forces() {
-	for (Particle &p : _particles) {
+	// for (Particle &p : _particles) {
+	Transform3D gx = get_global_transform();
+	for (int i = 0; i < _particles.size(); i++) {
+		Particle p = _particles[i];
+		// p.pos_cur = gx.xform(p.pos_cur);
+		// p.pos_prev = gx.xform(p.pos_prev);
+
 		Vector3 total_acceleration = Vector3(0, 0, 0);
 
 		if (apply_gravity) {
@@ -486,17 +609,22 @@ void VerletRope::_apply_forces() {
 		}
 
 		if (apply_wind && wind_noise != nullptr) {
-			auto timed_position = p.pos_cur + Vector3(1, 1, 1) * _time;
-			auto wind_force = wind_noise->get_noise_3d(timed_position.x, timed_position.y, timed_position.z);
+			Vector3 timed_position = p.pos_cur + Vector3(1, 1, 1) * _time;
+			float wind_force = wind_noise->get_noise_3d(timed_position.x, timed_position.y, timed_position.z);
 			total_acceleration += wind_scale * wind * wind_force;
 		}
 		if (apply_damping) {
-			auto velocity = p.pos_cur - p.pos_prev;
-			auto drag = -damping_factor * velocity.length() * velocity;
+			Vector3 velocity = p.pos_cur - p.pos_prev;
+			Vector3 drag = -damping_factor * velocity.length() * velocity;
 			total_acceleration += drag;
 		}
 
-		p.accel = total_acceleration;
+		// p.accel = total_acceleration;
+		p.accel = gx.xform_inv(total_acceleration);
+		// p.pos_cur = gx.xform_inv(p.pos_cur);
+		// p.pos_prev = gx.xform_inv(p.pos_prev);
+
+		_particles[i] = p;
 	}
 }
 
