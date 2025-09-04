@@ -1,27 +1,27 @@
-[gd_scene load_steps=3 format=3 uid="uid://dh0oj81pufivs"]
+[gd_scene load_steps=5 format=3 uid="uid://dh0oj81pufivs"]
 
-[ext_resource type="Texture2D" uid="uid://dbx66sovxd1" path="res://icon.svg" id="1_2jas5"]
+[ext_resource type="Texture2D" uid="uid://bxpeqa5abf62u" path="res://three-ply-rope.png" id="1_2jas5"]
+[ext_resource type="PackedScene" uid="uid://fmjw3nmdcxox" path="res://rope-endcap-4ply.glb" id="2_n51mc"]
+[ext_resource type="PackedScene" uid="uid://d4bgdr2vtpq86" path="res://rope-endcap-3ply.glb" id="3_8lvy3"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6gkck"]
-cull_mode = 2
 albedo_texture = ExtResource("1_2jas5")
 
 [node name="Node" type="Node3D"]
 
 [node name="VerletRope" type="VerletRope" parent="."]
 rope_width = 1.0
-rope_length = 8.0
+rope_length = 3.0
+rope_sides = 12
 rope_twist = 0.5
-rope_lod = 4
 material = SubResource("StandardMaterial3D_6gkck")
-start_cap = NodePath("../CSGCylinder3D")
-end_cap = NodePath("../CSGTorus3D")
+start_cap = NodePath("../rope-endcap-4ply")
+end_cap = NodePath("../rope-endcap-3ply")
 stiffness = 0.999
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.924295, 1.5113721, -0.7766577)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.40071297, 5.07272, -0.91424656)
 
-[node name="CSGCylinder3D" type="CSGCylinder3D" parent="."]
-transform = Transform3D(-0.6411661, 0.76553786, -0.053458445, 0.7655379, 0.63320196, -0.1140484, -0.053458374, -0.11404844, -0.99203587, 5.924295, 1.5113721, -0.7766577)
-height = 1.0
+[node name="rope-endcap-4ply" parent="." instance=ExtResource("2_n51mc")]
+transform = Transform3D(-0.9980432, 0.062490348, -0.0021690654, 0.062490344, 0.9956387, -0.06927112, -0.0021691709, -0.06927111, -0.9975955, 0.40071297, 5.07272, -0.91424656)
 
-[node name="CSGTorus3D" type="CSGTorus3D" parent="."]
-transform = Transform3D(-0.23116088, 0.94083375, 0.24778326, 0.97167116, 0.23612924, 0.0099038705, -0.04919098, 0.24305324, -0.9687649, -1.1834121, -1.9021153, -1.0318187)
+[node name="rope-endcap-3ply" parent="." instance=ExtResource("3_8lvy3")]
+transform = Transform3D(-0.9916771, -0.12848566, 0.008244287, 0.1284096, -0.98237383, 0.1358408, -0.009354623, 0.13576886, 0.9906964, 0.11857334, 2.0535364, -0.60725707)

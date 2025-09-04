@@ -321,7 +321,7 @@ void VerletRope::_emit_tube(LocalVector<Transform3D> &frames, int sides, float r
 
 		// loop one extra to close the seam (repeat first vertex)
 		// for the first and the last row.
-		for (int j = 0; j < sides + 1; j++) {
+		for (int j = sides; j >= 0; j--) {
 			const auto wrap_j = j % sides;
 			const auto angle = Math_TAU * float(wrap_j) / float(sides);
 			const auto ca = cos(angle);
@@ -357,48 +357,32 @@ void VerletRope::_emit_endcap(bool front, const Transform3D &frame, int sides, f
 	float u_width = 1.0 / sides;
 	Vector3 center_normal = T.normalized() * (front ? -1.0 : 1.0);
 
-	// emit triangles for end cap
-	for (int j = 0; j < sides; j++) {
-		float angle_a = Math_TAU * float(j) / float(sides);
-		float ca_a = cos(angle_a);
-		float sa_a = sin(angle_a);
-		Vector3 a = center + (B * ca_a + N * sa_a) * radius;
-		Vector2 uv_a = Vector2(j * u_width, 0);
+	auto emit = [&](int j) {
+		const auto wrap_j = j % sides;
+		const auto angle = Math_TAU * float(wrap_j) / float(sides);
+		const auto ca = cos(angle);
+		const auto sa = sin(angle);
+		const auto a = center + (B * ca + N * sa) * radius;
+		const auto uv_a = Vector2(wrap_j * u_width, 0);
 
-		int k = (j + 1) % sides;
-		float angle_b = Math_TAU * float(k) / float(sides);
-		float ca_b = cos(angle_b);
-		float sa_b = sin(angle_b);
-		Vector3 b = center + (B * ca_b + N * sa_b) * radius;
-		Vector2 uv_b = Vector2((j + 1) * u_width, 0);
+		const auto center_uv = Vector2(j * u_width, 0);
 
-		// center UV moves with the triangle
-		Vector2 center_uv = Vector2(j * u_width, 0);
+		mesh_v.push_back(a);
+		mesh_n.push_back(center_normal);
+		mesh_uv1.push_back(uv_a);
 
-		// front vs back face
 		mesh_v.push_back(center);
 		mesh_n.push_back(center_normal);
 		mesh_uv1.push_back(center_uv);
+	};
 
-		if (front) {
-			// be then a
-			mesh_v.push_back(b);
-			mesh_n.push_back(center_normal);
-			mesh_uv1.push_back(uv_b);
-
-			mesh_v.push_back(a);
-			mesh_n.push_back(center_normal);
-			mesh_uv1.push_back(uv_a);
-
-		} else {
-			// a then b
-			mesh_v.push_back(a);
-			mesh_n.push_back(center_normal);
-			mesh_uv1.push_back(uv_a);
-
-			mesh_v.push_back(b);
-			mesh_n.push_back(center_normal);
-			mesh_uv1.push_back(uv_b);
+	// emit triangles for end cap in either CCW or CW order
+	if (front) {
+		for (int j = 0; j < sides + 1; j++)
+			emit(j);
+	} else {
+		for (int j = sides; j >= 0; j--) {
+			emit(j);
 		}
 	}
 }
@@ -485,7 +469,7 @@ void VerletRope::_rebuild_mesh() {
 
 		auto idx = frames.size() - 1;
 		_emit_endcap(false, frames[idx], sides, radius, verts, norms, uv1s);
-		_align_cap_node(end_cap, frames[idx]);
+		_align_cap_node(end_cap, frames[idx].rotated_local(Vector3(1, 0, 0), Math_PI));
 
 		// generate the catmull interpolation for the segments.
 		Array arrays;
@@ -619,8 +603,8 @@ void VerletRope::_apply_forces() {
 			total_acceleration += drag;
 		}
 
-		// p.accel = total_acceleration;
-		p.accel = gx.xform_inv(total_acceleration);
+		p.accel = total_acceleration;
+		// p.accel = gx.xform_inv(total_acceleration);
 		// p.pos_cur = gx.xform_inv(p.pos_cur);
 		// p.pos_prev = gx.xform_inv(p.pos_prev);
 
