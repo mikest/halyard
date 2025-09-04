@@ -45,7 +45,7 @@ class VerletRope : public GeometryInstance3D {
 	float rope_width = 0.25;
 	float rope_length = 4.0;
 	int rope_sides = 6;
-	float rope_twist = 0.25;
+	float rope_twist = 1.0;
 	int rope_lod = 1;
 	Ref<Material> material = nullptr;
 	NodePath start_cap;

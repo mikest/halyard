@@ -10,18 +10,20 @@ albedo_texture = ExtResource("1_2jas5")
 [node name="Node" type="Node3D"]
 
 [node name="VerletRope" type="VerletRope" parent="."]
+rope_particles = 100
 rope_width = 1.0
-rope_length = 3.0
 rope_sides = 12
-rope_twist = 0.5
+rope_twist = 1.0
+rope_lod = 2
 material = SubResource("StandardMaterial3D_6gkck")
 start_cap = NodePath("../rope-endcap-4ply")
 end_cap = NodePath("../rope-endcap-3ply")
-stiffness = 0.999
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.40071297, 5.07272, -0.91424656)
+stiffness_iterations = 4
+stiffness = 1.1
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.50998515, 0.37645245)
 
 [node name="rope-endcap-4ply" parent="." instance=ExtResource("2_n51mc")]
-transform = Transform3D(-0.9980432, 0.062490348, -0.0021690654, 0.062490344, 0.9956387, -0.06927112, -0.0021691709, -0.06927111, -0.9975955, 0.40071297, 5.07272, -0.91424656)
+transform = Transform3D(-1, -7.351343e-10, 8.7419686e-08, 0, 0.99996465, 0.008408956, -8.742278e-08, 0.008408956, -0.99996465, 0, 0.50998515, 0.37645245)
 
 [node name="rope-endcap-3ply" parent="." instance=ExtResource("3_8lvy3")]
-transform = Transform3D(-0.9916771, -0.12848566, 0.008244287, 0.1284096, -0.98237383, 0.1358408, -0.009354623, 0.13576886, 0.9906964, 0.11857334, 2.0535364, -0.60725707)
+transform = Transform3D(-1, -8.742278e-08, 0, 7.8008505e-08, -0.89231324, 0.45141676, -3.9464105e-08, 0.45141676, 0.89231324, 0, -5.667435, 0.5869931)
