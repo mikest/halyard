@@ -1,6 +1,7 @@
 {
     "recommendations": [
         "ms-vscode.cpptools-extension-pack",
-        "ms-python.python"
+        "ms-python.python",
+        "geequlim.godot-tools"
     ]
 }

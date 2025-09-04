@@ -13,8 +13,8 @@
 
 using namespace godot;
 
-class VerletRope : public GeometryInstance3D {
-	GDCLASS(VerletRope, GeometryInstance3D)
+class FastRope : public GeometryInstance3D {
+	GDCLASS(FastRope, GeometryInstance3D)
 
 	Ref<ArrayMesh> _generated_mesh;
 
@@ -51,16 +51,17 @@ class VerletRope : public GeometryInstance3D {
 	NodePath start_cap;
 	NodePath end_cap;
 
-	// initial simulation
-	bool attach_start = true;
-	int preprocess_iterations = 5;
-	float preprocess_delta = 1 / 30.0;
-
 	// simulation parameters
 	bool simulate = true;
 	float simulation_rate = 60.0;
 	int stiffness_iterations = 2;
 	float stiffness = 0.9;
+
+	// attachments
+	NodePath start_anchor = ".";
+	NodePath mid_anchor;
+	int mid_index;
+	NodePath end_anchor;
 
 	// forces
 	bool apply_wind = false;
@@ -74,6 +75,10 @@ class VerletRope : public GeometryInstance3D {
 
 	bool apply_damping = true;
 	float damping_factor = 100.0;
+
+	// initial simulation
+	int preprocess_iterations = 5;
+	float preprocess_delta = 1 / 30.0;
 
 protected:
 	static void _bind_methods();
@@ -95,6 +100,10 @@ protected:
 	float get_current_rope_length() const;
 	float _get_average_segment_length() const;
 
+	// Anchors
+	void _update_anchor(NodePath &anchor, int index);
+	bool _get_anchor_transform(const NodePath &path, Transform3D &xform) const;
+
 	// Physics
 	void _stiff_rope();
 	void _verlet_process(float delta);
@@ -111,12 +120,12 @@ protected:
 	}
 
 public:
-	VerletRope();
-	~VerletRope() override;
+	FastRope();
+	~FastRope() override;
 
 	void _ready(void) override;
 
-	void _process(double delta) override;
+	// void _process(double delta) override;
 	void _physics_process(double delta) override;
 
 	void set_particle_count(uint64_t p_count);
@@ -152,21 +161,25 @@ public:
 	PROPERTY_GET_SET(NodePath, start_cap, {})
 	PROPERTY_GET_SET(NodePath, end_cap, {})
 
-	// initial simulation
-	PROPERTY_GET_SET(int, preprocess_iterations, {})
-	PROPERTY_GET_SET(float, preprocess_delta, {})
-
 	// simulation parameters
 	PROPERTY_GET_SET(bool, simulate, {})
 	PROPERTY_GET_SET(float, simulation_rate, {})
 	PROPERTY_GET_SET(int, stiffness_iterations, {})
 	PROPERTY_GET_SET(float, stiffness, {})
 
+	// anchors
+	PROPERTY_GET_SET(NodePath, start_anchor, _queue_rebuild())
+	PROPERTY_GET_SET(NodePath, mid_anchor, _queue_rebuild())
+	PROPERTY_GET_SET(int, mid_index, _queue_rebuild())
+	PROPERTY_GET_SET(NodePath, end_anchor, _queue_rebuild())
+
 	// forces
-	// bool apply_wind = false;
-	// float wind_scale = 20.0;
-	// Vector3 wind = Vector3(1, 0, 0);
-	// Ref<FastNoiseLite> wind_noise = nullptr;
+	PROPERTY_GET_SET(bool, apply_wind, {})
+	PROPERTY_GET_SET(float, wind_scale, {})
+	PROPERTY_GET_SET(Vector3, wind, {})
+
+	void set_wind_noise(const Ref<FastNoiseLite> &p_noise);
+	Ref<FastNoiseLite> get_wind_noise() const;
 
 	PROPERTY_GET_SET(bool, apply_gravity, {})
 	PROPERTY_GET_SET(Vector3, gravity, {})
@@ -174,6 +187,10 @@ public:
 
 	PROPERTY_GET_SET(bool, apply_damping, {})
 	PROPERTY_GET_SET(float, damping_factor, {})
+
+	// initial simulation
+	PROPERTY_GET_SET(int, preprocess_iterations, {})
+	PROPERTY_GET_SET(float, preprocess_delta, {})
 };
 
 #undef PROPERTY_GET
