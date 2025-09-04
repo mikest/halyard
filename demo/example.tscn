@@ -15,29 +15,30 @@ albedo_texture = ExtResource("1_2jas5")
 rope_particles = 20
 rope_width = 1.0
 rope_length = 20.0
-rope_sides = 50
+rope_sides = 8
 rope_lod = 4
 material = SubResource("StandardMaterial3D_6gkck")
 start_cap = NodePath("../rope-endcap-4ply")
 end_cap = NodePath("../rope-endcap-3ply")
 stiffness_iterations = 4
 stiffness = 1.5
-mid_anchor = NodePath("../Marker3D2")
-mid_index = 5
-end_anchor = NodePath("../Marker3D")
+mid_anchor = NodePath("../Marker3D")
+mid_index = 10
+end_anchor = NodePath("../Marker3D2")
+apply_wind = true
 wind_scale = 5.0
 wind = Vector3(1, 0, 1)
 wind_noise = SubResource("FastNoiseLite_8lvy3")
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.5770459, 12.883758, 2.7395506)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.0239563, 12.00682, 1.5707884)
 
 [node name="rope-endcap-4ply" parent="." instance=ExtResource("2_n51mc")]
-transform = Transform3D(-0.9965055, 0.08321217, -0.0072516208, 0.083212174, 0.98145735, -0.17267683, -0.007251659, -0.17267685, -0.98495185, -1.5770459, 12.883758, 2.7395506)
+transform = Transform3D(-0.9942207, 0.10719971, 0.0057987147, 0.1071997, 0.9884023, 0.10755968, 0.0057989038, 0.10755968, -0.99418175, 5.0239563, 12.00682, 1.5707884)
 
 [node name="rope-endcap-3ply" parent="." instance=ExtResource("3_8lvy3")]
-transform = Transform3D(0.55895084, 0.027098013, -0.8287579, 0.0016533912, 0.99942744, 0.03379354, 0.8291992, -0.020259187, 0.558586, 1.082545, 13.531383, 5.347775)
+transform = Transform3D(0.9396418, -0.31655356, 0.12987362, 0.33077395, 0.93749666, -0.10811384, -0.08753227, 0.14454709, 0.98561877, -1.8615947, 12.041101, 3.1427307)
 
 [node name="Marker3D" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.082545, 13.531383, 5.347775)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6988598, 10.662263, -2.0812836)
 
 [node name="Marker3D2" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8104506, 12.569445, 5.03114)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8615947, 12.041101, 3.1427307)

@@ -102,6 +102,7 @@ void FastRope::_update_anchor(NodePath &anchor, int index) {
 	Transform3D xform;
 	if (_get_anchor_transform(anchor, xform)) {
 		_particles[index].pos_cur = xform.origin;
+		_particles[index].pos_prev = xform.origin;
 		_particles[index].attached = true;
 	} else
 		_particles[index].attached = false;
