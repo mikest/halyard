@@ -26,16 +26,16 @@ mid_anchor = NodePath("../Marker3D")
 mid_index = 10
 end_anchor = NodePath("../Marker3D2")
 apply_wind = true
-wind_scale = 5.0
+wind_scale = 10.0
 wind = Vector3(1, 0, 1)
 wind_noise = SubResource("FastNoiseLite_8lvy3")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.0239563, 12.00682, 1.5707884)
 
 [node name="rope-endcap-4ply" parent="." instance=ExtResource("2_n51mc")]
-transform = Transform3D(-0.9942207, 0.10719971, 0.0057987147, 0.1071997, 0.9884023, 0.10755968, 0.0057989038, 0.10755968, -0.99418175, 5.0239563, 12.00682, 1.5707884)
+transform = Transform3D(-0.8967115, 0.43108252, 0.100380726, 0.43108252, 0.7991567, 0.41894677, 0.1003807, 0.41894677, -0.9024452, 5.0239563, 12.00682, 1.5707884)
 
 [node name="rope-endcap-3ply" parent="." instance=ExtResource("3_8lvy3")]
-transform = Transform3D(0.9396418, -0.31655356, 0.12987362, 0.33077395, 0.93749666, -0.10811384, -0.08753227, 0.14454709, 0.98561877, -1.8615947, 12.041101, 3.1427307)
+transform = Transform3D(0.97512513, 0.14532003, -0.16737095, -0.21214171, 0.8307101, -0.5147004, 0.06424046, 0.53740364, 0.8408748, -1.8615947, 12.041101, 3.1427307)
 
 [node name="Marker3D" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6988598, 10.662263, -2.0812836)
