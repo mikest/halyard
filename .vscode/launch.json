@@ -14,7 +14,7 @@
             "args": [
                 "--editor",
                 "--path",
-                "${workspaceFolder}/."
+                "${workspaceFolder}/../.." // assumed to live in addons
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

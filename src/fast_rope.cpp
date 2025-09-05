@@ -2,6 +2,11 @@
 #include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
+// Basis indexes
+const int X = 0;
+const int Y = 1;
+const int Z = 2;
+
 FastRope::FastRope() {
 	_generated_mesh.instantiate();
 	set_base(_generated_mesh->get_rid());
@@ -35,11 +40,11 @@ void FastRope::_bind_methods() {
 
 	// attachments
 	ADD_GROUP("Attachments", "");
-	EXPORT_PROPERTY(Variant::NODE_PATH, start_cap);
+	EXPORT_PROPERTY(Variant::NODE_PATH, start_attachment);
 	ClassDB::bind_method(D_METHOD("set_attachments", "attachments"), &FastRope::set_attachments);
 	ClassDB::bind_method(D_METHOD("get_attachments"), &FastRope::get_attachments);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "attachments", PROPERTY_HINT_RESOURCE_TYPE, "RopePositions"), "set_attachments", "get_attachments");
-	EXPORT_PROPERTY(Variant::NODE_PATH, end_cap);
+	EXPORT_PROPERTY(Variant::NODE_PATH, end_attachment);
 
 	// simulation parameters
 	ADD_GROUP("Simulation", "");
@@ -81,6 +86,8 @@ void FastRope::_bind_methods() {
 #undef STR
 }
 
+#pragma region Lifecycle
+
 void FastRope::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_READY: {
@@ -102,24 +109,11 @@ void FastRope::_ready(void) {
 	_create_rope();
 }
 
-void FastRope::_update_anchor(NodePath &anchor, float position) {
-	int last = _particles.size() - 1;
-	int index = Math::clamp(int(last * position), 0, last);
-
-	Transform3D xform;
-	if (_get_anchor_transform(anchor, xform)) {
-		_particles[index].pos_cur = xform.origin;
-		_particles[index].pos_prev = xform.origin;
-		_particles[index].attached = true;
-	} else
-		_particles[index].attached = false;
-}
-
 void FastRope::_physics_process(double delta) {
 	_time += delta;
 	_simulation_delta += delta;
 
-	auto simulation_step = 1.0 / float(simulation_rate);
+	auto simulation_step = 1.0 / float(_simulation_rate);
 	if (_simulation_delta < simulation_step)
 		return;
 
@@ -129,15 +123,10 @@ void FastRope::_physics_process(double delta) {
 			p.attached = false;
 
 		// set the anchor point for the beginning
-		_update_anchor(start_anchor, 0.0);
-		if (anchors != nullptr) {
-			for (auto &anchor : anchors->_positions)
-				_update_anchor(anchor.node, anchor.position);
-		}
-		_update_anchor(end_anchor, 1.0);
+		_update_anchors();
 
 		// run simulation
-		if (simulate) {
+		if (_simulate) {
 			_apply_forces();
 			_verlet_process(_simulation_delta);
 			_apply_constraints();
@@ -150,49 +139,30 @@ void FastRope::_physics_process(double delta) {
 	_simulation_delta = 0.0;
 }
 
-#pragma mark -
-
-void FastRope::set_material(const Ref<Material> &p_material) {
-	material = p_material;
-	if (_generated_mesh.is_valid() && _generated_mesh->get_surface_count() > 0) {
-		_generated_mesh->surface_set_material(0, material);
-	}
-}
-
-Ref<Material> FastRope::get_material() const {
-	return material;
-}
-
-void FastRope::set_wind_noise(const Ref<FastNoiseLite> &p_noise) {
-	wind_noise = p_noise;
-}
-
-Ref<FastNoiseLite> FastRope::get_wind_noise() const {
-	return wind_noise;
-}
-
-#pragma mark -
-
 void FastRope::_create_rope() {
 	auto global_position = get_global_position();
-	auto end_location = global_position + Vector3(0, -1, 0) * rope_length;
+	auto end_location = global_position + Vector3(0, -1, 0) * _rope_length;
 	bool end_attached = false;
 
 	Transform3D xform;
-	if (_get_anchor_transform(end_anchor, xform)) {
+	if (_get_anchor_transform(_end_anchor, xform)) {
 		end_location = xform.origin;
 		end_attached = true;
 	}
 
-	auto acceleration = gravity * gravity_scale;
-	auto segment = _get_average_segment_length();
-
-	_build_particles(
-			end_location,
-			global_position,
-			acceleration,
-			rope_particles,
-			segment);
+	auto initial_accel = _gravity * _gravity_scale;
+	auto segment_length = _get_average_segment_length();
+	Vector3 direction = (end_location - global_position).normalized();
+	_particles.clear();
+	for (int i = 0; i < _rope_particles; i++) {
+		Particle particle;
+		Vector3 position = global_position + direction * segment_length * i;
+		particle.pos_prev = position;
+		particle.pos_cur = position;
+		particle.accel = initial_accel;
+		particle.attached = false;
+		_particles.push_back(particle);
+	}
 
 	Particle &start = _particles[0];
 	Particle &end = _particles[_particles.size() - 1];
@@ -202,15 +172,10 @@ void FastRope::_create_rope() {
 	end.pos_prev = end_location;
 	end.pos_cur = end_location;
 
-	_update_anchor(start_anchor, 0.0);
-	if (anchors != nullptr) {
-		for (auto &anchor : anchors->_positions)
-			_update_anchor(anchor.node, anchor.position);
-	}
-	_update_anchor(end_anchor, 1.0);
+	_update_anchors();
 
-	for (int i = 0; i < preprocess_iterations; i++) {
-		_verlet_process(preprocess_delta);
+	for (int i = 0; i < _preprocess_iterations; i++) {
+		_verlet_process(_preprocess_delta);
 		_apply_constraints();
 	}
 
@@ -218,19 +183,27 @@ void FastRope::_create_rope() {
 	_queue_rebuild();
 }
 
-void FastRope::_build_particles(const Vector3 &end_location, const Vector3 &global_position, const Vector3 &initial_accel, int particle_count, float segment_length) {
-	Vector3 direction = (end_location - global_position).normalized();
+#pragma endregion
 
-	_particles.clear();
-	for (int i = 0; i < particle_count; i++) {
-		Particle particle;
-		Vector3 position = global_position + direction * segment_length * i;
-		particle.pos_prev = position;
-		particle.pos_cur = position;
-		particle.accel = initial_accel;
-		particle.attached = false;
-		_particles.push_back(particle);
+#pragma region Accessors
+
+void FastRope::set_material(const Ref<Material> &p_material) {
+	_material = p_material;
+	if (_generated_mesh.is_valid() && _generated_mesh->get_surface_count() > 0) {
+		_generated_mesh->surface_set_material(0, _material);
 	}
+}
+
+Ref<Material> FastRope::get_material() const {
+	return _material;
+}
+
+void FastRope::set_wind_noise(const Ref<FastNoiseLite> &p_noise) {
+	_wind_noise = p_noise;
+}
+
+Ref<FastNoiseLite> FastRope::get_wind_noise() const {
+	return _wind_noise;
 }
 
 void FastRope::set_particle_count(uint64_t p_count) {
@@ -256,20 +229,73 @@ Ref<ArrayMesh> FastRope::get_baked_mesh() const {
 	return _generated_mesh->duplicate();
 }
 
-#pragma mark -
-
-const int X = 0;
-const int Y = 1;
-const int Z = 2;
-
-Transform3D _align_up(const Transform3D &in_xform, const Vector3 &normal) {
-	Transform3D xform = in_xform;
-
-	xform.basis.set_column(Y, normal);
-	xform.basis.set_column(X, -in_xform.basis.get_column(Z).cross(normal));
-	xform.basis = xform.basis.orthonormalized();
-	return xform;
+float FastRope::get_current_rope_length() const {
+	float length = 0.0;
+	for (int i = 0; i < _particles.size() - 1; i++)
+		length += (_particles[i + 1].pos_cur - _particles[i].pos_cur).length();
+	return length;
 }
+
+#pragma endregion
+
+#pragma region Anchors & Attachments
+
+void FastRope::_update_anchor(NodePath &anchor, float position) {
+	int last = _particles.size() - 1;
+	int index = Math::clamp(int(last * position), 0, last);
+
+	Transform3D xform;
+	if (_get_anchor_transform(anchor, xform)) {
+		_particles[index].pos_cur = xform.origin;
+		_particles[index].pos_prev = xform.origin;
+		_particles[index].attached = true;
+	} else
+		_particles[index].attached = false;
+}
+
+bool FastRope::_get_anchor_transform(const NodePath &path, Transform3D &xform) const {
+	Node *node = get_node_or_null(path);
+	if (node && node->is_class("Node3D")) {
+		Node3D *node3d = (Node3D *)node;
+		if (node3d->is_visible()) {
+			xform = node3d->get_global_transform();
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void FastRope::_align_attachment_node(const NodePath &path, Transform3D xform) {
+	auto cap_scale = Vector3(_rope_width, _rope_width, _rope_width);
+	Node *node = get_node_or_null(path);
+	if (node && node->is_class("Node3D")) {
+		Node3D *node3d = (Node3D *)node;
+		if (node3d->is_visible()) {
+			node3d->set_global_transform(get_global_transform() * xform.orthonormalized());
+			node3d->set_scale(cap_scale);
+		}
+	}
+}
+
+void FastRope::_update_anchors() {
+	// for the first anchor, move the whole rope instead of the point
+	Transform3D xform;
+	if (_get_anchor_transform(_start_anchor, xform)) {
+		set_global_position(xform.origin);
+	}
+
+	_update_anchor(_start_anchor, 0.0);
+	if (_anchors != nullptr) {
+		for (auto &anchor : _anchors->_positions)
+			_update_anchor(anchor.node, anchor.position);
+	}
+	_update_anchor(_end_anchor, 1.0);
+}
+
+#pragma endregion
+
+#pragma region Drawing
 
 void FastRope::_compute_particle_normals() {
 	auto origin = get_global_position();
@@ -356,7 +382,7 @@ void FastRope::_emit_tube(LocalVector<Transform3D> &frames, int sides, float rad
 		total_length = 1.0;
 
 	// number of V repeats along the rope is based on rope width and twist factor
-	const float repeats = rope_length / rope_width * rope_twist;
+	const float repeats = _rope_length / _rope_width * _rope_twist;
 
 	for (int i = 0; i < frames.size() - 1; i++) {
 		const auto &pos = frames[i].origin;
@@ -438,29 +464,20 @@ void FastRope::_emit_endcap(bool front, const Transform3D &frame, int sides, flo
 	}
 }
 
-bool FastRope::_get_anchor_transform(const NodePath &path, Transform3D &xform) const {
-	Node *node = get_node_or_null(path);
-	if (node && node->is_class("Node3D")) {
-		Node3D *node3d = (Node3D *)node;
-		if (node3d->is_visible()) {
-			xform = node3d->get_global_transform();
-			return true;
-		}
-	}
+Pair<Vector3, Vector3> FastRope::_catmull_interpolate(const Vector3 &p0, const Vector3 &p1, const Vector3 &p2, const Vector3 &p3, float tension, float t) {
+	float t_sqr = t * t;
+	float t_cube = t_sqr * t;
 
-	return false;
-}
+	Vector3 m1 = (1.0 - tension) / 2.0 * (p2 - p0);
+	Vector3 m2 = (1.0 - tension) / 2.0 * (p3 - p1);
 
-void FastRope::_align_cap_node(const NodePath &path, Transform3D xform) {
-	auto cap_scale = Vector3(rope_width, rope_width, rope_width);
-	Node *node = get_node_or_null(path);
-	if (node && node->is_class("Node3D")) {
-		Node3D *node3d = (Node3D *)node;
-		if (node3d->is_visible()) {
-			node3d->set_global_transform(get_global_transform() * xform.orthonormalized());
-			node3d->set_scale(cap_scale);
-		}
-	}
+	Vector3 a = (2.0 * (p1 - p2)) + m1 + m2;
+	Vector3 b = (-3.0 * (p1 - p2)) - (2.0 * m1) - m2;
+
+	Vector3 point = (a * t_cube) + (b * t_sqr) + (m1 * t) + p1;
+	Vector3 tangent = ((3.0 * a * t_sqr) + (2.0 * b * t) + m1).normalized();
+
+	return { point, tangent };
 }
 
 void FastRope::_rebuild_mesh() {
@@ -484,8 +501,8 @@ void FastRope::_rebuild_mesh() {
 		float t = 0.0;
 
 		// adjustable lod
-		if (rope_lod > 0)
-			step = 1.0 / float(rope_lod);
+		if (_rope_lod > 0)
+			step = 1.0 / float(_rope_lod);
 
 		// sample out the catmull spline into points and tangents
 		while (t <= 1.0) {
@@ -512,37 +529,20 @@ void FastRope::_rebuild_mesh() {
 		// tube parameters. set the number of sides based on rope width
 		// A 0.1 thickness rope will have 6 sides
 		// A 1.0 thickness rope will have 12 sides
-		// float ratio = Math::ease(rope_width, .2);
-		float ratio = 0.5;
+		const float ratio = UtilityFunctions::ease(_rope_width, .2);
+		const auto radius = _rope_width * 0.5;
 		int sides = Math::clamp(int(Math::lerp(3, 12, ratio)), 3, 12);
-		auto radius = rope_width * 0.5;
+		if (_rope_sides >= 0)
+			sides = _rope_sides; // override for side count
 
-		// override
-		if (rope_sides >= 0) {
-			sides = rope_sides;
-		}
-
-		PackedVector3Array verts;
-		PackedVector3Array norms;
+		// emit geometry
+		PackedVector3Array verts, norms;
 		PackedVector2Array uv1s;
 
+		const auto last_frame_idx = frames.size() - 1;
 		_emit_endcap(true, frames[0], sides, radius, verts, norms, uv1s);
-		_align_cap_node(start_cap, frames[0]);
-
-		// attachments, if any
-		if (attachments != nullptr) {
-			for (auto &attachment : attachments->_positions) {
-				int last = frames.size() - 1;
-				int index = Math::clamp(int(last * attachment.position), 0, last);
-				_align_cap_node(attachment.node, frames[index]);
-			}
-		}
-
 		_emit_tube(frames, sides, radius, verts, norms, uv1s);
-
-		auto idx = frames.size() - 1;
-		_emit_endcap(false, frames[idx], sides, radius, verts, norms, uv1s);
-		_align_cap_node(end_cap, frames[idx].rotated_local(Vector3(1, 0, 0), Math_PI));
+		_emit_endcap(false, frames[last_frame_idx], sides, radius, verts, norms, uv1s);
 
 		// generate the catmull interpolation for the segments.
 		Array arrays;
@@ -553,11 +553,28 @@ void FastRope::_rebuild_mesh() {
 		// arrays[Mesh::ARRAY_TANGENT] = new_tangents;
 		arrays[Mesh::ARRAY_TEX_UV] = uv1s;
 		_generated_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLE_STRIP, arrays);
-		_generated_mesh->surface_set_material(0, material);
+		_generated_mesh->surface_set_material(0, _material);
+
+		// align attachments if present
+		_align_attachment_node(_start_attachment, frames[0]);
+		if (_attachments != nullptr) {
+			for (auto &attachment : _attachments->_positions) {
+				int last = frames.size() - 1;
+				int index = Math::clamp(int(last * attachment.position), 0, last);
+				_align_attachment_node(attachment.node, frames[index]);
+			}
+		}
+		_align_attachment_node(_end_attachment, frames[last_frame_idx].rotated_local(Vector3(1, 0, 0), Math_PI));
 	}
 }
 
-#pragma mark -
+#pragma endregion
+
+#pragma region Physics
+
+float FastRope::_get_average_segment_length() const {
+	return _rope_length / float(_particles.size() - 1);
+}
 
 PackedVector3Array FastRope::_get_simulation_particles(int index) {
 	auto segment_length = _get_average_segment_length();
@@ -573,7 +590,7 @@ PackedVector3Array FastRope::_get_simulation_particles(int index) {
 	p[1] = _particles[index].pos_cur;
 	p[2] = _particles[index + 1].pos_cur;
 
-	if (index == rope_particles - 2)
+	if (index == _rope_particles - 2)
 		p[3] = _particles[index + 1].pos_cur + (_particles[index + 1].T * segment_length);
 	else
 		p[3] = _particles[index + 2].pos_cur;
@@ -581,35 +598,8 @@ PackedVector3Array FastRope::_get_simulation_particles(int index) {
 	return p;
 }
 
-Pair<Vector3, Vector3> FastRope::_catmull_interpolate(const Vector3 &p0, const Vector3 &p1, const Vector3 &p2, const Vector3 &p3, float tension, float t) {
-	float t_sqr = t * t;
-	float t_cube = t_sqr * t;
-
-	Vector3 m1 = (1.0 - tension) / 2.0 * (p2 - p0);
-	Vector3 m2 = (1.0 - tension) / 2.0 * (p3 - p1);
-
-	Vector3 a = (2.0 * (p1 - p2)) + m1 + m2;
-	Vector3 b = (-3.0 * (p1 - p2)) - (2.0 * m1) - m2;
-
-	Vector3 point = (a * t_cube) + (b * t_sqr) + (m1 * t) + p1;
-	Vector3 tangent = ((3.0 * a * t_sqr) + (2.0 * b * t) + m1).normalized();
-
-	return { point, tangent };
-}
-
-float FastRope::get_current_rope_length() const {
-	float length = 0.0;
-	for (int i = 0; i < _particles.size() - 1; i++)
-		length += (_particles[i + 1].pos_cur - _particles[i].pos_cur).length();
-	return length;
-}
-
-float FastRope::_get_average_segment_length() const {
-	return rope_length / float(_particles.size() - 1);
-}
-
 void FastRope::_stiff_rope() {
-	for (int j = 0; j < stiffness_iterations; j++) {
+	for (int j = 0; j < _stiffness_iterations; j++) {
 		for (int i = 0; i < _particles.size() - 1; i++) {
 			Particle p0 = _particles[i];
 			Particle p1 = _particles[i + 1];
@@ -619,11 +609,11 @@ void FastRope::_stiff_rope() {
 			Vector3 direction = segment.normalized();
 
 			if (p0.attached) {
-				p1.pos_cur -= direction * stretch * stiffness;
+				p1.pos_cur -= direction * stretch * _stiffness;
 			} else if (p1.attached) {
-				p0.pos_cur += direction * stretch * stiffness;
+				p0.pos_cur += direction * stretch * _stiffness;
 			} else {
-				Vector3 half_stretch = direction * stretch * 0.5 * stiffness;
+				Vector3 half_stretch = direction * stretch * 0.5 * _stiffness;
 				p0.pos_cur += half_stretch;
 				p1.pos_cur -= half_stretch;
 			}
@@ -654,18 +644,18 @@ void FastRope::_apply_forces() {
 
 		Vector3 total_acceleration = Vector3(0, 0, 0);
 
-		if (apply_gravity) {
-			total_acceleration += gravity * gravity_scale;
+		if (_apply_gravity) {
+			total_acceleration += _gravity * _gravity_scale;
 		}
 
-		if (apply_wind && wind_noise != nullptr) {
+		if (_apply_wind && _wind_noise != nullptr) {
 			Vector3 timed_position = p.pos_cur + Vector3(1, 1, 1) * _time;
-			float wind_force = wind_noise->get_noise_3d(timed_position.x, timed_position.y, timed_position.z);
-			total_acceleration += wind_scale * wind * wind_force;
+			float wind_force = _wind_noise->get_noise_3d(timed_position.x, timed_position.y, timed_position.z);
+			total_acceleration += _wind_scale * _wind * wind_force;
 		}
-		if (apply_damping) {
+		if (_apply_damping) {
 			Vector3 velocity = p.pos_cur - p.pos_prev;
-			Vector3 drag = -damping_factor * velocity.length() * velocity;
+			Vector3 drag = -_damping_factor * velocity.length() * velocity;
 			total_acceleration += drag;
 		}
 
@@ -679,3 +669,5 @@ void FastRope::_apply_forces() {
 void FastRope::_apply_constraints() {
 	_stiff_rope();
 }
+
+#pragma endregion

@@ -44,45 +44,45 @@ class FastRope : public GeometryInstance3D {
 	double _simulation_delta = 0.0;
 
 	// rope geometry
-	int rope_particles = 10;
-	float rope_width = 0.25;
-	float rope_length = 4.0;
-	int rope_sides = 6;
-	float rope_twist = 1.0;
-	int rope_lod = 1;
-	Ref<Material> material = nullptr;
+	int _rope_particles = 10;
+	float _rope_width = 0.25;
+	float _rope_length = 4.0;
+	int _rope_sides = 6;
+	float _rope_twist = 1.0;
+	int _rope_lod = 1;
+	Ref<Material> _material = nullptr;
 
-	NodePath start_cap;
-	Ref<RopePositions> attachments;
-	NodePath end_cap;
+	NodePath _start_attachment;
+	Ref<RopePositions> _attachments;
+	NodePath _end_attachment;
 
 	// simulation parameters
-	bool simulate = true;
-	float simulation_rate = 60.0;
-	int stiffness_iterations = 2;
-	float stiffness = 0.9;
+	bool _simulate = true;
+	float _simulation_rate = 60.0;
+	int _stiffness_iterations = 2;
+	float _stiffness = 0.9;
 
 	// attachments
-	NodePath start_anchor = ".";
-	Ref<RopePositions> anchors;
-	NodePath end_anchor;
+	NodePath _start_anchor = ".";
+	Ref<RopePositions> _anchors;
+	NodePath _end_anchor;
 
 	// forces
-	bool apply_wind = false;
-	float wind_scale = 20.0;
-	Vector3 wind = Vector3(1, 0, 0);
-	Ref<FastNoiseLite> wind_noise = nullptr;
+	bool _apply_wind = false;
+	float _wind_scale = 20.0;
+	Vector3 _wind = Vector3(1, 0, 0);
+	Ref<FastNoiseLite> _wind_noise = nullptr;
 
-	bool apply_gravity = true;
-	Vector3 gravity = Vector3(0, -9.8, 0);
-	float gravity_scale = 1.0;
+	bool _apply_gravity = true;
+	Vector3 _gravity = Vector3(0, -9.8, 0);
+	float _gravity_scale = 1.0;
 
-	bool apply_damping = true;
-	float damping_factor = 100.0;
+	bool _apply_damping = true;
+	float _damping_factor = 100.0;
 
 	// initial simulation
-	int preprocess_iterations = 5;
-	float preprocess_delta = 1 / 30.0;
+	int _preprocess_iterations = 5;
+	float _preprocess_delta = 1 / 30.0;
 
 protected:
 	static void _bind_methods();
@@ -99,12 +99,13 @@ protected:
 
 	void _emit_tube(LocalVector<Transform3D> &frames, int sides, float radius, PackedVector3Array &V, PackedVector3Array &N, PackedVector2Array &UV1);
 	void _emit_endcap(bool front, const Transform3D &frame, int sides, float radius, PackedVector3Array &V, PackedVector3Array &N, PackedVector2Array &UV1);
-	void _align_cap_node(const NodePath &path, Transform3D xform);
+	void _align_attachment_node(const NodePath &path, Transform3D xform);
 
 	float get_current_rope_length() const;
 	float _get_average_segment_length() const;
 
 	// Anchors
+	void _update_anchors();
 	void _update_anchor(NodePath &anchor, float position);
 	bool _get_anchor_transform(const NodePath &path, Transform3D &xform) const;
 
@@ -139,11 +140,11 @@ public:
 
 // Getter/Setter macros for properties
 #define PROPERTY_GET(m_type, m_prop) \
-	const m_type &get_##m_prop() const { return m_prop; }
+	const m_type &get_##m_prop() const { return _##m_prop; }
 #define PROPERTY_SET(m_type, m_prop, m_update) \
 	void set_##m_prop(const m_type &val) {     \
-		if (val != m_prop) {                   \
-			m_prop = val;                      \
+		if (val != _##m_prop) {                \
+			_##m_prop = val;                   \
 			m_update;                          \
 		}                                      \
 	}
@@ -162,10 +163,10 @@ public:
 	void set_material(const Ref<Material> &p_material);
 	Ref<Material> get_material() const;
 
-	PROPERTY_GET_SET(NodePath, start_cap, {})
-	PROPERTY_GET_SET(NodePath, end_cap, {})
-	void set_attachments(const Ref<RopePositions> &p_attachments) { attachments = p_attachments; }
-	Ref<RopePositions> get_attachments() const { return attachments; }
+	PROPERTY_GET_SET(NodePath, start_attachment, {})
+	PROPERTY_GET_SET(NodePath, end_attachment, {})
+	void set_attachments(const Ref<RopePositions> &p_attachments) { _attachments = p_attachments; }
+	Ref<RopePositions> get_attachments() const { return _attachments; }
 
 	// simulation parameters
 	PROPERTY_GET_SET(bool, simulate, {})
@@ -176,8 +177,8 @@ public:
 	// anchors
 	PROPERTY_GET_SET(NodePath, start_anchor, _queue_rebuild())
 	PROPERTY_GET_SET(NodePath, end_anchor, _queue_rebuild())
-	void set_anchors(const Ref<RopePositions> &p_anchors) { anchors = p_anchors; }
-	Ref<RopePositions> get_anchors() const { return anchors; }
+	void set_anchors(const Ref<RopePositions> &p_anchors) { _anchors = p_anchors; }
+	Ref<RopePositions> get_anchors() const { return _anchors; }
 
 	// forces
 	PROPERTY_GET_SET(bool, apply_wind, {})
