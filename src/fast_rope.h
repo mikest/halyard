@@ -12,7 +12,7 @@
 #include <godot_cpp/variant/typed_array.hpp>
 #include <godot_cpp/variant/variant.hpp>
 
-#include "rope_position.h"
+#include "rope_positions.h"
 
 using namespace godot;
 
@@ -53,7 +53,7 @@ class FastRope : public GeometryInstance3D {
 	Ref<Material> material = nullptr;
 
 	NodePath start_cap;
-	Ref<RopePosition> attachments;
+	Ref<RopePositions> attachments;
 	NodePath end_cap;
 
 	// simulation parameters
@@ -64,7 +64,7 @@ class FastRope : public GeometryInstance3D {
 
 	// attachments
 	NodePath start_anchor = ".";
-	Ref<RopePosition> anchors;
+	Ref<RopePositions> anchors;
 	NodePath end_anchor;
 
 	// forces
@@ -164,8 +164,8 @@ public:
 
 	PROPERTY_GET_SET(NodePath, start_cap, {})
 	PROPERTY_GET_SET(NodePath, end_cap, {})
-	void set_attachments(const Ref<RopePosition> &p_attachments) { attachments = p_attachments; }
-	Ref<RopePosition> get_attachments() const { return attachments; }
+	void set_attachments(const Ref<RopePositions> &p_attachments) { attachments = p_attachments; }
+	Ref<RopePositions> get_attachments() const { return attachments; }
 
 	// simulation parameters
 	PROPERTY_GET_SET(bool, simulate, {})
@@ -176,8 +176,8 @@ public:
 	// anchors
 	PROPERTY_GET_SET(NodePath, start_anchor, _queue_rebuild())
 	PROPERTY_GET_SET(NodePath, end_anchor, _queue_rebuild())
-	void set_anchors(const Ref<RopePosition> &p_anchors) { anchors = p_anchors; }
-	Ref<RopePosition> get_anchors() const { return anchors; }
+	void set_anchors(const Ref<RopePositions> &p_anchors) { anchors = p_anchors; }
+	Ref<RopePositions> get_anchors() const { return anchors; }
 
 	// forces
 	PROPERTY_GET_SET(bool, apply_wind, {})

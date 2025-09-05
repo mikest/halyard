@@ -4,6 +4,7 @@ compatibility_minimum = "4.5"
 
 [icons]
 FastRope = "./icons/FastRope.svg"
+RopePositions = "./icons/RopePositions.svg"
 
 [libraries]
 ; Relative paths ensure that our GDExtension can be placed anywhere in the project directory.

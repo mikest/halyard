@@ -38,7 +38,7 @@ void FastRope::_bind_methods() {
 	EXPORT_PROPERTY(Variant::NODE_PATH, start_cap);
 	ClassDB::bind_method(D_METHOD("set_attachments", "attachments"), &FastRope::set_attachments);
 	ClassDB::bind_method(D_METHOD("get_attachments"), &FastRope::get_attachments);
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "attachments", PROPERTY_HINT_RESOURCE_TYPE, "RopePosition"), "set_attachments", "get_attachments");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "attachments", PROPERTY_HINT_RESOURCE_TYPE, "RopePositions"), "set_attachments", "get_attachments");
 	EXPORT_PROPERTY(Variant::NODE_PATH, end_cap);
 
 	// simulation parameters
@@ -52,7 +52,7 @@ void FastRope::_bind_methods() {
 	EXPORT_PROPERTY(Variant::NODE_PATH, start_anchor);
 	ClassDB::bind_method(D_METHOD("set_anchors", "anchors"), &FastRope::set_anchors);
 	ClassDB::bind_method(D_METHOD("get_anchors"), &FastRope::get_anchors);
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "anchors", PROPERTY_HINT_RESOURCE_TYPE, "RopePosition"), "set_anchors", "get_anchors");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "anchors", PROPERTY_HINT_RESOURCE_TYPE, "RopePositions"), "set_anchors", "get_anchors");
 	EXPORT_PROPERTY(Variant::NODE_PATH, end_anchor);
 
 	// forces
@@ -131,7 +131,7 @@ void FastRope::_physics_process(double delta) {
 		// set the anchor point for the beginning
 		_update_anchor(start_anchor, 0.0);
 		if (anchors != nullptr) {
-			for (auto &anchor : anchors->positions)
+			for (auto &anchor : anchors->_positions)
 				_update_anchor(anchor.node, anchor.position);
 		}
 		_update_anchor(end_anchor, 1.0);
@@ -204,7 +204,7 @@ void FastRope::_create_rope() {
 
 	_update_anchor(start_anchor, 0.0);
 	if (anchors != nullptr) {
-		for (auto &anchor : anchors->positions)
+		for (auto &anchor : anchors->_positions)
 			_update_anchor(anchor.node, anchor.position);
 	}
 	_update_anchor(end_anchor, 1.0);
@@ -528,6 +528,15 @@ void FastRope::_rebuild_mesh() {
 
 		_emit_endcap(true, frames[0], sides, radius, verts, norms, uv1s);
 		_align_cap_node(start_cap, frames[0]);
+
+		// attachments, if any
+		if (attachments != nullptr) {
+			for (auto &attachment : attachments->_positions) {
+				int last = frames.size() - 1;
+				int index = Math::clamp(int(last * attachment.position), 0, last);
+				_align_cap_node(attachment.node, frames[index]);
+			}
+		}
 
 		_emit_tube(frames, sides, radius, verts, norms, uv1s);
 

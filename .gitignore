@@ -2,6 +2,8 @@
 *.gen.*
 .godot/
 
+*.blend1
+
 # Ignore library files but not the gdextension file
 demo/bin/*
 !demo/bin/android

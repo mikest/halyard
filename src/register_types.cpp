@@ -6,7 +6,7 @@
 #include <godot_cpp/godot.hpp>
 
 #include "fast_rope.h"
-#include "rope_position.h"
+#include "rope_positions.h"
 
 using namespace godot;
 
@@ -15,7 +15,7 @@ void initialize_gdextension_types(ModuleInitializationLevel p_level) {
 		return;
 	}
 	GDREGISTER_CLASS(FastRope);
-	GDREGISTER_CLASS(RopePosition);
+	GDREGISTER_CLASS(RopePositions);
 }
 
 void uninitialize_gdextension_types(ModuleInitializationLevel p_level) {

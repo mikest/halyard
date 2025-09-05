@@ -1,26 +1,23 @@
-#include "rope_position.h"
+#include "rope_positions.h"
 
-// MAKE_TYPED_ARRAY(Ref<RopePosition>, Variant::OBJECT)
-// MAKE_TYPED_ARRAY_INFO(Ref<RopePosition>, Variant::OBJECT)
-
-void RopePosition::_bind_methods() {
+void RopePositions::_bind_methods() {
 #define STR(x) #x
-#define EXPORT_PROPERTY(m_type, m_property)                                                                  \
-	ClassDB::bind_method(D_METHOD(STR(set_##m_property), STR(m_property)), &RopePosition::set_##m_property); \
-	ClassDB::bind_method(D_METHOD(STR(get_##m_property)), &RopePosition::get_##m_property);                  \
+#define EXPORT_PROPERTY(m_type, m_property)                                                                   \
+	ClassDB::bind_method(D_METHOD(STR(set_##m_property), STR(m_property)), &RopePositions::set_##m_property); \
+	ClassDB::bind_method(D_METHOD(STR(get_##m_property)), &RopePositions::get_##m_property);                  \
 	ADD_PROPERTY(PropertyInfo(m_type, #m_property), STR(set_##m_property), STR(get_##m_property))
 
 	EXPORT_PROPERTY(Variant::INT, position_count);
 
-	ClassDB::bind_method(D_METHOD("set_position", "surface_index", "rotation"), &RopePosition::set_position);
-	ClassDB::bind_method(D_METHOD("get_position", "surface_index"), &RopePosition::get_position);
+	ClassDB::bind_method(D_METHOD("set_position", "surface_index", "rotation"), &RopePositions::set_position);
+	ClassDB::bind_method(D_METHOD("get_position", "surface_index"), &RopePositions::get_position);
 
 #undef EXPORT_PROPERTY
 #undef STR
 }
 
-void RopePosition::_get_property_list(List<PropertyInfo> *p_list) const {
-	for (uint64_t idx = 0; idx < positions.size(); ++idx) {
+void RopePositions::_get_property_list(List<PropertyInfo> *p_list) const {
+	for (uint64_t idx = 0; idx < _positions.size(); ++idx) {
 		uint32_t usage = PROPERTY_USAGE_DEFAULT;
 		String name = "position_" + itos(idx);
 
@@ -30,7 +27,7 @@ void RopePosition::_get_property_list(List<PropertyInfo> *p_list) const {
 	}
 }
 
-bool RopePosition::_property_can_revert(const StringName &p_name) const {
+bool RopePositions::_property_can_revert(const StringName &p_name) const {
 	if (p_name.begins_with("position_")) {
 		return true;
 	}
@@ -38,7 +35,7 @@ bool RopePosition::_property_can_revert(const StringName &p_name) const {
 	return false;
 }
 
-bool RopePosition::_property_get_revert(const StringName &p_name, Variant &r_property) const {
+bool RopePositions::_property_get_revert(const StringName &p_name, Variant &r_property) const {
 	if (p_name.begins_with("position_")) {
 		Pair<uint64_t, String> subprop = _decode_dynamic_propname(p_name);
 		uint64_t surf_idx = subprop.first;
@@ -55,7 +52,7 @@ bool RopePosition::_property_get_revert(const StringName &p_name, Variant &r_pro
 	return false;
 }
 
-bool RopePosition::_set(const StringName &p_name, const Variant &p_property) {
+bool RopePositions::_set(const StringName &p_name, const Variant &p_property) {
 	if (p_name.begins_with("position_")) {
 		Pair<uint64_t, String> subprop = _decode_dynamic_propname(p_name);
 		uint64_t idx = subprop.first;
@@ -72,7 +69,7 @@ bool RopePosition::_set(const StringName &p_name, const Variant &p_property) {
 	return false;
 }
 
-bool RopePosition::_get(const StringName &p_name, Variant &r_property) const {
+bool RopePositions::_get(const StringName &p_name, Variant &r_property) const {
 	if (p_name.begins_with("position_")) {
 		Pair<uint64_t, String> subprop = _decode_dynamic_propname(p_name);
 		uint64_t idx = subprop.first;
@@ -89,7 +86,7 @@ bool RopePosition::_get(const StringName &p_name, Variant &r_property) const {
 	return false;
 }
 
-Pair<uint64_t, String> RopePosition::_decode_dynamic_propname(const StringName &p_name) const {
+Pair<uint64_t, String> RopePositions::_decode_dynamic_propname(const StringName &p_name) const {
 	PackedStringArray prop_path = p_name.split("/");
 	if (prop_path.size() != 2) {
 		return Pair<uint64_t, String>();
