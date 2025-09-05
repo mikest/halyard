@@ -21,6 +21,7 @@ demo/bin/windows/*
 
 # Ignore custom.py
 custom.py
+__pycache__
 
 # Ignore generated compile_commands.json
 compile_commands.json

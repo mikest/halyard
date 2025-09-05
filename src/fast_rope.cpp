@@ -33,7 +33,12 @@ void FastRope::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_material"), &FastRope::get_material);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "material", PROPERTY_HINT_RESOURCE_TYPE, "Material"), "set_material", "get_material");
 
+	// attachments
+	ADD_GROUP("Attachments", "");
 	EXPORT_PROPERTY(Variant::NODE_PATH, start_cap);
+	ClassDB::bind_method(D_METHOD("set_attachments", "attachments"), &FastRope::set_attachments);
+	ClassDB::bind_method(D_METHOD("get_attachments"), &FastRope::get_attachments);
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "attachments", PROPERTY_HINT_RESOURCE_TYPE, "RopePosition"), "set_attachments", "get_attachments");
 	EXPORT_PROPERTY(Variant::NODE_PATH, end_cap);
 
 	// simulation parameters
@@ -45,8 +50,9 @@ void FastRope::_bind_methods() {
 
 	// anchors
 	EXPORT_PROPERTY(Variant::NODE_PATH, start_anchor);
-	EXPORT_PROPERTY(Variant::NODE_PATH, mid_anchor);
-	EXPORT_PROPERTY(Variant::INT, mid_index);
+	ClassDB::bind_method(D_METHOD("set_anchors", "anchors"), &FastRope::set_anchors);
+	ClassDB::bind_method(D_METHOD("get_anchors"), &FastRope::get_anchors);
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "anchors", PROPERTY_HINT_RESOURCE_TYPE, "RopePosition"), "set_anchors", "get_anchors");
 	EXPORT_PROPERTY(Variant::NODE_PATH, end_anchor);
 
 	// forces
@@ -96,8 +102,9 @@ void FastRope::_ready(void) {
 	_create_rope();
 }
 
-void FastRope::_update_anchor(NodePath &anchor, int index) {
-	index = Math::clamp(index, 0, int(_particles.size() - 1));
+void FastRope::_update_anchor(NodePath &anchor, float position) {
+	int last = _particles.size() - 1;
+	int index = Math::clamp(int(last * position), 0, last);
 
 	Transform3D xform;
 	if (_get_anchor_transform(anchor, xform)) {
@@ -122,9 +129,12 @@ void FastRope::_physics_process(double delta) {
 			p.attached = false;
 
 		// set the anchor point for the beginning
-		_update_anchor(start_anchor, 0);
-		_update_anchor(mid_anchor, mid_index);
-		_update_anchor(end_anchor, _particles.size() - 1);
+		_update_anchor(start_anchor, 0.0);
+		if (anchors != nullptr) {
+			for (auto &anchor : anchors->positions)
+				_update_anchor(anchor.node, anchor.position);
+		}
+		_update_anchor(end_anchor, 1.0);
 
 		// run simulation
 		if (simulate) {
@@ -192,9 +202,12 @@ void FastRope::_create_rope() {
 	end.pos_prev = end_location;
 	end.pos_cur = end_location;
 
-	_update_anchor(start_anchor, 0);
-	_update_anchor(mid_anchor, mid_index);
-	_update_anchor(end_anchor, _particles.size() - 1);
+	_update_anchor(start_anchor, 0.0);
+	if (anchors != nullptr) {
+		for (auto &anchor : anchors->positions)
+			_update_anchor(anchor.node, anchor.position);
+	}
+	_update_anchor(end_anchor, 1.0);
 
 	for (int i = 0; i < preprocess_iterations; i++) {
 		_verlet_process(preprocess_delta);

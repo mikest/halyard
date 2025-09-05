@@ -1,18 +1,27 @@
-[gd_scene load_steps=6 format=3 uid="uid://dh0oj81pufivs"]
+[gd_scene load_steps=7 format=3 uid="uid://dh0oj81pufivs"]
 
-[ext_resource type="Texture2D" uid="uid://b3myn1qltuld" path="res://assets/three-ply-rope.png" id="1_2jas5"]
-[ext_resource type="PackedScene" uid="uid://crhp0vug6hlmj" path="res://assets/rope-endcap-4ply.glb" id="2_n51mc"]
-[ext_resource type="PackedScene" uid="uid://fsqwoeavplu8" path="res://assets/rope-endcap-3ply.glb" id="3_8lvy3"]
+[ext_resource type="Texture2D" uid="uid://ckl871m64q1cc" path="res://addons/gd-fast-rope/assets/three-ply-rope.png" id="1_2jas5"]
+[ext_resource type="PackedScene" uid="uid://b2vyfoix5vthp" path="res://addons/gd-fast-rope/assets/rope-endcap-4ply.glb" id="2_n51mc"]
+[ext_resource type="PackedScene" uid="uid://d0jgmwsdx27oo" path="res://addons/gd-fast-rope/assets/rope-endcap-3ply.glb" id="3_8lvy3"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6gkck"]
 albedo_texture = ExtResource("1_2jas5")
+
+[sub_resource type="RopePosition" id="RopePosition_s6abl"]
+position_count = 3
+position_0/position = 0.12
+position_0/node = NodePath("../MarkerA")
+position_1/position = 0.43
+position_1/node = NodePath("../MarkerB")
+position_2/position = 0.76
+position_2/node = NodePath("../MarkerC")
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_8lvy3"]
 
 [node name="Node" type="Node3D"]
 
 [node name="FastRope" type="FastRope" parent="."]
-rope_particles = 20
+rope_particles = 100
 rope_width = 1.0
 rope_length = 20.0
 rope_sides = 8
@@ -22,23 +31,24 @@ start_cap = NodePath("../rope-endcap-4ply")
 end_cap = NodePath("../rope-endcap-3ply")
 stiffness_iterations = 4
 stiffness = 1.5
-mid_anchor = NodePath("../Marker3D")
-mid_index = 10
-end_anchor = NodePath("../Marker3D2")
+anchors = SubResource("RopePosition_s6abl")
 apply_wind = true
 wind_scale = 10.0
 wind = Vector3(1, 0, 1)
 wind_noise = SubResource("FastNoiseLite_8lvy3")
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 3, 3)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.72683597, 7.109048, 3.535121)
 
 [node name="rope-endcap-4ply" parent="." instance=ExtResource("2_n51mc")]
-transform = Transform3D(-0.9928308, -0.119217224, -0.00861977, -0.11921722, 0.98246694, 0.14333875, -0.008619809, 0.14333874, -0.9896362, 3, 3, 3)
+transform = Transform3D(-0.8747679, 0.4328301, 0.21780553, 0.4328302, 0.4959577, 0.75278413, 0.21780528, 0.75278425, -0.62118983, 0.72683597, 7.109048, 3.535121)
 
 [node name="rope-endcap-3ply" parent="." instance=ExtResource("3_8lvy3")]
-transform = Transform3D(0.7832545, -0.35204542, 0.5124221, 0.46182063, 0.88126594, -0.10045908, -0.416214, 0.3153321, 0.8528373, -3, 3, 3)
+transform = Transform3D(0.8490862, -0.01632418, 0.528002, -0.04420824, -0.998212, 0.040230177, 0.52640116, -0.05750093, -0.8482897, -6.315377, 1.126544, 5.5515246)
 
-[node name="Marker3D" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -3)
+[node name="MarkerA" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.22336769, 7.128361, 1.684763)
 
-[node name="Marker3D2" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 3, 3)
+[node name="MarkerB" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.4630039, 5.601366, 3)
+
+[node name="MarkerC" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 6, 6)

@@ -9,7 +9,10 @@
 #include <godot_cpp/classes/wrapped.hpp>
 #include <godot_cpp/templates/local_vector.hpp>
 #include <godot_cpp/templates/pair.hpp>
+#include <godot_cpp/variant/typed_array.hpp>
 #include <godot_cpp/variant/variant.hpp>
+
+#include "rope_position.h"
 
 using namespace godot;
 
@@ -48,7 +51,9 @@ class FastRope : public GeometryInstance3D {
 	float rope_twist = 1.0;
 	int rope_lod = 1;
 	Ref<Material> material = nullptr;
+
 	NodePath start_cap;
+	Ref<RopePosition> attachments;
 	NodePath end_cap;
 
 	// simulation parameters
@@ -59,8 +64,7 @@ class FastRope : public GeometryInstance3D {
 
 	// attachments
 	NodePath start_anchor = ".";
-	NodePath mid_anchor;
-	int mid_index;
+	Ref<RopePosition> anchors;
 	NodePath end_anchor;
 
 	// forces
@@ -101,7 +105,7 @@ protected:
 	float _get_average_segment_length() const;
 
 	// Anchors
-	void _update_anchor(NodePath &anchor, int index);
+	void _update_anchor(NodePath &anchor, float position);
 	bool _get_anchor_transform(const NodePath &path, Transform3D &xform) const;
 
 	// Physics
@@ -160,6 +164,8 @@ public:
 
 	PROPERTY_GET_SET(NodePath, start_cap, {})
 	PROPERTY_GET_SET(NodePath, end_cap, {})
+	void set_attachments(const Ref<RopePosition> &p_attachments) { attachments = p_attachments; }
+	Ref<RopePosition> get_attachments() const { return attachments; }
 
 	// simulation parameters
 	PROPERTY_GET_SET(bool, simulate, {})
@@ -169,9 +175,9 @@ public:
 
 	// anchors
 	PROPERTY_GET_SET(NodePath, start_anchor, _queue_rebuild())
-	PROPERTY_GET_SET(NodePath, mid_anchor, _queue_rebuild())
-	PROPERTY_GET_SET(int, mid_index, _queue_rebuild())
 	PROPERTY_GET_SET(NodePath, end_anchor, _queue_rebuild())
+	void set_anchors(const Ref<RopePosition> &p_anchors) { anchors = p_anchors; }
+	Ref<RopePosition> get_anchors() const { return anchors; }
 
 	// forces
 	PROPERTY_GET_SET(bool, apply_wind, {})
