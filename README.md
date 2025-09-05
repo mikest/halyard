@@ -21,6 +21,9 @@ The anchors can be used to create the illusion of pulleys.
 
 ## Installation
 
+0. Install the build tools for your platform, same as you would for building godot.
+	See: https://docs.godotengine.org/en/stable/contributing/development/compiling/introduction_to_the_buildsystem.html
+
 1. Clone the repository to your addons folder:
 	```sh
 	git clone https://github.com/mikest/gd-fast-rope.git
