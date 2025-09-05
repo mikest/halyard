@@ -31,12 +31,12 @@ class RopePositions : public Resource {
 protected:
 	static void _bind_methods();
 
-	void RopePositions::_get_property_list(List<PropertyInfo> *p_list) const;
-	bool RopePositions::_property_can_revert(const StringName &p_name) const;
-	bool RopePositions::_property_get_revert(const StringName &p_name, Variant &r_property) const;
-	bool RopePositions::_set(const StringName &p_name, const Variant &p_property);
-	bool RopePositions::_get(const StringName &p_name, Variant &r_property) const;
-	Pair<uint64_t, String> RopePositions::_decode_dynamic_propname(const StringName &p_name) const;
+	void _get_property_list(List<PropertyInfo> *p_list) const;
+	bool _property_can_revert(const StringName &p_name) const;
+	bool _property_get_revert(const StringName &p_name, Variant &r_property) const;
+	bool _set(const StringName &p_name, const Variant &p_property);
+	bool _get(const StringName &p_name, Variant &r_property) const;
+	Pair<uint64_t, String> _decode_dynamic_propname(const StringName &p_name) const;
 
 public:
 	RopePositions() = default;
