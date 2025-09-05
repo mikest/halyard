@@ -1,8 +1,8 @@
 [gd_scene load_steps=6 format=3 uid="uid://dh0oj81pufivs"]
 
-[ext_resource type="Texture2D" uid="uid://bxpeqa5abf62u" path="res://three-ply-rope.png" id="1_2jas5"]
-[ext_resource type="PackedScene" uid="uid://fmjw3nmdcxox" path="res://rope-endcap-4ply.glb" id="2_n51mc"]
-[ext_resource type="PackedScene" uid="uid://d4bgdr2vtpq86" path="res://rope-endcap-3ply.glb" id="3_8lvy3"]
+[ext_resource type="Texture2D" uid="uid://b3myn1qltuld" path="res://assets/three-ply-rope.png" id="1_2jas5"]
+[ext_resource type="PackedScene" uid="uid://crhp0vug6hlmj" path="res://assets/rope-endcap-4ply.glb" id="2_n51mc"]
+[ext_resource type="PackedScene" uid="uid://fsqwoeavplu8" path="res://assets/rope-endcap-3ply.glb" id="3_8lvy3"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6gkck"]
 albedo_texture = ExtResource("1_2jas5")
@@ -29,16 +29,16 @@ apply_wind = true
 wind_scale = 10.0
 wind = Vector3(1, 0, 1)
 wind_noise = SubResource("FastNoiseLite_8lvy3")
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.0239563, 12.00682, 1.5707884)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 3, 3)
 
 [node name="rope-endcap-4ply" parent="." instance=ExtResource("2_n51mc")]
-transform = Transform3D(-0.8967115, 0.43108252, 0.100380726, 0.43108252, 0.7991567, 0.41894677, 0.1003807, 0.41894677, -0.9024452, 5.0239563, 12.00682, 1.5707884)
+transform = Transform3D(-0.9928308, -0.119217224, -0.00861977, -0.11921722, 0.98246694, 0.14333875, -0.008619809, 0.14333874, -0.9896362, 3, 3, 3)
 
 [node name="rope-endcap-3ply" parent="." instance=ExtResource("3_8lvy3")]
-transform = Transform3D(0.97512513, 0.14532003, -0.16737095, -0.21214171, 0.8307101, -0.5147004, 0.06424046, 0.53740364, 0.8408748, -1.8615947, 12.041101, 3.1427307)
+transform = Transform3D(0.7832545, -0.35204542, 0.5124221, 0.46182063, 0.88126594, -0.10045908, -0.416214, 0.3153321, 0.8528373, -3, 3, 3)
 
 [node name="Marker3D" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6988598, 10.662263, -2.0812836)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, -3)
 
 [node name="Marker3D2" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8615947, 12.041101, 3.1427307)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 3, 3)

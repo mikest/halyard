@@ -6,7 +6,7 @@ from methods import print_error
 
 
 libname = "FastRope"
-projectdir = "demo"
+# projectdir = "demo"
 
 localEnv = Environment(tools=["default"], PLATFORM="")
 
@@ -58,7 +58,8 @@ library = env.SharedLibrary(
     source=sources,
 )
 
-copy = env.Install("{}/bin/{}/".format(projectdir, env["platform"]), library)
+# copy = env.Install("{}/bin/{}/".format(projectdir, env["platform"]), library)
+# default_args = [library, copy]
 
-default_args = [library, copy]
+default_args = [library]
 Default(*default_args)
