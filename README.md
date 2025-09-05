@@ -3,7 +3,7 @@
 
 A high-performance, cross-platform rope simulation library using the Verlet integration method. For when you need rope, and you need it quickly.
 
-![Screenshot](screenshot.png)
+![Screenshot](screenshots/screenshot.png)
 
 ## Features
 
@@ -16,7 +16,7 @@ A high-performance, cross-platform rope simulation library using the Verlet inte
 
 ## Installation
 
-1. Clone the repository:
+1. Clone the repository to your addons folder:
 	```sh
 	git clone https://github.com/mikest/gd-fast-rope.git
 	```
@@ -28,7 +28,7 @@ A high-performance, cross-platform rope simulation library using the Verlet inte
 	```sh
 	scons dev_build=yes compiledb=yes template_debug=yes
 	```
-3. Add the compiled `./demo/bin` binaries to your project.
+3. Reload your project.
 
 ## Usage
 

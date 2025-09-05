@@ -14,7 +14,7 @@
             "args": [
                 "--editor",
                 "--path",
-                "${workspaceFolder}/demo"
+                "${workspaceFolder}/."
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
