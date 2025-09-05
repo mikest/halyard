@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://wyuwvx1p7tra"
-path.s3tc="res://.godot/imported/rope-endcap-3ply_three-ply-rope.png-00a5c20d41b97e87a59857b00dce7c08.s3tc.ctex"
+uid="uid://e7k64xss26lu"
+path.s3tc="res://.godot/imported/rope-endcap-3ply_three-ply-rope.png-684575917f5a66f1053c45926839c176.s3tc.ctex"
 metadata={
 "imported_formats": ["s3tc_bptc"],
 "vram_texture": true
@@ -11,8 +11,8 @@ metadata={
 
 [deps]
 
-source_file="res://assets/rope-endcap-3ply_three-ply-rope.png"
-dest_files=["res://.godot/imported/rope-endcap-3ply_three-ply-rope.png-00a5c20d41b97e87a59857b00dce7c08.s3tc.ctex"]
+source_file="res://addons/gd-fast-rope/assets/rope-endcap-3ply_three-ply-rope.png"
+dest_files=["res://.godot/imported/rope-endcap-3ply_three-ply-rope.png-684575917f5a66f1053c45926839c176.s3tc.ctex"]
 
 [params]
 

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dknv3lx7ss0bn"
-path="res://.godot/imported/four-ply-rope.png-31d121320d6835d3fff781167dd50aca.ctex"
+uid="uid://dbfea4xvh0fp2"
+path="res://.godot/imported/four-ply-rope.png-a460b62226c2c4a3817c2b65554f273b.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/four-ply-rope.png"
-dest_files=["res://.godot/imported/four-ply-rope.png-31d121320d6835d3fff781167dd50aca.ctex"]
+source_file="res://addons/gd-fast-rope/assets/four-ply-rope.png"
+dest_files=["res://.godot/imported/four-ply-rope.png-a460b62226c2c4a3817c2b65554f273b.ctex"]
 
 [params]
 

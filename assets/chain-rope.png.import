@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dihb11726lfej"
-path="res://.godot/imported/chain-rope.png-3374165a3a9476b20e4732d8ef197e05.ctex"
+uid="uid://dkgx0i5w1yej7"
+path="res://.godot/imported/chain-rope.png-78a0fc168a545ae365094ce7e78a3500.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/chain-rope.png"
-dest_files=["res://.godot/imported/chain-rope.png-3374165a3a9476b20e4732d8ef197e05.ctex"]
+source_file="res://addons/gd-fast-rope/assets/chain-rope.png"
+dest_files=["res://.godot/imported/chain-rope.png-78a0fc168a545ae365094ce7e78a3500.ctex"]
 
 [params]
 

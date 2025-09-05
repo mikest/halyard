@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://crhp0vug6hlmj"
-path="res://.godot/imported/rope-endcap-4ply.glb-5c7c3cb18a183fa05233c56b1623f01a.scn"
+uid="uid://b2vyfoix5vthp"
+path="res://.godot/imported/rope-endcap-4ply.glb-fb1879547552037646b7f1261c66688e.scn"
 
 [deps]
 
-source_file="res://assets/rope-endcap-4ply.glb"
-dest_files=["res://.godot/imported/rope-endcap-4ply.glb-5c7c3cb18a183fa05233c56b1623f01a.scn"]
+source_file="res://addons/gd-fast-rope/assets/rope-endcap-4ply.glb"
+dest_files=["res://.godot/imported/rope-endcap-4ply.glb-fb1879547552037646b7f1261c66688e.scn"]
 
 [params]
 

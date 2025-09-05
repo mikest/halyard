@@ -1,10 +1,9 @@
 [configuration]
 entry_symbol = "fast_rope_library_init"
 compatibility_minimum = "4.5"
-reloadable = true
 
 [icons]
-FastRope = "./icon.svg"
+FastRope = "./icons/FastRope.svg"
 
 [libraries]
 ; Relative paths ensure that our GDExtension can be placed anywhere in the project directory.
