@@ -7,12 +7,17 @@ A high-performance, cross-platform rope simulation library using the Verlet inte
 
 ## Features
 
-- Fast and stable rope physics using Verlet integration.
-- Supports multiple rope types (single, multi-ply, chain, etc.)
+- Fast rope physics using Verlet integration.
+- Supports arbitrary rope attachment points and anchors.
 - Configurable rope length, stiffness, and segment count.
 - ~~Collision detection and response~~
 - Endcap and attachment support for rope details.
 - Demo scene and example textures and meshes included.
+
+![Screenshot](screenshots/ratlines.png)
+
+The attachment system can used to create complicated rigging arrangements like cargo nets, spider webs and ratlines.
+The anchors can be used to create the illusion of pulleys.
 
 ## Installation
 
@@ -33,17 +38,17 @@ A high-performance, cross-platform rope simulation library using the Verlet inte
 ## Usage
 
 1. Import the library into your project.
+2. Open the example scene and look around.
 2. Create a rope instance and configure its parameters.
-3. Attach rope ends to objects or positions. Rope details will be scaled to rope width, so model them at 1:1 for a 1m thick rope.
+3. Attach rope ends to objects or positions. Rope details will be scaled to rope width, so model your attachments at 1:1 for a 1m thick rope.
 
 ## Demo
 
-See the `demo/` folder for example scenes and usage.
+See `example.tscn` for usage.
 
 ## Documentation
 
 - API reference: See `doc_classes/`
-- Example scripts: See `demo/example.gd`
 - Build instructions: See `SConstruct`
 
 ## Contributing

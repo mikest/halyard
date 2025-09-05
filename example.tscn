@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://dh0oj81pufivs"]
+[gd_scene load_steps=8 format=3 uid="uid://dh0oj81pufivs"]
 
 [ext_resource type="Texture2D" uid="uid://ckl871m64q1cc" path="res://addons/gd-fast-rope/assets/three-ply-rope.png" id="1_2jas5"]
 [ext_resource type="PackedScene" uid="uid://b2vyfoix5vthp" path="res://addons/gd-fast-rope/assets/rope-endcap-4ply.glb" id="2_n51mc"]
@@ -10,24 +10,20 @@ albedo_texture = ExtResource("1_2jas5")
 
 [sub_resource type="RopePositions" id="RopePositions_cepmf"]
 position_count = 2
-position_0/position = 0.3
+position_0/position = 0.5
 position_0/node = NodePath("rope-knot")
-position_1/position = 0.6
+position_1/position = 0.7
 position_1/node = NodePath("rope-knot2")
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_8lvy3"]
 
-[sub_resource type="RopePositions" id="RopePositions_yi4gr"]
-position_count = 2
-position_0/position = 0.3
-position_0/node = NodePath("rope-knot3")
-position_1/position = 0.6
-position_1/node = NodePath("rope-knot4")
-
 [node name="Node" type="Node3D"]
 
-[node name="FastRope" type="FastRope" parent="."]
-rope_particles = 24
+[node name="MarkerTop" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45975327, 14.475722, -5.816162)
+
+[node name="Vert" type="FastRope" parent="."]
+rope_particles = 12
 rope_length = 15.0
 rope_sides = 8
 rope_lod = 4
@@ -37,7 +33,7 @@ attachments = SubResource("RopePositions_cepmf")
 end_cap = NodePath("rope-endcap-3ply")
 stiffness_iterations = 4
 stiffness = 1.5
-start_anchor = NodePath("../MarkerC")
+start_anchor = NodePath("../MarkerTop")
 end_anchor = NodePath("../MarkerA")
 apply_wind = true
 wind_scale = 10.0
@@ -45,30 +41,30 @@ wind = Vector3(1, 0, 1)
 wind_noise = SubResource("FastNoiseLite_8lvy3")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.1342664, 6.4854693, 0.03333521)
 
-[node name="rope-endcap-4ply" parent="FastRope" instance=ExtResource("2_n51mc")]
-transform = Transform3D(-0.24867262, 0.02488735, -0.006523213, 0.024887346, 0.21661538, -0.122304544, -0.0065232315, -0.122304544, -0.21794276, -3.0382571, 4.715505, -10.397503)
+[node name="rope-endcap-4ply" parent="Vert" instance=ExtResource("2_n51mc")]
+transform = Transform3D(-0.24423836, 0.052412875, -0.010025607, 0.052412875, 0.22679314, -0.091201745, -0.010025628, -0.091201745, -0.23255478, -1.6745131, 7.990253, -5.8494973)
 
-[node name="rope-endcap-3ply" parent="FastRope" instance=ExtResource("3_8lvy3")]
-transform = Transform3D(-0.24492624, -0.044821884, 0.022408584, 0.043305427, -0.13306768, 0.20716572, -0.025214795, 0.20684293, 0.13813119, -5.1342664, -6.4854693, -0.03333527)
+[node name="rope-endcap-3ply" parent="Vert" instance=ExtResource("3_8lvy3")]
+transform = Transform3D(-0.24345198, -0.05596766, 0.009937389, 0.05569918, -0.22615564, 0.09083628, -0.011345989, 0.0906711, 0.23270157, -5.1342664, -6.4854693, -0.03333527)
 
-[node name="rope-knot" parent="FastRope" instance=ExtResource("4_cepmf")]
-transform = Transform3D(-0.24829343, 0.027710933, -0.009081937, 0.027908979, 0.20324144, -0.1428776, -0.008453784, -0.14291614, -0.20494759, -3.5345943, 0.64352274, -7.9031043)
+[node name="rope-knot" parent="Vert" instance=ExtResource("4_cepmf")]
+transform = Transform3D(-0.24386679, 0.05411976, -0.010002106, 0.053993754, 0.22646196, -0.09110245, -0.010661384, -0.091027655, -0.23259471, -3.4038377, 0.6112876, -2.8819275)
 
-[node name="rope-knot2" parent="FastRope" instance=ExtResource("4_cepmf")]
-transform = Transform3D(-0.2469817, 0.035611294, -0.015227348, 0.03560445, 0.17007871, -0.17973745, -0.01524334, -0.1797361, -0.17309701, -4.108949, -2.809312, -4.9437504)
+[node name="rope-knot2" parent="Vert" instance=ExtResource("4_cepmf")]
+transform = Transform3D(-0.24368899, 0.054919407, -0.009976756, 0.054732077, 0.22632709, -0.09099695, -0.0109579535, -0.090884015, -0.23263709, -4.0408635, -2.0340877, -1.8191073)
 
-[node name="FastRope3" type="FastRope" parent="."]
-rope_particles = 24
+[node name="Vert2" type="FastRope" parent="."]
+rope_particles = 12
 rope_length = 15.0
 rope_sides = 8
 rope_lod = 4
 material = SubResource("StandardMaterial3D_6gkck")
-start_cap = NodePath("rope-endcap-4ply2")
-attachments = SubResource("RopePositions_yi4gr")
-end_cap = NodePath("rope-endcap-3ply2")
+start_cap = NodePath("rope-endcap-4ply")
+attachments = SubResource("RopePositions_cepmf")
+end_cap = NodePath("rope-endcap-3ply")
 stiffness_iterations = 4
 stiffness = 1.5
-start_anchor = NodePath("../MarkerC")
+start_anchor = NodePath("../MarkerTop")
 end_anchor = NodePath("../MarkerB")
 apply_wind = true
 wind_scale = 10.0
@@ -76,43 +72,107 @@ wind = Vector3(1, 0, 1)
 wind_noise = SubResource("FastNoiseLite_8lvy3")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.482673, 5.983771, 0.03333521)
 
-[node name="rope-endcap-4ply2" parent="FastRope3" instance=ExtResource("2_n51mc")]
-transform = Transform3D(-0.23524298, -0.079457454, 0.029107597, -0.07945747, 0.17782953, -0.15672642, 0.029107567, -0.15672642, -0.19258654, -6.386664, 5.2172036, -10.397503)
+[node name="rope-endcap-4ply" parent="Vert2" instance=ExtResource("2_n51mc")]
+transform = Transform3D(-0.2465078, -0.04089314, 0.007851855, -0.040893145, 0.22885369, -0.09194424, 0.00785185, -0.09194424, -0.23234588, -5.0229197, 8.491951, -5.8494973)
 
-[node name="rope-endcap-3ply2" parent="FastRope3" instance=ExtResource("3_8lvy3")]
-transform = Transform3D(-0.24394801, 0.043364517, -0.03329987, -0.05435841, -0.17599876, 0.16902545, 0.0058758855, 0.17217422, 0.1811671, -2.4826732, -5.983771, -0.03333527)
+[node name="rope-endcap-3ply" parent="Vert2" instance=ExtResource("3_8lvy3")]
+transform = Transform3D(-0.2467455, 0.03943253, -0.0078577995, -0.039538212, -0.22907822, 0.09197771, 0.007307452, 0.092023075, 0.23233242, -2.4826732, -5.983771, -0.03333518)
 
-[node name="rope-knot3" parent="FastRope3" instance=ExtResource("4_cepmf")]
-transform = Transform3D(-0.23731731, -0.07246277, 0.030489944, -0.0746183, 0.17709349, -0.15990622, 0.024750702, -0.16089448, -0.18973762, -4.8872895, 1.7731891, -7.317721)
+[node name="rope-knot" parent="Vert2" instance=ExtResource("4_cepmf")]
+transform = Transform3D(-0.24662665, -0.04016937, 0.007856703, -0.040222097, 0.2289618, -0.09197109, 0.007582143, -0.09199414, -0.23233509, -3.7192862, 1.1430936, -2.8962076)
 
-[node name="rope-knot4" parent="FastRope3" instance=ExtResource("4_cepmf")]
-transform = Transform3D(-0.24145432, -0.05646711, 0.03180054, -0.06321922, 0.17825441, -0.16348912, 0.014252685, -0.16594225, -0.18644042, -3.6844923, -1.5239067, -4.2851)
+[node name="rope-knot2" parent="Vert2" instance=ExtResource("4_cepmf")]
+transform = Transform3D(-0.24668056, -0.039837137, 0.007854901, -0.039913323, 0.22901994, -0.091960825, 0.0074581057, -0.09199385, -0.2323392, -3.2574732, -1.5005059, -1.8341885)
 
-[node name="FastRope2" type="FastRope" parent="."]
+[node name="Vert3" type="FastRope" parent="."]
 rope_particles = 12
-rope_length = 2.0
+rope_length = 15.0
+rope_sides = 8
+rope_lod = 4
+material = SubResource("StandardMaterial3D_6gkck")
+start_cap = NodePath("rope-endcap-4ply")
+attachments = SubResource("RopePositions_cepmf")
+end_cap = NodePath("rope-endcap-3ply")
+stiffness_iterations = 4
+stiffness = 1.5
+start_anchor = NodePath("../MarkerTop")
+end_anchor = NodePath("../MarkerC")
+apply_wind = true
+wind_scale = 10.0
+wind = Vector3(1, 0, 1)
+wind_noise = SubResource("FastNoiseLite_8lvy3")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.482673, 5.983771, 0.03333521)
+
+[node name="rope-endcap-4ply" parent="Vert3" instance=ExtResource("2_n51mc")]
+transform = Transform3D(-0.24993925, 0.0054106344, -0.0010467829, 0.005410631, 0.23190148, -0.09323316, -0.0010468, -0.09323315, -0.23196223, -5.0229197, 8.491951, -5.8494973)
+
+[node name="rope-endcap-3ply" parent="Vert3" instance=ExtResource("3_8lvy3")]
+transform = Transform3D(-0.24981779, -0.00948633, 0.001038587, 0.00919158, -0.231873, 0.09300766, -0.002565924, 0.09297806, 0.23205279, -5.482673, -5.983771, -0.03333524)
+
+[node name="rope-knot" parent="Vert3" instance=ExtResource("4_cepmf")]
+transform = Transform3D(-0.24988987, 0.00734636, -0.0010456232, 0.007206454, 0.23186529, -0.09320172, -0.0017689987, -0.0931908, -0.23197488, -5.218978, 1.1670494, -2.9037137)
+
+[node name="rope-knot2" parent="Vert3" instance=ExtResource("4_cepmf")]
+transform = Transform3D(-0.24986184, 0.008244427, -0.0010429999, 0.008039476, 0.23186947, -0.093123086, -0.0021036265, -0.09310516, -0.23200646, -5.307738, -1.4730339, -1.8431251)
+
+[node name="Horiz" type="FastRope" parent="."]
+rope_particles = 12
+rope_length = 1.5
 rope_sides = 8
 rope_lod = 4
 material = SubResource("StandardMaterial3D_6gkck")
 stiffness_iterations = 4
 stiffness = 1.5
-start_anchor = NodePath("../FastRope/rope-knot")
-end_anchor = NodePath("../FastRope3/rope-knot3")
+start_anchor = NodePath("../Vert/rope-knot")
+end_anchor = NodePath("../Vert3/rope-knot")
 apply_wind = true
 wind_scale = 10.0
 wind = Vector3(1, 0, 1)
 wind_noise = SubResource("FastNoiseLite_8lvy3")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.0375557, 5.983771, 0.03333521)
 
-[node name="FastRope4" type="FastRope" parent="."]
+[node name="Horiz2" type="FastRope" parent="."]
 rope_particles = 12
+rope_length = 1.5
 rope_sides = 8
 rope_lod = 4
 material = SubResource("StandardMaterial3D_6gkck")
 stiffness_iterations = 4
 stiffness = 1.5
-start_anchor = NodePath("../FastRope/rope-knot2")
-end_anchor = NodePath("../FastRope3/rope-knot4")
+start_anchor = NodePath("../Vert3/rope-knot")
+end_anchor = NodePath("../Vert2/rope-knot")
+apply_wind = true
+wind_scale = 10.0
+wind = Vector3(1, 0, 1)
+wind_noise = SubResource("FastNoiseLite_8lvy3")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.0375557, 5.983771, 0.03333521)
+
+[node name="Horiz3" type="FastRope" parent="."]
+rope_particles = 12
+rope_length = 2.5
+rope_sides = 8
+rope_lod = 4
+material = SubResource("StandardMaterial3D_6gkck")
+stiffness_iterations = 4
+stiffness = 1.5
+start_anchor = NodePath("../Vert/rope-knot2")
+end_anchor = NodePath("../Vert3/rope-knot2")
+apply_wind = true
+wind_scale = 10.0
+wind = Vector3(1, 0, 1)
+wind_noise = SubResource("FastNoiseLite_8lvy3")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.0375557, 5.983771, 0.03333521)
+
+[node name="Horiz4" type="FastRope" parent="."]
+rope_particles = 12
+rope_length = 2.5
+rope_sides = 8
+rope_lod = 4
+material = SubResource("StandardMaterial3D_6gkck")
+stiffness_iterations = 4
+stiffness = 1.5
+start_anchor = NodePath("../Vert3/rope-knot2")
+end_anchor = NodePath("../Vert2/rope-knot2")
 apply_wind = true
 wind_scale = 10.0
 wind = Vector3(1, 0, 1)
@@ -126,4 +186,3 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 0)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 0)
 
 [node name="MarkerC" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.90399075, 11.200974, -10.364168)
