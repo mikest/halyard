@@ -1,12 +1,6 @@
 #include "rope_positions.h"
 
 void RopePositions::_bind_methods() {
-#define STR(x) #x
-#define EXPORT_PROPERTY(m_type, m_property)                                                                   \
-	ClassDB::bind_method(D_METHOD(STR(set_##m_property), STR(m_property)), &RopePositions::set_##m_property); \
-	ClassDB::bind_method(D_METHOD(STR(get_##m_property)), &RopePositions::get_##m_property);                  \
-	ADD_PROPERTY(PropertyInfo(m_type, #m_property), STR(set_##m_property), STR(get_##m_property))
-
 	EXPORT_PROPERTY(Variant::INT, position_count);
 
 	ClassDB::bind_method(D_METHOD("set_position", "index", "position"), &RopePositions::set_position);
@@ -14,9 +8,6 @@ void RopePositions::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_node", "index", "node"), &RopePositions::set_node);
 	ClassDB::bind_method(D_METHOD("get_node", "index"), &RopePositions::get_node);
-
-#undef EXPORT_PROPERTY
-#undef STR
 }
 
 #define POSITION_PREFIX "position_"
@@ -128,7 +119,6 @@ void RopePositions::set_position(uint64_t idx, float val) {
 	Position p = _positions.get(idx);
 	p.position = val;
 	_positions.set(idx, p);
-	notify_property_list_changed();
 }
 
 float RopePositions::get_position(uint64_t idx) const {

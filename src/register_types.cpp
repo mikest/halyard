@@ -6,6 +6,7 @@
 #include <godot_cpp/godot.hpp>
 
 #include "rope.h"
+#include "rope_appearance.h"
 #include "rope_positions.h"
 
 using namespace godot;
@@ -16,6 +17,7 @@ void initialize_gdextension_types(ModuleInitializationLevel p_level) {
 	}
 	GDREGISTER_CLASS(Rope);
 	GDREGISTER_CLASS(RopePositions);
+	GDREGISTER_CLASS(RopeAppearance);
 }
 
 void uninitialize_gdextension_types(ModuleInitializationLevel p_level) {

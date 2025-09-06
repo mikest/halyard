@@ -12,6 +12,8 @@
 #include <godot_cpp/variant/typed_array.hpp>
 #include <godot_cpp/variant/variant.hpp>
 
+#include "property_utils.h"
+#include "rope_appearance.h"
 #include "rope_positions.h"
 
 using namespace godot;
@@ -44,17 +46,9 @@ class Rope : public GeometryInstance3D {
 	double _simulation_delta = 0.0;
 
 	// rope geometry
-	int _rope_particles = 10;
-	float _rope_width = 0.25;
-	float _rope_length = 4.0;
-	int _rope_sides = 6;
-	float _rope_twist = 1.0;
-	int _rope_lod = 1;
-	Ref<Material> _material = nullptr;
 
-	NodePath _start_attachment;
-	Ref<RopePositions> _attachments;
-	NodePath _end_attachment;
+	float _rope_length = 4.0;
+	Ref<RopeAppearance> _appearance;
 
 	// simulation parameters
 	bool _simulate = true;
@@ -90,7 +84,7 @@ protected:
 	void _notification(int p_what);
 
 	// Particle list
-	void _create_rope();
+	void _rebuild_rope();
 	void _build_particles(const Vector3 &end_location, const Vector3 &global_position, const Vector3 &initial_accel, int particle_count, float segment_length);
 	void _compute_parallel_transport(LocalVector<Transform3D> &frames);
 	void _compute_particle_normals();
@@ -133,40 +127,30 @@ public:
 	// void _process(double delta) override;
 	void _physics_process(double delta) override;
 
-	void set_particle_count(uint64_t p_count);
+	// derived properties
 	uint64_t get_particle_count() const;
-
+	uint64_t get_particle_count_for_length() const;
 	Ref<ArrayMesh> get_baked_mesh() const;
 
-// Getter/Setter macros for properties
-#define PROPERTY_GET(m_type, m_prop) \
-	const m_type &get_##m_prop() const { return _##m_prop; }
-#define PROPERTY_SET(m_type, m_prop, m_update) \
-	void set_##m_prop(const m_type &val) {     \
-		if (val != _##m_prop) {                \
-			_##m_prop = val;                   \
-			m_update;                          \
-		}                                      \
-	}
-#define PROPERTY_GET_SET(m_type, m_prop, m_update) \
-	PROPERTY_GET(m_type, m_prop)                   \
-	PROPERTY_SET(m_type, m_prop, m_update)
-
 	// Exported Properties
-	PROPERTY_GET_SET(int, rope_particles, _create_rope())
-	PROPERTY_GET_SET(float, rope_width, _queue_rebuild())
 	PROPERTY_GET_SET(float, rope_length, _queue_rebuild())
-	PROPERTY_GET_SET(int, rope_sides, _queue_rebuild())
-	PROPERTY_GET_SET(float, rope_twist, _queue_rebuild())
-	PROPERTY_GET_SET(int, rope_lod, _queue_rebuild())
+	PROPERTY_GET_SET(Ref<RopeAppearance>, appearance, _queue_rebuild())
 
-	void set_material(const Ref<Material> &p_material);
-	Ref<Material> get_material() const;
+	// anchors
+	PROPERTY_GET_SET(NodePath, start_anchor, _queue_rebuild())
+	PROPERTY_GET_SET(Ref<RopePositions>, anchors, _queue_rebuild())
+	PROPERTY_GET_SET(NodePath, end_anchor, _queue_rebuild())
 
-	PROPERTY_GET_SET(NodePath, start_attachment, {})
-	PROPERTY_GET_SET(NodePath, end_attachment, {})
-	void set_attachments(const Ref<RopePositions> &p_attachments) { _attachments = p_attachments; }
-	Ref<RopePositions> get_attachments() const { return _attachments; }
+	// appearance passthrough accessors
+	float get_rope_width() const { return _appearance != nullptr ? _appearance->get_rope_width() : 0.25; }
+	int get_rope_sides() const;
+	float get_rope_twist() const { return _appearance != nullptr ? _appearance->get_rope_twist() : 1.0; }
+	int get_rope_lod() const { return _appearance != nullptr ? _appearance->get_rope_lod() : 2; }
+	Ref<Material> get_material() const { return _appearance != nullptr ? _appearance->get_material() : nullptr; }
+	NodePath get_start_attachment() const { return _appearance != nullptr ? _appearance->get_start_attachment() : NodePath(); }
+	NodePath get_end_attachment() const { return _appearance != nullptr ? _appearance->get_end_attachment() : NodePath(); }
+	Ref<RopePositions> get_attachments() const { return _appearance != nullptr ? _appearance->get_attachments() : nullptr; }
+	int get_particles_per_meter() const { return _appearance != nullptr ? _appearance->get_particles_per_meter() : 2; }
 
 	// simulation parameters
 	PROPERTY_GET_SET(bool, simulate, {})
@@ -174,19 +158,11 @@ public:
 	PROPERTY_GET_SET(int, stiffness_iterations, {})
 	PROPERTY_GET_SET(float, stiffness, {})
 
-	// anchors
-	PROPERTY_GET_SET(NodePath, start_anchor, _queue_rebuild())
-	PROPERTY_GET_SET(NodePath, end_anchor, _queue_rebuild())
-	void set_anchors(const Ref<RopePositions> &p_anchors) { _anchors = p_anchors; }
-	Ref<RopePositions> get_anchors() const { return _anchors; }
-
 	// forces
 	PROPERTY_GET_SET(bool, apply_wind, {})
 	PROPERTY_GET_SET(float, wind_scale, {})
 	PROPERTY_GET_SET(Vector3, wind, {})
-
-	void set_wind_noise(const Ref<FastNoiseLite> &p_noise);
-	Ref<FastNoiseLite> get_wind_noise() const;
+	PROPERTY_GET_SET(Ref<FastNoiseLite>, wind_noise, {})
 
 	PROPERTY_GET_SET(bool, apply_gravity, {})
 	PROPERTY_GET_SET(Vector3, gravity, {})
@@ -199,7 +175,3 @@ public:
 	PROPERTY_GET_SET(int, preprocess_iterations, {})
 	PROPERTY_GET_SET(float, preprocess_delta, {})
 };
-
-#undef PROPERTY_GET
-#undef PROPERTY_SET
-#undef PROPERTY_GET_SET

@@ -1,0 +1,14 @@
+[gd_resource type="RopeAppearance" load_steps=3 format=3 uid="uid://dk73kcktj5ckk"]
+
+[ext_resource type="Texture2D" uid="uid://cvgoei4ais4km" path="res://addons/halyard/assets/three-ply-rope.png" id="1_gmubf"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_n6gf1"]
+albedo_texture = ExtResource("1_gmubf")
+
+[resource]
+rope_width = 0.125
+rope_lod = 3
+material = SubResource("StandardMaterial3D_n6gf1")
+start_attachment = NodePath("RopeStart")
+end_attachment = NodePath("RopeEnd")
+particles_per_meter = 4

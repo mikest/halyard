@@ -22,7 +22,7 @@ position_1/node = NodePath("rope-knot2")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4597571, 13.362176, -6.9939327)
 
 [node name="Vert" type="Rope" parent="."]
-rope_particles = 12
+particles_per_meter = 1
 rope_width = 0.125
 rope_length = 15.0
 rope_sides = -1
@@ -50,7 +50,7 @@ transform = Transform3D(-0.121581785, 0.028202698, -0.006890289, 0.028193912, 0.
 transform = Transform3D(-0.12151202, -0.028454218, 0.007084393, 0.028458398, -0.10715716, 0.05772748, -0.007067574, 0.057729542, 0.11064515, -3.459757, -13.362176, 6.9939327)
 
 [node name="Vert2" type="Rope" parent="."]
-rope_particles = 12
+particles_per_meter = 1
 rope_width = 0.125
 rope_length = 15.0
 rope_sides = -1
@@ -82,7 +82,7 @@ transform = Transform3D(-0.12314281, -0.020819297, 0.0052349544, -0.020868784, 0
 transform = Transform3D(-0.12315587, 0.02071168, -0.0053533064, -0.020800395, -0.10863054, 0.05823873, 0.004997516, 0.05827034, 0.1104744, 2.540243, -13.362176, 6.9939327)
 
 [node name="Vert3" type="Rope" parent="."]
-rope_particles = 12
+particles_per_meter = 1
 rope_width = 0.125
 rope_length = 15.0
 rope_sides = -1
@@ -114,7 +114,7 @@ transform = Transform3D(-0.1249278, 0.0041872407, -0.00071465236, 0.004033067, 0
 transform = Transform3D(-0.12489587, -0.005036058, 0.0008125288, 0.0047920616, -0.109003864, 0.060993385, -0.0017487796, 0.060973726, 0.10910612, -0.4597571, -13.362176, 6.9939327)
 
 [node name="Horiz" type="Rope" parent="."]
-rope_particles = 12
+particles_per_meter = 1
 rope_width = 0.125
 rope_length = 1.5
 rope_sides = -1
@@ -131,7 +131,7 @@ wind_noise = SubResource("FastNoiseLite_8lvy3")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.267448, 6.5911174, -3.5055487)
 
 [node name="Horiz2" type="Rope" parent="."]
-rope_particles = 12
+particles_per_meter = 1
 rope_width = 0.125
 rope_length = 1.5
 rope_sides = -1
@@ -148,7 +148,7 @@ wind_noise = SubResource("FastNoiseLite_8lvy3")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.265491, 6.620801, -3.5753903)
 
 [node name="Horiz3" type="Rope" parent="."]
-rope_particles = 12
+particles_per_meter = 1
 rope_width = 0.125
 rope_length = 2.25
 rope_sides = -1
@@ -165,7 +165,7 @@ wind_noise = SubResource("FastNoiseLite_8lvy3")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.9014802, 4.1592007, -2.2256737)
 
 [node name="Horiz4" type="Rope" parent="."]
-rope_particles = 12
+particles_per_meter = 1
 rope_width = 0.125
 rope_length = 2.25
 rope_sides = -1

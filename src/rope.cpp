@@ -18,33 +18,20 @@ Rope::~Rope() {
 }
 
 void Rope::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("get_baked_mesh"), &Rope::get_baked_mesh);
-	ClassDB::bind_method(D_METHOD("get_current_rope_length"), &Rope::get_current_rope_length);
+	ClassDB::bind_method(D_METHOD("get_baked_mesh"), &get_baked_mesh);
+	ClassDB::bind_method(D_METHOD("get_current_rope_length"), &get_current_rope_length);
+	ClassDB::bind_method(D_METHOD("get_particle_count_for_length"), &get_particle_count_for_length);
 
-#define STR(x) #x
-#define EXPORT_PROPERTY(m_type, m_property)                                                          \
-	ClassDB::bind_method(D_METHOD(STR(set_##m_property), STR(m_property)), &Rope::set_##m_property); \
-	ClassDB::bind_method(D_METHOD(STR(get_##m_property)), &Rope::get_##m_property);                  \
-	ADD_PROPERTY(PropertyInfo(m_type, #m_property), STR(set_##m_property), STR(get_##m_property))
-
-	EXPORT_PROPERTY(Variant::INT, rope_particles);
-	EXPORT_PROPERTY(Variant::FLOAT, rope_width);
 	EXPORT_PROPERTY(Variant::FLOAT, rope_length);
-	EXPORT_PROPERTY(Variant::INT, rope_sides);
-	EXPORT_PROPERTY(Variant::FLOAT, rope_twist);
-	EXPORT_PROPERTY(Variant::INT, rope_lod);
+	EXPORT_PROPERTY(Variant::NODE_PATH, start_anchor);
+	ClassDB::bind_method(D_METHOD("set_anchors", "anchors"), &set_anchors);
+	ClassDB::bind_method(D_METHOD("get_anchors"), &get_anchors);
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "anchors", PROPERTY_HINT_RESOURCE_TYPE, "RopePositions"), "set_anchors", "get_anchors");
+	EXPORT_PROPERTY(Variant::NODE_PATH, end_anchor);
 
-	ClassDB::bind_method(D_METHOD("set_material", "material"), &Rope::set_material);
-	ClassDB::bind_method(D_METHOD("get_material"), &Rope::get_material);
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "material", PROPERTY_HINT_RESOURCE_TYPE, "Material"), "set_material", "get_material");
-
-	// attachments
-	ADD_GROUP("Attachments", "");
-	EXPORT_PROPERTY(Variant::NODE_PATH, start_attachment);
-	ClassDB::bind_method(D_METHOD("set_attachments", "attachments"), &Rope::set_attachments);
-	ClassDB::bind_method(D_METHOD("get_attachments"), &Rope::get_attachments);
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "attachments", PROPERTY_HINT_RESOURCE_TYPE, "RopePositions"), "set_attachments", "get_attachments");
-	EXPORT_PROPERTY(Variant::NODE_PATH, end_attachment);
+	ClassDB::bind_method(D_METHOD("set_appearance", "appearance"), &set_appearance);
+	ClassDB::bind_method(D_METHOD("get_appearance"), &get_appearance);
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "appearance", PROPERTY_HINT_RESOURCE_TYPE, "RopeAppearance"), "set_appearance", "get_appearance");
 
 	// simulation parameters
 	ADD_GROUP("Simulation", "");
@@ -52,13 +39,6 @@ void Rope::_bind_methods() {
 	EXPORT_PROPERTY(Variant::FLOAT, simulation_rate);
 	EXPORT_PROPERTY(Variant::INT, stiffness_iterations);
 	EXPORT_PROPERTY(Variant::FLOAT, stiffness);
-
-	// anchors
-	EXPORT_PROPERTY(Variant::NODE_PATH, start_anchor);
-	ClassDB::bind_method(D_METHOD("set_anchors", "anchors"), &Rope::set_anchors);
-	ClassDB::bind_method(D_METHOD("get_anchors"), &Rope::get_anchors);
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "anchors", PROPERTY_HINT_RESOURCE_TYPE, "RopePositions"), "set_anchors", "get_anchors");
-	EXPORT_PROPERTY(Variant::NODE_PATH, end_anchor);
 
 	// forces
 	ADD_GROUP("Forces", "");
@@ -81,9 +61,6 @@ void Rope::_bind_methods() {
 	ADD_GROUP("Preprocess Simulation", "preprocess_");
 	EXPORT_PROPERTY(Variant::INT, preprocess_iterations);
 	EXPORT_PROPERTY(Variant::FLOAT, preprocess_delta);
-
-#undef EXPORT_PROPERTY
-#undef STR
 }
 
 #pragma region Lifecycle
@@ -106,7 +83,7 @@ void Rope::_notification(int p_what) {
 }
 
 void Rope::_ready(void) {
-	_create_rope();
+	_rebuild_rope();
 }
 
 void Rope::_physics_process(double delta) {
@@ -116,6 +93,12 @@ void Rope::_physics_process(double delta) {
 	auto simulation_step = 1.0 / float(_simulation_rate);
 	if (_simulation_delta < simulation_step)
 		return;
+
+	// if the particle count has changed, rebuild the rope
+	int desired_count = get_particle_count_for_length();
+	if (desired_count != _particles.size()) {
+		_rebuild_rope();
+	}
 
 	if (_particles.size() >= 2) {
 		// unattach all the particles
@@ -139,9 +122,15 @@ void Rope::_physics_process(double delta) {
 	_simulation_delta = 0.0;
 }
 
-void Rope::_create_rope() {
+uint64_t Rope::get_particle_count_for_length() const {
+	int particle_count = uint64_t(get_rope_length() * get_particles_per_meter()) + 1;
+	particle_count = Math::max(particle_count, 3);
+	return particle_count;
+}
+
+void Rope::_rebuild_rope() {
 	auto global_position = get_global_position();
-	auto end_location = global_position + Vector3(0, -1, 0) * _rope_length;
+	auto end_location = global_position + Vector3(0, -1, 0) * get_rope_length();
 	bool end_attached = false;
 
 	Transform3D xform;
@@ -150,13 +139,15 @@ void Rope::_create_rope() {
 		end_attached = true;
 	}
 
+	int particle_count = get_particle_count_for_length();
+	auto segment_length = get_rope_length() / particle_count;
 	auto initial_accel = _gravity * _gravity_scale;
-	auto segment_length = _get_average_segment_length();
 	Vector3 direction = (end_location - global_position).normalized();
 	_particles.clear();
-	for (int i = 0; i < _rope_particles; i++) {
+
+	for (int i = 0; i < particle_count; i++) {
 		Particle particle;
-		Vector3 position = global_position + direction * segment_length * i;
+		Vector3 position = global_position + (direction * segment_length * float(i));
 		particle.pos_prev = position;
 		particle.pos_cur = position;
 		particle.accel = initial_accel;
@@ -187,39 +178,13 @@ void Rope::_create_rope() {
 
 #pragma region Accessors
 
-void Rope::set_material(const Ref<Material> &p_material) {
-	_material = p_material;
-	if (_generated_mesh.is_valid() && _generated_mesh->get_surface_count() > 0) {
-		_generated_mesh->surface_set_material(0, _material);
-	}
-}
+// void Rope::set_wind_noise(const Ref<FastNoiseLite> &p_noise) {
+// 	_wind_noise = p_noise;
+// }
 
-Ref<Material> Rope::get_material() const {
-	return _material;
-}
-
-void Rope::set_wind_noise(const Ref<FastNoiseLite> &p_noise) {
-	_wind_noise = p_noise;
-}
-
-Ref<FastNoiseLite> Rope::get_wind_noise() const {
-	return _wind_noise;
-}
-
-void Rope::set_particle_count(uint64_t p_count) {
-	uint64_t cur_size = _particles.size();
-	if (cur_size != p_count) {
-		if (p_count > cur_size) {
-			uint64_t add_count = p_count - cur_size;
-			for (uint64_t i = 0; i < add_count; i++) {
-				_particles.push_back(Particle());
-			}
-		} else {
-			_particles.resize(p_count);
-		}
-		_queue_rebuild();
-	}
-}
+// Ref<FastNoiseLite> Rope::get_wind_noise() const {
+// 	return _wind_noise;
+// }
 
 uint64_t Rope::get_particle_count() const {
 	return _particles.size();
@@ -234,6 +199,21 @@ float Rope::get_current_rope_length() const {
 	for (int i = 0; i < _particles.size() - 1; i++)
 		length += (_particles[i + 1].pos_cur - _particles[i].pos_cur).length();
 	return length;
+}
+
+int Rope::get_rope_sides() const {
+	if (_appearance == nullptr)
+		return 6;
+	else {
+		auto sides = _appearance->get_rope_sides();
+		if (sides >= 3 && sides <= MAX_ROPE_SIDES) {
+			return sides;
+		} else {
+			auto diameter = get_rope_width();
+			const float ratio = UtilityFunctions::ease(diameter, .2);
+			return Math::clamp(int(Math::lerp(3, 12, ratio)), 3, 12);
+		}
+	}
 }
 
 #pragma endregion
@@ -267,7 +247,8 @@ bool Rope::_get_anchor_transform(const NodePath &path, Transform3D &xform) const
 }
 
 void Rope::_align_attachment_node(const NodePath &path, Transform3D xform) {
-	auto cap_scale = Vector3(_rope_width, _rope_width, _rope_width);
+	auto diameter = get_rope_width();
+	auto cap_scale = Vector3(diameter, diameter, diameter);
 	Node *node = get_node_or_null(path);
 	if (node && node->is_class("Node3D")) {
 		Node3D *node3d = (Node3D *)node;
@@ -382,7 +363,7 @@ void Rope::_emit_tube(LocalVector<Transform3D> &frames, int sides, float radius,
 		total_length = 1.0;
 
 	// number of V repeats along the rope is based on rope width and twist factor
-	const float repeats = _rope_length / _rope_width * _rope_twist;
+	const float repeats = get_rope_length() / get_rope_width() * get_rope_twist();
 
 	for (int i = 0; i < frames.size() - 1; i++) {
 		const auto &pos = frames[i].origin;
@@ -501,8 +482,9 @@ void Rope::_rebuild_mesh() {
 		float t = 0.0;
 
 		// adjustable lod
-		if (_rope_lod > 0)
-			step = 1.0 / float(_rope_lod);
+		auto lod = get_rope_lod();
+		if (lod > 0)
+			step = 1.0 / float(lod);
 
 		// sample out the catmull spline into points and tangents
 		while (t <= 1.0) {
@@ -529,11 +511,9 @@ void Rope::_rebuild_mesh() {
 		// tube parameters. set the number of sides based on rope width
 		// A 0.1 thickness rope will have 6 sides
 		// A 1.0 thickness rope will have 12 sides
-		const float ratio = UtilityFunctions::ease(_rope_width, .2);
-		const auto radius = _rope_width * 0.5;
-		int sides = Math::clamp(int(Math::lerp(3, 12, ratio)), 3, 12);
-		if (_rope_sides >= 0)
-			sides = _rope_sides; // override for side count
+		auto diameter = get_rope_width();
+		const auto radius = diameter * 0.5;
+		int sides = get_rope_sides();
 
 		// emit geometry
 		PackedVector3Array verts, norms;
@@ -553,18 +533,18 @@ void Rope::_rebuild_mesh() {
 		// arrays[Mesh::ARRAY_TANGENT] = new_tangents;
 		arrays[Mesh::ARRAY_TEX_UV] = uv1s;
 		_generated_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLE_STRIP, arrays);
-		_generated_mesh->surface_set_material(0, _material);
+		_generated_mesh->surface_set_material(0, get_material());
 
 		// align attachments if present
-		_align_attachment_node(_start_attachment, frames[0]);
-		if (_attachments != nullptr) {
-			for (auto &attachment : _attachments->_positions) {
+		_align_attachment_node(get_start_attachment(), frames[0]);
+		if (get_attachments() != nullptr) {
+			for (auto &attachment : get_attachments()->_positions) {
 				int last = frames.size() - 1;
 				int index = Math::clamp(int(last * attachment.position), 0, last);
 				_align_attachment_node(attachment.node, frames[index]);
 			}
 		}
-		_align_attachment_node(_end_attachment, frames[last_frame_idx].rotated_local(Vector3(1, 0, 0), Math_PI));
+		_align_attachment_node(get_end_attachment(), frames[last_frame_idx].rotated_local(Vector3(1, 0, 0), Math_PI));
 	}
 }
 
@@ -573,7 +553,7 @@ void Rope::_rebuild_mesh() {
 #pragma region Physics
 
 float Rope::_get_average_segment_length() const {
-	return _rope_length / float(_particles.size() - 1);
+	return get_rope_length() / float(_particles.size() - 1);
 }
 
 PackedVector3Array Rope::_get_simulation_particles(int index) {
@@ -590,7 +570,7 @@ PackedVector3Array Rope::_get_simulation_particles(int index) {
 	p[1] = _particles[index].pos_cur;
 	p[2] = _particles[index + 1].pos_cur;
 
-	if (index == _rope_particles - 2)
+	if (index == _particles.size() - 2)
 		p[3] = _particles[index + 1].pos_cur + (_particles[index + 1].T * segment_length);
 	else
 		p[3] = _particles[index + 2].pos_cur;

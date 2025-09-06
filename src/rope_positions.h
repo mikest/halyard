@@ -1,10 +1,12 @@
 #pragma once
 
+#include "property_utils.h"
 #include <godot_cpp/classes/resource.hpp>
 #include <godot_cpp/classes/wrapped.hpp>
 #include <godot_cpp/templates/local_vector.hpp>
 #include <godot_cpp/templates/pair.hpp>
 #include <godot_cpp/variant/variant.hpp>
+
 
 using namespace godot;
 
