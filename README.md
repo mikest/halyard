@@ -1,5 +1,5 @@
 
-# Fast Verlet Rope Library
+# Halyard: A Fast Verlet Rope Library
 
 A high-performance, cross-platform rope simulation library using the Verlet integration method. For when you need rope, and you need it quickly.
 
@@ -26,7 +26,7 @@ The anchors can be used to create the illusion of pulleys.
 
 1. Clone the repository to your addons folder:
 	```sh
-	git clone https://github.com/mikest/gd-fast-rope.git
+	git clone https://github.com/mikest/halyard.git
 	```
 2. Build the library using SCons or CMake:
 	```sh

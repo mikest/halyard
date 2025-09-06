@@ -1,4 +1,4 @@
-#include "fast_rope.h"
+#include "rope.h"
 #include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -7,24 +7,24 @@ const int X = 0;
 const int Y = 1;
 const int Z = 2;
 
-FastRope::FastRope() {
+Rope::Rope() {
 	_generated_mesh.instantiate();
 	set_base(_generated_mesh->get_rid());
 }
 
-FastRope::~FastRope() {
+Rope::~Rope() {
 	_generated_mesh->clear_surfaces();
 	_generated_mesh.unref();
 }
 
-void FastRope::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("get_baked_mesh"), &FastRope::get_baked_mesh);
-	ClassDB::bind_method(D_METHOD("get_current_rope_length"), &FastRope::get_current_rope_length);
+void Rope::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("get_baked_mesh"), &Rope::get_baked_mesh);
+	ClassDB::bind_method(D_METHOD("get_current_rope_length"), &Rope::get_current_rope_length);
 
 #define STR(x) #x
-#define EXPORT_PROPERTY(m_type, m_property)                                                              \
-	ClassDB::bind_method(D_METHOD(STR(set_##m_property), STR(m_property)), &FastRope::set_##m_property); \
-	ClassDB::bind_method(D_METHOD(STR(get_##m_property)), &FastRope::get_##m_property);                  \
+#define EXPORT_PROPERTY(m_type, m_property)                                                          \
+	ClassDB::bind_method(D_METHOD(STR(set_##m_property), STR(m_property)), &Rope::set_##m_property); \
+	ClassDB::bind_method(D_METHOD(STR(get_##m_property)), &Rope::get_##m_property);                  \
 	ADD_PROPERTY(PropertyInfo(m_type, #m_property), STR(set_##m_property), STR(get_##m_property))
 
 	EXPORT_PROPERTY(Variant::INT, rope_particles);
@@ -34,15 +34,15 @@ void FastRope::_bind_methods() {
 	EXPORT_PROPERTY(Variant::FLOAT, rope_twist);
 	EXPORT_PROPERTY(Variant::INT, rope_lod);
 
-	ClassDB::bind_method(D_METHOD("set_material", "material"), &FastRope::set_material);
-	ClassDB::bind_method(D_METHOD("get_material"), &FastRope::get_material);
+	ClassDB::bind_method(D_METHOD("set_material", "material"), &Rope::set_material);
+	ClassDB::bind_method(D_METHOD("get_material"), &Rope::get_material);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "material", PROPERTY_HINT_RESOURCE_TYPE, "Material"), "set_material", "get_material");
 
 	// attachments
 	ADD_GROUP("Attachments", "");
 	EXPORT_PROPERTY(Variant::NODE_PATH, start_attachment);
-	ClassDB::bind_method(D_METHOD("set_attachments", "attachments"), &FastRope::set_attachments);
-	ClassDB::bind_method(D_METHOD("get_attachments"), &FastRope::get_attachments);
+	ClassDB::bind_method(D_METHOD("set_attachments", "attachments"), &Rope::set_attachments);
+	ClassDB::bind_method(D_METHOD("get_attachments"), &Rope::get_attachments);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "attachments", PROPERTY_HINT_RESOURCE_TYPE, "RopePositions"), "set_attachments", "get_attachments");
 	EXPORT_PROPERTY(Variant::NODE_PATH, end_attachment);
 
@@ -55,8 +55,8 @@ void FastRope::_bind_methods() {
 
 	// anchors
 	EXPORT_PROPERTY(Variant::NODE_PATH, start_anchor);
-	ClassDB::bind_method(D_METHOD("set_anchors", "anchors"), &FastRope::set_anchors);
-	ClassDB::bind_method(D_METHOD("get_anchors"), &FastRope::get_anchors);
+	ClassDB::bind_method(D_METHOD("set_anchors", "anchors"), &Rope::set_anchors);
+	ClassDB::bind_method(D_METHOD("get_anchors"), &Rope::get_anchors);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "anchors", PROPERTY_HINT_RESOURCE_TYPE, "RopePositions"), "set_anchors", "get_anchors");
 	EXPORT_PROPERTY(Variant::NODE_PATH, end_anchor);
 
@@ -66,8 +66,8 @@ void FastRope::_bind_methods() {
 	EXPORT_PROPERTY(Variant::FLOAT, wind_scale);
 	EXPORT_PROPERTY(Variant::VECTOR3, wind);
 
-	ClassDB::bind_method(D_METHOD("set_wind_noise", "wind_noise"), &FastRope::set_wind_noise);
-	ClassDB::bind_method(D_METHOD("get_wind_noise"), &FastRope::get_wind_noise);
+	ClassDB::bind_method(D_METHOD("set_wind_noise", "wind_noise"), &Rope::set_wind_noise);
+	ClassDB::bind_method(D_METHOD("get_wind_noise"), &Rope::get_wind_noise);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "wind_noise", PROPERTY_HINT_RESOURCE_TYPE, "FastNoiseLite"), "set_wind_noise", "get_wind_noise");
 
 	EXPORT_PROPERTY(Variant::BOOL, apply_gravity);
@@ -88,7 +88,7 @@ void FastRope::_bind_methods() {
 
 #pragma region Lifecycle
 
-void FastRope::_notification(int p_what) {
+void Rope::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_READY: {
 			// ensure we're always called, even when processing is disabled...
@@ -105,11 +105,11 @@ void FastRope::_notification(int p_what) {
 	}
 }
 
-void FastRope::_ready(void) {
+void Rope::_ready(void) {
 	_create_rope();
 }
 
-void FastRope::_physics_process(double delta) {
+void Rope::_physics_process(double delta) {
 	_time += delta;
 	_simulation_delta += delta;
 
@@ -139,7 +139,7 @@ void FastRope::_physics_process(double delta) {
 	_simulation_delta = 0.0;
 }
 
-void FastRope::_create_rope() {
+void Rope::_create_rope() {
 	auto global_position = get_global_position();
 	auto end_location = global_position + Vector3(0, -1, 0) * _rope_length;
 	bool end_attached = false;
@@ -187,26 +187,26 @@ void FastRope::_create_rope() {
 
 #pragma region Accessors
 
-void FastRope::set_material(const Ref<Material> &p_material) {
+void Rope::set_material(const Ref<Material> &p_material) {
 	_material = p_material;
 	if (_generated_mesh.is_valid() && _generated_mesh->get_surface_count() > 0) {
 		_generated_mesh->surface_set_material(0, _material);
 	}
 }
 
-Ref<Material> FastRope::get_material() const {
+Ref<Material> Rope::get_material() const {
 	return _material;
 }
 
-void FastRope::set_wind_noise(const Ref<FastNoiseLite> &p_noise) {
+void Rope::set_wind_noise(const Ref<FastNoiseLite> &p_noise) {
 	_wind_noise = p_noise;
 }
 
-Ref<FastNoiseLite> FastRope::get_wind_noise() const {
+Ref<FastNoiseLite> Rope::get_wind_noise() const {
 	return _wind_noise;
 }
 
-void FastRope::set_particle_count(uint64_t p_count) {
+void Rope::set_particle_count(uint64_t p_count) {
 	uint64_t cur_size = _particles.size();
 	if (cur_size != p_count) {
 		if (p_count > cur_size) {
@@ -221,15 +221,15 @@ void FastRope::set_particle_count(uint64_t p_count) {
 	}
 }
 
-uint64_t FastRope::get_particle_count() const {
+uint64_t Rope::get_particle_count() const {
 	return _particles.size();
 }
 
-Ref<ArrayMesh> FastRope::get_baked_mesh() const {
+Ref<ArrayMesh> Rope::get_baked_mesh() const {
 	return _generated_mesh->duplicate();
 }
 
-float FastRope::get_current_rope_length() const {
+float Rope::get_current_rope_length() const {
 	float length = 0.0;
 	for (int i = 0; i < _particles.size() - 1; i++)
 		length += (_particles[i + 1].pos_cur - _particles[i].pos_cur).length();
@@ -240,7 +240,7 @@ float FastRope::get_current_rope_length() const {
 
 #pragma region Anchors & Attachments
 
-void FastRope::_update_anchor(NodePath &anchor, float position) {
+void Rope::_update_anchor(NodePath &anchor, float position) {
 	int last = _particles.size() - 1;
 	int index = Math::clamp(int(last * position), 0, last);
 
@@ -253,7 +253,7 @@ void FastRope::_update_anchor(NodePath &anchor, float position) {
 		_particles[index].attached = false;
 }
 
-bool FastRope::_get_anchor_transform(const NodePath &path, Transform3D &xform) const {
+bool Rope::_get_anchor_transform(const NodePath &path, Transform3D &xform) const {
 	Node *node = get_node_or_null(path);
 	if (node && node->is_class("Node3D")) {
 		Node3D *node3d = (Node3D *)node;
@@ -266,7 +266,7 @@ bool FastRope::_get_anchor_transform(const NodePath &path, Transform3D &xform) c
 	return false;
 }
 
-void FastRope::_align_attachment_node(const NodePath &path, Transform3D xform) {
+void Rope::_align_attachment_node(const NodePath &path, Transform3D xform) {
 	auto cap_scale = Vector3(_rope_width, _rope_width, _rope_width);
 	Node *node = get_node_or_null(path);
 	if (node && node->is_class("Node3D")) {
@@ -278,7 +278,7 @@ void FastRope::_align_attachment_node(const NodePath &path, Transform3D xform) {
 	}
 }
 
-void FastRope::_update_anchors() {
+void Rope::_update_anchors() {
 	// for the first anchor, move the whole rope instead of the point
 	Transform3D xform;
 	if (_get_anchor_transform(_start_anchor, xform)) {
@@ -297,7 +297,7 @@ void FastRope::_update_anchors() {
 
 #pragma region Drawing
 
-void FastRope::_compute_particle_normals() {
+void Rope::_compute_particle_normals() {
 	auto origin = get_global_position();
 
 	auto start = _particles[0];
@@ -324,7 +324,7 @@ void FastRope::_compute_particle_normals() {
 
 // compute a stable normal/binormal frame using parallel transport to reduce twisting
 // ref: https://en.wikipedia.org/wiki/Parallel_transport
-void FastRope::_compute_parallel_transport(LocalVector<Transform3D> &frames) {
+void Rope::_compute_parallel_transport(LocalVector<Transform3D> &frames) {
 	auto count = frames.size();
 	if (count > 0) {
 		// initial tangent
@@ -369,7 +369,7 @@ void FastRope::_compute_parallel_transport(LocalVector<Transform3D> &frames) {
 	}
 }
 
-void FastRope::_emit_tube(LocalVector<Transform3D> &frames, int sides, float radius, PackedVector3Array &V, PackedVector3Array &N, PackedVector2Array &UV1) {
+void Rope::_emit_tube(LocalVector<Transform3D> &frames, int sides, float radius, PackedVector3Array &V, PackedVector3Array &N, PackedVector2Array &UV1) {
 	// build cumulative length along the sampled positions so we can map V smoothly.
 	// rope can be stretchy so we can't just use rope_length here
 	LocalVector<float> cum_lengths;
@@ -424,7 +424,7 @@ void FastRope::_emit_tube(LocalVector<Transform3D> &frames, int sides, float rad
 	}
 }
 
-void FastRope::_emit_endcap(bool front, const Transform3D &frame, int sides, float radius, PackedVector3Array &mesh_v, PackedVector3Array &mesh_n, PackedVector2Array &mesh_uv1) {
+void Rope::_emit_endcap(bool front, const Transform3D &frame, int sides, float radius, PackedVector3Array &mesh_v, PackedVector3Array &mesh_n, PackedVector2Array &mesh_uv1) {
 	Vector3 center = frame.origin;
 	Vector3 T = frame.basis.get_column(Y);
 	Vector3 N = frame.basis.get_column(X);
@@ -464,7 +464,7 @@ void FastRope::_emit_endcap(bool front, const Transform3D &frame, int sides, flo
 	}
 }
 
-Pair<Vector3, Vector3> FastRope::_catmull_interpolate(const Vector3 &p0, const Vector3 &p1, const Vector3 &p2, const Vector3 &p3, float tension, float t) {
+Pair<Vector3, Vector3> Rope::_catmull_interpolate(const Vector3 &p0, const Vector3 &p1, const Vector3 &p2, const Vector3 &p3, float tension, float t) {
 	float t_sqr = t * t;
 	float t_cube = t_sqr * t;
 
@@ -480,7 +480,7 @@ Pair<Vector3, Vector3> FastRope::_catmull_interpolate(const Vector3 &p0, const V
 	return { point, tangent };
 }
 
-void FastRope::_rebuild_mesh() {
+void Rope::_rebuild_mesh() {
 	_generated_mesh->clear_surfaces();
 
 	// recompute normal, tangents, and binormals
@@ -572,11 +572,11 @@ void FastRope::_rebuild_mesh() {
 
 #pragma region Physics
 
-float FastRope::_get_average_segment_length() const {
+float Rope::_get_average_segment_length() const {
 	return _rope_length / float(_particles.size() - 1);
 }
 
-PackedVector3Array FastRope::_get_simulation_particles(int index) {
+PackedVector3Array Rope::_get_simulation_particles(int index) {
 	auto segment_length = _get_average_segment_length();
 
 	PackedVector3Array p;
@@ -598,7 +598,7 @@ PackedVector3Array FastRope::_get_simulation_particles(int index) {
 	return p;
 }
 
-void FastRope::_stiff_rope() {
+void Rope::_stiff_rope() {
 	for (int j = 0; j < _stiffness_iterations; j++) {
 		for (int i = 0; i < _particles.size() - 1; i++) {
 			Particle p0 = _particles[i];
@@ -624,7 +624,7 @@ void FastRope::_stiff_rope() {
 	}
 }
 
-void FastRope::_verlet_process(float delta) {
+void Rope::_verlet_process(float delta) {
 	for (Particle &p : _particles) {
 		if (p.attached) {
 			continue;
@@ -636,7 +636,7 @@ void FastRope::_verlet_process(float delta) {
 	}
 }
 
-void FastRope::_apply_forces() {
+void Rope::_apply_forces() {
 	Transform3D gx = get_global_transform();
 	for (Particle &p : _particles) {
 		// p.pos_cur = gx.xform(p.pos_cur);
@@ -666,7 +666,7 @@ void FastRope::_apply_forces() {
 	}
 }
 
-void FastRope::_apply_constraints() {
+void Rope::_apply_constraints() {
 	_stiff_rope();
 }
 

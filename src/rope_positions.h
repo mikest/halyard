@@ -10,9 +10,9 @@ using namespace godot;
 
 const int MAX_ROPE_POSITIONS = 10;
 
-class FastRope;
+class Rope;
 class RopePositions : public Resource {
-	friend FastRope;
+	friend Rope;
 	GDCLASS(RopePositions, Resource)
 
 	struct Position {

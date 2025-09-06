@@ -16,8 +16,8 @@
 
 using namespace godot;
 
-class FastRope : public GeometryInstance3D {
-	GDCLASS(FastRope, GeometryInstance3D)
+class Rope : public GeometryInstance3D {
+	GDCLASS(Rope, GeometryInstance3D)
 
 	Ref<ArrayMesh> _generated_mesh;
 
@@ -125,8 +125,8 @@ protected:
 	}
 
 public:
-	FastRope();
-	~FastRope() override;
+	Rope();
+	~Rope() override;
 
 	void _ready(void) override;
 
