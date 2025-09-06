@@ -246,19 +246,6 @@ bool Rope::_get_anchor_transform(const NodePath &path, Transform3D &xform) const
 	return false;
 }
 
-void Rope::_align_attachment_node(const NodePath &path, Transform3D xform) {
-	auto diameter = get_rope_width();
-	auto cap_scale = Vector3(diameter, diameter, diameter);
-	Node *node = get_node_or_null(path);
-	if (node && node->is_class("Node3D")) {
-		Node3D *node3d = (Node3D *)node;
-		if (node3d->is_visible()) {
-			node3d->set_global_transform(get_global_transform() * xform.orthonormalized());
-			node3d->set_scale(cap_scale);
-		}
-	}
-}
-
 void Rope::_update_anchors() {
 	// for the first anchor, move the whole rope instead of the point
 	Transform3D xform;
@@ -350,7 +337,7 @@ void Rope::_compute_parallel_transport(LocalVector<Transform3D> &frames) {
 	}
 }
 
-void Rope::_emit_tube(LocalVector<Transform3D> &frames, int sides, float radius, PackedVector3Array &V, PackedVector3Array &N, PackedVector2Array &UV1) {
+void Rope::_emit_tube(LocalVector<Transform3D> &frames, int start, int end, int sides, float radius, PackedVector3Array &V, PackedVector3Array &N, PackedVector2Array &UV1) {
 	// build cumulative length along the sampled positions so we can map V smoothly.
 	// rope can be stretchy so we can't just use rope_length here
 	LocalVector<float> cum_lengths;
@@ -365,7 +352,7 @@ void Rope::_emit_tube(LocalVector<Transform3D> &frames, int sides, float radius,
 	// number of V repeats along the rope is based on rope width and twist factor
 	const float repeats = get_rope_length() / get_rope_width() * get_rope_twist();
 
-	for (int i = 0; i < frames.size() - 1; i++) {
+	for (int i = start; i <= end; i++) {
 		const auto &pos = frames[i].origin;
 		const auto &next_pos = frames[i + 1].origin;
 
@@ -461,6 +448,72 @@ Pair<Vector3, Vector3> Rope::_catmull_interpolate(const Vector3 &p0, const Vecto
 	return { point, tangent };
 }
 
+void Rope::_align_attachment_node(const NodePath &path, Transform3D xform, float offset) {
+	auto diameter = get_rope_width();
+	auto cap_scale = Vector3(diameter, diameter, diameter);
+	Node *node = get_node_or_null(path);
+	if (node && node->is_class("Node3D")) {
+		Node3D *node3d = (Node3D *)node;
+		if (node3d->is_visible()) {
+			xform.origin += xform.basis.get_column(Y).normalized() * offset;
+
+			node3d->set_global_transform(get_global_transform() * xform.orthonormalized());
+			node3d->set_scale(cap_scale);
+		}
+	}
+}
+
+int Rope::_frame_at_offset(const LocalVector<Transform3D> &frames, float offset) const {
+	// find the nearest transform frame for the given offset
+	float frames_per_segment = int(frames.size() / float(_particles.size()));
+	float offset_particle = offset * get_particles_per_meter();
+	float offset_frame = offset_particle * frames_per_segment;
+
+	// if offset is negative work backwards from the end
+	if (offset_frame < 0)
+		offset_frame = (frames.size() - 1) + offset_frame;
+
+	// clamp in range
+	offset_frame = Math::clamp(int(offset_frame), 0, int(frames.size() - 1));
+	return offset_frame;
+}
+
+void Rope::_align_end_node(const NodePath &path, const LocalVector<Transform3D> &frames, int index, float offset) {
+	Transform3D xform = frames[index];
+
+	Node *node = get_node_or_null(path);
+	if (node && node->is_class("Node3D")) {
+		Node3D *node3d = (Node3D *)node;
+		if (node3d->is_visible()) {
+			// get the frame closest to the offset distance
+			Transform3D offset_xform = frames[_frame_at_offset(frames, offset)];
+			auto dir = (xform.origin - offset_xform.origin);
+			auto dist = dir.length();
+			dir.normalize();
+
+			// align the bases from the offset frame to the position frame
+			xform.basis.set_column(Y, dir);
+			xform.basis.set_column(X, -xform.basis.get_column(Z).cross(dir));
+			xform.basis = xform.basis.orthonormalized();
+
+			if (offset < 0.0)
+				xform.origin = offset_xform.origin + dir * (dist + offset);
+			else
+				xform.origin = offset_xform.origin + dir * (dist - offset);
+
+			// if offset is negative, flip the orientation
+			// if (offset < 0.0)
+			// 	xform = xform.rotated_local(Vector3(1, 0, 0), Math_PI);
+
+			// transform into global space and rescale
+			node3d->set_global_transform(get_global_transform() * xform.orthonormalized());
+			auto diameter = get_rope_width();
+			auto cap_scale = Vector3(diameter, diameter, diameter);
+			node3d->set_scale(cap_scale);
+		}
+	}
+}
+
 void Rope::_rebuild_mesh() {
 	_generated_mesh->clear_surfaces();
 
@@ -519,10 +572,12 @@ void Rope::_rebuild_mesh() {
 		PackedVector3Array verts, norms;
 		PackedVector2Array uv1s;
 
-		const auto last_frame_idx = frames.size() - 1;
-		_emit_endcap(true, frames[0], sides, radius, verts, norms, uv1s);
-		_emit_tube(frames, sides, radius, verts, norms, uv1s);
-		_emit_endcap(false, frames[last_frame_idx], sides, radius, verts, norms, uv1s);
+		const auto start_frame = _frame_at_offset(frames, get_start_offset());
+		const auto end_frame = _frame_at_offset(frames, get_end_offset());
+
+		_emit_endcap(true, frames[start_frame], sides, radius, verts, norms, uv1s);
+		_emit_tube(frames, start_frame, end_frame, sides, radius, verts, norms, uv1s);
+		_emit_endcap(false, frames[end_frame], sides, radius, verts, norms, uv1s);
 
 		// generate the catmull interpolation for the segments.
 		Array arrays;
@@ -536,15 +591,18 @@ void Rope::_rebuild_mesh() {
 		_generated_mesh->surface_set_material(0, get_material());
 
 		// align attachments if present
-		_align_attachment_node(get_start_attachment(), frames[0]);
+		_align_end_node(get_start_attachment(), frames, 0, get_start_offset());
+		// _align_attachment_node(get_start_attachment(), frames[0], get_start_offset());
 		if (get_attachments() != nullptr) {
 			for (auto &attachment : get_attachments()->_positions) {
 				int last = frames.size() - 1;
 				int index = Math::clamp(int(last * attachment.position), 0, last);
-				_align_attachment_node(attachment.node, frames[index]);
+				_align_attachment_node(attachment.node, frames[index], 0.0);
 			}
 		}
-		_align_attachment_node(get_end_attachment(), frames[last_frame_idx].rotated_local(Vector3(1, 0, 0), Math_PI));
+		_align_end_node(get_end_attachment(), frames, frames.size() - 1, get_end_offset());
+
+		// _align_attachment_node(get_end_attachment(), frames[last_frame_idx].rotated_local(Vector3(1, 0, 0), Math_PI), get_end_offset());
 	}
 }
 

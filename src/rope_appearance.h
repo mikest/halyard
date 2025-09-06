@@ -26,8 +26,12 @@ class RopeAppearance : public Resource {
 	Ref<Material> _material = nullptr;
 
 	NodePath _start_attachment;
+	float _start_offset = 0.0;
+
 	Ref<RopePositions> _attachments;
+
 	NodePath _end_attachment;
+	float _end_offset = 0.0;
 
 	int _particles_per_meter = 2;
 
@@ -60,7 +64,10 @@ public:
 	Ref<Material> get_material() const;
 
 	PROPERTY_GET_SET(NodePath, start_attachment, _notify_change())
+	PROPERTY_GET_SET(float, start_offset, _notify_change())
 	PROPERTY_GET_SET(NodePath, end_attachment, _notify_change())
+	PROPERTY_GET_SET(float, end_offset, _notify_change())
+
 	void set_attachments(const Ref<RopePositions> &p_attachments) { _attachments = p_attachments; }
 	Ref<RopePositions> get_attachments() const { return _attachments; }
 

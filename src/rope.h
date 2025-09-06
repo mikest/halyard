@@ -91,9 +91,12 @@ protected:
 	PackedVector3Array _get_simulation_particles(int index);
 	Pair<Vector3, Vector3> _catmull_interpolate(const Vector3 &p0, const Vector3 &p1, const Vector3 &p2, const Vector3 &p3, float tension, float t);
 
-	void _emit_tube(LocalVector<Transform3D> &frames, int sides, float radius, PackedVector3Array &V, PackedVector3Array &N, PackedVector2Array &UV1);
+	void _emit_tube(LocalVector<Transform3D> &frames, int start, int end, int sides, float radius, PackedVector3Array &V, PackedVector3Array &N, PackedVector2Array &UV1);
 	void _emit_endcap(bool front, const Transform3D &frame, int sides, float radius, PackedVector3Array &V, PackedVector3Array &N, PackedVector2Array &UV1);
-	void _align_attachment_node(const NodePath &path, Transform3D xform);
+
+	void _align_attachment_node(const NodePath &path, Transform3D xform, float offset);
+	int _frame_at_offset(const LocalVector<Transform3D> &frames, float offset) const;
+	void _align_end_node(const NodePath &path, const LocalVector<Transform3D> &frames, int index, float offset);
 
 	float get_current_rope_length() const;
 	float _get_average_segment_length() const;
@@ -142,15 +145,20 @@ public:
 	PROPERTY_GET_SET(NodePath, end_anchor, _queue_rebuild())
 
 	// appearance passthrough accessors
-	float get_rope_width() const { return _appearance != nullptr ? _appearance->get_rope_width() : 0.25; }
+#define APPEARENCE_ACCESSOR(m_type, m_name, m_default) \
+	m_type get_##m_name() const { return _appearance != nullptr ? _appearance->get_##m_name() : m_default; }
+	APPEARENCE_ACCESSOR(float, rope_width, 0.125)
 	int get_rope_sides() const;
-	float get_rope_twist() const { return _appearance != nullptr ? _appearance->get_rope_twist() : 1.0; }
-	int get_rope_lod() const { return _appearance != nullptr ? _appearance->get_rope_lod() : 2; }
-	Ref<Material> get_material() const { return _appearance != nullptr ? _appearance->get_material() : nullptr; }
-	NodePath get_start_attachment() const { return _appearance != nullptr ? _appearance->get_start_attachment() : NodePath(); }
-	NodePath get_end_attachment() const { return _appearance != nullptr ? _appearance->get_end_attachment() : NodePath(); }
-	Ref<RopePositions> get_attachments() const { return _appearance != nullptr ? _appearance->get_attachments() : nullptr; }
-	int get_particles_per_meter() const { return _appearance != nullptr ? _appearance->get_particles_per_meter() : 2; }
+	APPEARENCE_ACCESSOR(float, rope_twist, 1.0)
+	APPEARENCE_ACCESSOR(int, rope_lod, 2)
+	APPEARENCE_ACCESSOR(Ref<Material>, material, nullptr)
+	APPEARENCE_ACCESSOR(NodePath, start_attachment, NodePath())
+	APPEARENCE_ACCESSOR(float, start_offset, 0.0)
+	APPEARENCE_ACCESSOR(NodePath, end_attachment, NodePath())
+	APPEARENCE_ACCESSOR(float, end_offset, 0.0)
+	APPEARENCE_ACCESSOR(Ref<RopePositions>, attachments, nullptr)
+	APPEARENCE_ACCESSOR(int, particles_per_meter, 2)
+#undef APPEARENCE_ACCESSOR
 
 	// simulation parameters
 	PROPERTY_GET_SET(bool, simulate, {})
