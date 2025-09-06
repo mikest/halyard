@@ -26,7 +26,7 @@ void uninitialize_gdextension_types(ModuleInitializationLevel p_level) {
 
 extern "C" {
 // Initialization
-GDExtensionBool GDE_EXPORT fast_rope_library_init(
+GDExtensionBool GDE_EXPORT halyard_library_init(
 		GDExtensionInterfaceGetProcAddress p_get_proc_address,
 		GDExtensionClassLibraryPtr p_library,
 		GDExtensionInitialization *r_initialization) {

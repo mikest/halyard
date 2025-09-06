@@ -6,7 +6,6 @@ from methods import print_error
 
 
 libname = "Halyard"
-# projectdir = "demo"
 
 localEnv = Environment(tools=["default"], PLATFORM="")
 

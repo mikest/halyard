@@ -7,9 +7,8 @@
 			"command": "scons",
 			"args": [
 				// enable for debugging with breakpoints
+				"template_debug=yes",
 				"dev_build=yes",
-				"compiledb=yes",
-				"template_debug=yes"
 			],
 			"problemMatcher": "$msCompile"
 		},
@@ -19,7 +18,7 @@
 			"type": "shell",
 			"command": "scons",
 			"args": [
-				"compiledb=yes",
+				"dev_build=no",
 			],
 			"problemMatcher": "$msCompile"
 		}

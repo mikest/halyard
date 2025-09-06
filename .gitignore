@@ -9,6 +9,7 @@
 icons/*.import
 assets/*.import
 bin/windows/*.ilk
+~*.dll
 
 # Ignore library files but not the gdextension file
 demo/bin/*

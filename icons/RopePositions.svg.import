@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://rgq00e6va5rd"
-path="res://.godot/imported/RopePositions.svg-8c7d940b875c365027f74bd3f2ed9a7c.ctex"
+path="res://.godot/imported/RopePositions.svg-825390ada8b905b02c5ebc86ffeb35b4.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://addons/gd-fast-rope/icons/RopePositions.svg"
-dest_files=["res://.godot/imported/RopePositions.svg-8c7d940b875c365027f74bd3f2ed9a7c.ctex"]
+source_file="res://addons/halyard/icons/RopePositions.svg"
+dest_files=["res://.godot/imported/RopePositions.svg-825390ada8b905b02c5ebc86ffeb35b4.ctex"]
 
 [params]
 

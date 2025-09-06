@@ -1,8 +1,8 @@
 [gd_scene load_steps=7 format=3 uid="uid://dh0oj81pufivs"]
 
-[ext_resource type="Texture2D" uid="uid://ckl871m64q1cc" path="res://addons/halyard/assets/three-ply-rope.png" id="1_2jas5"]
-[ext_resource type="PackedScene" uid="uid://b257b6hwf7qeg" path="res://addons/halyard/assets/rope-eye-splice.blend" id="3_s6abl"]
-[ext_resource type="PackedScene" uid="uid://dlbtao03wicnv" path="res://addons/halyard/assets/rope-knot.blend" id="4_cepmf"]
+[ext_resource type="Texture2D" uid="uid://cvgoei4ais4km" path="res://addons/halyard/assets/three-ply-rope.png" id="1_2jas5"]
+[ext_resource type="PackedScene" uid="uid://p0j74gydrou0" path="res://addons/halyard/assets/rope-eye-splice.blend" id="3_s6abl"]
+[ext_resource type="PackedScene" uid="uid://vcb8ag10i823" path="res://addons/halyard/assets/rope-knot.blend" id="4_cepmf"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6gkck"]
 albedo_texture = ExtResource("1_2jas5")
@@ -41,13 +41,13 @@ wind_noise = SubResource("FastNoiseLite_8lvy3")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4597571, 13.362176, -6.9939327)
 
 [node name="rope-knot" parent="Vert" instance=ExtResource("4_cepmf")]
-transform = Transform3D(-0.12163743, 0.027915716, -0.0070746206, 0.02805481, 0.107933916, -0.056464132, -0.0065011615, -0.05653303, -0.11129578, -1.7564275, -6.775081, 3.4660628)
+transform = Transform3D(-0.12163744, 0.02799466, -0.006755241, 0.027980475, 0.107948646, -0.05647286, -0.0068137557, -0.05646583, -0.111311205, -1.7272029, -6.7709913, 3.4885142)
 
 [node name="rope-knot2" parent="Vert" instance=ExtResource("4_cepmf")]
-transform = Transform3D(-0.121649556, 0.027814642, -0.007261659, 0.028007902, 0.10756472, -0.05718731, -0.0064763706, -0.057281557, -0.11091384, -2.3851357, -9.206372, 4.7501664)
+transform = Transform3D(-0.121581785, 0.028202698, -0.006890289, 0.028193912, 0.107620224, -0.056991138, -0.0069261556, -0.05698679, -0.11103843, -2.3612375, -9.202919, 4.7683654)
 
 [node name="rope-eye-splice" parent="Vert" instance=ExtResource("3_s6abl")]
-transform = Transform3D(-0.12166442, -0.027680287, 0.007521317, 0.027950412, -0.107039884, 0.058191385, -0.0064453864, 0.058320362, 0.11037297, -3.459757, -13.362176, 6.9939327)
+transform = Transform3D(-0.12151202, -0.028454218, 0.007084393, 0.028458398, -0.10715716, 0.05772748, -0.007067574, 0.057729542, 0.11064515, -3.459757, -13.362176, 6.9939327)
 
 [node name="Vert2" type="Rope" parent="."]
 rope_particles = 12
@@ -70,16 +70,16 @@ wind_noise = SubResource("FastNoiseLite_8lvy3")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4597571, 13.362176, -6.9939327)
 
 [node name="rope-knot3" parent="Vert2" instance=ExtResource("4_cepmf")]
-transform = Transform3D(-0.12350145, -0.01880621, 0.004326281, -0.018806208, 0.1110115, -0.0542934, 0.0043262895, -0.054293398, -0.11251004, 0, 0, 0)
+transform = Transform3D(-0.12318357, -0.02065367, 0.0049227527, -0.020653673, 0.109842315, -0.055974025, 0.0049227397, -0.055974025, -0.11165875, 0, 0, 0)
 
 [node name="rope-knot" parent="Vert2" instance=ExtResource("4_cepmf")]
-transform = Transform3D(-0.12316524, -0.020780105, 0.0048487405, -0.02067608, 0.10919964, -0.05720959, 0.0052747233, -0.05717189, -0.11103401, 1.2098688, -6.7862144, 3.4192398)
+transform = Transform3D(-0.12314646, -0.020818397, 0.005152215, -0.020849701, 0.10917907, -0.057185836, 0.0050240266, -0.057197243, -0.11103259, 1.2762796, -6.742306, 3.4796512)
 
 [node name="rope-knot2" parent="Vert2" instance=ExtResource("4_cepmf")]
-transform = Transform3D(-0.12301299, -0.021608882, 0.0050852587, -0.02145749, 0.10840145, -0.058426898, 0.005690323, -0.058371074, -0.11038767, 1.68223, -9.210623, 4.7066298)
+transform = Transform3D(-0.12314281, -0.020819297, 0.0052349544, -0.020868784, 0.108947314, -0.057619225, 0.00503406, -0.057637125, -0.110804416, 1.7400463, -9.171518, 4.7585344)
 
 [node name="rope-eye-splice" parent="Vert2" instance=ExtResource("3_s6abl")]
-transform = Transform3D(-0.12280033, 0.022707041, -0.005428669, -0.022492243, -0.107269764, 0.06010239, 0.0062593226, 0.06002157, 0.10946795, 2.540243, -13.362176, 6.9939327)
+transform = Transform3D(-0.12315587, 0.02071168, -0.0053533064, -0.020800395, -0.10863054, 0.05823873, 0.004997516, 0.05827034, 0.1104744, 2.540243, -13.362176, 6.9939327)
 
 [node name="Vert3" type="Rope" parent="."]
 rope_particles = 12
@@ -102,16 +102,16 @@ wind_noise = SubResource("FastNoiseLite_8lvy3")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.4597571, 13.362176, -6.9939327)
 
 [node name="rope-eye-splice2" parent="Vert3" instance=ExtResource("3_s6abl")]
-transform = Transform3D(-0.12478069, 0.007245995, -0.0015082214, 0.007245994, 0.1144084, -0.049831845, -0.0015082246, -0.04983184, -0.11462771, 0, 0, 0)
+transform = Transform3D(-0.12497074, 0.0026335432, -0.00061499205, 0.002633543, 0.11204404, -0.055355217, -0.0006149933, -0.05535522, -0.11207329, 0, 0, 0)
 
 [node name="rope-knot" parent="Vert3" instance=ExtResource("4_cepmf")]
-transform = Transform3D(-0.124927826, 0.00379548, -0.0019060402, 0.004246701, 0.110773265, -0.05776028, -6.471737e-05, -0.057791688, -0.11083825, -0.35127306, -6.838678, 3.2274332)
+transform = Transform3D(-0.12494018, 0.0038054255, -0.00068452366, 0.0036905853, 0.11077271, -0.05779953, -0.0011530018, -0.057792082, -0.11083206, -0.19447336, -6.738817, 3.4233525)
 
 [node name="rope-knot2" parent="Vert3" instance=ExtResource("4_cepmf")]
-transform = Transform3D(-0.12496272, 0.0023033917, -0.002003266, 0.0029892458, 0.10896477, -0.061177958, 0.0006189487, -0.06120762, -0.10898736, -0.41795772, -9.253766, 4.535423)
+transform = Transform3D(-0.1249278, 0.0041872407, -0.00071465236, 0.004033067, 0.1103204, -0.0586357, -0.0013334485, -0.058624893, -0.11039177, -0.28218406, -9.16544, 4.700444)
 
 [node name="rope-eye-splice" parent="Vert3" instance=ExtResource("3_s6abl")]
-transform = Transform3D(-0.12498271, -0.00021520676, 0.0020677054, 0.0012790646, -0.105970874, 0.06628376, 0.0016388148, 0.06629575, 0.10595842, -0.4597571, -13.362176, 6.9939327)
+transform = Transform3D(-0.12489587, -0.005036058, 0.0008125288, 0.0047920616, -0.109003864, 0.060993385, -0.0017487796, 0.060973726, 0.10910612, -0.4597571, -13.362176, 6.9939327)
 
 [node name="Horiz" type="Rope" parent="."]
 rope_particles = 12
@@ -128,7 +128,7 @@ apply_wind = true
 wind_scale = 10.0
 wind = Vector3(1, 0, 1)
 wind_noise = SubResource("FastNoiseLite_8lvy3")
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.2965974, 6.5871086, -3.5278072)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.267448, 6.5911174, -3.5055487)
 
 [node name="Horiz2" type="Rope" parent="."]
 rope_particles = 12
@@ -145,7 +145,7 @@ apply_wind = true
 wind_scale = 10.0
 wind = Vector3(1, 0, 1)
 wind_noise = SubResource("FastNoiseLite_8lvy3")
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.10870379, 6.5235653, -3.7663639)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.265491, 6.620801, -3.5753903)
 
 [node name="Horiz3" type="Rope" parent="."]
 rope_particles = 12
@@ -162,7 +162,7 @@ apply_wind = true
 wind_scale = 10.0
 wind = Vector3(1, 0, 1)
 wind_noise = SubResource("FastNoiseLite_8lvy3")
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.9253199, 4.155815, -2.2437162)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.9014802, 4.1592007, -2.2256737)
 
 [node name="Horiz4" type="Rope" parent="."]
 rope_particles = 12
@@ -179,7 +179,7 @@ apply_wind = true
 wind_scale = 10.0
 wind = Vector3(1, 0, 1)
 wind_noise = SubResource("FastNoiseLite_8lvy3")
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.041983217, 4.108469, -2.4584017)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.17770058, 4.1945276, -2.2975607)
 
 [node name="MarkerA" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 0)
