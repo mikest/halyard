@@ -7,10 +7,8 @@ albedo_texture = ExtResource("1_gmubf")
 
 [resource]
 rope_width = 0.125
-rope_lod = 3
 material = SubResource("StandardMaterial3D_n6gf1")
 start_attachment = NodePath("rope-eye-splice")
 start_offset = 0.35
 end_attachment = NodePath("rope-eye-splice2")
-end_offset = -0.35
-particles_per_meter = 4
+end_offset = 0.35

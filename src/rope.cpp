@@ -22,12 +22,12 @@ void Rope::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_current_rope_length"), &get_current_rope_length);
 	ClassDB::bind_method(D_METHOD("get_particle_count_for_length"), &get_particle_count_for_length);
 
-	EXPORT_PROPERTY(Variant::FLOAT, rope_length);
-	EXPORT_PROPERTY(Variant::NODE_PATH, start_anchor);
+	EXPORT_PROPERTY(Variant::FLOAT, rope_length, Rope);
+	EXPORT_PROPERTY(Variant::NODE_PATH, start_anchor, Rope);
+	EXPORT_PROPERTY(Variant::NODE_PATH, end_anchor, Rope);
 	ClassDB::bind_method(D_METHOD("set_anchors", "anchors"), &set_anchors);
 	ClassDB::bind_method(D_METHOD("get_anchors"), &get_anchors);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "anchors", PROPERTY_HINT_RESOURCE_TYPE, "RopePositions"), "set_anchors", "get_anchors");
-	EXPORT_PROPERTY(Variant::NODE_PATH, end_anchor);
 
 	ClassDB::bind_method(D_METHOD("set_appearance", "appearance"), &set_appearance);
 	ClassDB::bind_method(D_METHOD("get_appearance"), &get_appearance);
@@ -35,32 +35,32 @@ void Rope::_bind_methods() {
 
 	// simulation parameters
 	ADD_GROUP("Simulation", "");
-	EXPORT_PROPERTY(Variant::BOOL, simulate);
-	EXPORT_PROPERTY(Variant::FLOAT, simulation_rate);
-	EXPORT_PROPERTY(Variant::INT, stiffness_iterations);
-	EXPORT_PROPERTY(Variant::FLOAT, stiffness);
+	EXPORT_PROPERTY(Variant::BOOL, simulate, Rope);
+	EXPORT_PROPERTY(Variant::FLOAT, simulation_rate, Rope);
+	EXPORT_PROPERTY(Variant::INT, stiffness_iterations, Rope);
+	EXPORT_PROPERTY(Variant::FLOAT, stiffness, Rope);
 
 	// forces
 	ADD_GROUP("Forces", "");
-	EXPORT_PROPERTY(Variant::BOOL, apply_wind);
-	EXPORT_PROPERTY(Variant::FLOAT, wind_scale);
-	EXPORT_PROPERTY(Variant::VECTOR3, wind);
+	EXPORT_PROPERTY(Variant::BOOL, apply_wind, Rope);
+	EXPORT_PROPERTY(Variant::FLOAT, wind_scale, Rope);
+	EXPORT_PROPERTY(Variant::VECTOR3, wind, Rope);
 
 	ClassDB::bind_method(D_METHOD("set_wind_noise", "wind_noise"), &Rope::set_wind_noise);
 	ClassDB::bind_method(D_METHOD("get_wind_noise"), &Rope::get_wind_noise);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "wind_noise", PROPERTY_HINT_RESOURCE_TYPE, "FastNoiseLite"), "set_wind_noise", "get_wind_noise");
 
-	EXPORT_PROPERTY(Variant::BOOL, apply_gravity);
-	EXPORT_PROPERTY(Variant::VECTOR3, gravity);
-	EXPORT_PROPERTY(Variant::FLOAT, gravity_scale);
+	EXPORT_PROPERTY(Variant::BOOL, apply_gravity, Rope);
+	EXPORT_PROPERTY(Variant::VECTOR3, gravity, Rope);
+	EXPORT_PROPERTY(Variant::FLOAT, gravity_scale, Rope);
 
-	EXPORT_PROPERTY(Variant::BOOL, apply_damping);
-	EXPORT_PROPERTY(Variant::FLOAT, damping_factor);
+	EXPORT_PROPERTY(Variant::BOOL, apply_damping, Rope);
+	EXPORT_PROPERTY(Variant::FLOAT, damping_factor, Rope);
 
 	// initial simulation
 	ADD_GROUP("Preprocess Simulation", "preprocess_");
-	EXPORT_PROPERTY(Variant::INT, preprocess_iterations);
-	EXPORT_PROPERTY(Variant::FLOAT, preprocess_delta);
+	EXPORT_PROPERTY(Variant::INT, preprocess_iterations, Rope);
+	EXPORT_PROPERTY(Variant::FLOAT, preprocess_delta, Rope);
 }
 
 #pragma region Lifecycle

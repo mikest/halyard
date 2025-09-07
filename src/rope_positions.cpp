@@ -1,7 +1,7 @@
 #include "rope_positions.h"
 
 void RopePositions::_bind_methods() {
-	EXPORT_PROPERTY(Variant::INT, position_count);
+	EXPORT_PROPERTY(Variant::INT, position_count, RopePositions);
 
 	ClassDB::bind_method(D_METHOD("set_position", "index", "position"), &RopePositions::set_position);
 	ClassDB::bind_method(D_METHOD("get_position", "index"), &RopePositions::get_position);
