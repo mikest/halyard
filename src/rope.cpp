@@ -263,7 +263,59 @@ void Rope::_update_anchors() {
 
 #pragma endregion
 
-#pragma region Drawing
+#pragma region Frame Calculations
+
+float Rope::_get_average_segment_length() const {
+	return get_rope_length() / float(_particles.size() - 1);
+}
+
+PackedVector3Array Rope::_get_control_points_for_particle(int index) const {
+	auto segment_length = _get_average_segment_length();
+	const auto last_index = _particles.size() - 1;
+	const auto projected = (_particles[index].T * segment_length);
+
+	PackedVector3Array p;
+	p.resize(4);
+
+	// at index 0 project a fictitious previous point
+	if (index > 0)
+		p[0] = _particles[index - 1].pos_cur;
+	if (index == 0)
+		p[0] = _particles[index].pos_cur - projected;
+
+	// p[1] is the current point at index
+	p[1] = _particles[index].pos_cur;
+
+	if (index < last_index)
+		p[2] = _particles[index + 1].pos_cur;
+	else
+		p[2] = _particles[index].pos_cur + projected;
+
+	// last
+	if (index < last_index - 1)
+		p[3] = _particles[index + 2].pos_cur;
+	else if (index < last_index)
+		p[3] = _particles[index + 1].pos_cur + projected;
+	else
+		p[3] = _particles[index].pos_cur + projected * 2.0;
+	return p;
+}
+
+Pair<Vector3, Vector3> Rope::_catmull_interpolate(const Vector3 &p0, const Vector3 &p1, const Vector3 &p2, const Vector3 &p3, float tension, float t) const {
+	float t_sqr = t * t;
+	float t_cube = t_sqr * t;
+
+	Vector3 m1 = (1.0 - tension) / 2.0 * (p2 - p0);
+	Vector3 m2 = (1.0 - tension) / 2.0 * (p3 - p1);
+
+	Vector3 a = (2.0 * (p1 - p2)) + m1 + m2;
+	Vector3 b = (-3.0 * (p1 - p2)) - (2.0 * m1) - m2;
+
+	Vector3 point = (a * t_cube) + (b * t_sqr) + (m1 * t) + p1;
+	Vector3 tangent = ((3.0 * a * t_sqr) + (2.0 * b * t) + m1).normalized();
+
+	return { point, tangent };
+}
 
 void Rope::_compute_particle_normals() {
 	auto origin = get_global_position();
@@ -292,7 +344,7 @@ void Rope::_compute_particle_normals() {
 
 // compute a stable normal/binormal frame using parallel transport to reduce twisting
 // ref: https://en.wikipedia.org/wiki/Parallel_transport
-void Rope::_compute_parallel_transport(LocalVector<Transform3D> &frames) {
+void Rope::_compute_parallel_transport(LocalVector<Transform3D> &frames) const {
 	auto count = frames.size();
 	if (count > 0) {
 		// initial tangent
@@ -337,6 +389,112 @@ void Rope::_compute_parallel_transport(LocalVector<Transform3D> &frames) {
 	}
 }
 
+int Rope::_frame_at_offset(const LocalVector<Transform3D> &frames, float offset, bool from_end) const {
+	// find the nearest transform frame for the given offset
+	float frames_per_segment = int(frames.size() / float(_particles.size()));
+	float offset_particle = offset * get_particles_per_meter();
+	float offset_frame = offset_particle * frames_per_segment;
+
+	// if offset is negative work backwards from the end
+	if (from_end)
+		offset_frame = (frames.size() - 1) + offset_frame;
+
+	// clamp in range
+	offset_frame = Math::clamp(int(offset_frame), 0, int(frames.size() - 1));
+	return offset_frame;
+}
+
+void Rope::_calculate_frames_for_particles(LocalVector<Transform3D> &frames) const {
+	_ASSERT(_particles.size() >= 2);
+
+	Vector3 global_position = get_global_position();
+	auto lod = get_rope_lod();
+	if (lod < 1)
+		lod = 1;
+
+	// got to N-1 because we sample between pairs of particles
+	for (int i = 0; i < _particles.size(); i++) {
+		// 	auto step := get_draw_subdivision_step(camera_position, i);
+		const auto particles = _get_control_points_for_particle(i);
+		const auto &p0 = particles[0];
+		const auto &p1 = particles[1];
+		const auto &p2 = particles[2];
+		const auto &p3 = particles[3];
+
+		// sample out the catmull spline into points and tangents
+		float t = 0.0;
+		for (int j = 0; j < lod; j++) {
+			auto current_result = _catmull_interpolate(p0, p1, p2, p3, 0.0, t);
+			auto position = current_result.first;
+			auto tangent = current_result.second;
+
+			// store sampled position and tangent; compute a stable frame after sampling
+			// Normal and Binormal are calculated in parallel transport propigation.
+			position -= global_position;
+			Vector3 zero = Vector3(0, 0, 0);
+			frames.push_back(Transform3D(Basis(zero, tangent, zero), position));
+			t += 1.0 / float(lod);
+
+			// skip lod frames for the last particle, as it's the terminal frame
+			if (i == _particles.size() - 1)
+				break;
+		}
+	}
+
+	// clip the frames by the start and end offsets
+	auto start_offset = get_start_offset();
+	Basis start_basis = frames[0].basis;
+	while (start_offset > 0.0 && frames.size() > 2) {
+		// distance to next frame
+		Transform3D &frame = frames[0];
+		const Transform3D &next = frames[1];
+		float dist = frame.origin.distance_to(next.origin);
+
+		// if distance is less than the offset, remove the frame and continue
+		if (dist < start_offset) {
+			start_offset -= dist;
+			frames.remove_at(0);
+		} else {
+			// move the frame along the line to the next frame
+			Vector3 dir = (next.origin - frame.origin).normalized();
+			frame.origin += dir * start_offset;
+			frame.basis = start_basis;
+			break;
+		}
+	}
+
+	// clip the end offset by walking in reverse
+	auto end_offset = get_end_offset();
+	Basis end_basis = frames[frames.size() - 1].basis;
+	while (end_offset > 0.0 && frames.size() > 2) {
+		// distance to next frame
+		Transform3D &frame = frames[frames.size() - 1];
+		const Transform3D &prev = frames[frames.size() - 2];
+		float dist = frame.origin.distance_to(prev.origin);
+
+		// if distance is less than the offset, remove the frame and continue
+		if (dist < end_offset) {
+			end_offset -= dist;
+			frames.remove_at(frames.size() - 1);
+		} else {
+			// move the frame along the line to the previous frame
+			Vector3 dir = (prev.origin - frame.origin).normalized();
+			frame.origin += dir * end_offset;
+			frame.basis = end_basis;
+			break;
+		}
+	}
+
+	// Need at least two frames to draw a rope
+	if (frames.size() >= 2) {
+		_compute_parallel_transport(frames);
+	}
+}
+
+#pragma endregion
+
+#pragma region Mesh Rendering
+
 void Rope::_emit_tube(LocalVector<Transform3D> &frames, int start, int end, int sides, float radius, PackedVector3Array &V, PackedVector3Array &N, PackedVector2Array &UV1) {
 	// build cumulative length along the sampled positions so we can map V smoothly.
 	// rope can be stretchy so we can't just use rope_length here
@@ -352,7 +510,8 @@ void Rope::_emit_tube(LocalVector<Transform3D> &frames, int start, int end, int 
 	// number of V repeats along the rope is based on rope width and twist factor
 	const float repeats = get_rope_length() / get_rope_width() * get_rope_twist();
 
-	for (int i = start; i <= end; i++) {
+	// NOTE: run to the second to the last frame as we emit 2 frames at a time.
+	for (int i = 0; i < frames.size() - 1; i++) {
 		const auto &pos = frames[i].origin;
 		const auto &next_pos = frames[i + 1].origin;
 
@@ -432,22 +591,6 @@ void Rope::_emit_endcap(bool front, const Transform3D &frame, int sides, float r
 	}
 }
 
-Pair<Vector3, Vector3> Rope::_catmull_interpolate(const Vector3 &p0, const Vector3 &p1, const Vector3 &p2, const Vector3 &p3, float tension, float t) {
-	float t_sqr = t * t;
-	float t_cube = t_sqr * t;
-
-	Vector3 m1 = (1.0 - tension) / 2.0 * (p2 - p0);
-	Vector3 m2 = (1.0 - tension) / 2.0 * (p3 - p1);
-
-	Vector3 a = (2.0 * (p1 - p2)) + m1 + m2;
-	Vector3 b = (-3.0 * (p1 - p2)) - (2.0 * m1) - m2;
-
-	Vector3 point = (a * t_cube) + (b * t_sqr) + (m1 * t) + p1;
-	Vector3 tangent = ((3.0 * a * t_sqr) + (2.0 * b * t) + m1).normalized();
-
-	return { point, tangent };
-}
-
 void Rope::_align_attachment_node(const NodePath &path, Transform3D xform, float offset) {
 	auto diameter = get_rope_width();
 	auto cap_scale = Vector3(diameter, diameter, diameter);
@@ -463,57 +606,6 @@ void Rope::_align_attachment_node(const NodePath &path, Transform3D xform, float
 	}
 }
 
-int Rope::_frame_at_offset(const LocalVector<Transform3D> &frames, float offset) const {
-	// find the nearest transform frame for the given offset
-	float frames_per_segment = int(frames.size() / float(_particles.size()));
-	float offset_particle = offset * get_particles_per_meter();
-	float offset_frame = offset_particle * frames_per_segment;
-
-	// if offset is negative work backwards from the end
-	if (offset_frame < 0)
-		offset_frame = (frames.size() - 1) + offset_frame;
-
-	// clamp in range
-	offset_frame = Math::clamp(int(offset_frame), 0, int(frames.size() - 1));
-	return offset_frame;
-}
-
-void Rope::_align_end_node(const NodePath &path, const LocalVector<Transform3D> &frames, int index, float offset) {
-	Transform3D xform = frames[index];
-
-	Node *node = get_node_or_null(path);
-	if (node && node->is_class("Node3D")) {
-		Node3D *node3d = (Node3D *)node;
-		if (node3d->is_visible()) {
-			// get the frame closest to the offset distance
-			Transform3D offset_xform = frames[_frame_at_offset(frames, offset)];
-			auto dir = (xform.origin - offset_xform.origin);
-			auto dist = dir.length();
-			dir.normalize();
-
-			// align the bases from the offset frame to the position frame
-			xform.basis.set_column(Y, dir);
-			xform.basis.set_column(X, -xform.basis.get_column(Z).cross(dir));
-			xform.basis = xform.basis.orthonormalized();
-
-			if (offset < 0.0)
-				xform.origin = offset_xform.origin + dir * (dist + offset);
-			else
-				xform.origin = offset_xform.origin + dir * (dist - offset);
-
-			// if offset is negative, flip the orientation
-			// if (offset < 0.0)
-			// 	xform = xform.rotated_local(Vector3(1, 0, 0), Math_PI);
-
-			// transform into global space and rescale
-			node3d->set_global_transform(get_global_transform() * xform.orthonormalized());
-			auto diameter = get_rope_width();
-			auto cap_scale = Vector3(diameter, diameter, diameter);
-			node3d->set_scale(cap_scale);
-		}
-	}
-}
-
 void Rope::_rebuild_mesh() {
 	_generated_mesh->clear_surfaces();
 
@@ -521,46 +613,11 @@ void Rope::_rebuild_mesh() {
 	_compute_particle_normals();
 
 	// build the tranform frames from the catmull spline
-	Vector3 global_position = get_global_position();
 	LocalVector<Transform3D> frames;
-	for (int i = 0; i < _particles.size() - 1; i++) {
-		const auto particles = _get_simulation_particles(i);
-		const auto &p0 = particles[0];
-		const auto &p1 = particles[1];
-		const auto &p2 = particles[2];
-		const auto &p3 = particles[3];
-
-		// 	auto step := get_draw_subdivision_step(camera_position, i);
-		float step = 1.0;
-		float t = 0.0;
-
-		// adjustable lod
-		auto lod = get_rope_lod();
-		if (lod > 0)
-			step = 1.0 / float(lod);
-
-		// sample out the catmull spline into points and tangents
-		while (t <= 1.0) {
-			auto current_result = _catmull_interpolate(p0, p1, p2, p3, 0.0, t);
-			auto position = current_result.first;
-			auto tangent = current_result.second;
-
-			// store sampled position and tangent; compute a stable frame after sampling
-			position -= global_position;
-			// Transform3D for each point.
-			// Tangent is Y
-			// Normal is X, calculated in parallel transport
-			// Binormal is Z, calculated in parallel transport
-			Vector3 zero = Vector3(0, 0, 0);
-			frames.push_back(Transform3D(Basis(zero, tangent, zero), position));
-			t += step;
-		}
-	}
+	_calculate_frames_for_particles(frames);
 
 	// Need at least two frames to draw a rope
 	if (frames.size() >= 2) {
-		_compute_parallel_transport(frames);
-
 		// tube parameters. set the number of sides based on rope width
 		// A 0.1 thickness rope will have 6 sides
 		// A 1.0 thickness rope will have 12 sides
@@ -572,8 +629,14 @@ void Rope::_rebuild_mesh() {
 		PackedVector3Array verts, norms;
 		PackedVector2Array uv1s;
 
-		const auto start_frame = _frame_at_offset(frames, get_start_offset());
-		const auto end_frame = _frame_at_offset(frames, get_end_offset());
+		const int last_frame = frames.size() - 1;
+		auto start_frame = _frame_at_offset(frames, get_start_offset(), false);
+		int end_frame = _frame_at_offset(frames, get_end_offset(), true);
+		if (end_frame == 0)
+			end_frame = last_frame;
+
+		start_frame = 0;
+		end_frame = last_frame;
 
 		_emit_endcap(true, frames[start_frame], sides, radius, verts, norms, uv1s);
 		_emit_tube(frames, start_frame, end_frame, sides, radius, verts, norms, uv1s);
@@ -591,18 +654,19 @@ void Rope::_rebuild_mesh() {
 		_generated_mesh->surface_set_material(0, get_material());
 
 		// align attachments if present
-		_align_end_node(get_start_attachment(), frames, 0, get_start_offset());
-		// _align_attachment_node(get_start_attachment(), frames[0], get_start_offset());
+		_align_attachment_node(get_start_attachment(), frames[0], 0.0);
+
+		// mid attachments
 		if (get_attachments() != nullptr) {
 			for (auto &attachment : get_attachments()->_positions) {
-				int last = frames.size() - 1;
-				int index = Math::clamp(int(last * attachment.position), 0, last);
+				int index = Math::clamp(int(last_frame * attachment.position), 0, last_frame);
 				_align_attachment_node(attachment.node, frames[index], 0.0);
 			}
 		}
-		_align_end_node(get_end_attachment(), frames, frames.size() - 1, get_end_offset());
 
-		// _align_attachment_node(get_end_attachment(), frames[last_frame_idx].rotated_local(Vector3(1, 0, 0), Math_PI), get_end_offset());
+		// end attachment
+		Transform3D xform = frames[last_frame].rotated_local(Vector3(1, 0, 0), Math_PI);
+		_align_attachment_node(get_end_attachment(), xform, 0.0);
 	}
 }
 
@@ -610,48 +674,29 @@ void Rope::_rebuild_mesh() {
 
 #pragma region Physics
 
-float Rope::_get_average_segment_length() const {
-	return get_rope_length() / float(_particles.size() - 1);
-}
-
-PackedVector3Array Rope::_get_simulation_particles(int index) {
-	auto segment_length = _get_average_segment_length();
-
-	PackedVector3Array p;
-	p.resize(4);
-
-	if (index == 0)
-		p[0] = _particles[index].pos_cur - (_particles[index].T * segment_length);
-	else
-		p[0] = _particles[index - 1].pos_cur;
-
-	p[1] = _particles[index].pos_cur;
-	p[2] = _particles[index + 1].pos_cur;
-
-	if (index == _particles.size() - 2)
-		p[3] = _particles[index + 1].pos_cur + (_particles[index + 1].T * segment_length);
-	else
-		p[3] = _particles[index + 2].pos_cur;
-
-	return p;
-}
-
 void Rope::_stiff_rope() {
+	// Calculate the maximum allowed rope length
+	const float max_length = get_rope_length() * 1.1f; // Allow 10% stretch, adjust as needed
+
 	for (int j = 0; j < _stiffness_iterations; j++) {
+		// First, apply the usual constraints between particles
 		for (int i = 0; i < _particles.size() - 1; i++) {
 			Particle p0 = _particles[i];
 			Particle p1 = _particles[i + 1];
 
 			Vector3 segment = p1.pos_cur - p0.pos_cur;
 			float stretch = segment.length() - _get_average_segment_length();
+			float scalar_stretch = Math::clamp(stretch * _stiffness, 0.0f, 1.0f);
+
 			Vector3 direction = segment.normalized();
 
+			// If either particle is attached, only move the other one
 			if (p0.attached) {
-				p1.pos_cur -= direction * stretch * _stiffness;
+				p1.pos_cur -= direction * scalar_stretch;
 			} else if (p1.attached) {
-				p0.pos_cur += direction * stretch * _stiffness;
+				p0.pos_cur += direction * scalar_stretch;
 			} else {
-				Vector3 half_stretch = direction * stretch * 0.5 * _stiffness;
+				Vector3 half_stretch = direction * 0.5f * scalar_stretch;
 				p0.pos_cur += half_stretch;
 				p1.pos_cur -= half_stretch;
 			}
