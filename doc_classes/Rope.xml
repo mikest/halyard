@@ -66,12 +66,9 @@ Velocity damping factor to apply to the rope simulation. 0 is undamped, 100 is h
 		</member>
 
 
-		<member name="preprocess_iterations" type="int">
-When the rope is first created, the number of simulations steps to run before rendering
-for the first time. Simulation will be run at `preprocess_delta` time steps.
-        </member>
-		<member name="preprocess_delta" type="int">
-Time step to run the pre-process simulation at when the rope is rebuilt. In seconds.
+		<member name="preprocess_time" type="float">
+Virtual time to calculate into the future before first render.
+This will run [code]preprocess_time * simulation_rate[/code] frames as fast as possible.
         </member>
     </members>
 </class>

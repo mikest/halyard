@@ -8,9 +8,10 @@ A high-performance, cross-platform rope simulation library using the Verlet inte
 ## Features
 
 - Fast rope physics using Verlet integration.
-- Supports arbitrary rope attachment points and anchors.
+- Supports arbitrary rope attachment points and anchors for complex rigging.
 - Configurable rope length, stiffness, and segment count.
-- ~~Collision detection and response~~
+- Collision detection and response.
+- ~~Apply forces to anchors~~
 - Endcap and attachment support for rope details.
 - Demo scene and example textures and meshes included.
 

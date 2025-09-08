@@ -33,6 +33,10 @@ void Rope::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_current_rope_length"), &Rope::get_current_rope_length);
 	ClassDB::bind_method(D_METHOD("get_particle_count_for_length"), &Rope::get_particle_count_for_length);
 
+	ClassDB::bind_method(D_METHOD("get_rope_frame_at_offset", "offset"), &Rope::get_rope_frame_at_offset);
+	ClassDB::bind_method(D_METHOD("get_rope_frames"), &Rope::get_rope_frames);
+	ClassDB::bind_method(D_METHOD("get_particle_positions"), &Rope::get_particle_positions);
+
 	EXPORT_PROPERTY(Variant::FLOAT, rope_length, Rope);
 	EXPORT_PROPERTY(Variant::NODE_PATH, start_anchor, Rope);
 	EXPORT_PROPERTY(Variant::NODE_PATH, end_anchor, Rope);
@@ -47,6 +51,7 @@ void Rope::_bind_methods() {
 	// simulation parameters
 	ADD_GROUP("Simulation", "");
 	EXPORT_PROPERTY(Variant::BOOL, simulate, Rope);
+	EXPORT_PROPERTY(Variant::FLOAT, preprosses_time, Rope);
 	EXPORT_PROPERTY(Variant::FLOAT, simulation_rate, Rope);
 	EXPORT_PROPERTY(Variant::INT, stiffness_iterations, Rope);
 	EXPORT_PROPERTY(Variant::FLOAT, stiffness, Rope);
@@ -76,16 +81,12 @@ void Rope::_bind_methods() {
 
 	EXPORT_PROPERTY(Variant::BOOL, apply_damping, Rope);
 	EXPORT_PROPERTY(Variant::FLOAT, damping_factor, Rope);
-
-	// initial simulation
-	ADD_GROUP("Preprocess Simulation", "preprocess_");
-	EXPORT_PROPERTY(Variant::INT, preprocess_iterations, Rope);
-	EXPORT_PROPERTY(Variant::FLOAT, preprocess_delta, Rope);
 }
 
 #pragma region Lifecycle
 
 void Rope::_notification(int p_what) {
+	double delta = Engine::get_singleton()->is_in_physics_frame() ? get_physics_process_delta_time() : get_process_delta_time();
 	switch (p_what) {
 		case NOTIFICATION_ENTER_WORLD: {
 			RID space = get_world_3d()->get_space();
@@ -123,30 +124,37 @@ void Rope::_notification(int p_what) {
 
 		case NOTIFICATION_READY: {
 			// ensure we're always called, even when processing is disabled...
-			set_process_internal(true);
-			_rebuild_mesh();
+			_internal_ready();
 		} break;
 
+		case NOTIFICATION_INTERNAL_PHYSICS_PROCESS:
+			_internal_physics_process(delta);
+			break;
+
 		case NOTIFICATION_INTERNAL_PROCESS:
-			if (_pop_is_dirty()) {
-				set_global_transform(Transform3D(Basis(), get_global_position()));
-				_rebuild_mesh();
-			}
+			_internal_process(delta);
 			break;
 
 		case NOTIFICATION_EXIT_TREE: {
-			// if (_collider != nullptr)
-			// 	_collider->queue_free();
-			// _collider = nullptr;
 		} break;
 	}
 }
 
-void Rope::_ready(void) {
+void Rope::_internal_ready(void) {
+	set_process_internal(true);
+	set_physics_process_internal(true);
 	_rebuild_rope();
+	_rebuild_mesh();
 }
 
-void Rope::_physics_process(double delta) {
+void Rope::_internal_process(double delta) {
+	if (_pop_is_dirty()) {
+		set_global_transform(Transform3D(Basis(), get_global_position()));
+		_rebuild_mesh();
+	}
+}
+
+void Rope::_internal_physics_process(double delta) {
 	_time += delta;
 	_simulation_delta += delta;
 
@@ -166,9 +174,8 @@ void Rope::_physics_process(double delta) {
 			p.attached = false;
 
 		// set the anchor point for the beginning
-		_update_anchors();
-
 		// run simulation
+		_update_anchors();
 		if (_simulate) {
 			_update_physics(float(simulation_step), 1);
 			_queue_rebuild();
@@ -212,6 +219,7 @@ void Rope::_rebuild_rope() {
 	// free previous shapes
 	_clear_physics_shapes();
 	_particles.clear();
+	_frames.clear();
 
 	auto global_position = get_global_position();
 	auto end_location = global_position + Vector3(0, -1, 0) * get_rope_length();
@@ -255,7 +263,9 @@ void Rope::_rebuild_rope() {
 	end.pos_cur = end_location;
 
 	_update_anchors();
-	_update_physics(_preprocess_delta, _preprocess_iterations);
+	const float preprocess_delta = 1.0 / _simulation_rate;
+	const int preprocess_iterations = Math::max(int(_simulation_rate * _preprosses_time), 1);
+	_update_physics(preprocess_delta, preprocess_iterations);
 	_compute_particle_normals();
 
 	_queue_rebuild();
@@ -341,11 +351,11 @@ void Rope::_update_anchors() {
 	}
 
 	_update_anchor(_start_anchor, 0.0);
+	_update_anchor(_end_anchor, 1.0);
 	if (_anchors != nullptr) {
 		for (auto &anchor : _anchors->_positions)
 			_update_anchor(anchor.node, anchor.position);
 	}
-	_update_anchor(_end_anchor, 1.0);
 }
 
 #pragma endregion
@@ -474,6 +484,32 @@ void Rope::_compute_parallel_transport(LocalVector<Transform3D> &frames) const {
 			frames[i].basis.set_column(Z, B);
 		}
 	}
+}
+
+TypedArray<Transform3D> Rope::get_rope_frames() const {
+	TypedArray<Transform3D> array;
+
+	// manual copy
+	for (const auto &frame : _frames)
+		array.push_back(frame);
+	return array;
+}
+
+TypedArray<Vector3> Rope::get_particle_positions() const {
+	TypedArray<Vector3> array;
+
+	// manual copy
+	for (const auto &particle : _particles)
+		array.push_back(particle.pos_cur);
+	return array;
+}
+
+Transform3D Rope::get_rope_frame_at_offset(float offset) const {
+	if (_frames.size() >= 2) {
+		int frame = _frame_at_offset(_frames, offset, false);
+		return _frames[frame];
+	} else
+		return Transform3D();
 }
 
 int Rope::_frame_at_offset(const LocalVector<Transform3D> &frames, float offset, bool from_end) const {
@@ -700,11 +736,11 @@ void Rope::_rebuild_mesh() {
 	_compute_particle_normals();
 
 	// build the tranform frames from the catmull spline
-	LocalVector<Transform3D> frames;
-	_calculate_frames_for_particles(frames);
+	_frames.clear();
+	_calculate_frames_for_particles(_frames);
 
 	// Need at least two frames to draw a rope
-	if (frames.size() >= 2) {
+	if (_frames.size() >= 2) {
 		// tube parameters. set the number of sides based on rope width
 		// A 0.1 thickness rope will have 6 sides
 		// A 1.0 thickness rope will have 12 sides
@@ -716,18 +752,10 @@ void Rope::_rebuild_mesh() {
 		PackedVector3Array verts, norms;
 		PackedVector2Array uv1s;
 
-		const int last_frame = frames.size() - 1;
-		auto start_frame = _frame_at_offset(frames, get_start_offset(), false);
-		int end_frame = _frame_at_offset(frames, get_end_offset(), true);
-		if (end_frame == 0)
-			end_frame = last_frame;
-
-		start_frame = 0;
-		end_frame = last_frame;
-
-		_emit_endcap(true, frames[start_frame], sides, radius, verts, norms, uv1s);
-		_emit_tube(frames, start_frame, end_frame, sides, radius, verts, norms, uv1s);
-		_emit_endcap(false, frames[end_frame], sides, radius, verts, norms, uv1s);
+		const int last_frame = _frames.size() - 1;
+		_emit_endcap(true, _frames[0], sides, radius, verts, norms, uv1s);
+		_emit_tube(_frames, 0, last_frame, sides, radius, verts, norms, uv1s);
+		_emit_endcap(false, _frames[last_frame], sides, radius, verts, norms, uv1s);
 
 		// generate the catmull interpolation for the segments.
 		Array arrays;
@@ -741,18 +769,18 @@ void Rope::_rebuild_mesh() {
 		_generated_mesh->surface_set_material(0, get_material());
 
 		// align attachments if present
-		_align_attachment_node(get_start_attachment(), frames[0], 0.0);
+		_align_attachment_node(get_start_attachment(), _frames[0], 0.0);
 
 		// mid attachments
 		if (get_attachments() != nullptr) {
 			for (auto &attachment : get_attachments()->_positions) {
 				int index = Math::clamp(int(last_frame * attachment.position), 0, last_frame);
-				_align_attachment_node(attachment.node, frames[index], 0.0);
+				_align_attachment_node(attachment.node, _frames[index], 0.0);
 			}
 		}
 
 		// end attachment
-		Transform3D xform = frames[last_frame].rotated_local(Vector3(1, 0, 0), Math_PI);
+		Transform3D xform = _frames[last_frame].rotated_local(Vector3(1, 0, 0), Math_PI);
 		_align_attachment_node(get_end_attachment(), xform, 0.0);
 	}
 }

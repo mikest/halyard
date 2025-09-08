@@ -46,6 +46,7 @@ class Rope : public GeometryInstance3D {
 
 	// internal state
 	LocalVector<Particle> _particles;
+	LocalVector<Transform3D> _frames;
 	bool _dirty = true;
 	double _time = 0.0;
 	double _simulation_delta = 0.0;
@@ -84,8 +85,7 @@ class Rope : public GeometryInstance3D {
 	float _damping_factor = 100.0;
 
 	// initial simulation
-	int _preprocess_iterations = 5;
-	float _preprocess_delta = 1 / 30.0;
+	int _preprosses_time = 1.0;
 
 protected:
 	static void _bind_methods();
@@ -140,15 +140,19 @@ public:
 	Rope();
 	~Rope() override;
 
-	void _ready(void) override;
-
-	// void _process(double delta) override;
-	void _physics_process(double delta) override;
+	void _internal_ready();
+	void _internal_process(double delta);
+	void _internal_physics_process(double delta);
 
 	// derived properties
 	uint64_t get_particle_count() const;
 	uint64_t get_particle_count_for_length() const;
 	Ref<ArrayMesh> get_baked_mesh() const;
+
+	// utility
+	TypedArray<Transform3D> get_rope_frames() const;
+	Transform3D get_rope_frame_at_offset(float offset) const;
+	TypedArray<Vector3> get_particle_positions() const;
 
 	// Exported Properties
 	PROPERTY_GET_SET(float, rope_length, _queue_rebuild())
@@ -201,6 +205,5 @@ public:
 	PROPERTY_GET_SET(float, damping_factor, {})
 
 	// initial simulation
-	PROPERTY_GET_SET(int, preprocess_iterations, {})
-	PROPERTY_GET_SET(float, preprocess_delta, {})
+	PROPERTY_GET_SET(float, preprosses_time, {})
 };
