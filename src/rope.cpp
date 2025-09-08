@@ -1,4 +1,10 @@
 #include "rope.h"
+#include <godot_cpp/classes/engine.hpp>
+#include <godot_cpp/classes/physics_direct_space_state3d.hpp>
+#include <godot_cpp/classes/physics_ray_query_parameters3d.hpp>
+#include <godot_cpp/classes/physics_server3d.hpp>
+#include <godot_cpp/classes/sphere_shape3d.hpp>
+#include <godot_cpp/classes/world3d.hpp>
 #include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -10,27 +16,32 @@ const int Z = 2;
 Rope::Rope() {
 	_generated_mesh.instantiate();
 	set_base(_generated_mesh->get_rid());
+
+	_physics_body = PhysicsServer3D::get_singleton()->body_create();
+	PhysicsServer3D::get_singleton()->body_set_mode(_physics_body, PhysicsServer3D::BODY_MODE_STATIC);
 }
 
 Rope::~Rope() {
 	_generated_mesh->clear_surfaces();
 	_generated_mesh.unref();
+
+	PhysicsServer3D::get_singleton()->free_rid(_physics_body);
 }
 
 void Rope::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("get_baked_mesh"), &get_baked_mesh);
-	ClassDB::bind_method(D_METHOD("get_current_rope_length"), &get_current_rope_length);
-	ClassDB::bind_method(D_METHOD("get_particle_count_for_length"), &get_particle_count_for_length);
+	ClassDB::bind_method(D_METHOD("get_baked_mesh"), &Rope::get_baked_mesh);
+	ClassDB::bind_method(D_METHOD("get_current_rope_length"), &Rope::get_current_rope_length);
+	ClassDB::bind_method(D_METHOD("get_particle_count_for_length"), &Rope::get_particle_count_for_length);
 
 	EXPORT_PROPERTY(Variant::FLOAT, rope_length, Rope);
 	EXPORT_PROPERTY(Variant::NODE_PATH, start_anchor, Rope);
 	EXPORT_PROPERTY(Variant::NODE_PATH, end_anchor, Rope);
-	ClassDB::bind_method(D_METHOD("set_anchors", "anchors"), &set_anchors);
-	ClassDB::bind_method(D_METHOD("get_anchors"), &get_anchors);
+	ClassDB::bind_method(D_METHOD("set_anchors", "anchors"), &Rope::set_anchors);
+	ClassDB::bind_method(D_METHOD("get_anchors"), &Rope::get_anchors);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "anchors", PROPERTY_HINT_RESOURCE_TYPE, "RopePositions"), "set_anchors", "get_anchors");
 
-	ClassDB::bind_method(D_METHOD("set_appearance", "appearance"), &set_appearance);
-	ClassDB::bind_method(D_METHOD("get_appearance"), &get_appearance);
+	ClassDB::bind_method(D_METHOD("set_appearance", "appearance"), &Rope::set_appearance);
+	ClassDB::bind_method(D_METHOD("get_appearance"), &Rope::get_appearance);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "appearance", PROPERTY_HINT_RESOURCE_TYPE, "RopeAppearance"), "set_appearance", "get_appearance");
 
 	// simulation parameters
@@ -39,6 +50,15 @@ void Rope::_bind_methods() {
 	EXPORT_PROPERTY(Variant::FLOAT, simulation_rate, Rope);
 	EXPORT_PROPERTY(Variant::INT, stiffness_iterations, Rope);
 	EXPORT_PROPERTY(Variant::FLOAT, stiffness, Rope);
+	EXPORT_PROPERTY(Variant::FLOAT, friction, Rope);
+
+	ClassDB::bind_method(D_METHOD("set_collision_layer", "collision_layer"), &Rope::set_collision_layer);
+	ClassDB::bind_method(D_METHOD("get_collision_layer"), &Rope::get_collision_layer);
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "collision_layer", PROPERTY_HINT_LAYERS_3D_PHYSICS), "set_collision_layer", "get_collision_layer");
+
+	ClassDB::bind_method(D_METHOD("set_collision_mask", "collision_mask"), &Rope::set_collision_mask);
+	ClassDB::bind_method(D_METHOD("get_collision_mask"), &Rope::get_collision_mask);
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "collision_mask", PROPERTY_HINT_LAYERS_3D_PHYSICS), "set_collision_mask", "get_collision_mask");
 
 	// forces
 	ADD_GROUP("Forces", "");
@@ -67,17 +87,57 @@ void Rope::_bind_methods() {
 
 void Rope::_notification(int p_what) {
 	switch (p_what) {
+		case NOTIFICATION_ENTER_WORLD: {
+			RID space = get_world_3d()->get_space();
+			PhysicsServer3D::get_singleton()->body_set_space(_physics_body, space);
+			// _prepare_physics_server();
+		} break;
+		case NOTIFICATION_EXIT_WORLD: {
+			PhysicsServer3D::get_singleton()->body_set_space(_physics_body, RID());
+		} break;
+
+		case NOTIFICATION_TRANSFORM_CHANGED: {
+			// if (Engine::get_singleton()->is_editor_hint()) {
+			// 	// _reset_points_offsets();
+			// 	return;
+			// }
+
+			// PhysicsServer3D::get_singleton()->body_set_shape_transform(_physics_body, 0, get_global_transform());
+		} break;
+
+		case NOTIFICATION_VISIBILITY_CHANGED: {
+			// _update_pickable();
+		} break;
+
+			// case NOTIFICATION_DISABLED: {
+			// 	if (is_inside_tree() && (disable_mode == DISABLE_MODE_REMOVE)) {
+			// 		_prepare_physics_server();
+			// 	}
+			// } break;
+
+			// case NOTIFICATION_ENABLED: {
+			// 	if (is_inside_tree() && (disable_mode == DISABLE_MODE_REMOVE)) {
+			// 		_prepare_physics_server();
+			// 	}
+			// } break;
+
 		case NOTIFICATION_READY: {
 			// ensure we're always called, even when processing is disabled...
 			set_process_internal(true);
 			_rebuild_mesh();
 		} break;
 
-		case NOTIFICATION_INTERNAL_PROCESS: {
+		case NOTIFICATION_INTERNAL_PROCESS:
 			if (_pop_is_dirty()) {
 				set_global_transform(Transform3D(Basis(), get_global_position()));
 				_rebuild_mesh();
 			}
+			break;
+
+		case NOTIFICATION_EXIT_TREE: {
+			// if (_collider != nullptr)
+			// 	_collider->queue_free();
+			// _collider = nullptr;
 		} break;
 	}
 }
@@ -110,10 +170,7 @@ void Rope::_physics_process(double delta) {
 
 		// run simulation
 		if (_simulate) {
-			_apply_forces();
-			_verlet_process(_simulation_delta);
-			_apply_constraints();
-
+			_update_physics(float(simulation_step), 1);
 			_queue_rebuild();
 		}
 	}
@@ -128,7 +185,34 @@ uint64_t Rope::get_particle_count_for_length() const {
 	return particle_count;
 }
 
+void Rope::_clear_physics_shapes() {
+	PhysicsServer3D::get_singleton()->body_clear_shapes(_physics_body);
+	for (Particle &p : _particles) {
+		if (p.shape.is_valid()) {
+			PhysicsServer3D::get_singleton()->free_rid(p.shape);
+			p.shape = RID();
+		}
+	}
+}
+
+void Rope::_rebuild_physics_shapes() {
+	// create a small sphere shape for each particle
+	// this is a simple approximation, for better collision use capsules between particles
+	float radius = get_rope_width() * 0.5f;
+
+	for (Particle &p : _particles) {
+		RID shape = PhysicsServer3D::get_singleton()->sphere_shape_create();
+		PhysicsServer3D::get_singleton()->shape_set_data(shape, radius);
+		PhysicsServer3D::get_singleton()->body_add_shape(_physics_body, shape, Transform3D(Basis(), p.pos_cur));
+		p.shape = shape;
+	}
+}
+
 void Rope::_rebuild_rope() {
+	// free previous shapes
+	_clear_physics_shapes();
+	_particles.clear();
+
 	auto global_position = get_global_position();
 	auto end_location = global_position + Vector3(0, -1, 0) * get_rope_length();
 	bool end_attached = false;
@@ -143,8 +227,8 @@ void Rope::_rebuild_rope() {
 	auto segment_length = get_rope_length() / particle_count;
 	auto initial_accel = _gravity * _gravity_scale;
 	Vector3 direction = (end_location - global_position).normalized();
-	_particles.clear();
 
+	float radius = get_rope_width() * 0.5f;
 	for (int i = 0; i < particle_count; i++) {
 		Particle particle;
 		Vector3 position = global_position + (direction * segment_length * float(i));
@@ -152,6 +236,13 @@ void Rope::_rebuild_rope() {
 		particle.pos_cur = position;
 		particle.accel = initial_accel;
 		particle.attached = false;
+
+		// physics shape
+		RID shape = PhysicsServer3D::get_singleton()->sphere_shape_create();
+		PhysicsServer3D::get_singleton()->shape_set_data(shape, radius);
+		PhysicsServer3D::get_singleton()->body_add_shape(_physics_body, shape, Transform3D(Basis(), particle.pos_cur));
+		particle.shape = shape;
+
 		_particles.push_back(particle);
 	}
 
@@ -164,13 +255,9 @@ void Rope::_rebuild_rope() {
 	end.pos_cur = end_location;
 
 	_update_anchors();
-
-	for (int i = 0; i < _preprocess_iterations; i++) {
-		_verlet_process(_preprocess_delta);
-		_apply_constraints();
-	}
-
+	_update_physics(_preprocess_delta, _preprocess_iterations);
 	_compute_particle_normals();
+
 	_queue_rebuild();
 }
 
@@ -674,6 +761,35 @@ void Rope::_rebuild_mesh() {
 
 #pragma region Physics
 
+int Rope::get_collision_layer() const { return _collision_layer; }
+
+void Rope::set_collision_layer(int layer) {
+	_collision_layer = layer;
+	PhysicsServer3D::get_singleton()->body_set_collision_layer(_physics_body, layer);
+}
+
+int Rope::get_collision_mask() const { return _collision_mask; }
+
+void Rope::set_collision_mask(int mask) {
+	_collision_mask = mask;
+	PhysicsServer3D::get_singleton()->body_set_collision_mask(_physics_body, mask);
+}
+
+void Rope::_update_physics(float delta, int iterations) {
+	for (int i = 0; i < iterations; i++) {
+		_apply_forces();
+		_apply_constraints();
+		_verlet_process(delta);
+		_stiff_rope();
+
+		_update_collision_shapes();
+	}
+}
+
+void Rope::_prepare_physics_server() {
+	// no-op for now
+}
+
 void Rope::_stiff_rope() {
 	// Calculate the maximum allowed rope length
 	const float max_length = get_rope_length() * 1.1f; // Allow 10% stretch, adjust as needed
@@ -749,8 +865,121 @@ void Rope::_apply_forces() {
 	}
 }
 
+// NOTE: this doesn't quite work as expected...
+Vector3 reflect_sphere(Vector3 start, Vector3 end, Vector3 normal, Vector3 collision, float radius) {
+	// Calculate the direction and distance of movement
+	Vector3 direction = end - start;
+	float distance = direction.length();
+	if (distance < CMP_EPSILON) {
+		// No movement
+		return end;
+	}
+	direction = direction.normalized();
+
+	// Find the point where the sphere would touch the plane
+	// The plane is defined by (collision, normal)
+	// Move the sphere center to the point where the sphere's surface touches the plane
+	float start_to_plane = (start - collision).dot(normal) - radius;
+	float end_to_plane = (end - collision).dot(normal) - radius;
+
+	// If the sphere is moving away from the plane, do nothing
+	// if (start_to_plane < 0.0f && end_to_plane < 0.0f) {
+	// 	return end;
+	// }
+
+	// Find intersection point along the movement vector
+	float denom = direction.dot(normal);
+	if (Math::is_zero_approx(denom)) {
+		// Parallel to the plane, no collision
+		return end;
+	}
+
+	// t is the fraction along the movement vector where the sphere touches the plane
+	float t = ((collision - start).dot(normal) - radius) / denom;
+	t = Math::clamp(t, 0.0f, 1.0f);
+
+	// Compute the contact point
+	Vector3 contact_point = start + direction * (distance * t);
+
+	// Reflect the remaining movement after collision
+	Vector3 remaining = end - contact_point;
+	Vector3 reflected = remaining.bounce(normal);
+
+	// New end position after reflection
+	Vector3 end_position = contact_point + reflected;
+
+	// Optionally, you could return or output end_position
+	// For now, just for demonstration, print it
+	return end_position;
+}
+
 void Rope::_apply_constraints() {
-	_stiff_rope();
+	// ray cast from the previous position to the current position
+	// if we hit something, move the particle to the hit position
+	Ref<World3D> w3d = get_world_3d();
+	ERR_FAIL_COND(w3d.is_null());
+
+	PhysicsDirectSpaceState3D *dss = PhysicsServer3D::get_singleton()->space_get_direct_state(w3d->get_space());
+	ERR_FAIL_NULL(dss);
+
+	// set up the raycast parameters
+	if (_collision_mask) {
+		Ref<PhysicsRayQueryParameters3D> rq;
+		rq.instantiate();
+
+		TypedArray<RID> exclude;
+		exclude.append(_physics_body);
+		rq->set_exclude(exclude);
+		rq->set_collision_mask(_collision_mask);
+		rq->set_collide_with_areas(false);
+		rq->set_collide_with_bodies(true);
+
+		float friction = (1.0 - Math::clamp(get_friction(), 0.0f, 1.0f));
+		float radius = get_rope_width() * 0.5f;
+		for (Particle &p : _particles) {
+			if (p.attached)
+				continue;
+
+			Vector3 from = p.pos_prev;
+			Vector3 to = p.pos_cur;
+			Vector3 direction = to - from;
+
+			float length = direction.length();
+			if (length < CMP_EPSILON)
+				continue;
+
+			rq->set_from(from);
+			rq->set_to(to);
+
+			Dictionary result = dss->intersect_ray(rq);
+			if (!result.is_empty()) {
+				// move the particle to the hit position
+				Vector3 position = result["position"];
+				Vector3 normal = result["normal"];
+				Vector3 contact = position + normal * CMP_EPSILON;
+
+				// // reflect the acceleration and the final position across the normal at the reflection point
+				p.accel = p.accel.bounce(normal) * friction;
+				p.pos_cur = ((p.pos_cur - contact) * friction).bounce(normal) + contact;
+
+				// TODO: figure out sphere contact point and reflect from there instead.
+				// p.pos_cur = reflect_sphere(p.pos_prev, p.pos_cur, normal, contact, radius);
+			}
+		}
+	}
+}
+
+void Rope::_update_collision_shapes() {
+	// update the shape positions1
+	int index = 0;
+	int shape_count = PhysicsServer3D::get_singleton()->body_get_shape_count(_physics_body);
+	_ASSERT(shape_count == _particles.size());
+	for (int i = 0; i < shape_count; i++) {
+		// update the shape transform to match the particle position
+		Particle &p = _particles[i];
+		Transform3D xform(Basis(), p.pos_cur);
+		PhysicsServer3D::get_singleton()->body_set_shape_transform(_physics_body, i, xform);
+	}
 }
 
 #pragma endregion

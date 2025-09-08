@@ -3,9 +3,12 @@
 #include <godot_cpp/classes/array_mesh.hpp>
 #include <godot_cpp/classes/geometry_instance3d.hpp>
 
+#include <godot_cpp/classes/collision_object3d.hpp>
+#include <godot_cpp/classes/collision_shape3d.hpp>
 #include <godot_cpp/classes/fast_noise_lite.hpp>
 #include <godot_cpp/classes/material.hpp>
 #include <godot_cpp/classes/node3d.hpp>
+#include <godot_cpp/classes/physics_server3d.hpp>
 #include <godot_cpp/classes/wrapped.hpp>
 #include <godot_cpp/templates/local_vector.hpp>
 #include <godot_cpp/templates/pair.hpp>
@@ -22,6 +25,7 @@ class Rope : public GeometryInstance3D {
 	GDCLASS(Rope, GeometryInstance3D)
 
 	Ref<ArrayMesh> _generated_mesh;
+	RID _physics_body;
 
 	// Rope particle, segments connect between particles.
 	struct Particle {
@@ -34,6 +38,7 @@ class Rope : public GeometryInstance3D {
 		Vector3 B = Vector3(0, 0, 0);
 
 		bool attached = false;
+		RID shape;
 
 		Particle() = default;
 		~Particle() = default;
@@ -55,6 +60,10 @@ class Rope : public GeometryInstance3D {
 	float _simulation_rate = 60.0;
 	int _stiffness_iterations = 2;
 	float _stiffness = 0.9;
+	float _friction = 0.5;
+
+	int _collision_layer = 1;
+	int _collision_mask = 1;
 
 	// attachments
 	NodePath _start_anchor = ".";
@@ -107,10 +116,16 @@ protected:
 	bool _get_anchor_transform(const NodePath &path, Transform3D &xform) const;
 
 	// Physics
+	void _update_physics(float delta, int iterations);
 	void _stiff_rope();
 	void _verlet_process(float delta);
 	void _apply_forces();
 	void _apply_constraints();
+	void _update_collision_shapes();
+
+	void _clear_physics_shapes();
+	void _rebuild_physics_shapes();
+	void _prepare_physics_server();
 
 	// Mesh building
 	void _rebuild_mesh();
@@ -165,6 +180,12 @@ public:
 	PROPERTY_GET_SET(float, simulation_rate, {})
 	PROPERTY_GET_SET(int, stiffness_iterations, {})
 	PROPERTY_GET_SET(float, stiffness, {})
+	PROPERTY_GET_SET(float, friction, {})
+
+	int get_collision_layer() const;
+	void set_collision_layer(int layer);
+	int get_collision_mask() const;
+	void set_collision_mask(int mask);
 
 	// forces
 	PROPERTY_GET_SET(bool, apply_wind, {})
