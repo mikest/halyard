@@ -492,7 +492,7 @@ int Rope::_frame_at_offset(const LocalVector<Transform3D> &frames, float offset,
 }
 
 void Rope::_calculate_frames_for_particles(LocalVector<Transform3D> &frames) const {
-	_ASSERT(_particles.size() >= 2);
+	DEV_ASSERT(_particles.size() >= 2);
 
 	Vector3 global_position = get_global_position();
 	auto lod = get_rope_lod();
@@ -973,7 +973,7 @@ void Rope::_update_collision_shapes() {
 	// update the shape positions1
 	int index = 0;
 	int shape_count = PhysicsServer3D::get_singleton()->body_get_shape_count(_physics_body);
-	_ASSERT(shape_count == _particles.size());
+	DEV_ASSERT(shape_count == _particles.size());
 	for (int i = 0; i < shape_count; i++) {
 		// update the shape transform to match the particle position
 		Particle &p = _particles[i];
