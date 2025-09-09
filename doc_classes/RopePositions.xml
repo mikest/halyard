@@ -1,5 +1,7 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<class name="RopePositions" inherits="Resource" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<?xml version="1.0" encoding="UTF-8"?>
+<class name="RopePositions" inherits="Resource"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
 		A class for describing anchor and attachment node positions.
 	</brief_description>
@@ -13,9 +15,6 @@
 		<method name="set_position">
 			<return type="void" />
 			<param index="0" name="index" type="int" />
-			<description>
-				Index of the rope position.
-			</description>
 			<param index="1" name="position" type="float" />
 			<description>
 				Position of the node along the rope, as a scalar [0..1] of the [code]rope_length[/code]
@@ -24,9 +23,6 @@
 		<method name="set_node">
 			<return type="void" />
 			<param index="0" name="index" type="int" />
-			<description>
-				Index of the rope position.
-			</description>
 			<param index="1" name="node" type="NodePath" />
 			<description>
 				NodePath to the node to be anchored or attached at the position.
@@ -34,8 +30,8 @@
 		</method>
 	</methods>
 	<members>
-        <member name="position_count" type="int">
-The number of rope positions.
+		<member name="position_count" type="int">
+			The number of rope positions.
         </member>
-    </members>
+	</members>
 </class>

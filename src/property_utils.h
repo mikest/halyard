@@ -20,3 +20,8 @@
 	ClassDB::bind_method(D_METHOD(STR(set_##m_property), STR(m_property)), &m_class::set_##m_property); \
 	ClassDB::bind_method(D_METHOD(STR(get_##m_property)), &m_class::get_##m_property);                  \
 	ADD_PROPERTY(PropertyInfo(m_type, #m_property), STR(set_##m_property), STR(get_##m_property))
+
+#define EXPORT_PROPERTY_RANGED(m_type, m_property, m_class, m_range)                                    \
+	ClassDB::bind_method(D_METHOD(STR(set_##m_property), STR(m_property)), &m_class::set_##m_property); \
+	ClassDB::bind_method(D_METHOD(STR(get_##m_property)), &m_class::get_##m_property);                  \
+	ADD_PROPERTY(PropertyInfo(m_type, #m_property, PROPERTY_HINT_RANGE, m_range), STR(set_##m_property), STR(get_##m_property))

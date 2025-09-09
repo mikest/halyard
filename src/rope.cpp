@@ -33,8 +33,9 @@ void Rope::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_current_rope_length"), &Rope::get_current_rope_length);
 	ClassDB::bind_method(D_METHOD("get_particle_count_for_length"), &Rope::get_particle_count_for_length);
 
-	ClassDB::bind_method(D_METHOD("get_rope_frame_at_offset", "offset"), &Rope::get_rope_frame_at_offset);
-	ClassDB::bind_method(D_METHOD("get_rope_frames"), &Rope::get_rope_frames);
+	ClassDB::bind_method(D_METHOD("get_rope_frame_count"), &Rope::get_rope_frame_count);
+	ClassDB::bind_method(D_METHOD("get_rope_frame", "index"), &Rope::get_rope_frame);
+	ClassDB::bind_method(D_METHOD("get_rope_frames"), &Rope::get_all_rope_frames);
 	ClassDB::bind_method(D_METHOD("get_particle_positions"), &Rope::get_particle_positions);
 
 	EXPORT_PROPERTY(Variant::FLOAT, rope_length, Rope);
@@ -51,11 +52,11 @@ void Rope::_bind_methods() {
 	// simulation parameters
 	ADD_GROUP("Simulation", "");
 	EXPORT_PROPERTY(Variant::BOOL, simulate, Rope);
-	EXPORT_PROPERTY(Variant::FLOAT, preprosses_time, Rope);
+	EXPORT_PROPERTY(Variant::FLOAT, preprocess_time, Rope);
 	EXPORT_PROPERTY(Variant::FLOAT, simulation_rate, Rope);
 	EXPORT_PROPERTY(Variant::INT, stiffness_iterations, Rope);
 	EXPORT_PROPERTY(Variant::FLOAT, stiffness, Rope);
-	EXPORT_PROPERTY(Variant::FLOAT, friction, Rope);
+	EXPORT_PROPERTY_RANGED(Variant::FLOAT, friction, Rope, "0.0,1.0,0.01");
 
 	ClassDB::bind_method(D_METHOD("set_collision_layer", "collision_layer"), &Rope::set_collision_layer);
 	ClassDB::bind_method(D_METHOD("get_collision_layer"), &Rope::get_collision_layer);
@@ -264,7 +265,7 @@ void Rope::_rebuild_rope() {
 
 	_update_anchors();
 	const float preprocess_delta = 1.0 / _simulation_rate;
-	const int preprocess_iterations = Math::max(int(_simulation_rate * _preprosses_time), 1);
+	const int preprocess_iterations = Math::max(int(_simulation_rate * _preprocess_time), 1);
 	_update_physics(preprocess_delta, preprocess_iterations);
 	_compute_particle_normals();
 
@@ -486,7 +487,18 @@ void Rope::_compute_parallel_transport(LocalVector<Transform3D> &frames) const {
 	}
 }
 
-TypedArray<Transform3D> Rope::get_rope_frames() const {
+int Rope::get_rope_frame_count(int index) const {
+	return _frames.size();
+}
+
+Transform3D Rope::get_rope_frame(int index) const {
+	if (index < 0 || index >= _frames.size())
+		return Transform3D();
+
+	return _frames[index];
+}
+
+TypedArray<Transform3D> Rope::get_all_rope_frames() const {
 	TypedArray<Transform3D> array;
 
 	// manual copy
@@ -502,14 +514,6 @@ TypedArray<Vector3> Rope::get_particle_positions() const {
 	for (const auto &particle : _particles)
 		array.push_back(particle.pos_cur);
 	return array;
-}
-
-Transform3D Rope::get_rope_frame_at_offset(float offset) const {
-	if (_frames.size() >= 2) {
-		int frame = Math::clamp(int(offset * (_frames.size() - 1)), 0, int(_frames.size() - 1));
-		return _frames[frame];
-	} else
-		return Transform3D();
 }
 
 int Rope::_frame_at_offset(const LocalVector<Transform3D> &frames, float offset, bool from_end) const {

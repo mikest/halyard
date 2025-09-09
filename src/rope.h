@@ -52,7 +52,6 @@ class Rope : public GeometryInstance3D {
 	double _simulation_delta = 0.0;
 
 	// rope geometry
-
 	float _rope_length = 4.0;
 	Ref<RopeAppearance> _appearance;
 
@@ -85,7 +84,7 @@ class Rope : public GeometryInstance3D {
 	float _damping_factor = 100.0;
 
 	// initial simulation
-	int _preprosses_time = 1.0;
+	int _preprocess_time = 1.0;
 
 protected:
 	static void _bind_methods();
@@ -147,12 +146,14 @@ public:
 	// derived properties
 	uint64_t get_particle_count() const;
 	uint64_t get_particle_count_for_length() const;
+	TypedArray<Vector3> get_particle_positions() const;
+
 	Ref<ArrayMesh> get_baked_mesh() const;
 
 	// utility
-	TypedArray<Transform3D> get_rope_frames() const;
-	Transform3D get_rope_frame_at_offset(float offset) const;
-	TypedArray<Vector3> get_particle_positions() const;
+	int get_rope_frame_count(int index) const;
+	Transform3D get_rope_frame(int index) const;
+	TypedArray<Transform3D> get_all_rope_frames() const;
 
 	// Exported Properties
 	PROPERTY_GET_SET(float, rope_length, _queue_rebuild())
@@ -205,5 +206,5 @@ public:
 	PROPERTY_GET_SET(float, damping_factor, {})
 
 	// initial simulation
-	PROPERTY_GET_SET(float, preprosses_time, {})
+	PROPERTY_GET_SET(float, preprocess_time, {})
 };

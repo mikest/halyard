@@ -1,5 +1,7 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<class name="Rope" inherits="GeometryInstance3D" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<?xml version="1.0" encoding="UTF-8"?>
+<class name="Rope" inherits="GeometryInstance3D"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
 		A fast verlet rope class.
 	</brief_description>
@@ -9,66 +11,98 @@
 	<tutorials>
 	</tutorials>
 	<methods>
-		<method name="get_baked_mesh" qualifiers="const">
+		<method name="get_baked_mesh">
 			<return type="Mesh" />
 			<description>
 				Returns the current mesh of the rope. Changes every physics frame.
 			</description>
 		</method>
+
+		<method name="get_all_rope_frames">
+			<return type="Array[Transform3D]" />
+			<description>
+				Returns a list of all the transform frames used to render the rope. The frame tangents and normals are aligned along the rope and there will be
+				more frames for higher LODs.
+			</description>
+		</method>
+
+		<method name="get_rope_frame">
+			<return type="Transform3D" />
+			<param index="0" name="index" type="int" />
+			<description>
+				Returns an individual frame at index, or Transform.IDENTITY if out of bounds.
+			</description>
+		</method>
+
+		<method name="get_rope_frame_count">
+			<return type="int" />
+			<description>
+				Returns the current number of frames.
+			</description>
+		</method>
+
+		<method name="get_particle_positions">
+			<return type="Array[Vector3]" />
+			<description>
+				Returns the current positions for the rope particles. Particle positions are used to simulate the physics.
+			</description>
+		</method>
+
 	</methods>
 	<members>
 		<member name="rope_length" type="int">
-Length of the rope. Segments will be `rope_length / rope_particles` long.
+			Length of the rope. Segments will be `rope_length / rope_particles` long.
         </member>
-
 		<member name="start_anchor" type="NodePath">
-NodePath to a node to anchor the start of the rope to. The origin of the rope will follow this node. Can point to self.
+			NodePath to a node to anchor the start of the rope to. The origin of the rope will follow this node. Can point to self.
 		</member>
 		<member name="end_anchor" type="NodePath">
-NodePath to a node to anchor the end of the rope to. The end of the rope will follow this node.
+			NodePath to a node to anchor the end of the rope to. The end of the rope will follow this node.
 		</member>
 		<member name="anchors" type="RopePositions">
-A RopePositions resource containing additional anchors to attach the rope to. All anchors will be aligned to the nearest frame, and so the positions
-are dependent on the number of particles in the rope and the LOD.
+			A RopePositions resource containing additional anchors to attach the rope to. All anchors will be aligned to the nearest frame, and so the positions
+			are dependent on the number of particles in the rope and the LOD.
 		</member>
-
 		<member name="appearance" type="RopeAppearance">
-A RopeAppearance resource containing properties that control how the rope is rendered.
+			A RopeAppearance resource containing properties that control how the rope is rendered.
 		</member>
 
 		<member name="simulation_rate" type="float">
-Framerate to run the simulation at in FPS.
+			Framerate to run the simulation at in FPS.
         </member>
 		<member name="stiffness_iterations" type="int">
-When performing stiffness calculations, the number of passes through the rope to run per frame.
-Higher values will improve stiffness stability.
+			When performing stiffness calculations, the number of passes through the rope to run per frame.
+			Higher values will improve stiffness stability.
         </member>
 		<member name="stiffness" type="float">
-Stiffness factor. Controls stretchyness of rope.
-Should be around [0.8 - 1.2] for a realistic rope.
-Higher values may lead to instability in the simulation.
+			Stiffness factor. Controls stretchyness of rope.
+			Should be around [0.8 - 1.2] for a realistic rope.
+			Higher values may lead to instability in the simulation.
+        </member>
+		<member name="friction" type="float">
+			At 0.0 the rope will slide off surfaces. At 1.0 the rope will stick to surfaces.
+        </member>
+		<member name="preprocess_time" type="float">
+			Virtual time to calculate into the future before first render.
+			This will run [code]preprocess_time * simulation_rate[/code] frames as fast as possible.
         </member>
 
 		<member name="wind" type="Vector3">
-Wind direction.
+			Wind direction.
 		</member>
 		<member name="wind_scale" type="float">
-Scale factor to apply to the wind vector when applying it to the rope simulation.
+			Scale factor to apply to the wind vector when applying it to the rope simulation.
 		</member>
 		<member name="wind_noise" type="FastNoiseLite">
+			Wind noise.
+		</member>
 
 		<member name="gravity" type="Vector3">
-Gravity vector to apply to the rope simulation. Default is (0, -9.8, 0).
+			Gravity vector to apply to the rope simulation. Default is (0, -9.8, 0).
 		</member>
 		<member name="damping" type="float">
-Velocity damping factor to apply to the rope simulation. 0 is undamped, 100 is heavily damped.
-		</member>
+			Velocity damping factor to apply to the rope simulation. 0 is undamped, 100 is heavily damped.
 		</member>
 
-
-		<member name="preprocess_time" type="float">
-Virtual time to calculate into the future before first render.
-This will run [code]preprocess_time * simulation_rate[/code] frames as fast as possible.
-        </member>
-    </members>
+	</members>
 </class>
