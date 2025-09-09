@@ -354,8 +354,12 @@ void Rope::_update_anchors() {
 	_update_anchor(_start_anchor, 0.0);
 	_update_anchor(_end_anchor, 1.0);
 	if (_anchors != nullptr) {
-		for (auto &anchor : _anchors->_positions)
-			_update_anchor(anchor.node, anchor.position);
+		int count = _anchors->get_position_count();
+		for (int idx = 0; idx < count; idx++) {
+			auto position = _anchors->get_position_at_index(idx, _rope_length);
+			auto node = _anchors->get_node(idx);
+			_update_anchor(node, position);
+		}
 	}
 }
 
@@ -487,7 +491,7 @@ void Rope::_compute_parallel_transport(LocalVector<Transform3D> &frames) const {
 	}
 }
 
-int Rope::get_rope_frame_count(int index) const {
+int Rope::get_rope_frame_count() const {
 	return _frames.size();
 }
 
@@ -776,10 +780,15 @@ void Rope::_rebuild_mesh() {
 		_align_attachment_node(get_start_attachment(), _frames[0], 0.0);
 
 		// mid attachments
-		if (get_attachments() != nullptr) {
-			for (auto &attachment : get_attachments()->_positions) {
-				int index = Math::clamp(int(last_frame * attachment.position), 0, last_frame);
-				_align_attachment_node(attachment.node, _frames[index], 0.0);
+		auto attachments = get_attachments();
+		if (attachments != nullptr) {
+			int count = attachments->get_position_count();
+			for (int idx = 0; idx < count; idx++) {
+				float position = attachments->get_position_at_index(idx, _rope_length);
+				NodePath node = attachments->get_node(idx);
+
+				int index = Math::clamp(int(last_frame * position), 0, last_frame);
+				_align_attachment_node(node, _frames[index], 0.0);
 			}
 		}
 

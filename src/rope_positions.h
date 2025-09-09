@@ -3,10 +3,11 @@
 #include "property_utils.h"
 #include <godot_cpp/classes/resource.hpp>
 #include <godot_cpp/classes/wrapped.hpp>
+#include <godot_cpp/core/binder_common.hpp>
+#include <godot_cpp/core/gdvirtual.gen.inc>
 #include <godot_cpp/templates/local_vector.hpp>
 #include <godot_cpp/templates/pair.hpp>
 #include <godot_cpp/variant/variant.hpp>
-
 
 using namespace godot;
 
@@ -41,6 +42,9 @@ protected:
 public:
 	RopePositions() = default;
 	~RopePositions() override = default;
+
+	GDVIRTUAL2RC(float, get_position_at_index, uint64_t, float);
+	virtual float get_position_at_index(uint64_t idx, float) const;
 
 	void set_position_count(uint64_t count);
 	uint64_t get_position_count() const;

@@ -3,6 +3,8 @@
 void RopePositions::_bind_methods() {
 	EXPORT_PROPERTY(Variant::INT, position_count, RopePositions);
 
+	GDVIRTUAL_BIND(get_position_at_index)
+
 	ClassDB::bind_method(D_METHOD("set_position", "index", "position"), &RopePositions::set_position);
 	ClassDB::bind_method(D_METHOD("get_position", "index"), &RopePositions::get_position);
 
@@ -19,7 +21,8 @@ void RopePositions::_get_property_list(List<PropertyInfo> *p_list) const {
 		String name = POSITION_PREFIX + itos(idx);
 
 		p_list->push_back(PropertyInfo(Variant::NIL, name.capitalize(), PROPERTY_HINT_NONE, name + "/", PROPERTY_USAGE_GROUP));
-		p_list->push_back(PropertyInfo(Variant::FLOAT, name + "/position", PROPERTY_HINT_RANGE, "0.0,1.0,0.01", usage));
+		// p_list->push_back(PropertyInfo(Variant::FLOAT, name + "/position", PROPERTY_HINT_RANGE, "0.0,1.0,0.01", usage));
+		p_list->push_back(PropertyInfo(Variant::FLOAT, name + "/position", PROPERTY_HINT_NONE, "", usage));
 		p_list->push_back(PropertyInfo(Variant::NODE_PATH, name + "/node", PROPERTY_HINT_NODE_PATH_TO_EDITED_NODE, "", usage));
 	}
 }
@@ -95,6 +98,17 @@ Pair<uint64_t, String> RopePositions::_get_propname_with_index(const StringName 
 
 #pragma region Accessors
 
+float RopePositions::get_position_at_index(uint64_t idx, float rope_length) const {
+	if (!GDVIRTUAL_IS_OVERRIDDEN(get_position_at_index)) {
+		// rope_length ignored in default impl
+		return _positions.get(idx).position;
+	} else {
+		float ret_val;
+		GDVIRTUAL_CALL(get_position_at_index, idx, rope_length, ret_val);
+		return ret_val;
+	}
+}
+
 void RopePositions::set_position_count(uint64_t count) {
 	if (count > MAX_ROPE_POSITIONS) {
 		print_error("RopePositions: invalid count passed to set_position_count(), max_count:" + itos(MAX_ROPE_POSITIONS));
@@ -128,6 +142,7 @@ float RopePositions::get_position(uint64_t idx) const {
 	}
 
 	return _positions.get(idx).position;
+	//return get_position_at_index(idx);
 }
 
 void RopePositions::set_node(uint64_t idx, const NodePath &val) {

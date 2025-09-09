@@ -20,6 +20,7 @@
 #include "rope_positions.h"
 
 using namespace godot;
+class RopePositions;
 
 class Rope : public GeometryInstance3D {
 	GDCLASS(Rope, GeometryInstance3D)
@@ -151,7 +152,7 @@ public:
 	Ref<ArrayMesh> get_baked_mesh() const;
 
 	// utility
-	int get_rope_frame_count(int index) const;
+	int get_rope_frame_count() const;
 	Transform3D get_rope_frame(int index) const;
 	TypedArray<Transform3D> get_all_rope_frames() const;
 

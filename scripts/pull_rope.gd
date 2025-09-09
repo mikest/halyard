@@ -37,7 +37,8 @@ func _physics_process(_delta: float) -> void:
 	
 	# the attachment will be aligned along the rope Tangent, so we'll use that to se the force direction
 	if pull_on:
-		var xform : Transform3D = get_rope_frame_at_offset(1.0)
+		var count := get_rope_frame_count()
+		var xform : Transform3D = get_rope_frame(count-1)
 		xform = global_transform * xform
 		#DebugDraw3D.draw_gizmo(xform)
 		
