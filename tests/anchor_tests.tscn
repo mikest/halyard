@@ -1,0 +1,146 @@
+[gd_scene load_steps=6 format=3 uid="uid://bl1snne1dyabg"]
+
+[sub_resource type="RopePositions" id="RopePositions_ntxkk"]
+position_count = 3
+position_0/position = 0.25
+position_0/node = NodePath("Anchor1")
+position_1/position = 0.5
+position_1/node = NodePath("Anchor2")
+position_2/position = 0.75
+position_2/node = NodePath("Anchor3")
+
+[sub_resource type="RopeAppearance" id="RopeAppearance_mcmdf"]
+rope_lod = 4
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ntxkk"]
+albedo_color = Color(1, 0, 0, 1)
+
+[sub_resource type="RopeAppearance" id="RopeAppearance_1jhvu"]
+rope_lod = 4
+particles_per_meter = 4
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mcmdf"]
+albedo_color = Color(0, 0.75, 1, 1)
+
+[node name="Node3D" type="Node3D"]
+
+[node name="RelaxedRope" type="Rope" parent="."]
+end_anchor = NodePath("EndAnchor")
+anchors = SubResource("RopePositions_ntxkk")
+
+[node name="Anchor1" type="Marker3D" parent="RelaxedRope"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0, 0)
+
+[node name="Anchor2" type="Marker3D" parent="RelaxedRope"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0)
+
+[node name="Anchor3" type="Marker3D" parent="RelaxedRope"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, 0)
+
+[node name="EndAnchor" type="Marker3D" parent="RelaxedRope"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
+
+[node name="StretchedRope" type="Rope" parent="."]
+rope_length = 1.0
+end_anchor = NodePath("EndAnchor")
+anchors = SubResource("RopePositions_ntxkk")
+stiffness = 0.1
+collision_layer = 0
+collision_mask = 0
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1)
+
+[node name="Anchor1" type="Marker3D" parent="StretchedRope"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0, 0)
+
+[node name="Anchor2" type="Marker3D" parent="StretchedRope"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0)
+
+[node name="Anchor3" type="Marker3D" parent="StretchedRope"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, 0)
+
+[node name="EndAnchor" type="Marker3D" parent="StretchedRope"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
+
+[node name="RelaxedRope2" type="Rope" parent="."]
+end_anchor = NodePath("EndAnchor")
+anchors = SubResource("RopePositions_ntxkk")
+appearance = SubResource("RopeAppearance_mcmdf")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.75)
+material_override = SubResource("StandardMaterial3D_ntxkk")
+
+[node name="Anchor1" type="Marker3D" parent="RelaxedRope2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0, 0)
+
+[node name="Anchor2" type="Marker3D" parent="RelaxedRope2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0)
+
+[node name="Anchor3" type="Marker3D" parent="RelaxedRope2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, 0)
+
+[node name="EndAnchor" type="Marker3D" parent="RelaxedRope2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
+
+[node name="StretchedRope2" type="Rope" parent="."]
+rope_length = 1.0
+end_anchor = NodePath("EndAnchor")
+anchors = SubResource("RopePositions_ntxkk")
+appearance = SubResource("RopeAppearance_mcmdf")
+stiffness = 0.1
+collision_layer = 0
+collision_mask = 0
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.75)
+material_override = SubResource("StandardMaterial3D_ntxkk")
+
+[node name="Anchor1" type="Marker3D" parent="StretchedRope2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0, 0)
+
+[node name="Anchor2" type="Marker3D" parent="StretchedRope2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0)
+
+[node name="Anchor3" type="Marker3D" parent="StretchedRope2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, 0)
+
+[node name="EndAnchor" type="Marker3D" parent="StretchedRope2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
+
+[node name="RelaxedRope3" type="Rope" parent="."]
+end_anchor = NodePath("EndAnchor")
+anchors = SubResource("RopePositions_ntxkk")
+appearance = SubResource("RopeAppearance_1jhvu")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3.75)
+material_override = SubResource("StandardMaterial3D_mcmdf")
+
+[node name="Anchor1" type="Marker3D" parent="RelaxedRope3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0, 0)
+
+[node name="Anchor2" type="Marker3D" parent="RelaxedRope3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0)
+
+[node name="Anchor3" type="Marker3D" parent="RelaxedRope3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, 0)
+
+[node name="EndAnchor" type="Marker3D" parent="RelaxedRope3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
+
+[node name="StretchedRope3" type="Rope" parent="."]
+rope_length = 1.0
+end_anchor = NodePath("EndAnchor")
+anchors = SubResource("RopePositions_ntxkk")
+appearance = SubResource("RopeAppearance_1jhvu")
+stiffness = 0.1
+collision_layer = 0
+collision_mask = 0
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4.75)
+material_override = SubResource("StandardMaterial3D_mcmdf")
+
+[node name="Anchor1" type="Marker3D" parent="StretchedRope3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0, 0)
+
+[node name="Anchor2" type="Marker3D" parent="StretchedRope3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0)
+
+[node name="Anchor3" type="Marker3D" parent="StretchedRope3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, 0)
+
+[node name="EndAnchor" type="Marker3D" parent="StretchedRope3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)

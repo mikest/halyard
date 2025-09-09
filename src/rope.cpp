@@ -327,8 +327,7 @@ void Rope::_update_anchor(NodePath &anchor, float position) {
 		_particles[index].pos_cur = xform.origin;
 		_particles[index].pos_prev = xform.origin;
 		_particles[index].attached = true;
-	} else
-		_particles[index].attached = false;
+	}
 }
 
 bool Rope::_get_anchor_transform(const NodePath &path, Transform3D &xform) const {
@@ -351,8 +350,11 @@ void Rope::_update_anchors() {
 		set_global_position(xform.origin);
 	}
 
-	_update_anchor(_start_anchor, 0.0);
-	_update_anchor(_end_anchor, 1.0);
+	// clear previous position attachments
+	for (auto &particle : _particles)
+		particle.attached = false;
+
+	// mark the mid anchors
 	if (_anchors != nullptr) {
 		int count = _anchors->get_position_count();
 		for (int idx = 0; idx < count; idx++) {
@@ -361,6 +363,11 @@ void Rope::_update_anchors() {
 			_update_anchor(node, position);
 		}
 	}
+
+	// attach to the start and end anchors last so that they are always
+	// anchored and not stomped on by mid anchors above.
+	_update_anchor(_start_anchor, 0.0);
+	_update_anchor(_end_anchor, 1.0);
 }
 
 #pragma endregion

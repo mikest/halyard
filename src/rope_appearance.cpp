@@ -14,11 +14,11 @@ void RopeAppearance::_bind_methods() {
 	// attachments
 	EXPORT_PROPERTY(Variant::NODE_PATH, start_attachment, RopeAppearance);
 	EXPORT_PROPERTY(Variant::FLOAT, start_offset, RopeAppearance);
+	EXPORT_PROPERTY(Variant::NODE_PATH, end_attachment, RopeAppearance);
+	EXPORT_PROPERTY(Variant::FLOAT, end_offset, RopeAppearance);
 	ClassDB::bind_method(D_METHOD("set_attachments", "attachments"), &RopeAppearance::set_attachments);
 	ClassDB::bind_method(D_METHOD("get_attachments"), &RopeAppearance::get_attachments);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "attachments", PROPERTY_HINT_RESOURCE_TYPE, "RopePositions"), "set_attachments", "get_attachments");
-	EXPORT_PROPERTY(Variant::NODE_PATH, end_attachment, RopeAppearance);
-	EXPORT_PROPERTY(Variant::FLOAT, end_offset, RopeAppearance);
 
 	// simulation parameters
 	ADD_GROUP("Simulation", "");
