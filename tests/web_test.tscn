@@ -1,0 +1,88 @@
+[gd_scene load_steps=6 format=3 uid="uid://c6pq3mg86lkun"]
+
+[ext_resource type="Script" uid="uid://ccqeo0jjod5r0" path="res://addons/halyard/scripts/distributed_rope_positions.gd" id="1_lks7b"]
+
+[sub_resource type="RopePositions" id="RopePositions_uix47"]
+position_count = 3
+position_0/position = 0.0
+position_0/node = NodePath("Attachment1")
+position_1/position = 0.0
+position_1/node = NodePath("Attachment2")
+position_2/position = 0.0
+position_2/node = NodePath("Attachment3")
+script = ExtResource("1_lks7b")
+include_start = true
+include_end = true
+metadata/_custom_type_script = "uid://ccqeo0jjod5r0"
+
+[sub_resource type="RopeAppearance" id="RopeAppearance_18r7s"]
+rope_width = 0.125
+attachments = SubResource("RopePositions_uix47")
+
+[sub_resource type="RopePositions" id="RopePositions_jiad6"]
+position_count = 1
+position_0/position = 0.5
+position_0/node = NodePath("../Rope/Attachment2")
+
+[sub_resource type="RopePositions" id="RopePositions_gueu6"]
+position_count = 6
+position_0/position = 0.0
+position_0/node = NodePath("../Rope2")
+position_1/position = 0.0
+position_1/node = NodePath("../EndAnchor")
+position_2/position = 0.0
+position_2/node = NodePath("../EndAnchor2")
+position_3/position = 0.0
+position_3/node = NodePath("../Rope/Attachment1")
+position_4/position = 0.0
+position_4/node = NodePath("../Rope2/Attachment1")
+position_5/position = 0.0
+position_5/node = NodePath("../Rope/Attachment3")
+script = ExtResource("1_lks7b")
+include_start = true
+include_end = true
+metadata/_custom_type_script = "uid://ccqeo0jjod5r0"
+
+[node name="Node3D" type="Node3D"]
+
+[node name="Rope" type="Rope" parent="."]
+end_anchor = NodePath("../EndAnchor")
+appearance = SubResource("RopeAppearance_18r7s")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8021312, 0, 0.07251388)
+
+[node name="Attachment1" type="Marker3D" parent="Rope"]
+transform = Transform3D(-0.040649638, -0.11819492, -0.001601674, -0.118194535, 0.04061868, 0.002274657, -0.0016303603, 0.0022541848, -0.124969035, 0.9035721, -0.4659069, -0.017232753)
+
+[node name="Attachment2" type="Marker3D" parent="Rope"]
+transform = Transform3D(0.00011239393, -0.12497717, -0.0023861981, -0.124976106, -0.00015895566, 0.002438722, -0.002441311, 0.002383549, -0.124953434, 1.904268, -0.6371591, -0.036317896)
+
+[node name="Attachment3" type="Marker3D" parent="Rope"]
+transform = Transform3D(0.040853765, -0.11809225, -0.003192343, -0.118090615, -0.04091636, 0.0023364986, -0.0032523316, 0.0022522479, -0.124937385, 2.905529, -0.46314013, -0.055413853)
+
+[node name="EndAnchor" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
+
+[node name="Rope2" type="Rope" parent="."]
+end_anchor = NodePath("../EndAnchor2")
+anchors = SubResource("RopePositions_jiad6")
+appearance = SubResource("RopeAppearance_18r7s")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2)
+
+[node name="Attachment1" type="Marker3D" parent="Rope2"]
+transform = Transform3D(-0.12477963, -0.005979214, 0.0043923096, -0.00597624, 0.03715266, -0.11920136, 0.0043963576, -0.11920122, -0.03737303, 0.051451873, -0.35781187, 1.0257419)
+
+[node name="Attachment2" type="Marker3D" parent="Rope2"]
+transform = Transform3D(-0.12483745, 0.0002517961, 0.006367749, -0.006363449, 0.0018114873, -0.12482478, -0.00034372136, -0.124986626, -0.0017963132, 0.10213685, -0.6371591, 2.036196)
+
+[node name="Attachment3" type="Marker3D" parent="Rope2"]
+transform = Transform3D(-0.12471633, 0.006170552, 0.0057239183, -0.007365196, -0.038870208, -0.118574284, -0.0040734317, -0.11864246, 0.039145574, 0.049533114, -0.3788924, 3.0476167)
+
+[node name="EndAnchor2" type="Marker3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2)
+
+[node name="Thread" type="Rope" parent="."]
+rope_length = 12.0
+start_anchor = NodePath("../Rope")
+end_anchor = NodePath("../Rope2/Attachment3")
+anchors = SubResource("RopePositions_gueu6")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8021312, 0, 0.07251388)

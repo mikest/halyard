@@ -35,8 +35,20 @@ void Rope::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("get_rope_frame_count"), &Rope::get_rope_frame_count);
 	ClassDB::bind_method(D_METHOD("get_rope_frame", "index"), &Rope::get_rope_frame);
-	ClassDB::bind_method(D_METHOD("get_rope_frames"), &Rope::get_all_rope_frames);
+	ClassDB::bind_method(D_METHOD("get_all_rope_frames"), &Rope::get_all_rope_frames);
 	ClassDB::bind_method(D_METHOD("get_particle_positions"), &Rope::get_particle_positions);
+
+	// pass through
+	ClassDB::bind_method(D_METHOD("get_rope_width"), &Rope::get_rope_width);
+	ClassDB::bind_method(D_METHOD("get_rope_sides"), &Rope::get_rope_sides);
+	ClassDB::bind_method(D_METHOD("get_rope_twist"), &Rope::get_rope_twist);
+	ClassDB::bind_method(D_METHOD("get_rope_lod"), &Rope::get_rope_lod);
+	ClassDB::bind_method(D_METHOD("get_start_attachment"), &Rope::get_start_attachment);
+	ClassDB::bind_method(D_METHOD("get_start_offset"), &Rope::get_start_offset);
+	ClassDB::bind_method(D_METHOD("get_end_attachment"), &Rope::get_end_attachment);
+	ClassDB::bind_method(D_METHOD("get_end_offset"), &Rope::get_end_offset);
+	ClassDB::bind_method(D_METHOD("get_particles_per_meter"), &Rope::get_particles_per_meter);
+	ClassDB::bind_method(D_METHOD("get_attachments"), &Rope::get_attachments);
 
 	EXPORT_PROPERTY(Variant::FLOAT, rope_length, Rope);
 	EXPORT_PROPERTY(Variant::NODE_PATH, start_anchor, Rope);
@@ -803,6 +815,8 @@ void Rope::_rebuild_mesh() {
 		Transform3D xform = _frames[last_frame].rotated_local(Vector3(1, 0, 0), Math_PI);
 		_align_attachment_node(get_end_attachment(), xform, 0.0);
 	}
+
+	update_gizmos();
 }
 
 #pragma endregion

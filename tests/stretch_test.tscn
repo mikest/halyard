@@ -1,13 +1,17 @@
-[gd_scene load_steps=2 format=3 uid="uid://uyxawsqlqrb4"]
+[gd_scene load_steps=3 format=3 uid="uid://uyxawsqlqrb4"]
 
 [sub_resource type="RopePositions" id="RopePositions_ntxkk"]
 position_count = 3
 position_0/position = 0.25
-position_0/node = NodePath("Anchor1")
+position_0/node = NodePath("")
 position_1/position = 0.5
-position_1/node = NodePath("Anchor2")
+position_1/node = NodePath("")
 position_2/position = 0.75
-position_2/node = NodePath("Anchor3")
+position_2/node = NodePath("")
+
+[sub_resource type="RopeAppearance" id="RopeAppearance_do1de"]
+rope_width = 0.125
+rope_lod = 10
 
 [node name="Node3D" type="Node3D"]
 
@@ -31,3 +35,15 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, 0)
 
 [node name="EndAnchor" type="Marker3D" parent="StretchedRope"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
+
+[node name="StretchedRope2" type="Rope" parent="."]
+rope_length = 1.0
+end_anchor = NodePath("EndAnchor")
+appearance = SubResource("RopeAppearance_do1de")
+stiffness = 0.1
+collision_layer = 0
+collision_mask = 0
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.25)
+
+[node name="EndAnchor" type="Marker3D" parent="StretchedRope2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, 0)
