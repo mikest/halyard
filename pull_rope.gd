@@ -32,28 +32,28 @@ func _ready() -> void:
 
 ## This rope will pull on its end_anchor if the end anchor is a RigidBody3D
 func _physics_process(_delta: float) -> void:
-	var stretch := get_current_rope_length() - rope_length
+	var current := get_current_rope_length()
+	var stretch := current - rope_length
 	
 	# the attachment will be aligned along the rope Tangent, so we'll use that to se the force direction
-	var xform := get_rope_frame_at_offset(1.0)
 	if pull_on:
-		var pull_point := Vector3(0,0,0)
+		var xform : Transform3D = get_rope_frame_at_offset(1.0)
+		xform = global_transform * xform
+		#DebugDraw3D.draw_gizmo(xform)
 		
 		# use a node as the pull poisition.
+		var pull_point := Vector3(0,0,0)
 		var pull_node :Node3D = get_node_or_null(pull_from)
 		if pull_node:
 			pull_point = pull_node.global_position - pull_on.global_position
 		
-		# pull on the origin, not the center of mass so that we can have objects swinging from a joint.
-		var force := pow(stretch,force_stiffness)
-		
 		# cap the pull force at a multiple of the body mass to keep from wildly oscillating if the stretch is too large
+		var force := pow(stretch,force_stiffness) * pull_on.mass * force_strength
 		var force_limit := pull_on.mass * force_limit_mass_scale
 		force = clampf(force, -force_limit, force_limit)
 		
-		pull_on.apply_force(-xform.basis.y.normalized() * \
-		# stiffness is done as a power function so that the rope pulls harder back to the end the further its been streached
-			force * \
-			pull_on.mass * force_strength, pull_point)
+		# pull on the origin, not the center of mass so that we can have objects swinging from a joint.
+		var force_vector := -xform.basis.y.normalized() * force
+		pull_on.apply_force(force_vector, pull_point)
 	pass
 #endregion

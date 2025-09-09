@@ -506,7 +506,7 @@ TypedArray<Vector3> Rope::get_particle_positions() const {
 
 Transform3D Rope::get_rope_frame_at_offset(float offset) const {
 	if (_frames.size() >= 2) {
-		int frame = _frame_at_offset(_frames, offset, false);
+		int frame = Math::clamp(int(offset * (_frames.size() - 1)), 0, int(_frames.size() - 1));
 		return _frames[frame];
 	} else
 		return Transform3D();
