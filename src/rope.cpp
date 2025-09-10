@@ -231,7 +231,6 @@ void Rope::_rebuild_physics_shapes() {
 void Rope::_rebuild_rope() {
 	// free previous shapes
 	_clear_physics_shapes();
-	_particles.clear();
 	_frames.clear();
 
 	auto global_position = get_global_position();
@@ -244,27 +243,36 @@ void Rope::_rebuild_rope() {
 		end_attached = true;
 	}
 
+	int previous_count = _particles.size();
 	int particle_count = get_particle_count_for_length();
+	_particles.resize(particle_count);
 	auto segment_length = get_rope_length() / particle_count;
 	auto initial_accel = _gravity * _gravity_scale;
 	Vector3 direction = (end_location - global_position).normalized();
+	Vector3 previous_pos = global_position;
 
 	float radius = get_rope_width() * 0.5f;
 	for (int i = 0; i < particle_count; i++) {
-		Particle particle;
-		Vector3 position = global_position + (direction * segment_length * float(i));
-		particle.pos_prev = position;
-		particle.pos_cur = position;
-		particle.accel = initial_accel;
-		particle.attached = false;
+		Particle &particle = _particles[i];
+		Vector3 position;
+		if (i >= previous_count) {
+			Vector3 position = previous_pos + (direction * segment_length);
+			particle.pos_prev = position;
+			particle.pos_cur = position;
+			particle.accel = initial_accel;
+			particle.attached = false;
+			direction = (previous_pos - position).normalized();
+			previous_pos = position;
+		} else {
+			direction = (previous_pos - particle.pos_cur).normalized();
+			previous_pos = particle.pos_cur;
+		}
 
 		// physics shape
 		RID shape = PhysicsServer3D::get_singleton()->sphere_shape_create();
 		PhysicsServer3D::get_singleton()->shape_set_data(shape, radius);
 		PhysicsServer3D::get_singleton()->body_add_shape(_physics_body, shape, Transform3D(Basis(), particle.pos_cur));
 		particle.shape = shape;
-
-		_particles.push_back(particle);
 	}
 
 	Particle &start = _particles[0];
@@ -276,9 +284,14 @@ void Rope::_rebuild_rope() {
 	end.pos_cur = end_location;
 
 	_update_anchors();
-	const float preprocess_delta = 1.0 / _simulation_rate;
-	const int preprocess_iterations = Math::max(int(_simulation_rate * _preprocess_time), 1);
-	_update_physics(preprocess_delta, preprocess_iterations);
+
+	// onlye run preprocess on the first build
+	if (previous_count == 0) {
+		const float preprocess_delta = 1.0 / _simulation_rate;
+		const int preprocess_iterations = Math::max(int(_simulation_rate * _preprocess_time), 1);
+		_update_physics(preprocess_delta, preprocess_iterations);
+	}
+
 	_compute_particle_normals();
 
 	_queue_rebuild();

@@ -11,7 +11,6 @@ func _init():
 	create_material("red", Color(1, 0, 0))
 	create_material("green", Color(0, 1, 0))
 	create_material("blue", Color(0, 0, 1))
-	create_handle_material("handles")
 
 
 func _redraw(gizmo):
@@ -39,10 +38,3 @@ func _redraw(gizmo):
 		gizmo.add_lines(red, get_material("red", gizmo), false)
 		gizmo.add_lines(green, get_material("green", gizmo), false)
 		gizmo.add_lines(blue, get_material("blue", gizmo), false)
-
-		# var handles = PackedVector3Array()
-
-		# handles.push_back(Vector3(0, 1, 0))
-		# handles.push_back(Vector3(0, node3d.my_custom_value, 0))
-
-		# gizmo.add_handles(handles, get_material("handles", gizmo), [])

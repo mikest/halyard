@@ -1,0 +1,60 @@
+[gd_scene load_steps=6 format=3 uid="uid://8r23wy3n04eu"]
+
+[ext_resource type="Script" uid="uid://ehha186u4br6" path="res://addons/halyard/scripts/offset_rope_positions.gd" id="1_5q3c7"]
+[ext_resource type="Script" uid="uid://dl6y1t3o1yx0o" path="res://addons/halyard/scripts/pull_rope.gd" id="2_56k4y"]
+
+[sub_resource type="RopePositions" id="RopePositions_p4qpy"]
+position_count = 2
+position_0/position = 1.0
+position_0/node = NodePath("Anchor")
+position_1/position = 1.5
+position_1/node = NodePath("Anchor2")
+script = ExtResource("1_5q3c7")
+metadata/_custom_type_script = "uid://ehha186u4br6"
+
+[sub_resource type="RopeAppearance" id="RopeAppearance_5q3c7"]
+particles_per_meter = 8
+
+[sub_resource type="ConcavePolygonShape3D" id="ConcavePolygonShape3D_cjwhe"]
+data = PackedVector3Array(-0.5, -0.5, 0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, -0.5, -0.5, 0.5, -0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5, -0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5, -0.5, -0.5)
+
+[node name="Node3D" type="Node3D"]
+
+[node name="PullRope" type="Rope" parent="." node_paths=PackedStringArray("pull_on")]
+rope_length = 8.64
+end_anchor = NodePath("../RigidBody3D/Marker3D")
+anchors = SubResource("RopePositions_p4qpy")
+appearance = SubResource("RopeAppearance_5q3c7")
+stiffness_iterations = 4
+collision_layer = 0
+collision_mask = 0
+script = ExtResource("2_56k4y")
+pull_on = NodePath("../RigidBody3D")
+pull_from = NodePath("../RigidBody3D/Marker3D")
+force_stiffness = 2.0
+metadata/_custom_type_script = "uid://dl6y1t3o1yx0o"
+
+[node name="Anchor" type="Marker3D" parent="PullRope"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8065012, -0.06835866, 0)
+
+[node name="Anchor2" type="Marker3D" parent="PullRope"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.16603, -0.5009351, 0)
+
+[node name="RigidBody3D" type="RigidBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6.27233, 0)
+linear_damp = 1.0
+angular_damp = 1.0
+
+[node name="CSGBox3D" type="CSGBox3D" parent="RigidBody3D"]
+
+[node name="CSGBakedCollisionShape3D" type="CollisionShape3D" parent="RigidBody3D"]
+shape = SubResource("ConcavePolygonShape3D_cjwhe")
+
+[node name="Marker3D" type="Marker3D" parent="RigidBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.5, 0.5)
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.9562639, 0.2925052, 0, -0.2925052, 0.9562639, 0, 0, 4.4390244)
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.4408167, 0.89759713, 0, -0.89759713, 0.4408167, 0, 0, 6.9154296)

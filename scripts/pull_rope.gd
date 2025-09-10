@@ -19,11 +19,11 @@ class_name PullRope
 @export var force_strength := 1.0
 
 ## How stiff the rope is, lower values are stretchier
-@export var force_stiffness := 5.0
+@export var force_stiffness := 10.0
 
 ## Multiplied by pullo_on.mass and used to cap the upper limit for force.
 ## useful for preventing oscillations.
-@export var force_limit_mass_scale := 10.0
+@export var force_limit_mass_scale := 100.0
 
 #region Runtime
 func _ready() -> void:
