@@ -3,6 +3,7 @@
 #include <godot_cpp/classes/physics_direct_space_state3d.hpp>
 #include <godot_cpp/classes/physics_ray_query_parameters3d.hpp>
 #include <godot_cpp/classes/physics_server3d.hpp>
+#include <godot_cpp/classes/rendering_server.hpp>
 #include <godot_cpp/classes/sphere_shape3d.hpp>
 #include <godot_cpp/classes/world3d.hpp>
 #include <godot_cpp/core/math.hpp>
@@ -24,6 +25,8 @@ Rope::Rope() {
 Rope::~Rope() {
 	_generated_mesh->clear_surfaces();
 	_generated_mesh.unref();
+
+	_clear_instances();
 
 	PhysicsServer3D::get_singleton()->free_rid(_physics_body);
 }
@@ -100,14 +103,31 @@ void Rope::_bind_methods() {
 
 void Rope::_notification(int p_what) {
 	double delta = Engine::get_singleton()->is_in_physics_frame() ? get_physics_process_delta_time() : get_process_delta_time();
+	bool visible = is_visible_in_tree();
+
 	switch (p_what) {
 		case NOTIFICATION_ENTER_WORLD: {
 			RID space = get_world_3d()->get_space();
 			PhysicsServer3D::get_singleton()->body_set_space(_physics_body, space);
-			// _prepare_physics_server();
+
+			RID scenario = get_world_3d()->get_scenario();
+			auto rs = RenderingServer::get_singleton();
+			for (auto instance : _instances) {
+				rs->instance_set_scenario(instance, scenario);
+				rs->instance_set_visible(instance, visible);
+			}
+
 		} break;
 		case NOTIFICATION_EXIT_WORLD: {
 			PhysicsServer3D::get_singleton()->body_set_space(_physics_body, RID());
+
+			auto rs = RenderingServer::get_singleton();
+			for (auto instance : _instances) {
+				rs->instance_set_scenario(instance, RID());
+				rs->instance_attach_skeleton(instance, RID());
+				rs->instance_set_visible(instance, visible);
+			}
+
 		} break;
 
 		case NOTIFICATION_TRANSFORM_CHANGED: {
@@ -228,9 +248,39 @@ void Rope::_rebuild_physics_shapes() {
 	}
 }
 
+void Rope::_clear_instances() {
+	auto rs = RenderingServer::get_singleton();
+	for (auto &rid : _instances) {
+		rs->free_rid(rid);
+	}
+	_instances.clear();
+}
+
+void Rope::_rebuild_instances() {
+	auto rs = RenderingServer::get_singleton();
+	if (_appearance != nullptr) {
+		auto scenario = get_world_3d()->get_scenario();
+		auto mesh = _appearance->get_array_mesh();
+		if (mesh != nullptr) {
+			// create one instance for each gap between particles
+			// this will be one less than the particle count
+			auto count = _particles.size() - 1;
+
+			for (int idx = 0; idx < count; idx++) {
+				RID instance = rs->instance_create2(mesh->get_rid(), scenario);
+
+				if (instance.is_valid()) {
+					_instances.push_back(instance);
+				}
+			}
+		}
+	}
+}
+
 void Rope::_rebuild_rope() {
 	// free previous shapes
 	_clear_physics_shapes();
+	_clear_instances();
 	_frames.clear();
 
 	auto global_position = get_global_position();
@@ -282,6 +332,8 @@ void Rope::_rebuild_rope() {
 	end.attached = end_attached; //_attach_end != null;
 	end.pos_prev = end_location;
 	end.pos_cur = end_location;
+
+	_rebuild_instances();
 
 	_update_anchors();
 
@@ -789,24 +841,54 @@ void Rope::_rebuild_mesh() {
 		int sides = get_rope_sides();
 
 		// emit geometry
-		PackedVector3Array verts, norms;
-		PackedVector2Array uv1s;
-
 		const int last_frame = _frames.size() - 1;
-		_emit_endcap(true, _frames[0], sides, radius, verts, norms, uv1s);
-		_emit_tube(_frames, 0, last_frame, sides, radius, verts, norms, uv1s);
-		_emit_endcap(false, _frames[last_frame], sides, radius, verts, norms, uv1s);
 
-		// generate the catmull interpolation for the segments.
-		Array arrays;
-		arrays.resize(Mesh::ARRAY_MAX);
-		arrays.fill(Variant());
-		arrays[Mesh::ARRAY_VERTEX] = verts;
-		arrays[Mesh::ARRAY_NORMAL] = norms;
-		// arrays[Mesh::ARRAY_TANGENT] = new_tangents;
-		arrays[Mesh::ARRAY_TEX_UV] = uv1s;
-		_generated_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLE_STRIP, arrays);
-		_generated_mesh->surface_set_material(0, get_material());
+		// render link mesh
+		if (_instances.size() == _particles.size() - 1) {
+			auto rs = RenderingServer::get_singleton();
+
+			// N-1 chain links per paricles
+			auto count = _particles.size() - 1;
+
+			for (int idx = 0; idx < count; idx++) {
+				RID instance = _instances[idx];
+				Vector3 pt = _particles[idx].pos_cur;
+				Vector3 pt2 = _particles[idx + 1].pos_cur;
+				Vector3 dir = (pt2 - pt);
+				float dist = dir.length();
+				dir.normalize();
+
+				Transform3D xform(Basis(), pt + dir * dist / 2.0);
+				xform.basis.rotate_to_align(Vector3(0, 1, 0), dir);
+
+				if (idx % 2)
+					xform = xform.rotated_local(Vector3(0, 1, 0), Math_PI / 2.0);
+				auto d = get_rope_width();
+				xform.scale_basis(Vector3(d, d, d));
+
+				rs->instance_set_transform(instance, xform);
+			}
+
+			// render gen mesh
+		} else {
+			PackedVector3Array verts, norms;
+			PackedVector2Array uv1s;
+
+			_emit_endcap(true, _frames[0], sides, radius, verts, norms, uv1s);
+			_emit_tube(_frames, 0, last_frame, sides, radius, verts, norms, uv1s);
+			_emit_endcap(false, _frames[last_frame], sides, radius, verts, norms, uv1s);
+
+			// generate the catmull interpolation for the segments.
+			Array arrays;
+			arrays.resize(Mesh::ARRAY_MAX);
+			arrays.fill(Variant());
+			arrays[Mesh::ARRAY_VERTEX] = verts;
+			arrays[Mesh::ARRAY_NORMAL] = norms;
+			// arrays[Mesh::ARRAY_TANGENT] = new_tangents;
+			arrays[Mesh::ARRAY_TEX_UV] = uv1s;
+			_generated_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLE_STRIP, arrays);
+			_generated_mesh->surface_set_material(0, get_material());
+		}
 
 		// align attachments if present
 		_align_attachment_node(get_start_attachment(), _frames[0], 0.0);

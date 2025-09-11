@@ -11,6 +11,10 @@ void RopeAppearance::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_material"), &RopeAppearance::get_material);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "material", PROPERTY_HINT_RESOURCE_TYPE, "Material"), "set_material", "get_material");
 
+	ClassDB::bind_method(D_METHOD("set_link_mesh", "array_mesh"), &RopeAppearance::set_array_mesh);
+	ClassDB::bind_method(D_METHOD("get_link_mesh"), &RopeAppearance::get_array_mesh);
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "link_mesh", PROPERTY_HINT_RESOURCE_TYPE, "ArrayMesh"), "set_link_mesh", "get_link_mesh");
+
 	// attachments
 	EXPORT_PROPERTY(Variant::NODE_PATH, start_attachment, RopeAppearance);
 	EXPORT_PROPERTY(Variant::FLOAT, start_offset, RopeAppearance);
@@ -32,6 +36,15 @@ void RopeAppearance::set_material(const Ref<Material> &p_material) {
 
 Ref<Material> RopeAppearance::get_material() const {
 	return _material;
+}
+
+void RopeAppearance::set_array_mesh(const Ref<ArrayMesh> &p_mesh) {
+	_mesh = p_mesh;
+	_notify_change();
+}
+
+Ref<ArrayMesh> RopeAppearance::get_array_mesh() const {
+	return _mesh;
 }
 
 #pragma endregion

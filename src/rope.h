@@ -27,6 +27,7 @@ class Rope : public GeometryInstance3D {
 
 	Ref<ArrayMesh> _generated_mesh;
 	RID _physics_body;
+	LocalVector<RID> _instances;
 
 	// Rope particle, segments connect between particles.
 	struct Particle {
@@ -135,6 +136,9 @@ protected:
 		_dirty = false;
 		return is_dirty;
 	}
+
+	void _clear_instances();
+	void _rebuild_instances();
 
 public:
 	Rope();

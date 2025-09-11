@@ -1,5 +1,6 @@
 #pragma once
 
+#include <godot_cpp/classes/array_mesh.hpp>
 #include <godot_cpp/classes/material.hpp>
 #include <godot_cpp/classes/resource.hpp>
 #include <godot_cpp/classes/wrapped.hpp>
@@ -24,6 +25,7 @@ class RopeAppearance : public Resource {
 	float _rope_twist = 1.0;
 	int _rope_lod = 2;
 	Ref<Material> _material = nullptr;
+	Ref<ArrayMesh> _mesh = nullptr;
 
 	NodePath _start_attachment;
 	float _start_offset = 0.0;
@@ -62,6 +64,9 @@ public:
 
 	void set_material(const Ref<Material> &p_material);
 	Ref<Material> get_material() const;
+
+	void set_array_mesh(const Ref<ArrayMesh> &p_mesh);
+	Ref<ArrayMesh> get_array_mesh() const;
 
 	PROPERTY_GET_SET(NodePath, start_attachment, _notify_change())
 	PROPERTY_GET_SET(float, start_offset, _notify_change())
