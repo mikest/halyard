@@ -6,6 +6,7 @@ void RopeAppearance::_bind_methods() {
 	EXPORT_PROPERTY(Variant::INT, rope_sides, RopeAppearance);
 	EXPORT_PROPERTY(Variant::FLOAT, rope_twist, RopeAppearance);
 	EXPORT_PROPERTY(Variant::INT, rope_lod, RopeAppearance);
+	EXPORT_PROPERTY(Variant::INT, particles_per_meter, RopeAppearance);
 
 	ClassDB::bind_method(D_METHOD("set_material", "material"), &RopeAppearance::set_material);
 	ClassDB::bind_method(D_METHOD("get_material"), &RopeAppearance::get_material);
@@ -23,10 +24,6 @@ void RopeAppearance::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_attachments", "attachments"), &RopeAppearance::set_attachments);
 	ClassDB::bind_method(D_METHOD("get_attachments"), &RopeAppearance::get_attachments);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "attachments", PROPERTY_HINT_RESOURCE_TYPE, "RopePositions"), "set_attachments", "get_attachments");
-
-	// simulation parameters
-	ADD_GROUP("Simulation", "");
-	EXPORT_PROPERTY(Variant::INT, particles_per_meter, RopeAppearance);
 }
 
 void RopeAppearance::set_material(const Ref<Material> &p_material) {
