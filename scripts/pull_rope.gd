@@ -3,23 +3,20 @@
 extends Rope
 class_name PullRope
 
-## To use this rope to pull on a rigid body end_anchor the rope
-## to either pull_on or pull_from and then anchor the start_anchor
-## to your fixed point.
+## This node pulls on a RigidBody3D and applies the force at the [code]end_anchor[/code]
+## relative to the RigidBody3D's origin. This means that you probably want the end anchor
+## to be a child of the RigidBody.
 
 ## Objcet to pull on.
-## Probably want to set anchor for the rope to either this object or pull_from
+## The object force will be applied at end_anchor
 @export var pull_on: RigidBody3D
-
-## Use a different node to set the point to pull on
-## for the RigidBody. Otherwise the RigidBody origin will be used.
-@export var pull_from: NodePath
 
 ## How hard to pull as a scalar of mass
 @export var force_strength := 1.0
 
-## How stiff the rope is, lower values are stretchier
-@export var force_stiffness := 10.0
+## How stiff the rope is, lower values are stretchier. Higher valyues
+## may introduce oscillations.
+@export var force_stiffness := 5.0
 
 ## Multiplied by pullo_on.mass and used to cap the upper limit for force.
 ## useful for preventing oscillations.
@@ -36,7 +33,7 @@ func _physics_process(_delta: float) -> void:
 	var stretch := current - rope_length
 	
 	# the attachment will be aligned along the rope Tangent, so we'll use that to se the force direction
-	if pull_on:
+	if pull_on and end_anchor:
 		var count := get_rope_frame_count()
 		var xform : Transform3D = get_rope_frame(count-1)
 		xform = global_transform * xform
@@ -44,7 +41,7 @@ func _physics_process(_delta: float) -> void:
 		
 		# use a node as the pull poisition.
 		var pull_point := Vector3(0,0,0)
-		var pull_node :Node3D = get_node_or_null(pull_from)
+		var pull_node :Node3D = get_node_or_null(end_anchor)
 		if pull_node:
 			pull_point = pull_node.global_position - pull_on.global_position
 		

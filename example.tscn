@@ -1,8 +1,8 @@
 [gd_scene load_steps=7 format=3 uid="uid://dh0oj81pufivs"]
 
 [ext_resource type="Texture2D" uid="uid://cvgoei4ais4km" path="res://addons/halyard/assets/three-ply-rope.png" id="1_2jas5"]
-[ext_resource type="PackedScene" uid="uid://p0j74gydrou0" path="res://addons/halyard/assets/rope-eye-splice.blend" id="3_s6abl"]
-[ext_resource type="PackedScene" uid="uid://vcb8ag10i823" path="res://addons/halyard/assets/rope-knot.blend" id="4_cepmf"]
+[ext_resource type="PackedScene" path="res://addons/halyard/assets/rope-eye-splice.blend" id="3_s6abl"]
+[ext_resource type="PackedScene" path="res://addons/halyard/assets/rope-knot.blend" id="4_cepmf"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_6gkck"]
 albedo_texture = ExtResource("1_2jas5")

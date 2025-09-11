@@ -1,6 +1,6 @@
 [gd_scene load_steps=7 format=3 uid="uid://cccskqmb0yr4k"]
 
-[ext_resource type="PackedScene" uid="uid://p0j74gydrou0" path="res://addons/halyard/assets/rope-eye-splice.blend" id="1_rwnhk"]
+[ext_resource type="PackedScene" path="res://addons/halyard/assets/rope-eye-splice.blend" id="1_rwnhk"]
 
 [sub_resource type="RopePositions" id="RopePositions_ntxkk"]
 position_count = 3
