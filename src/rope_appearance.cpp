@@ -6,7 +6,7 @@ void RopeAppearance::_bind_methods() {
 	EXPORT_PROPERTY(Variant::INT, rope_sides, RopeAppearance);
 	EXPORT_PROPERTY(Variant::FLOAT, rope_twist, RopeAppearance);
 	EXPORT_PROPERTY(Variant::INT, rope_lod, RopeAppearance);
-	EXPORT_PROPERTY(Variant::INT, particles_per_meter, RopeAppearance);
+	EXPORT_PROPERTY_RANGED(Variant::FLOAT, particles_per_meter, RopeAppearance, "0.1,20,,hide_slider");
 
 	ClassDB::bind_method(D_METHOD("set_material", "material"), &RopeAppearance::set_material);
 	ClassDB::bind_method(D_METHOD("get_material"), &RopeAppearance::get_material);

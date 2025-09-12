@@ -144,6 +144,8 @@ protected:
 	void _clear_instances();
 	void _rebuild_instances();
 
+	void _on_appearance_changed();
+
 public:
 	enum From {
 		Start = 0,
@@ -177,7 +179,9 @@ public:
 	// Exported Properties
 	PROPERTY_GET_SET(float, rope_length, _queue_rebuild())
 	PROPERTY_GET_SET(int, grow_from, {})
-	PROPERTY_GET_SET(Ref<RopeAppearance>, appearance, _queue_rebuild())
+
+	Ref<RopeAppearance> get_appearance() const;
+	void set_appearance(const Ref<RopeAppearance> &val);
 
 	// anchors
 	PROPERTY_GET_SET(NodePath, start_anchor, _queue_rebuild())
@@ -197,7 +201,7 @@ public:
 	APPEARENCE_ACCESSOR(NodePath, end_attachment, NodePath())
 	APPEARENCE_ACCESSOR(float, end_offset, 0.0)
 	APPEARENCE_ACCESSOR(Ref<RopePositions>, attachments, nullptr)
-	APPEARENCE_ACCESSOR(int, particles_per_meter, 2)
+	APPEARENCE_ACCESSOR(float, particles_per_meter, 2.0)
 #undef APPEARENCE_ACCESSOR
 
 	// simulation parameters

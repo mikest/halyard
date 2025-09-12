@@ -35,12 +35,13 @@ class RopeAppearance : public Resource {
 	NodePath _end_attachment;
 	float _end_offset = 0.0;
 
-	int _particles_per_meter = 2;
+	float _particles_per_meter = 2;
 
 protected:
 	static void _bind_methods();
 	void _notify_change() {
-		notify_property_list_changed();
+		// notify_property_list_changed();
+		emit_changed();
 	}
 
 public:
@@ -73,9 +74,12 @@ public:
 	PROPERTY_GET_SET(NodePath, end_attachment, _notify_change())
 	PROPERTY_GET_SET(float, end_offset, _notify_change())
 
-	void set_attachments(const Ref<RopePositions> &p_attachments) { _attachments = p_attachments; }
+	void set_attachments(const Ref<RopePositions> &p_attachments) {
+		_attachments = p_attachments;
+		_notify_change();
+	}
 	Ref<RopePositions> get_attachments() const { return _attachments; }
 
 	// simulation parameters
-	PROPERTY_GET_SET(int, particles_per_meter, _notify_change())
+	PROPERTY_GET_SET(float, particles_per_meter, _notify_change())
 };

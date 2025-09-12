@@ -23,6 +23,9 @@ Rope::Rope() {
 }
 
 Rope::~Rope() {
+	if (_appearance != nullptr)
+		_appearance->disconnect("changed", Callable(this, "_on_appearance_changed"));
+
 	_generated_mesh->clear_surfaces();
 	_generated_mesh.unref();
 
@@ -60,6 +63,8 @@ void Rope::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_end_offset"), &Rope::get_end_offset);
 	ClassDB::bind_method(D_METHOD("get_particles_per_meter"), &Rope::get_particles_per_meter);
 	ClassDB::bind_method(D_METHOD("get_attachments"), &Rope::get_attachments);
+
+	ClassDB::bind_method(D_METHOD("_on_appearance_changed"), &Rope::_on_appearance_changed);
 
 	EXPORT_PROPERTY(Variant::FLOAT, rope_length, Rope);
 	EXPORT_PROPERTY_ENUM(grow_from, "Start,End", Rope);
@@ -242,7 +247,12 @@ void Rope::_rebuild_instances() {
 	if (_appearance != nullptr) {
 		auto scenario = get_world_3d()->get_scenario();
 		auto mesh = _appearance->get_array_mesh();
+		auto material = _appearance->get_material();
+
 		if (mesh != nullptr) {
+			// if (material != nullptr && mesh->get_surface_count())
+			// 	mesh->surface_set_material(0, material);
+
 			// create one instance for each gap between particles
 			// this will be one less than the particle count
 			auto count = _particles.size() - 1;
@@ -346,6 +356,32 @@ void Rope::_rebuild_rope() {
 
 #pragma region Accessors
 
+void Rope::_on_appearance_changed() {
+	_rebuild_rope();
+}
+
+Ref<RopeAppearance> Rope::get_appearance() const {
+	return _appearance;
+}
+
+void Rope::set_appearance(const Ref<RopeAppearance> &val) {
+	if (_appearance != val) {
+		// disconnect old
+		if (_appearance != nullptr) {
+			_appearance->disconnect("changed", Callable(this, "_on_appearance_changed"));
+		}
+
+		_appearance = val;
+
+		// connect new
+		if (_appearance != nullptr) {
+			_appearance->connect("changed", Callable(this, "_on_appearance_changed"));
+		}
+
+		_queue_rebuild();
+	}
+}
+
 uint64_t Rope::get_particle_count() const {
 	return _particles.size();
 }
@@ -423,7 +459,7 @@ TypedArray<Vector3> Rope::get_particle_positions() const {
 
 uint64_t Rope::get_particle_count_for_length() const {
 	int particle_count = uint64_t(get_rope_length() * get_particles_per_meter()) + 1;
-	particle_count = Math::max(particle_count, 3);
+	particle_count = Math::max(particle_count, 2);
 	return particle_count;
 }
 
