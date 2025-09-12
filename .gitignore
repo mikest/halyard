@@ -6,8 +6,7 @@
 
 # Ignore some specific import settings files
 *.gdextension.uid
-icons/*.import
-assets/*.import
+#*.import
 bin/windows/*.ilk
 ~*.dll
 

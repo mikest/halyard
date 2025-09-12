@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bq61i07ingq05"
-path="res://.godot/imported/RopePositions.svg-825390ada8b905b02c5ebc86ffeb35b4.ctex"
+uid="uid://1tv1oabb311d"
+path="res://.godot/imported/RopeAppearance.svg-9fa8c7122a3ca9e94a5d6f0bb550d0ee.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://addons/halyard/icons/RopePositions.svg"
-dest_files=["res://.godot/imported/RopePositions.svg-825390ada8b905b02c5ebc86ffeb35b4.ctex"]
+source_file="res://addons/halyard/icons/RopeAppearance.svg"
+dest_files=["res://.godot/imported/RopeAppearance.svg-9fa8c7122a3ca9e94a5d6f0bb550d0ee.ctex"]
 
 [params]
 

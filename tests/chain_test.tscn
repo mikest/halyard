@@ -1,7 +1,7 @@
 [gd_scene load_steps=7 format=3 uid="uid://b5q5mxkwn7e2y"]
 
 [ext_resource type="Script" path="res://addons/halyard/scripts/offset_rope_positions.gd" id="1_06evi"]
-[ext_resource type="ArrayMesh" path="res://addons/halyard/assets/chain-link.res" id="2_vqcs3"]
+[ext_resource type="ArrayMesh" uid="uid://j3u082cbuveh" path="res://addons/halyard/assets/chain-link.res" id="2_vqcs3"]
 [ext_resource type="Script" path="res://addons/halyard/scripts/pull_rope.gd" id="3_i11ko"]
 
 [sub_resource type="RopePositions" id="RopePositions_50u00"]
@@ -9,6 +9,7 @@ position_count = 1
 position_0/position = 2.0
 position_0/node = NodePath("../AnchorChainHole")
 script = ExtResource("1_06evi")
+from = 0
 metadata/_custom_type_script = "uid://ehha186u4br6"
 
 [sub_resource type="RopeAppearance" id="RopeAppearance_06evi"]
@@ -36,14 +37,14 @@ apply_wind = true
 wind_scale = 5.0
 wind = Vector3(-1, 0, 0)
 unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.393847, -0.9868257, -0.9506135)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.39385, -0.986826, -0.950613)
 script = ExtResource("3_i11ko")
 pull_on = NodePath("../Ball")
 force_strength = 10.0
 
 [node name="Ball" type="RigidBody3D" parent="."]
 unique_name_in_owner = true
-transform = Transform3D(0.7178348, 0, -0.69621354, 0, 1, 0, 0.69621354, 0, 0.7178348, 2.4084687, -0.65079784, -1.5039663)
+transform = Transform3D(0.717835, 0, -0.696214, 0, 1, 0, 0.696214, 0, 0.717835, 2.40847, -0.650798, -1.50397)
 collision_layer = 4
 collision_mask = 15
 mass = 1000.0
@@ -62,7 +63,7 @@ shape = SubResource("SphereShape3D_vqcs3")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 
 [node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.95374846, 0.30060592, 0, -0.30060592, 0.95374846, 0, 0, 7.75286)
+transform = Transform3D(1, 0, 0, 0, 0.953748, 0.300606, 0, -0.300606, 0.953748, 0, 0, 7.75286)
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.78501433, 0.6194776, 0, -0.6194776, 0.78501433, 0, 0, 8.260099)
+transform = Transform3D(1, 0, 0, 0, 0.785014, 0.619478, 0, -0.619478, 0.785014, 0, 0, 8.2601)
