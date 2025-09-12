@@ -19,10 +19,10 @@ jobs:
             #{ platform: linux, arch: x86_32, os: ubuntu-22.04 },
             #{ platform: linux, arch: arm64, os: ubuntu-22.04-arm },
             #{ platform: linux, arch: arm32, os: ubuntu-22.04-arm },
-            # { platform: windows, arch: x86_64, os: windows-latest },
+            # - { platform: windows, arch: x86_64, os: windows-latest },
             #{ platform: windows, arch: x86_32, os: windows-latest },
             #{ platform: windows, arch: arm64, os: windows-latest },
-            # { platform: macos, arch: universal, os: macos-latest },
+            # - { platform: macos, arch: universal, os: macos-latest },
             # { platform: android, arch: x86_64, os: ubuntu-22.04 },
             #{ platform: android, arch: x86_32, os: ubuntu-22.04 },
             # { platform: android, arch: arm64, os: ubuntu-22.04 },
@@ -98,7 +98,7 @@ jobs:
         with:
           name: halyard-${{ matrix.target.platform }}-${{ matrix.target.arch }}-${{ matrix.float-precision }}-${{ matrix.target-type }}
           path: |
-            ${{ github.workspace }}/bin
+            ${{ github.workspace }}/bin*
 
 
   # Merges all the build artifacts together into a single halyard artifact.
