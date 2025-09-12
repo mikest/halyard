@@ -16,18 +16,21 @@ metadata/_custom_type_script = "uid://ehha186u4br6"
 [node name="Node3D" type="Node3D"]
 
 [node name="Chain" type="Rope" parent="." node_paths=PackedStringArray("pull_on")]
-rope_length = 3.98
-end_anchor = NodePath("../Ball")
+rope_length = 4.61
+grow_from = 1
+end_anchor = NodePath("../Ball/Marker3D")
 anchors = SubResource("RopePositions_50u00")
 appearance = ExtResource("2_h3vvf")
 stiffness_iterations = 4
 stiffness = 1.0
 friction = 0.1
-collision_layer = 0
+collision_layer = 5
+collision_mask = 5
 apply_wind = true
 wind_scale = 5.0
 wind = Vector3(-1, 0, 0)
 unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.393847, -0.9868257, -0.9506135)
 script = ExtResource("3_i11ko")
 pull_on = NodePath("../Ball")
 force_strength = 10.0
@@ -41,6 +44,9 @@ mass = 1000.0
 linear_damp = 0.1
 angular_damp = 1.0
 metadata/_edit_group_ = true
+
+[node name="Marker3D" type="Marker3D" parent="Ball"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.15, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Ball"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)

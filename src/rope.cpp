@@ -289,7 +289,7 @@ void Rope::_rebuild_rope() {
 	_frames.clear();
 
 	auto global_position = get_global_position();
-	auto end_location = global_position + Vector3(0, -1, 0) * get_rope_length();
+	auto end_location = global_position + _gravity.normalized() * get_rope_length();
 	bool end_attached = false;
 
 	Transform3D xform;
@@ -298,11 +298,9 @@ void Rope::_rebuild_rope() {
 		end_attached = true;
 	}
 
-	int previous_count = _particles.size();
+	const int previous_count = _particles.size();
 	int particle_count = get_particle_count_for_length();
-
 	auto segment_length = get_rope_length() / particle_count;
-	auto initial_accel = _gravity * _gravity_scale;
 
 	// grow
 	Vector3 direction;
@@ -315,14 +313,14 @@ void Rope::_rebuild_rope() {
 		}
 
 		Vector3 position = previous_pos + (direction * segment_length);
-
 		Particle particle;
 		particle.pos_prev = position;
 		particle.pos_cur = position;
-		particle.accel = initial_accel;
+		particle.accel = _gravity * _gravity_scale;
 		particle.attached = false;
 
-		direction = (previous_pos - position).normalized();
+		// for next particle
+		direction = -(previous_pos - position).normalized();
 		previous_pos = position;
 
 		if (_grow_from > 0)
@@ -355,7 +353,7 @@ void Rope::_rebuild_rope() {
 	Particle &end = _particles[_particles.size() - 1];
 
 	start.attached = true;
-	end.attached = end_attached; //_attach_end != null;
+	end.attached = end_attached;
 	end.pos_prev = end_location;
 	end.pos_cur = end_location;
 
@@ -363,7 +361,7 @@ void Rope::_rebuild_rope() {
 
 	_update_anchors();
 
-	// onlye run preprocess on the first build
+	// only run preprocess on the first build
 	if (previous_count == 0) {
 		const float preprocess_delta = 1.0 / _simulation_rate;
 		const int preprocess_iterations = Math::max(int(_simulation_rate * _preprocess_time), 1);
@@ -378,14 +376,6 @@ void Rope::_rebuild_rope() {
 #pragma endregion
 
 #pragma region Accessors
-
-// void Rope::set_wind_noise(const Ref<FastNoiseLite> &p_noise) {
-// 	_wind_noise = p_noise;
-// }
-
-// Ref<FastNoiseLite> Rope::get_wind_noise() const {
-// 	return _wind_noise;
-// }
 
 uint64_t Rope::get_particle_count() const {
 	return _particles.size();
