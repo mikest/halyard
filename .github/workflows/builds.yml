@@ -111,7 +111,7 @@ jobs:
         with:
           name: halyard-${{ matrix.target.platform }}-${{ matrix.target.arch }}-${{ matrix.float-precision }}-${{ matrix.target-type }}
           path: |
-            ${{ github.workspace }}/bin*
+            ${{ github.workspace }}/*
 
 
   # Merges all the build artifacts together into a single halyard artifact.
