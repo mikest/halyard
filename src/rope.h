@@ -55,6 +55,7 @@ class Rope : public GeometryInstance3D {
 
 	// rope geometry
 	float _rope_length = 4.0;
+	int _grow_from = 0;
 	Ref<RopeAppearance> _appearance;
 
 	// simulation parameters
@@ -118,6 +119,7 @@ protected:
 
 	// Physics
 	void _update_physics(float delta, int iterations);
+	void _apply_chain_constraint(int from_idx);
 	void _stiff_rope();
 	void _verlet_process(float delta);
 	void _apply_forces();
@@ -141,6 +143,11 @@ protected:
 	void _rebuild_instances();
 
 public:
+	enum From {
+		Start = 0,
+		End = 1,
+	};
+
 	Rope();
 	~Rope() override;
 
@@ -162,6 +169,7 @@ public:
 
 	// Exported Properties
 	PROPERTY_GET_SET(float, rope_length, _queue_rebuild())
+	PROPERTY_GET_SET(int, grow_from, {})
 	PROPERTY_GET_SET(Ref<RopeAppearance>, appearance, _queue_rebuild())
 
 	// anchors
@@ -213,3 +221,5 @@ public:
 	// initial simulation
 	PROPERTY_GET_SET(float, preprocess_time, {})
 };
+
+VARIANT_ENUM_CAST(Rope::From);

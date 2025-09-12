@@ -32,6 +32,9 @@ Rope::~Rope() {
 }
 
 void Rope::_bind_methods() {
+	BIND_ENUM_CONSTANT(Start);
+	BIND_ENUM_CONSTANT(End);
+
 	ClassDB::bind_method(D_METHOD("get_baked_mesh"), &Rope::get_baked_mesh);
 	ClassDB::bind_method(D_METHOD("get_current_rope_length"), &Rope::get_current_rope_length);
 	ClassDB::bind_method(D_METHOD("get_particle_count_for_length"), &Rope::get_particle_count_for_length);
@@ -54,6 +57,8 @@ void Rope::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_attachments"), &Rope::get_attachments);
 
 	EXPORT_PROPERTY(Variant::FLOAT, rope_length, Rope);
+	EXPORT_PROPERTY_ENUM(grow_from, "Start,End", Rope);
+
 	EXPORT_PROPERTY(Variant::NODE_PATH, start_anchor, Rope);
 	EXPORT_PROPERTY(Variant::NODE_PATH, end_anchor, Rope);
 	ClassDB::bind_method(D_METHOD("set_anchors", "anchors"), &Rope::set_anchors);
@@ -69,7 +74,7 @@ void Rope::_bind_methods() {
 	EXPORT_PROPERTY(Variant::BOOL, simulate, Rope);
 	EXPORT_PROPERTY(Variant::FLOAT, preprocess_time, Rope);
 	EXPORT_PROPERTY(Variant::FLOAT, simulation_rate, Rope);
-	EXPORT_PROPERTY(Variant::INT, stiffness_iterations, Rope);
+	EXPORT_PROPERTY_RANGED(Variant::INT, stiffness_iterations, Rope, "1,50,1,hide_slider");
 	EXPORT_PROPERTY(Variant::FLOAT, stiffness, Rope);
 	EXPORT_PROPERTY_RANGED(Variant::FLOAT, friction, Rope, "0.0,1.0,0.01");
 
@@ -295,28 +300,49 @@ void Rope::_rebuild_rope() {
 
 	int previous_count = _particles.size();
 	int particle_count = get_particle_count_for_length();
-	_particles.resize(particle_count);
+
 	auto segment_length = get_rope_length() / particle_count;
 	auto initial_accel = _gravity * _gravity_scale;
-	Vector3 direction = (end_location - global_position).normalized();
-	Vector3 previous_pos = global_position;
 
-	float radius = get_rope_width() * 0.5f;
-	for (int i = 0; i < particle_count; i++) {
-		Particle &particle = _particles[i];
-		Vector3 position;
-		if (i >= previous_count) {
-			Vector3 position = previous_pos + (direction * segment_length);
-			particle.pos_prev = position;
-			particle.pos_cur = position;
-			particle.accel = initial_accel;
-			particle.attached = false;
-			direction = (previous_pos - position).normalized();
-			previous_pos = position;
-		} else {
-			direction = (previous_pos - particle.pos_cur).normalized();
-			previous_pos = particle.pos_cur;
+	// grow
+	Vector3 direction;
+	Vector3 previous_pos;
+	while (_particles.size() < particle_count) {
+		// first one
+		if (_particles.size() == 0) {
+			previous_pos = global_position;
+			direction = (end_location - previous_pos).normalized();
 		}
+
+		Vector3 position = previous_pos + (direction * segment_length);
+
+		Particle particle;
+		particle.pos_prev = position;
+		particle.pos_cur = position;
+		particle.accel = initial_accel;
+		particle.attached = false;
+
+		direction = (previous_pos - position).normalized();
+		previous_pos = position;
+
+		if (_grow_from > 0)
+			_particles.push_back(particle);
+		else
+			_particles.insert(0, particle);
+	}
+
+	// shrink
+	if (particle_count > 0) {
+		while (_particles.size() > particle_count) {
+			if (_grow_from > 0)
+				_particles.remove_at(_particles.size() - 1);
+			else
+				_particles.remove_at(0);
+		}
+	}
+
+	for (auto &particle : _particles) {
+		float radius = get_rope_width() * 0.5f;
 
 		// physics shape
 		RID shape = PhysicsServer3D::get_singleton()->sphere_shape_create();
@@ -937,6 +963,7 @@ void Rope::_update_physics(float delta, int iterations) {
 		_apply_forces();
 		_apply_constraints();
 		_verlet_process(delta);
+
 		_stiff_rope();
 
 		_update_collision_shapes();
@@ -957,9 +984,11 @@ void Rope::_stiff_rope() {
 			Particle p0 = _particles[i];
 			Particle p1 = _particles[i + 1];
 
-			Vector3 segment = p1.pos_cur - p0.pos_cur;
-			float stretch = segment.length() - _get_average_segment_length();
-			float scalar_stretch = Math::clamp(stretch * _stiffness, 0.0f, 1.0f);
+			const Vector3 segment = p1.pos_cur - p0.pos_cur;
+			const float segment_length = segment.length();
+			const float stretch = segment_length - _get_average_segment_length();
+			const float limit = segment_length / 2.0;
+			float scalar_stretch = Math::clamp(stretch * _stiffness, -limit, limit);
 
 			Vector3 direction = segment.normalized();
 

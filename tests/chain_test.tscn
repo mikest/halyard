@@ -1,0 +1,56 @@
+[gd_scene load_steps=6 format=3 uid="uid://b5q5mxkwn7e2y"]
+
+[ext_resource type="Script" uid="uid://ehha186u4br6" path="res://addons/halyard/scripts/offset_rope_positions.gd" id="1_06evi"]
+[ext_resource type="RopeAppearance" uid="uid://dtnm5jw3xwf1q" path="res://boats/metal_chain_appearance.tres" id="2_h3vvf"]
+[ext_resource type="Script" uid="uid://dl6y1t3o1yx0o" path="res://addons/halyard/scripts/pull_rope.gd" id="3_i11ko"]
+
+[sub_resource type="RopePositions" id="RopePositions_50u00"]
+position_count = 1
+position_0/position = 2.0
+position_0/node = NodePath("../AnchorChainHole")
+script = ExtResource("1_06evi")
+metadata/_custom_type_script = "uid://ehha186u4br6"
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_vqcs3"]
+
+[node name="Node3D" type="Node3D"]
+
+[node name="Chain" type="Rope" parent="." node_paths=PackedStringArray("pull_on")]
+rope_length = 3.98
+end_anchor = NodePath("../Ball")
+anchors = SubResource("RopePositions_50u00")
+appearance = ExtResource("2_h3vvf")
+stiffness_iterations = 4
+stiffness = 1.0
+friction = 0.1
+collision_layer = 0
+apply_wind = true
+wind_scale = 5.0
+wind = Vector3(-1, 0, 0)
+unique_name_in_owner = true
+script = ExtResource("3_i11ko")
+pull_on = NodePath("../Ball")
+force_strength = 10.0
+
+[node name="Ball" type="RigidBody3D" parent="."]
+unique_name_in_owner = true
+transform = Transform3D(0.7178348, 0, -0.69621354, 0, 1, 0, 0.69621354, 0, 0.7178348, 2.4084687, -0.65079784, -1.5039663)
+collision_layer = 4
+collision_mask = 15
+mass = 1000.0
+linear_damp = 0.1
+angular_damp = 1.0
+metadata/_edit_group_ = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ball"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+shape = SubResource("SphereShape3D_vqcs3")
+
+[node name="CSGSphere3D" type="CSGSphere3D" parent="Ball"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.95374846, 0.30060592, 0, -0.30060592, 0.95374846, 0, 0, 7.75286)
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.78501433, 0.6194776, 0, -0.6194776, 0.78501433, 0, 0, 8.260099)
