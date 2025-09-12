@@ -47,6 +47,9 @@ The anchors can be used to create the illusion of pulleys.
 ## Usage
 
 1. Import the library into your project.
+	- NOTE: On OSX you will have to work through explicitly allowing the dylibs to open.
+	- NOTE: One Windows you may also need to do this.
+	- You can avoid this by building from source. The repo is designed to be checked out directly into your addons folder for this reason.
 2. Open the example scene and look around.
 2. Create a rope instance and configure its parameters.
 3. Attach rope ends to objects or positions. Rope details will be scaled to rope width, so model your attachments at 1:1 for a 1m thick rope.

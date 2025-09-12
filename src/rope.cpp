@@ -289,15 +289,10 @@ void Rope::_rebuild_rope() {
 	auto segment_length = get_rope_length() / particle_count;
 
 	// grow
-	Vector3 direction;
-	Vector3 previous_pos;
-	while (_particles.size() < particle_count) {
-		// first one
-		if (_particles.size() == 0) {
-			previous_pos = global_position;
-			direction = (end_location - previous_pos).normalized();
-		}
+	Vector3 direction = (global_position - end_location).normalized();
+	Vector3 previous_pos = end_location;
 
+	while (_particles.size() < particle_count) {
 		Vector3 position = previous_pos + (direction * segment_length);
 		Particle particle;
 		particle.pos_prev = position;
@@ -306,7 +301,7 @@ void Rope::_rebuild_rope() {
 		particle.attached = false;
 
 		// for next particle
-		direction = -(previous_pos - position).normalized();
+		direction = (position - previous_pos).normalized();
 		previous_pos = position;
 
 		if (_grow_from > 0)
