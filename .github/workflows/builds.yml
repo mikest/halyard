@@ -98,7 +98,6 @@ jobs:
         shell: sh
         run: |
           rm -rf doc_classes
-          rm -rf godot-cpp
           rm -rf CMakeLists.txt
           rm -rf SConstruct
           rm -rf methods.py
@@ -112,6 +111,7 @@ jobs:
           name: halyard-${{ matrix.target.platform }}-${{ matrix.target.arch }}-${{ matrix.float-precision }}-${{ matrix.target-type }}
           path: |
             ${{ github.workspace }}/*
+            !${{ github.workspace }}/godot-cpp
 
 
   # Merges all the build artifacts together into a single halyard artifact.
