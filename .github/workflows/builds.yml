@@ -91,19 +91,6 @@ jobs:
         shell: pwsh
         run: |
           Remove-Item bin/* -Include *.exp,*.lib,*.pdb -Force
-      
-      # Clean up non-addon files
-      - name: Linux - Delete no addon files
-        if: ${{ matrix.target.platform == 'linux' }}
-        shell: sh
-        run: |
-          rm -rf __pycache__
-          rm -rf doc_classes
-          rm -rf CMakeLists.txt
-          rm -rf SConstruct
-          rm -rf methods.py
-          rm -rf build_profile.json
-          rm -rf TEMPLATE-README.md
 
       # Upload the build
       - name: Upload Artifact
@@ -113,6 +100,14 @@ jobs:
           path: |
             ${{ github.workspace }}/*
             !${{ github.workspace }}/godot-cpp
+            !${{ github.workspace }}/__pycache__
+            !${{ github.workspace }}/doc_classes
+            !${{ github.workspace }}/CMakeLists.txt
+            !${{ github.workspace }}/SConstruct
+            !${{ github.workspace }}/methods.py
+            !${{ github.workspace }}/build_profile.json
+            !${{ github.workspace }}/TEMPLATE-README.md
+
 
 
   # Merges all the build artifacts together into a single halyard artifact.
