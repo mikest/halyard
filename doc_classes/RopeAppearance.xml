@@ -22,11 +22,11 @@ The number of subdivisions to divide the segments by.
 A catmull spline will be used to interpolate along the rope, increasing curvature.
 Switch to wireframe view to see impact of this setting on polygon count.
                 </member>
+                <member name="particles_per_meter" type="float">Number of particles per meter of rope. The smallest number of particles you can have is 2.</member>
                 <member name="material" type="Material">The material to use when rendering the rope. If null, the default material will be used.</member>
                 <member name="start_attachment" type="NodePath">NodePath to a node to attach tp the start of the rope. The node will be aligned to the rope's start frame.</member>
                 <member name="start_offset" type="float">Offset along the rope to attach the start node to. In meters.</member>
                 <member name="end_attachment" type="NodePath">NodePath to a node to attach to the end of the rope. The node will be aligned to the rope's end frame.</member>
                 <member name="end_offset" type="float">Offset along the rope to attach the end node to. In meters.</member>
-                <member name="particles_per_meter" type="int">Number of particles per meter of rope. The smallest number of particles you can have is 2.</member>
         </members>
 </class>
