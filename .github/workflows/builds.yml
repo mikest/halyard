@@ -95,15 +95,15 @@ jobs:
       # Clean up non-addon files
       - name: Linux - Delete no addon files
         if: ${{ matrix.target.platform == 'linux' }}
-        shell: pwsh
+        shell: sh
         run: |
-          Remove-Item doc_classes
-          Remove-Item godot-cpp
-          Remove-Item CMakeLists.txt
-          Remove-Item SConstruct
-          Remove-Item methods.py
-          Remove-Item build_profile.json
-          Remove-Item TEMPLATE-README.md
+          rm -rf doc_classes
+          rm -rf godot-cpp
+          rm -rf CMakeLists.txt
+          rm -rf SConstruct
+          rm -rf methods.py
+          rm -rf build_profile.json
+          rm -rf TEMPLATE-README.md
 
       # Upload the build
       - name: Upload Artifact
