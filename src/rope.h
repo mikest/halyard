@@ -47,8 +47,9 @@ class Rope : public GeometryInstance3D {
 	};
 
 	// internal state
-	LocalVector<Particle> _particles;
-	LocalVector<Transform3D> _frames;
+	LocalVector<Particle> _particles; // the individual points in the simulation
+	LocalVector<Transform3D> _frames; // the transform frame for each LOD point along the rope
+	LocalVector<Transform3D> _links; // the transforms for the points between each particle, always N-1 in count.
 	bool _dirty = true;
 	double _time = 0.0;
 	double _simulation_delta = 0.0;
@@ -100,6 +101,7 @@ protected:
 	void _compute_parallel_transport(LocalVector<Transform3D> &frames) const;
 	void _compute_particle_normals();
 	void _calculate_frames_for_particles(LocalVector<Transform3D> &frames) const;
+	void _calculate_links_for_particles(LocalVector<Transform3D> &links) const;
 	PackedVector3Array _get_control_points_for_particle(int index) const;
 	Pair<Vector3, Vector3> _catmull_interpolate(const Vector3 &p0, const Vector3 &p1, const Vector3 &p2, const Vector3 &p3, float tension, float t) const;
 
@@ -166,6 +168,11 @@ public:
 	int get_rope_frame_count() const;
 	Transform3D get_rope_frame(int index) const;
 	TypedArray<Transform3D> get_all_rope_frames() const;
+
+	// utility
+	int get_link_count() const;
+	Transform3D get_link(int index) const;
+	TypedArray<Transform3D> get_all_links() const;
 
 	// Exported Properties
 	PROPERTY_GET_SET(float, rope_length, _queue_rebuild())

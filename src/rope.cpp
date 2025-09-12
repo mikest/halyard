@@ -42,7 +42,12 @@ void Rope::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_rope_frame_count"), &Rope::get_rope_frame_count);
 	ClassDB::bind_method(D_METHOD("get_rope_frame", "index"), &Rope::get_rope_frame);
 	ClassDB::bind_method(D_METHOD("get_all_rope_frames"), &Rope::get_all_rope_frames);
+
 	ClassDB::bind_method(D_METHOD("get_particle_positions"), &Rope::get_particle_positions);
+
+	ClassDB::bind_method(D_METHOD("get_link_count"), &Rope::get_rope_frame_count);
+	ClassDB::bind_method(D_METHOD("get_link", "index"), &Rope::get_rope_frame);
+	ClassDB::bind_method(D_METHOD("get_all_links"), &Rope::get_all_rope_frames);
 
 	// pass through
 	ClassDB::bind_method(D_METHOD("get_rope_width"), &Rope::get_rope_width);
@@ -224,35 +229,6 @@ void Rope::_internal_physics_process(double delta) {
 	_simulation_delta = 0.0;
 }
 
-uint64_t Rope::get_particle_count_for_length() const {
-	int particle_count = uint64_t(get_rope_length() * get_particles_per_meter()) + 1;
-	particle_count = Math::max(particle_count, 3);
-	return particle_count;
-}
-
-void Rope::_clear_physics_shapes() {
-	PhysicsServer3D::get_singleton()->body_clear_shapes(_physics_body);
-	for (Particle &p : _particles) {
-		if (p.shape.is_valid()) {
-			PhysicsServer3D::get_singleton()->free_rid(p.shape);
-			p.shape = RID();
-		}
-	}
-}
-
-void Rope::_rebuild_physics_shapes() {
-	// create a small sphere shape for each particle
-	// this is a simple approximation, for better collision use capsules between particles
-	float radius = get_rope_width() * 0.5f;
-
-	for (Particle &p : _particles) {
-		RID shape = PhysicsServer3D::get_singleton()->sphere_shape_create();
-		PhysicsServer3D::get_singleton()->shape_set_data(shape, radius);
-		PhysicsServer3D::get_singleton()->body_add_shape(_physics_body, shape, Transform3D(Basis(), p.pos_cur));
-		p.shape = shape;
-	}
-}
-
 void Rope::_clear_instances() {
 	auto rs = RenderingServer::get_singleton();
 	for (auto &rid : _instances) {
@@ -339,15 +315,8 @@ void Rope::_rebuild_rope() {
 		}
 	}
 
-	for (auto &particle : _particles) {
-		float radius = get_rope_width() * 0.5f;
-
-		// physics shape
-		RID shape = PhysicsServer3D::get_singleton()->sphere_shape_create();
-		PhysicsServer3D::get_singleton()->shape_set_data(shape, radius);
-		PhysicsServer3D::get_singleton()->body_add_shape(_physics_body, shape, Transform3D(Basis(), particle.pos_cur));
-		particle.shape = shape;
-	}
+	_clear_physics_shapes();
+	_rebuild_physics_shapes();
 
 	Particle &start = _particles[0];
 	Particle &end = _particles[_particles.size() - 1];
@@ -405,6 +374,57 @@ int Rope::get_rope_sides() const {
 			return Math::clamp(int(Math::lerp(3, 12, ratio)), 3, 12);
 		}
 	}
+}
+
+int Rope::get_link_count() const {
+	return _links.size();
+}
+
+Transform3D Rope::get_link(int index) const {
+	if (index < 0 || index >= _links.size())
+		return Transform3D();
+
+	return _links[index];
+}
+
+TypedArray<Transform3D> Rope::get_all_links() const {
+	TypedArray<Transform3D> array;
+	for (const auto &link : _links)
+		array.push_back(link);
+	return array;
+}
+
+int Rope::get_rope_frame_count() const {
+	return _frames.size();
+}
+
+Transform3D Rope::get_rope_frame(int index) const {
+	if (index < 0 || index >= _frames.size())
+		return Transform3D();
+
+	return _frames[index];
+}
+
+TypedArray<Transform3D> Rope::get_all_rope_frames() const {
+	TypedArray<Transform3D> array;
+	for (const auto &frame : _frames)
+		array.push_back(frame);
+	return array;
+}
+
+TypedArray<Vector3> Rope::get_particle_positions() const {
+	TypedArray<Vector3> array;
+
+	// manual copy
+	for (const auto &particle : _particles)
+		array.push_back(particle.pos_cur);
+	return array;
+}
+
+uint64_t Rope::get_particle_count_for_length() const {
+	int particle_count = uint64_t(get_rope_length() * get_particles_per_meter()) + 1;
+	particle_count = Math::max(particle_count, 3);
+	return particle_count;
 }
 
 #pragma endregion
@@ -591,35 +611,6 @@ void Rope::_compute_parallel_transport(LocalVector<Transform3D> &frames) const {
 	}
 }
 
-int Rope::get_rope_frame_count() const {
-	return _frames.size();
-}
-
-Transform3D Rope::get_rope_frame(int index) const {
-	if (index < 0 || index >= _frames.size())
-		return Transform3D();
-
-	return _frames[index];
-}
-
-TypedArray<Transform3D> Rope::get_all_rope_frames() const {
-	TypedArray<Transform3D> array;
-
-	// manual copy
-	for (const auto &frame : _frames)
-		array.push_back(frame);
-	return array;
-}
-
-TypedArray<Vector3> Rope::get_particle_positions() const {
-	TypedArray<Vector3> array;
-
-	// manual copy
-	for (const auto &particle : _particles)
-		array.push_back(particle.pos_cur);
-	return array;
-}
-
 int Rope::_frame_at_offset(const LocalVector<Transform3D> &frames, float offset, bool from_end) const {
 	// find the nearest transform frame for the given offset
 	float frames_per_segment = int(frames.size() / float(_particles.size()));
@@ -644,6 +635,7 @@ void Rope::_calculate_frames_for_particles(LocalVector<Transform3D> &frames) con
 		lod = 1;
 
 	// got to N-1 because we sample between pairs of particles
+	frames.clear();
 	for (int i = 0; i < _particles.size(); i++) {
 		// 	auto step := get_draw_subdivision_step(camera_position, i);
 		const auto particles = _get_control_points_for_particle(i);
@@ -719,6 +711,36 @@ void Rope::_calculate_frames_for_particles(LocalVector<Transform3D> &frames) con
 	// Need at least two frames to draw a rope
 	if (frames.size() >= 2) {
 		_compute_parallel_transport(frames);
+	}
+}
+
+// calculate the transforms for each link so they can be used for both chains and capsule positioning
+void Rope::_calculate_links_for_particles(LocalVector<Transform3D> &links) const {
+	links.clear();
+
+	// need at least two particles to make a link
+	if (_particles.size() >= 2) {
+		// N-1 chain links per paricles
+		auto count = _particles.size() - 1;
+		for (int idx = 0; idx < count; idx++) {
+			Vector3 pt = _particles[idx].pos_cur;
+			Vector3 pt2 = _particles[idx + 1].pos_cur;
+			Vector3 dir = (pt2 - pt);
+			float dist = dir.length();
+			dir.normalize();
+
+			// xform is at the midpoint between particles
+			Transform3D xform(Basis(), pt + dir * dist / 2.0);
+			xform.basis.rotate_to_align(Vector3(0, 1, 0), dir);
+
+			// every other frame is rotated along the tangent 90deg
+			// so that the links alternate
+			if (idx % 2)
+				xform = xform.rotated_local(Vector3(0, 1, 0), Math_PI / 2.0);
+
+			// push back the unscaled xform
+			links.push_back(xform);
+		}
 	}
 }
 
@@ -843,8 +865,7 @@ void Rope::_rebuild_mesh() {
 	// recompute normal, tangents, and binormals
 	_compute_particle_normals();
 
-	// build the tranform frames from the catmull spline
-	_frames.clear();
+	// recalculate the LOD frames
 	_calculate_frames_for_particles(_frames);
 
 	// Need at least two frames to draw a rope
@@ -859,29 +880,18 @@ void Rope::_rebuild_mesh() {
 		// emit geometry
 		const int last_frame = _frames.size() - 1;
 
-		// render link mesh
-		if (_instances.size() == _particles.size() - 1) {
+		// move the link instances if present
+		bool has_chain = _instances.size() == _particles.size() - 1 && _instances.size() == _links.size();
+		if (has_chain) {
 			auto rs = RenderingServer::get_singleton();
 
-			// N-1 chain links per paricles
-			auto count = _particles.size() - 1;
-
+			// N-1 chain links per particles
+			auto count = _links.size();
 			for (int idx = 0; idx < count; idx++) {
 				RID instance = _instances[idx];
-				Vector3 pt = _particles[idx].pos_cur;
-				Vector3 pt2 = _particles[idx + 1].pos_cur;
-				Vector3 dir = (pt2 - pt);
-				float dist = dir.length();
-				dir.normalize();
+				Transform3D xform = _links[idx];
 
-				Transform3D xform(Basis(), pt + dir * dist / 2.0);
-				xform.basis.rotate_to_align(Vector3(0, 1, 0), dir);
-
-				if (idx % 2)
-					xform = xform.rotated_local(Vector3(0, 1, 0), Math_PI / 2.0);
-				auto d = get_rope_width();
-				xform.scale_basis(Vector3(d, d, d));
-
+				xform.scale_basis(Vector3(diameter, diameter, diameter));
 				rs->instance_set_transform(instance, xform);
 			}
 
@@ -934,6 +944,39 @@ void Rope::_rebuild_mesh() {
 
 #pragma region Physics
 
+void Rope::_clear_physics_shapes() {
+	PhysicsServer3D::get_singleton()->body_clear_shapes(_physics_body);
+	for (Particle &p : _particles) {
+		if (p.shape.is_valid()) {
+			PhysicsServer3D::get_singleton()->free_rid(p.shape);
+			p.shape = RID();
+		}
+	}
+}
+
+void Rope::_rebuild_physics_shapes() {
+	int particle_count = get_particle_count_for_length();
+
+	Dictionary capsule;
+	float radius = get_rope_width() * 0.5f;
+	float height = Math::max(get_rope_length() / (particle_count - 1), radius * 2.0f);
+	capsule["radius"] = radius;
+	capsule["height"] = height + radius * 2;
+
+	// create N-1 capsule colliders
+	for (int idx = 0; idx < particle_count - 1; idx++) {
+		// physics shape
+		RID shape = PhysicsServer3D::get_singleton()->capsule_shape_create();
+		PhysicsServer3D::get_singleton()->shape_set_data(shape, capsule);
+		PhysicsServer3D::get_singleton()->body_add_shape(_physics_body, shape, Transform3D());
+		_particles[idx].shape = shape;
+	}
+
+	// clear shape from last particle
+	if (particle_count)
+		_particles[particle_count - 1].shape = RID();
+}
+
 int Rope::get_collision_layer() const { return _collision_layer; }
 
 void Rope::set_collision_layer(int layer) {
@@ -956,6 +999,8 @@ void Rope::_update_physics(float delta, int iterations) {
 
 		_stiff_rope();
 
+		// now that everything has moved, recalc link positions
+		_calculate_links_for_particles(_links);
 		_update_collision_shapes();
 	}
 }
@@ -1089,6 +1134,9 @@ Vector3 reflect_sphere(Vector3 start, Vector3 end, Vector3 normal, Vector3 colli
 	return end_position;
 }
 
+// NOTE: We do *not* use the collider shapes for collision detection of the rope
+// instead we cast rays in the direction of travel and model the particles
+// as points. This has trade offs, but its significantly faster than a pin_joint + capsule chain.
 void Rope::_apply_constraints() {
 	// ray cast from the previous position to the current position
 	// if we hit something, move the particle to the hit position
@@ -1145,16 +1193,16 @@ void Rope::_apply_constraints() {
 	}
 }
 
+// this moves our collision shapes into their new positions
 void Rope::_update_collision_shapes() {
 	// update the shape positions1
 	int index = 0;
-	int shape_count = PhysicsServer3D::get_singleton()->body_get_shape_count(_physics_body);
-	DEV_ASSERT(shape_count == _particles.size());
-	for (int i = 0; i < shape_count; i++) {
-		// update the shape transform to match the particle position
-		Particle &p = _particles[i];
-		Transform3D xform(Basis(), p.pos_cur);
-		PhysicsServer3D::get_singleton()->body_set_shape_transform(_physics_body, i, xform);
+	int count = PhysicsServer3D::get_singleton()->body_get_shape_count(_physics_body);
+	DEV_ASSERT(count == _links.size());
+
+	for (int idx = 0; idx < count; idx++) {
+		// update the shape transform to match the link position
+		PhysicsServer3D::get_singleton()->body_set_shape_transform(_physics_body, idx, _links[idx]);
 	}
 }
 
