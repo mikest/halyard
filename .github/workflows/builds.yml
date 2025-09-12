@@ -23,12 +23,12 @@ jobs:
             #{ platform: windows, arch: x86_32, os: windows-latest },
             #{ platform: windows, arch: arm64, os: windows-latest },
             { platform: macos, arch: universal, os: macos-latest },
-            { platform: android, arch: x86_64, os: ubuntu-22.04 },
+            # { platform: android, arch: x86_64, os: ubuntu-22.04 },
             #{ platform: android, arch: x86_32, os: ubuntu-22.04 },
-            { platform: android, arch: arm64, os: ubuntu-22.04 },
+            # { platform: android, arch: arm64, os: ubuntu-22.04 },
             #{ platform: android, arch: arm32, os: ubuntu-22.04 },
-            { platform: ios, arch: arm64, os: macos-latest },
-            { platform: web, arch: wasm32, os: ubuntu-22.04 },
+            # { platform: ios, arch: arm64, os: macos-latest },
+            # { platform: web, arch: wasm32, os: ubuntu-22.04 },
           ]
         target-type: [template_debug, template_release]
         float-precision: [single, double]
@@ -98,17 +98,28 @@ jobs:
         with:
           name: halyard-${{ matrix.target.platform }}-${{ matrix.target.arch }}-${{ matrix.float-precision }}-${{ matrix.target-type }}
           path: |
-            ${{ github.workspace }}/bin/**
+            ${{ github.workspace }}/*
+            !${{ github.workspace }}/godot-cpp
+            !${{ github.workspace }}/__pycache__
+            !${{ github.workspace }}/doc_classes
+            !${{ github.workspace }}/CMakeLists.txt
+            !${{ github.workspace }}/SConstruct
+            !${{ github.workspace }}/src
+            !${{ github.workspace }}/methods.py
+            !${{ github.workspace }}/build_profile.json
+            !${{ github.workspace }}/TEMPLATE-README.md
 
   # Merges all the build artifacts together into a single halyard artifact.
   # If you comment out this step, all the builds will be uploaded individually.
   merge:
     runs-on: ubuntu-22.04
     needs: build
+    env:
+      BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
     steps:
       - name: Merge Artifacts
         uses: actions/upload-artifact/merge@v4
         with:
-          name: halyard
+          name: halyard-${{ github.head_ref || github.ref_name }}
           pattern: halyard-*
           delete-merged: true
