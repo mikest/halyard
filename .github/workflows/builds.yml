@@ -104,21 +104,22 @@ jobs:
             !${{ github.workspace }}/doc_classes
             !${{ github.workspace }}/CMakeLists.txt
             !${{ github.workspace }}/SConstruct
+            !${{ github.workspace }}/src
             !${{ github.workspace }}/methods.py
             !${{ github.workspace }}/build_profile.json
             !${{ github.workspace }}/TEMPLATE-README.md
-
-
 
   # Merges all the build artifacts together into a single halyard artifact.
   # If you comment out this step, all the builds will be uploaded individually.
   merge:
     runs-on: ubuntu-22.04
     needs: build
+    env:
+      BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
     steps:
       - name: Merge Artifacts
         uses: actions/upload-artifact/merge@v4
         with:
-          name: halyard
+          name: halyard-${{ github.head_ref || github.ref_name }}
           pattern: halyard-*
           delete-merged: true
