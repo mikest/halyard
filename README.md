@@ -34,7 +34,11 @@ The anchors can be used to create the illusion of pulleys.
 	```sh
 	git clone https://github.com/mikest/halyard.git
 	```
-2. Build the library using SCons or CMake:
+2. Initialize the submodules:
+	```sh
+	git submodule update --init --recursive
+	```
+3. Build the library using SCons or CMake:
 	```sh
 	scons compiledb=yes
 	```
@@ -42,11 +46,12 @@ The anchors can be used to create the illusion of pulleys.
 	```sh
 	scons dev_build=yes compiledb=yes template_debug=yes
 	```
-3. Reload your project.
+4. Reload your project.
 
 ## Usage
 
 1. Import the library into your project.
+	- NOTE: On 4.3 you may encounter errors related to SVG images on the first load. It should succeed on the second load.
 	- NOTE: On OSX you will have to work through explicitly allowing the dylibs to open.
 	- NOTE: One Windows you may also need to do this.
 	- You can avoid this by building from source. The repo is designed to be checked out directly into your addons folder for this reason.
