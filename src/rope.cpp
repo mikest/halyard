@@ -122,10 +122,13 @@ void Rope::_notification(int p_what) {
 
 	switch (p_what) {
 		case NOTIFICATION_ENTER_WORLD: {
-			RID space = get_world_3d()->get_space();
+			Ref<World3D> w3d = get_world_3d();
+			ERR_FAIL_COND(w3d.is_null());
+
+			RID space = w3d->get_space();
 			PhysicsServer3D::get_singleton()->body_set_space(_physics_body, space);
 
-			RID scenario = get_world_3d()->get_scenario();
+			RID scenario = w3d->get_scenario();
 			auto rs = RenderingServer::get_singleton();
 			for (auto instance : _instances) {
 				rs->instance_set_scenario(instance, scenario);
@@ -244,6 +247,9 @@ void Rope::_clear_instances() {
 
 void Rope::_rebuild_instances() {
 	auto rs = RenderingServer::get_singleton();
+	Ref<World3D> w3d = get_world_3d();
+	ERR_FAIL_COND(w3d.is_null());
+
 	if (_appearance != nullptr) {
 		auto scenario = get_world_3d()->get_scenario();
 		auto mesh = _appearance->get_array_mesh();

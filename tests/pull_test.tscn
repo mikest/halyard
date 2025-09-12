@@ -1,7 +1,7 @@
 [gd_scene load_steps=8 format=3 uid="uid://8r23wy3n04eu"]
 
-[ext_resource type="Script" uid="uid://ehha186u4br6" path="res://addons/halyard/scripts/offset_rope_positions.gd" id="1_5q3c7"]
-[ext_resource type="Script" uid="uid://dl6y1t3o1yx0o" path="res://addons/halyard/scripts/pull_rope.gd" id="2_56k4y"]
+[ext_resource type="Script" path="res://addons/halyard/scripts/offset_rope_positions.gd" id="1_5q3c7"]
+[ext_resource type="Script" path="res://addons/halyard/scripts/pull_rope.gd" id="2_56k4y"]
 
 [sub_resource type="RopePositions" id="RopePositions_p4qpy"]
 position_count = 1

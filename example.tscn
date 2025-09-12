@@ -1,6 +1,6 @@
 [gd_scene load_steps=7 format=3 uid="uid://dh0oj81pufivs"]
 
-[ext_resource type="Texture2D" uid="uid://cvgoei4ais4km" path="res://addons/halyard/assets/three-ply-rope.png" id="1_2jas5"]
+[ext_resource type="Texture2D" path="res://addons/halyard/assets/three-ply-rope.png" id="1_2jas5"]
 [ext_resource type="PackedScene" path="res://addons/halyard/assets/rope-eye-splice.blend" id="3_s6abl"]
 [ext_resource type="PackedScene" path="res://addons/halyard/assets/rope-knot.blend" id="4_cepmf"]
 

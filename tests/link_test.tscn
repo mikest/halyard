@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3 uid="uid://c6m5djyl84pub"]
 
-[ext_resource type="ArrayMesh" uid="uid://j3u082cbuveh" path="res://addons/halyard/assets/chain-link.res" id="1_5qxvb"]
-[ext_resource type="PackedScene" uid="uid://dyssu3u4wpv8j" path="res://addons/halyard/assets/rope-endcap.blend" id="2_of4qs"]
+[ext_resource type="ArrayMesh" path="res://addons/halyard/assets/chain-link.res" id="1_5qxvb"]
+[ext_resource type="PackedScene" path="res://addons/halyard/assets/rope-endcap.blend" id="2_of4qs"]
 
 [sub_resource type="RopeAppearance" id="RopeAppearance_nksku"]
 rope_lod = 1
