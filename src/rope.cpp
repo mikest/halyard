@@ -18,16 +18,19 @@ Rope::Rope() {
 	_generated_mesh.instantiate();
 	set_base(_generated_mesh->get_rid());
 
-	_physics_body = PhysicsServer3D::get_singleton()->body_create();
-	PhysicsServer3D::get_singleton()->body_set_mode(_physics_body, PhysicsServer3D::BODY_MODE_STATIC);
+	auto ps = PhysicsServer3D::get_singleton();
+	_physics_body = ps->body_create();
+	ps->body_set_mode(_physics_body, PhysicsServer3D::BODY_MODE_STATIC);
 }
 
 Rope::~Rope() {
 	if (_appearance != nullptr)
 		_appearance->disconnect("changed", Callable(this, "_on_appearance_changed"));
 
-	_generated_mesh->clear_surfaces();
-	_generated_mesh.unref();
+	if (_generated_mesh.is_valid()) {
+		_generated_mesh->clear_surfaces();
+		_generated_mesh.unref();
+	}
 
 	_clear_instances();
 
@@ -125,6 +128,8 @@ void Rope::_notification(int p_what) {
 			Ref<World3D> w3d = get_world_3d();
 			auto ps = PhysicsServer3D::get_singleton();
 			auto rs = RenderingServer::get_singleton();
+			ERR_FAIL_NULL(w3d);
+
 			if (w3d.is_valid() && rs && ps) {
 				RID space = w3d->get_space();
 				ps->body_set_space(_physics_body, space);
@@ -134,14 +139,12 @@ void Rope::_notification(int p_what) {
 					rs->instance_set_scenario(instance, scenario);
 					rs->instance_set_visible(instance, visible);
 				}
-			} else
-				ERR_FAIL_MSG("Invalid World3D on NOTIFICATION_ENTER_WORLD");
+			}
 
 		} break;
 		case NOTIFICATION_EXIT_WORLD: {
 			auto ps = PhysicsServer3D::get_singleton();
 			auto rs = RenderingServer::get_singleton();
-
 			if (ps && rs) {
 				ps->body_set_space(_physics_body, RID());
 				for (auto instance : _instances) {
@@ -149,18 +152,11 @@ void Rope::_notification(int p_what) {
 					rs->instance_attach_skeleton(instance, RID());
 					rs->instance_set_visible(instance, visible);
 				}
-			} else
-				ERR_FAIL_MSG("Invalid World3D on NOTIFICATION_EXIT_WORLD");
+			}
 
 		} break;
 
 		case NOTIFICATION_TRANSFORM_CHANGED: {
-			// if (Engine::get_singleton()->is_editor_hint()) {
-			// 	// _reset_points_offsets();
-			// 	return;
-			// }
-
-			// PhysicsServer3D::get_singleton()->body_set_shape_transform(_physics_body, 0, get_global_transform());
 		} break;
 
 		case NOTIFICATION_VISIBILITY_CHANGED: {
@@ -180,7 +176,6 @@ void Rope::_notification(int p_what) {
 			// } break;
 
 		case NOTIFICATION_READY: {
-			// ensure we're always called, even when processing is disabled...
 			_internal_ready();
 		} break;
 
@@ -205,7 +200,10 @@ void Rope::_internal_ready(void) {
 
 void Rope::_internal_process(double delta) {
 	if (_pop_is_dirty()) {
+		// cancel out the rotation for our transform.
+		// the simulation can't work with it.
 		set_global_transform(Transform3D(Basis(), get_global_position()));
+
 		_draw_rope();
 	}
 }
@@ -242,6 +240,8 @@ void Rope::_internal_physics_process(double delta) {
 
 void Rope::_clear_instances() {
 	auto rs = RenderingServer::get_singleton();
+	ERR_FAIL_NULL_MSG(rs, "RenderingServer missing");
+
 	for (auto &rid : _instances) {
 		rs->free_rid(rid);
 	}
@@ -251,30 +251,27 @@ void Rope::_clear_instances() {
 void Rope::_rebuild_instances() {
 	auto rs = RenderingServer::get_singleton();
 	Ref<World3D> w3d = get_world_3d();
+	ERR_FAIL_NULL_MSG(rs, "RenderingServer missing");
+	ERR_FAIL_NULL_MSG(w3d, "World3D missing");
 
-	if (rs && w3d.is_valid() && _appearance.is_valid()) {
-		auto scenario = get_world_3d()->get_scenario();
-		auto mesh = _appearance->get_array_mesh();
-		auto material = _appearance->get_material();
-
-		if (mesh != nullptr) {
-			// if (material != nullptr && mesh->get_surface_count())
-			// 	mesh->surface_set_material(0, material);
-
-			// create one instance for each gap between particles
-			// this will be one less than the particle count
-			auto count = _particles.size() - 1;
-
-			for (int idx = 0; idx < count; idx++) {
-				RID instance = rs->instance_create2(mesh->get_rid(), scenario);
-
-				if (instance.is_valid()) {
-					_instances.push_back(instance);
+	if (rs && w3d.is_valid()) {
+		// only rebuild instances if we have an appearance
+		if (_appearance.is_valid()) {
+			auto scenario = w3d->get_scenario();
+			auto mesh = _appearance->get_array_mesh();
+			if (scenario.is_valid() && mesh.is_valid()) {
+				// create one instance for each gap between particles
+				// this will be one less than the particle count
+				auto count = _particles.size() - 1;
+				for (int idx = 0; idx < count; idx++) {
+					RID instance = rs->instance_create2(mesh->get_rid(), scenario);
+					if (instance.is_valid()) {
+						_instances.push_back(instance);
+					}
 				}
 			}
 		}
-	} else
-		ERR_FAIL_MSG("Invalid World3D during instances rebuild.");
+	}
 }
 
 void Rope::_rebuild_rope() {
@@ -341,7 +338,6 @@ void Rope::_rebuild_rope() {
 	end.pos_cur = end_location;
 
 	_rebuild_instances();
-
 	_update_anchors();
 
 	// only run preprocess on the first build
@@ -352,7 +348,6 @@ void Rope::_rebuild_rope() {
 	}
 
 	_compute_particle_normals();
-
 	_queue_redraw();
 }
 
@@ -935,6 +930,7 @@ void Rope::_draw_rope() {
 		bool has_chain = _instances.size() == _particles.size() - 1 && _instances.size() == _links.size();
 		if (has_chain) {
 			auto rs = RenderingServer::get_singleton();
+			ERR_FAIL_NULL_MSG(rs, "RenderingServer missing");
 
 			// N-1 chain links per particles
 			auto count = _links.size();
@@ -1006,16 +1002,18 @@ bool Rope::_pop_is_dirty() {
 #pragma region Physics
 
 void Rope::_clear_physics_shapes() {
-	PhysicsServer3D::get_singleton()->body_clear_shapes(_physics_body);
+	auto ps = PhysicsServer3D::get_singleton();
+	ps->body_clear_shapes(_physics_body);
 	for (Particle &p : _particles) {
 		if (p.shape.is_valid()) {
-			PhysicsServer3D::get_singleton()->free_rid(p.shape);
+			ps->free_rid(p.shape);
 			p.shape = RID();
 		}
 	}
 }
 
 void Rope::_rebuild_physics_shapes() {
+	auto ps = PhysicsServer3D::get_singleton();
 	int particle_count = get_particle_count_for_length();
 
 	Dictionary capsule;
@@ -1027,9 +1025,9 @@ void Rope::_rebuild_physics_shapes() {
 	// create N-1 capsule colliders
 	for (int idx = 0; idx < particle_count - 1; idx++) {
 		// physics shape
-		RID shape = PhysicsServer3D::get_singleton()->capsule_shape_create();
-		PhysicsServer3D::get_singleton()->shape_set_data(shape, capsule);
-		PhysicsServer3D::get_singleton()->body_add_shape(_physics_body, shape, Transform3D());
+		RID shape = ps->capsule_shape_create();
+		ps->shape_set_data(shape, capsule);
+		ps->body_add_shape(_physics_body, shape, Transform3D());
 		_particles[idx].shape = shape;
 	}
 
@@ -1042,7 +1040,10 @@ int Rope::get_collision_layer() const { return _collision_layer; }
 
 void Rope::set_collision_layer(int layer) {
 	_collision_layer = layer;
-	PhysicsServer3D::get_singleton()->body_set_collision_layer(_physics_body, layer);
+
+	auto ps = PhysicsServer3D::get_singleton();
+	ERR_FAIL_NULL(ps);
+	ps->body_set_collision_layer(_physics_body, layer);
 }
 
 int Rope::get_collision_mask() const { return _collision_mask; }
@@ -1202,9 +1203,10 @@ void Rope::_apply_constraints() {
 	// ray cast from the previous position to the current position
 	// if we hit something, move the particle to the hit position
 	Ref<World3D> w3d = get_world_3d();
-	ERR_FAIL_COND(w3d.is_null());
+	ERR_FAIL_NULL(w3d);
 
-	PhysicsDirectSpaceState3D *dss = PhysicsServer3D::get_singleton()->space_get_direct_state(w3d->get_space());
+	auto ps = PhysicsServer3D::get_singleton();
+	PhysicsDirectSpaceState3D *dss = ps->space_get_direct_state(w3d->get_space());
 	ERR_FAIL_NULL(dss);
 
 	// set up the raycast parameters
@@ -1256,14 +1258,16 @@ void Rope::_apply_constraints() {
 
 // this moves our collision shapes into their new positions
 void Rope::_update_collision_shapes() {
+	auto ps = PhysicsServer3D::get_singleton();
+
 	// update the shape positions1
 	int index = 0;
-	int count = PhysicsServer3D::get_singleton()->body_get_shape_count(_physics_body);
+	int count = ps->body_get_shape_count(_physics_body);
 	DEV_ASSERT(count == _links.size());
 
 	for (int idx = 0; idx < count; idx++) {
 		// update the shape transform to match the link position
-		PhysicsServer3D::get_singleton()->body_set_shape_transform(_physics_body, idx, _links[idx]);
+		ps->body_set_shape_transform(_physics_body, idx, _links[idx]);
 	}
 }
 
