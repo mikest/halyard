@@ -146,10 +146,10 @@ jobs:
       - name: Log
         shell: sh
         run: |
-          zip halyard-${{ github.event.release.tag_name || github.head_ref || github.ref_name }}.zip addons/*
+          zip -r halyard-${{ github.event.release.tag_name || github.head_ref || github.ref_name }}.zip addons
           tree
 
-      # ...so that it can be uploaded to the Release
+      # ...so that it can be uploaded to the Release as a Draft
       - name: Release
         uses: softprops/action-gh-release@v2
         if: github.ref_type == 'tag'
