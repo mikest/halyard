@@ -134,23 +134,22 @@ jobs:
           name: halyard-${{ github.event.release.tag_name || github.head_ref || github.ref_name }}
           pattern: halyard-*
           delete-merged: true
-      # - name: Download merged
-      #   shell: sh
-      #   run: |
-      #     wget --header="Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" ${{ steps.upload.outputs.artifact-url }}
+
+      # I can't figure out how to download just the zip file from above, so we redownload the contents
+      # and zip it all back up again...
       - name: Download Artifact
         uses: actions/download-artifact@v5
+        if: github.ref_type == 'tag'
         with:
-          # name: halyard-*
-          path: artifact
+          path: halyard
       - name: Log
         shell: sh
         run: |
           tree
           ls -R
-          zip halyard-${{ github.event.release.tag_name || github.head_ref || github.ref_name }}.zip artifact/*
+          zip halyard-${{ github.event.release.tag_name || github.head_ref || github.ref_name }}.zip halyard/*
 
-      # artifact-url
+      # ...so that it can be uploaded to the Release
       - name: Release
         uses: softprops/action-gh-release@v2
         if: github.ref_type == 'tag'
