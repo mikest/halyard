@@ -1,5 +1,4 @@
 @tool
-@icon("res://icons/ring-icon.png")
 extends Rope
 class_name PullRope
 
@@ -35,18 +34,18 @@ func _physics_process(_delta: float) -> void:
 	# the attachment will be aligned along the rope Tangent, so we'll use that to se the force direction
 	if pull_on and end_anchor:
 		var count := get_rope_frame_count()
-		var xform : Transform3D = get_rope_frame(count-1)
+		var xform: Transform3D = get_rope_frame(count - 1)
 		xform = global_transform * xform
 		#DebugDraw3D.draw_gizmo(xform)
 		
 		# use a node as the pull poisition.
-		var pull_point := Vector3(0,0,0)
-		var pull_node :Node3D = get_node_or_null(end_anchor)
+		var pull_point := Vector3(0, 0, 0)
+		var pull_node: Node3D = get_node_or_null(end_anchor)
 		if pull_node:
 			pull_point = pull_node.global_position - pull_on.global_position
 		
 		# cap the pull force at a multiple of the body mass to keep from wildly oscillating if the stretch is too large
-		var force := pow(stretch,force_stiffness) * pull_on.mass * force_strength
+		var force := pow(stretch, force_stiffness) * pull_on.mass * force_strength
 		var force_limit := pull_on.mass * force_limit_mass_scale
 		force = clampf(force, -force_limit, force_limit)
 		
