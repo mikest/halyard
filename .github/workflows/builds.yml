@@ -156,5 +156,5 @@ jobs:
         if: github.ref_type == 'tag'
         with:
           draft: true
-          files: *.zip
+          files: halyard-*.zip
 
