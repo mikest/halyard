@@ -137,7 +137,7 @@ jobs:
       - name: Download merged
         shell: sh
         run: |
-          curl ${{ steps.upload.outputs.artifact-url }}
+          curl -IO ${{ steps.upload.outputs.artifact-url }}
       - name: Log
         shell: sh
         run: |
