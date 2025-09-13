@@ -1,0 +1,136 @@
+[gd_scene load_steps=8 format=3 uid="uid://crgf2p88i5w4l"]
+
+[ext_resource type="Script" uid="uid://dl6y1t3o1yx0o" path="res://addons/halyard/scripts/pull_rope.gd" id="1_2j0ef"]
+[ext_resource type="ArrayMesh" uid="uid://j3u082cbuveh" path="res://addons/halyard/assets/chain-link.res" id="1_623gb"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_623gb"]
+albedo_color = Color(0.3155359, 0.25440636, 0.1698789, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ljxrd"]
+size = Vector3(1, 0.1, 0.5)
+
+[sub_resource type="RopeAppearance" id="RopeAppearance_623gb"]
+rope_width = 0.125
+rope_lod = 1
+particles_per_meter = 20.0
+link_mesh = ExtResource("1_623gb")
+end_attachment = NodePath("EndAttach")
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_623gb"]
+
+[sub_resource type="RopeAppearance" id="RopeAppearance_u0cki"]
+rope_width = 0.125
+particles_per_meter = 20.0
+link_mesh = ExtResource("1_623gb")
+
+[node name="Node3D" type="Node3D"]
+
+[node name="RigidBody3D" type="RigidBody3D" parent="."]
+collision_layer = 0
+collision_mask = 0
+mass = 5.0
+linear_damp = 0.1
+angular_damp = 1.0
+
+[node name="CSGBox3D" type="CSGBox3D" parent="RigidBody3D"]
+material_override = SubResource("StandardMaterial3D_623gb")
+size = Vector3(1, 0.1, 0.5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RigidBody3D"]
+shape = SubResource("BoxShape3D_ljxrd")
+
+[node name="BoardAnchor" type="Marker3D" parent="RigidBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.1, 0.25)
+
+[node name="BoardAnchor2" type="Marker3D" parent="RigidBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.1, -0.25)
+
+[node name="BoardAnchor3" type="Marker3D" parent="RigidBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0.1, 0.25)
+
+[node name="BoardAnchor4" type="Marker3D" parent="RigidBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0.1, -0.25)
+
+[node name="Pivot" type="Marker3D" parent="RigidBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0.5, 0)
+
+[node name="Pivot2" type="Marker3D" parent="RigidBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.5, 0)
+
+[node name="Rope" type="Rope" parent="." node_paths=PackedStringArray("pull_on")]
+rope_length = 2.0
+end_anchor = NodePath("../RigidBody3D/Pivot")
+appearance = SubResource("RopeAppearance_623gb")
+stiffness_iterations = 12
+stiffness = 6.0
+collision_layer = 0
+collision_mask = 0
+apply_wind = true
+wind = Vector3(0, 0, 1)
+wind_noise = SubResource("FastNoiseLite_623gb")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 2.3375678, 1.2649236)
+script = ExtResource("1_2j0ef")
+pull_on = NodePath("../RigidBody3D")
+metadata/_custom_type_script = "uid://dl6y1t3o1yx0o"
+
+[node name="EndAttach" type="Marker3D" parent="Rope"]
+transform = Transform3D(-0.125, -1.2761932e-08, 2.1208932e-09, 8.2658085e-09, -0.09454983, -0.08176387, 9.951961e-09, -0.08176387, 0.09454983, 0, -1.8375678, -1.2649236)
+
+[node name="Rope" type="Rope" parent="Rope"]
+rope_length = 0.3
+start_anchor = NodePath("../EndAttach")
+end_anchor = NodePath("../../RigidBody3D/BoardAnchor4")
+appearance = SubResource("RopeAppearance_u0cki")
+collision_layer = 0
+collision_mask = 0
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.8375678, -1.2649236)
+
+[node name="Rope2" type="Rope" parent="Rope"]
+rope_length = 0.3
+start_anchor = NodePath("../EndAttach")
+end_anchor = NodePath("../../RigidBody3D/BoardAnchor3")
+appearance = SubResource("RopeAppearance_u0cki")
+collision_layer = 0
+collision_mask = 0
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.8375678, -1.2649236)
+
+[node name="Rope2" type="Rope" parent="." node_paths=PackedStringArray("pull_on")]
+rope_length = 2.0
+end_anchor = NodePath("../RigidBody3D/Pivot2")
+appearance = SubResource("RopeAppearance_623gb")
+stiffness_iterations = 12
+stiffness = 6.0
+apply_wind = true
+wind = Vector3(0, 0, 1)
+wind_noise = SubResource("FastNoiseLite_623gb")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 2.3375678, 1.2649236)
+script = ExtResource("1_2j0ef")
+pull_on = NodePath("../RigidBody3D")
+metadata/_custom_type_script = "uid://dl6y1t3o1yx0o"
+
+[node name="EndAttach" type="Marker3D" parent="Rope2"]
+transform = Transform3D(-0.125, -1.2384347e-08, 1.7175967e-09, 8.33463e-09, -0.09533705, -0.08084459, 9.319664e-09, -0.08084459, 0.09533705, 0, -1.8375678, -1.2649236)
+
+[node name="Rope" type="Rope" parent="Rope2"]
+rope_length = 0.3
+start_anchor = NodePath("../EndAttach")
+end_anchor = NodePath("../../RigidBody3D/BoardAnchor2")
+appearance = SubResource("RopeAppearance_u0cki")
+collision_layer = 0
+collision_mask = 0
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.8375678, -1.2649236)
+
+[node name="Rope2" type="Rope" parent="Rope2"]
+rope_length = 0.3
+start_anchor = NodePath("../EndAttach")
+end_anchor = NodePath("../../RigidBody3D/BoardAnchor")
+appearance = SubResource("RopeAppearance_u0cki")
+collision_layer = 0
+collision_mask = 0
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.8375678, -1.2649236)
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(0.88197064, 0.113954976, -0.4573205, 0, 0.97032946, 0.2417864, 0.47130433, -0.2132485, 0.8558022, -2.5204206, 3.0003877, 7.37268)
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="Camera3D"]
+transform = Transform3D(0.96249306, -0.25708085, 0.08669708, 0.065598115, 0.53058904, 0.84508705, -0.2632562, -0.8077032, 0.5275524, 2.7680752, -3.71892, -1.0995541)

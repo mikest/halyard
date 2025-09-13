@@ -200,13 +200,13 @@ void Rope::_notification(int p_what) {
 void Rope::_internal_ready(void) {
 	set_process_internal(true);
 	set_physics_process_internal(true);
-	_queue_rebuild();
+	_queue_redraw();
 }
 
 void Rope::_internal_process(double delta) {
 	if (_pop_is_dirty()) {
 		set_global_transform(Transform3D(Basis(), get_global_position()));
-		_rebuild_mesh();
+		_draw_rope();
 	}
 }
 
@@ -218,9 +218,7 @@ void Rope::_internal_physics_process(double delta) {
 	if (_simulation_delta < simulation_step)
 		return;
 
-	// if the particle count has changed, rebuild the rope
-	int desired_count = get_particle_count_for_length();
-	if (desired_count != _particles.size()) {
+	if (_pop_rebuild()) {
 		_rebuild_rope();
 	}
 
@@ -234,7 +232,7 @@ void Rope::_internal_physics_process(double delta) {
 		_update_anchors();
 		if (_simulate) {
 			_update_physics(float(simulation_step), 1);
-			_queue_rebuild();
+			_queue_redraw();
 		}
 	}
 
@@ -355,7 +353,17 @@ void Rope::_rebuild_rope() {
 
 	_compute_particle_normals();
 
-	_queue_rebuild();
+	_queue_redraw();
+}
+
+void Rope::_queue_rope_rebuild() {
+	_rebuild = true;
+}
+
+bool Rope::_pop_rebuild() {
+	bool should_rebuild = _rebuild;
+	_rebuild = false;
+	return should_rebuild;
 }
 
 #pragma endregion
@@ -364,7 +372,7 @@ void Rope::_rebuild_rope() {
 
 void Rope::_on_appearance_changed() {
 	if (is_inside_tree())
-		_rebuild_rope();
+		_queue_rope_rebuild();
 }
 
 Ref<RopeAppearance> Rope::get_appearance() const {
@@ -385,7 +393,7 @@ void Rope::set_appearance(const Ref<RopeAppearance> &val) {
 			_appearance->connect("changed", Callable(this, "_on_appearance_changed"));
 		}
 
-		_queue_rebuild();
+		_queue_redraw();
 	}
 }
 
@@ -902,7 +910,7 @@ void Rope::_align_attachment_node(const NodePath &path, Transform3D xform, float
 	}
 }
 
-void Rope::_rebuild_mesh() {
+void Rope::_draw_rope() {
 	_generated_mesh->clear_surfaces();
 
 	// recompute normal, tangents, and binormals
@@ -981,6 +989,16 @@ void Rope::_rebuild_mesh() {
 	}
 
 	update_gizmos();
+}
+
+void Rope::_queue_redraw() {
+	_dirty = true;
+}
+
+bool Rope::_pop_is_dirty() {
+	bool is_dirty = _dirty;
+	_dirty = false;
+	return is_dirty;
 }
 
 #pragma endregion

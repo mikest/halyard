@@ -1,43 +1,101 @@
-[gd_scene load_steps=6 format=3 uid="uid://c6pq3mg86lkun"]
+[gd_scene load_steps=10 format=3 uid="uid://c6pq3mg86lkun"]
 
-[ext_resource type="Script" path="res://addons/halyard/scripts/distributed_rope_positions.gd" id="1_lks7b"]
+[ext_resource type="Script" uid="uid://ccqeo0jjod5r0" path="res://addons/halyard/scripts/distributed_rope_positions.gd" id="1_lks7b"]
 
 [sub_resource type="RopePositions" id="RopePositions_uix47"]
-position_count = 3
+position_count = 7
 position_0/position = 0.0
-position_0/node = NodePath("Attachment1")
+position_0/node = NodePath("AttachmentA1")
 position_1/position = 0.0
-position_1/node = NodePath("Attachment2")
+position_1/node = NodePath("AttachmentA2")
 position_2/position = 0.0
-position_2/node = NodePath("Attachment3")
+position_2/node = NodePath("AttachmentA3")
+position_3/position = 0.0
+position_3/node = NodePath("AttachmentB")
+position_4/position = 0.0
+position_4/node = NodePath("AttachmentC1")
+position_5/position = 0.0
+position_5/node = NodePath("AttachmentC2")
+position_6/position = 0.0
+position_6/node = NodePath("AttachmentC3")
 script = ExtResource("1_lks7b")
 include_start = true
 include_end = true
 metadata/_custom_type_script = "uid://ccqeo0jjod5r0"
 
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lks7b"]
+transparency = 1
+albedo_color = Color(1, 1, 1, 0.039215688)
+metallic = 1.0
+roughness = 0.3
+
 [sub_resource type="RopeAppearance" id="RopeAppearance_18r7s"]
-rope_width = 0.125
+rope_width = 0.05
+rope_sides = 5
+material = SubResource("StandardMaterial3D_lks7b")
 attachments = SubResource("RopePositions_uix47")
 
-[sub_resource type="RopePositions" id="RopePositions_jiad6"]
+[sub_resource type="RopePositions" id="RopePositions_lks7b"]
 position_count = 1
-position_0/position = 0.5
-position_0/node = NodePath("../Rope/Attachment2")
+position_0/position = 0.0
+position_0/node = NodePath("../SpokeThread/AttachmentB")
+script = ExtResource("1_lks7b")
+include_start = true
+include_end = true
+metadata/_custom_type_script = "uid://ccqeo0jjod5r0"
+
+[sub_resource type="RopePositions" id="RopePositions_18r7s"]
+position_count = 5
+position_0/position = 0.0
+position_0/node = NodePath("../SpokeThread2/AttachmentA1")
+position_1/position = 0.0
+position_1/node = NodePath("../SpokeThread3/AttachmentA1")
+position_2/position = 0.0
+position_2/node = NodePath("../SpokeThread/AttachmentC3")
+position_3/position = 0.0
+position_3/node = NodePath("../SpokeThread2/AttachmentC3")
+position_4/position = 0.0
+position_4/node = NodePath("../SpokeThread3/AttachmentC3")
+script = ExtResource("1_lks7b")
+include_start = true
+include_end = true
+metadata/_custom_type_script = "uid://ccqeo0jjod5r0"
+
+[sub_resource type="RopeAppearance" id="RopeAppearance_lks7b"]
+rope_width = 0.05
+rope_sides = 5
+particles_per_meter = 12.0
+material = SubResource("StandardMaterial3D_lks7b")
+
+[sub_resource type="RopePositions" id="RopePositions_jiad6"]
+position_count = 5
+position_0/position = 0.0
+position_0/node = NodePath("../SpokeThread2/AttachmentA2")
+position_1/position = 0.0
+position_1/node = NodePath("../SpokeThread3/AttachmentA2")
+position_2/position = 0.0
+position_2/node = NodePath("../SpokeThread/AttachmentC2")
+position_3/position = 0.0
+position_3/node = NodePath("../SpokeThread2/AttachmentC2")
+position_4/position = 0.0
+position_4/node = NodePath("../SpokeThread3/AttachmentC2")
+script = ExtResource("1_lks7b")
+include_start = true
+include_end = true
+metadata/_custom_type_script = "uid://ccqeo0jjod5r0"
 
 [sub_resource type="RopePositions" id="RopePositions_gueu6"]
-position_count = 6
+position_count = 5
 position_0/position = 0.0
-position_0/node = NodePath("../Rope2")
+position_0/node = NodePath("../SpokeThread2/AttachmentA3")
 position_1/position = 0.0
-position_1/node = NodePath("../EndAnchor")
+position_1/node = NodePath("../SpokeThread3/AttachmentA3")
 position_2/position = 0.0
-position_2/node = NodePath("../EndAnchor2")
+position_2/node = NodePath("../SpokeThread/AttachmentC1")
 position_3/position = 0.0
-position_3/node = NodePath("../Rope/Attachment1")
+position_3/node = NodePath("../SpokeThread2/AttachmentC1")
 position_4/position = 0.0
-position_4/node = NodePath("../Rope2/Attachment1")
-position_5/position = 0.0
-position_5/node = NodePath("../Rope/Attachment3")
+position_4/node = NodePath("../SpokeThread3/AttachmentC1")
 script = ExtResource("1_lks7b")
 include_start = true
 include_end = true
@@ -45,44 +103,141 @@ metadata/_custom_type_script = "uid://ccqeo0jjod5r0"
 
 [node name="Node3D" type="Node3D"]
 
-[node name="Rope" type="Rope" parent="."]
-end_anchor = NodePath("../EndAnchor")
-appearance = SubResource("RopeAppearance_18r7s")
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8021312, 0, 0.07251388)
+[node name="Spoke" type="Node3D" parent="."]
 
-[node name="Attachment1" type="Marker3D" parent="Rope"]
-transform = Transform3D(-0.040649638, -0.11819492, -0.001601674, -0.118194535, 0.04061868, 0.002274657, -0.0016303603, 0.0022541848, -0.124969035, 0.9035721, -0.4659069, -0.017232753)
-
-[node name="Attachment2" type="Marker3D" parent="Rope"]
-transform = Transform3D(0.00011239393, -0.12497717, -0.0023861981, -0.124976106, -0.00015895566, 0.002438722, -0.002441311, 0.002383549, -0.124953434, 1.904268, -0.6371591, -0.036317896)
-
-[node name="Attachment3" type="Marker3D" parent="Rope"]
-transform = Transform3D(0.040853765, -0.11809225, -0.003192343, -0.118090615, -0.04091636, 0.0023364986, -0.0032523316, 0.0022522479, -0.124937385, 2.905529, -0.46314013, -0.055413853)
-
-[node name="EndAnchor" type="Marker3D" parent="."]
+[node name="StartAnchor" type="Marker3D" parent="Spoke"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
 
-[node name="Rope2" type="Rope" parent="."]
-end_anchor = NodePath("../EndAnchor2")
-anchors = SubResource("RopePositions_jiad6")
+[node name="EndAnchor" type="Marker3D" parent="Spoke"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 0)
+
+[node name="Spoke2" type="Node3D" parent="."]
+transform = Transform3D(0.49999997, 0, 0.86602545, 0, 1, 0, -0.86602545, 0, 0.49999997, 0, 0, 0)
+
+[node name="StartAnchor" type="Marker3D" parent="Spoke2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
+
+[node name="EndAnchor" type="Marker3D" parent="Spoke2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 0)
+
+[node name="Spoke3" type="Node3D" parent="."]
+transform = Transform3D(-0.50000006, 0, 0.8660254, 0, 1, 0, -0.8660254, 0, -0.50000006, 0, 0, 0)
+
+[node name="StartAnchor" type="Marker3D" parent="Spoke3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
+
+[node name="EndAnchor" type="Marker3D" parent="Spoke3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 0)
+
+[node name="SpokeThread" type="Rope" parent="."]
+start_anchor = NodePath("../Spoke/StartAnchor")
+end_anchor = NodePath("../Spoke/EndAnchor")
 appearance = SubResource("RopeAppearance_18r7s")
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -2)
+wind = Vector3(0, 0, 1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
 
-[node name="Attachment1" type="Marker3D" parent="Rope2"]
-transform = Transform3D(-0.12477963, -0.0059791952, 0.0043923184, -0.005976243, 0.03715266, -0.11920136, 0.004396336, -0.11920121, -0.037373025, 0.051451884, -0.35781187, 1.0257419)
+[node name="AttachmentA1" type="Marker3D" parent="SpokeThread"]
+transform = Transform3D(-0.015029321, 0.04768773, 4.371139e-09, 0.04768773, 0.015029321, -4.334964e-10, -1.7273543e-09, 4.0386907e-09, -0.05, -0.48288774, -0.17785811, 4.5079793e-09)
 
-[node name="Attachment2" type="Marker3D" parent="Rope2"]
-transform = Transform3D(-0.12483745, 0.0002517961, 0.006367634, -0.006363334, 0.0018114012, -0.124824785, -0.00034371763, -0.12498662, -0.0017962275, 0.10213685, -0.6371591, 2.036196)
+[node name="AttachmentA2" type="Marker3D" parent="SpokeThread"]
+transform = Transform3D(-0.010282467, 0.04893129, 4.371139e-09, 0.04893129, 0.010282467, -4.190733e-10, -1.3090377e-09, 4.191527e-09, -0.05, -0.9816586, -0.30938077, 8.449263e-09)
 
-[node name="Attachment3" type="Marker3D" parent="Rope2"]
-transform = Transform3D(-0.12471632, 0.006170571, 0.00572393, -0.0073652114, -0.038870186, -0.11857429, -0.0040734466, -0.118642464, 0.039145555, 0.049533166, -0.37889236, 3.047617)
+[node name="AttachmentA3" type="Marker3D" parent="SpokeThread"]
+transform = Transform3D(-0.005191031, 0.049729805, 4.371139e-09, 0.049729805, 0.005191031, -4.0032866e-10, -8.5197965e-10, 4.305955e-09, -0.05, -1.4910061, -0.389705, 1.11249205e-08)
 
-[node name="EndAnchor2" type="Marker3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2)
+[node name="AttachmentB" type="Marker3D" parent="SpokeThread"]
+transform = Transform3D(6.952503e-05, 0.049999952, -4.371139e-09, 0.049999952, -6.952503e-05, -3.899032e-10, -3.959809e-10, -4.3705923e-09, -0.05, -2.005957, -0.41630182, 1.2044011e-08)
 
-[node name="Thread" type="Rope" parent="."]
-rope_length = 12.0
-start_anchor = NodePath("../Rope")
-end_anchor = NodePath("../Rope2/Attachment3")
+[node name="AttachmentC1" type="Marker3D" parent="SpokeThread"]
+transform = Transform3D(0.0053302045, 0.04971508, -4.371139e-09, 0.04971508, -0.0053302045, -3.9337764e-10, -8.571172e-10, -4.3042947e-09, -0.05, -2.5209324, -0.38827294, 1.1037047e-08)
+
+[node name="AttachmentC2" type="Marker3D" parent="SpokeThread"]
+transform = Transform3D(0.010417659, 0.048902683, -4.371139e-09, 0.048902683, -0.010417659, -4.0647216e-10, -1.3082921e-09, -4.1905186e-09, -0.05, -3.0305915, -0.30644554, 8.300214e-09)
+
+[node name="AttachmentC3" type="Marker3D" parent="SpokeThread"]
+transform = Transform3D(0.015070723, 0.047674663, -4.371139e-09, 0.047674663, -0.015070723, -4.175329e-10, -1.7156392e-09, -4.042001e-09, -0.05, -3.5294561, -0.17342874, 4.348001e-09)
+
+[node name="SpokeThread2" type="Rope" parent="."]
+start_anchor = NodePath("../Spoke2/StartAnchor")
+end_anchor = NodePath("../Spoke2/EndAnchor")
+anchors = SubResource("RopePositions_lks7b")
+appearance = SubResource("RopeAppearance_18r7s")
+wind = Vector3(0, 0, 1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.99999994, 0, -1.7320509)
+
+[node name="AttachmentA1" type="Marker3D" parent="SpokeThread2"]
+transform = Transform3D(-0.041003395, 0.024063252, -0.015481653, 0.024038222, 0.014295176, -0.041446496, -0.01552049, -0.041431967, -0.02329177, -0.24549049, -0.16816671, 0.4226842)
+
+[node name="AttachmentA2" type="Marker3D" parent="SpokeThread2"]
+transform = Transform3D(-0.039977934, 0.024586348, -0.0172417, 0.02452744, 0.010171543, -0.042366784, -0.0173254, -0.042332627, -0.020193549, -0.49781305, -0.2957342, 0.85713184)
+
+[node name="AttachmentA3" type="Marker3D" parent="SpokeThread2"]
+transform = Transform3D(-0.038922604, 0.024935028, -0.019059794, 0.024840603, 0.0059163496, -0.042987686, -0.019182695, -0.042932987, -0.016993618, -0.7547122, -0.37883526, 1.299459)
+
+[node name="AttachmentB" type="Marker3D" parent="SpokeThread2"]
+transform = Transform3D(-0.037585966, 0.024998022, -0.021503355, 0.0249473, 0.00023626843, -0.04333101, -0.021562178, -0.043301772, -0.012650269, -1.0059569, -0.41630182, 1.7320509)
+
+[node name="AttachmentC1" type="Marker3D" parent="SpokeThread2"]
+transform = Transform3D(-0.03622519, 0.02473116, -0.024002196, 0.024726937, -0.0056054997, -0.043094743, -0.024006546, -0.04309232, -0.008169311, -1.2618899, -0.38362882, 2.1779962)
+
+[node name="AttachmentC2" type="Marker3D" parent="SpokeThread2"]
+transform = Transform3D(-0.0350709, 0.024346804, -0.026024316, 0.024299933, -0.01037089, -0.042449474, -0.02606809, -0.04242261, -0.0045581865, -1.5159724, -0.300703, 2.6207173)
+
+[node name="AttachmentC3" type="Marker3D" parent="SpokeThread2"]
+transform = Transform3D(-0.03400772, 0.02377714, -0.027894845, 0.023694143, -0.014771593, -0.041477557, -0.02796538, -0.041430034, -0.001220615, -1.7649932, -0.16932434, 3.0546186)
+
+[node name="SpokeThread3" type="Rope" parent="."]
+start_anchor = NodePath("../Spoke3/StartAnchor")
+end_anchor = NodePath("../Spoke3/EndAnchor")
+anchors = SubResource("RopePositions_lks7b")
+appearance = SubResource("RopeAppearance_18r7s")
+wind = Vector3(0, 0, 1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.0000001, 0, -1.7320508)
+
+[node name="AttachmentA1" type="Marker3D" parent="SpokeThread3"]
+transform = Transform3D(-0.041255265, -0.023793831, 0.015226829, -0.023764892, 0.01466278, -0.04147569, 0.015271961, -0.041459095, -0.023407495, 0.24177474, -0.17306125, 0.42127573)
+
+[node name="AttachmentA2" type="Marker3D" parent="SpokeThread3"]
+transform = Transform3D(-0.040169872, -0.024363264, 0.017111763, -0.024294874, 0.010213508, -0.04249051, 0.017208727, -0.04245133, -0.020043556, 0.49088788, -0.3025062, 0.855338)
+
+[node name="AttachmentA3" type="Marker3D" parent="SpokeThread3"]
+transform = Transform3D(-0.039046414, -0.024731845, 0.019071277, -0.024621645, 0.0055934517, -0.043156553, 0.01921334, -0.0430935, -0.016546858, 0.7449182, -0.3839877, 1.2979686)
+
+[node name="AttachmentB" type="Marker3D" parent="SpokeThread3"]
+transform = Transform3D(-0.03757422, -0.025001034, 0.021520367, -0.024706079, -0.0002860187, -0.0434687, 0.021858355, -0.04329973, -0.012138612, 0.99404323, -0.41630182, 1.7320508)
+
+[node name="AttachmentC1" type="Marker3D" parent="SpokeThread3"]
+transform = Transform3D(-0.036156073, -0.024934022, 0.023896296, -0.024461808, -0.0059327595, -0.043202113, 0.024379468, -0.042931307, -0.007908518, 1.2527282, -0.37817824, 2.177454)
+
+[node name="AttachmentC2" type="Marker3D" parent="SpokeThread3"]
+transform = Transform3D(-0.03509031, -0.024569858, 0.025787447, -0.024068251, -0.010328358, -0.0425916, 0.026256232, -0.04230422, -0.0045785643, 1.5096684, -0.29361483, 2.619852)
+
+[node name="AttachmentC3" type="Marker3D" parent="SpokeThread3"]
+transform = Transform3D(-0.034105286, -0.02404753, 0.02754171, -0.023524797, -0.014399859, -0.041704055, 0.027989522, -0.041404836, -0.0014920371, 1.7618988, -0.16413982, 3.05414)
+
+[node name="WeaveThread" type="Rope" parent="."]
+rope_length = 7.0
+start_anchor = NodePath("../SpokeThread/AttachmentA1")
+end_anchor = NodePath("../SpokeThread/AttachmentA1")
+anchors = SubResource("RopePositions_18r7s")
+appearance = SubResource("RopeAppearance_lks7b")
+wind = Vector3(0, 0, 1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5171123, -0.17785811, 4.1514565e-09)
+
+[node name="WeaveThread2" type="Rope" parent="."]
+rope_length = 5.0
+start_anchor = NodePath("../SpokeThread/AttachmentA2")
+end_anchor = NodePath("../SpokeThread/AttachmentA2")
+anchors = SubResource("RopePositions_jiad6")
+appearance = SubResource("RopeAppearance_lks7b")
+wind = Vector3(0, 0, 1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.0183414, -0.30938077, 7.7810345e-09)
+
+[node name="WeaveThread3" type="Rope" parent="."]
+rope_length = 3.0
+start_anchor = NodePath("../SpokeThread/AttachmentA3")
+end_anchor = NodePath("../SpokeThread/AttachmentA3")
 anchors = SubResource("RopePositions_gueu6")
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.8021312, 0, 0.07251388)
+appearance = SubResource("RopeAppearance_lks7b")
+wind = Vector3(0, 0, 1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.50899386, -0.389705, 1.0245085e-08)

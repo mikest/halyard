@@ -11,7 +11,7 @@
 
 using namespace godot;
 
-const int MAX_ROPE_POSITIONS = 10;
+const int MAX_ROPE_POSITIONS = 30;
 
 class Rope;
 class RopePositions : public Resource {

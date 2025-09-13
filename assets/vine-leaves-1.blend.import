@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://goc6jks5bb05"
-path="res://.godot/imported/rope-endcap-rope-loop.blend-5e0b733032969bf23fae464eb21fd06b.scn"
+uid="uid://cqloonmxh6jlk"
+path="res://.godot/imported/vine-leaves-1.blend-74e7c6dec69b2642db26e2f87b54cb54.scn"
 
 [deps]
 
-source_file="res://addons/halyard/assets/rope-endcap-rope-loop.blend"
-dest_files=["res://.godot/imported/rope-endcap-rope-loop.blend-5e0b733032969bf23fae464eb21fd06b.scn"]
+source_file="res://addons/halyard/assets/vine-leaves-1.blend"
+dest_files=["res://.godot/imported/vine-leaves-1.blend-74e7c6dec69b2642db26e2f87b54cb54.scn"]
 
 [params]
 

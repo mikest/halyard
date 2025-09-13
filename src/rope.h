@@ -50,6 +50,7 @@ class Rope : public GeometryInstance3D {
 	LocalVector<Particle> _particles; // the individual points in the simulation
 	LocalVector<Transform3D> _frames; // the transform frame for each LOD point along the rope
 	LocalVector<Transform3D> _links; // the transforms for the points between each particle, always N-1 in count.
+	bool _rebuild = true;
 	bool _dirty = true;
 	double _time = 0.0;
 	double _simulation_delta = 0.0;
@@ -96,7 +97,6 @@ protected:
 	void _notification(int p_what);
 
 	// Particle list
-	void _rebuild_rope();
 	void _build_particles(const Vector3 &end_location, const Vector3 &global_position, const Vector3 &initial_accel, int particle_count, float segment_length);
 	void _compute_parallel_transport(LocalVector<Transform3D> &frames) const;
 	void _compute_particle_normals();
@@ -120,6 +120,10 @@ protected:
 	bool _get_anchor_transform(const NodePath &path, Transform3D &xform) const;
 
 	// Physics
+	void _rebuild_rope();
+	void _queue_rope_rebuild();
+	bool _pop_rebuild();
+
 	void _update_physics(float delta, int iterations);
 	void _apply_chain_constraint(int from_idx);
 	void _stiff_rope();
@@ -133,14 +137,9 @@ protected:
 	void _prepare_physics_server();
 
 	// Mesh building
-	void _rebuild_mesh();
-	void _queue_rebuild() { _dirty = true; }
-	bool _pop_is_dirty() {
-		bool is_dirty = _dirty;
-		_dirty = false;
-		return is_dirty;
-	}
-
+	void _draw_rope();
+	void _queue_redraw();
+	bool _pop_is_dirty();
 	void _clear_instances();
 	void _rebuild_instances();
 
@@ -177,16 +176,16 @@ public:
 	TypedArray<Transform3D> get_all_links() const;
 
 	// Exported Properties
-	PROPERTY_GET_SET(float, rope_length, _queue_rebuild())
+	PROPERTY_GET_SET(float, rope_length, _queue_rope_rebuild())
 	PROPERTY_GET_SET(int, grow_from, {})
 
 	Ref<RopeAppearance> get_appearance() const;
 	void set_appearance(const Ref<RopeAppearance> &val);
 
 	// anchors
-	PROPERTY_GET_SET(NodePath, start_anchor, _queue_rebuild())
-	PROPERTY_GET_SET(Ref<RopePositions>, anchors, _queue_rebuild())
-	PROPERTY_GET_SET(NodePath, end_anchor, _queue_rebuild())
+	PROPERTY_GET_SET(NodePath, start_anchor, _queue_redraw())
+	PROPERTY_GET_SET(Ref<RopePositions>, anchors, _queue_redraw())
+	PROPERTY_GET_SET(NodePath, end_anchor, _queue_redraw())
 
 	// appearance passthrough accessors
 #define APPEARENCE_ACCESSOR(m_type, m_name, m_default) \
