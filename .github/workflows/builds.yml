@@ -134,15 +134,21 @@ jobs:
           name: halyard-${{ github.event.release.tag_name || github.head_ref || github.ref_name }}
           pattern: halyard-*
           delete-merged: true
-      - name: Download merged
-        shell: sh
-        run: |
-          wget --header="Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" ${{ steps.upload.outputs.artifact-url }}
+      # - name: Download merged
+      #   shell: sh
+      #   run: |
+      #     wget --header="Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" ${{ steps.upload.outputs.artifact-url }}
+      - name: Download Artifact
+        uses: actions/download-artifact@v2
+        with:
+          # name: halyard-*
+          path: artifact
       - name: Log
         shell: sh
         run: |
           tree
           ls -R
+          zip halyard-${{ github.event.release.tag_name || github.head_ref || github.ref_name }}.zip artifact/*
 
       # artifact-url
       - name: Release
@@ -150,5 +156,5 @@ jobs:
         if: github.ref_type == 'tag'
         with:
           draft: true
-          files: release/*.zip
+          files: *.zip
 
