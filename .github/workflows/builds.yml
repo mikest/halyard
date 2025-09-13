@@ -120,9 +120,12 @@ jobs:
   merge:
     runs-on: ubuntu-22.04
     needs: build
+    permissions:
+      contents: write
     env:
-      BRANCH_NAME: ${{ github.head_ref || github.ref_name }} 
+      BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
     steps:
+      # Merge libraries into a file called halyard-{tag|branch|ref}.zip
       - name: Merge Artifacts
         uses: actions/upload-artifact/merge@v4
         with:
