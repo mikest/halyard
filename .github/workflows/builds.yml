@@ -140,13 +140,13 @@ jobs:
       - name: Download Artifact
         uses: actions/download-artifact@v5
         with:
-          path: halyard
+          path: addons/halyard
       
       # Reorganize the output files and zip back up into an archive
       - name: Log
         shell: sh
         run: |
-          zip halyard-${{ github.event.release.tag_name || github.head_ref || github.ref_name }}.zip halyard/*
+          zip halyard-${{ github.event.release.tag_name || github.head_ref || github.ref_name }}.zip addons/*
           tree
 
       # ...so that it can be uploaded to the Release
