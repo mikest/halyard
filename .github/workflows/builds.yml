@@ -137,10 +137,12 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           pattern: halyard-*
+          path: release
       - name: Log
         shell: sh
         run: |
           tree
+          ls -R
 
       # artifact-url
       - name: Release
@@ -148,5 +150,5 @@ jobs:
         if: github.ref_type == 'tag'
         with:
           draft: true
-          files: halyard-*.zip
+          files: release/*
 
