@@ -128,16 +128,16 @@ jobs:
       # Merge libraries into a file called halyard-{tag|branch|ref}.zip
       - name: Merge Artifacts
         uses: actions/upload-artifact/merge@v4
+        id: upload
         with:
           # name: halyard-${{ github.head_ref || github.ref_name }}
           name: halyard-${{ github.event.release.tag_name || github.head_ref || github.ref_name }}
           pattern: halyard-*
           delete-merged: true
       - name: Download merged
-        uses: actions/download-artifact@v5
-        with:
-          pattern: halyard-*
-          path: release
+        shell: sh
+        run: |
+          curl ${{ steps.upload.outputs.artifact-url }}
       - name: Log
         shell: sh
         run: |
@@ -150,5 +150,5 @@ jobs:
         if: github.ref_type == 'tag'
         with:
           draft: true
-          files: release/*
+          files: release/*.zip
 
