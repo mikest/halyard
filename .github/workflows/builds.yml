@@ -137,7 +137,7 @@ jobs:
       - name: Download merged
         shell: sh
         run: |
-          wget --tries=5 --waitretry=10 ${{ steps.upload.outputs.artifact-url }}
+          wget header='--header=Authorization: token ${{ secrets.GITHUB_TOKEN }}' ${{ steps.upload.outputs.artifact-url }} --header "Referer: www.github.com"
       - name: Log
         shell: sh
         run: |
