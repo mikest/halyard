@@ -139,7 +139,7 @@ jobs:
       #   run: |
       #     wget --header="Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" ${{ steps.upload.outputs.artifact-url }}
       - name: Download Artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v5
         with:
           # name: halyard-*
           path: artifact
