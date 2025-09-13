@@ -123,28 +123,34 @@ void Rope::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_ENTER_WORLD: {
 			Ref<World3D> w3d = get_world_3d();
-			ERR_FAIL_COND(w3d.is_null());
-
-			RID space = w3d->get_space();
-			PhysicsServer3D::get_singleton()->body_set_space(_physics_body, space);
-
-			RID scenario = w3d->get_scenario();
+			auto ps = PhysicsServer3D::get_singleton();
 			auto rs = RenderingServer::get_singleton();
-			for (auto instance : _instances) {
-				rs->instance_set_scenario(instance, scenario);
-				rs->instance_set_visible(instance, visible);
-			}
+			if (w3d.is_valid() && rs && ps) {
+				RID space = w3d->get_space();
+				ps->body_set_space(_physics_body, space);
+
+				RID scenario = w3d->get_scenario();
+				for (auto instance : _instances) {
+					rs->instance_set_scenario(instance, scenario);
+					rs->instance_set_visible(instance, visible);
+				}
+			} else
+				ERR_FAIL_MSG("Invalid World3D on NOTIFICATION_ENTER_WORLD");
 
 		} break;
 		case NOTIFICATION_EXIT_WORLD: {
-			PhysicsServer3D::get_singleton()->body_set_space(_physics_body, RID());
-
+			auto ps = PhysicsServer3D::get_singleton();
 			auto rs = RenderingServer::get_singleton();
-			for (auto instance : _instances) {
-				rs->instance_set_scenario(instance, RID());
-				rs->instance_attach_skeleton(instance, RID());
-				rs->instance_set_visible(instance, visible);
-			}
+
+			if (ps && rs) {
+				ps->body_set_space(_physics_body, RID());
+				for (auto instance : _instances) {
+					rs->instance_set_scenario(instance, RID());
+					rs->instance_attach_skeleton(instance, RID());
+					rs->instance_set_visible(instance, visible);
+				}
+			} else
+				ERR_FAIL_MSG("Invalid World3D on NOTIFICATION_EXIT_WORLD");
 
 		} break;
 
@@ -194,8 +200,7 @@ void Rope::_notification(int p_what) {
 void Rope::_internal_ready(void) {
 	set_process_internal(true);
 	set_physics_process_internal(true);
-	_rebuild_rope();
-	_rebuild_mesh();
+	_queue_rebuild();
 }
 
 void Rope::_internal_process(double delta) {
@@ -248,9 +253,8 @@ void Rope::_clear_instances() {
 void Rope::_rebuild_instances() {
 	auto rs = RenderingServer::get_singleton();
 	Ref<World3D> w3d = get_world_3d();
-	ERR_FAIL_COND(w3d.is_null());
 
-	if (_appearance != nullptr) {
+	if (rs && w3d.is_valid() && _appearance.is_valid()) {
 		auto scenario = get_world_3d()->get_scenario();
 		auto mesh = _appearance->get_array_mesh();
 		auto material = _appearance->get_material();
@@ -271,7 +275,8 @@ void Rope::_rebuild_instances() {
 				}
 			}
 		}
-	}
+	} else
+		ERR_FAIL_MSG("Invalid World3D during instances rebuild.");
 }
 
 void Rope::_rebuild_rope() {
@@ -358,7 +363,8 @@ void Rope::_rebuild_rope() {
 #pragma region Accessors
 
 void Rope::_on_appearance_changed() {
-	_rebuild_rope();
+	if (is_inside_tree())
+		_rebuild_rope();
 }
 
 Ref<RopeAppearance> Rope::get_appearance() const {
