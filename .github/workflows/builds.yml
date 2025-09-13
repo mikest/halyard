@@ -137,7 +137,7 @@ jobs:
       - name: Download merged
         shell: sh
         run: |
-          wget ${{ steps.upload.outputs.artifact-url }}
+          wget --tries=5 --waitretry=10 ${{ steps.upload.outputs.artifact-url }}
       - name: Log
         shell: sh
         run: |
