@@ -134,5 +134,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: github.ref_type == 'tag'
         with:
+          draft: true
           files: halyard-${{ github.event.release.tag_name || github.head_ref || github.ref_name }}.zip
 
