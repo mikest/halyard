@@ -13,17 +13,20 @@ A high-performance, cross-platform rope simulation library using the Verlet inte
 - Limitted collision detection and response.
 	- Bodies can collide with rope, modelled as a capsule chain.
 	- Rope can collide with bodies, but is modelled as points.
-	- ~~Rigid bodies can apply forces to ropes~~
 - Apply forces to an anchor with the _PullRope_ class.
 - Dynamically resize rope length for creating hoists.
 - Render rope as a mesh tube or as individual chain links.
 - Endcap and attachment support for rope details.
-- Demo scene and example textures and meshes included.
-
-![Screenshot](screenshots/ratlines.png)
+- TODO:
+	- ~~External RigidBodies can apply forces to ropes~~
+	- ~~Ropes can be infinitely stiff, like in metal chains~~
+	- ~~PullRopes can transfer forces through anchors~~
+	- ~~Ropes preserve their orientation through anchors~~
+	- ~~Rope positions can specify their own Basis~~
 
 The attachment system can used to create complicated rigging arrangements like cargo nets, spider webs and ratlines.
 The anchors can be used to create the illusion of pulleys.
+
 
 ## Installation
 
@@ -61,11 +64,29 @@ The anchors can be used to create the illusion of pulleys.
 
 ## Demo
 
-See `example.tscn` for usage.
+See `example.tscn` for an example of using this library to generate ship _ratlines_.
+
+![example.tscn](screenshots/ratlines.png)
+
+
+You can also find a variety of tests that demonstrate different capabilities in the `tests folder.
+
+Some examples:
+- `anchor_test.tscn`: Anchor placement.
+- `attachment_test.tscn`: Various attachment behaviors.
+- `chain_test.tscn`: Testing out chain link rendering.
+- `pull_test.tscn`: Test out the `PullRope` class with an offset anchor on a RigidBody
+- `stretch_test.tscn`: Test out stretching behaviors
+- `swing_test.tscn`: Test out a pair of PullRopes pulling on a RigidBody3D.
+- `vine_test.tscn`: Test out chaining ropes together in branching structures.
+![Vine](screenshots/vines.png)
+- `web_test.tscn`: Test out weaving multiple ropes together with shared anchor and attachment resources.
+![Web](screenshots/web.png)
+
 
 ## Documentation
 
-- API reference: See `doc_classes/`
+- API reference: See the built in documentation for the classes.
 - Build instructions: See `SConstruct`
 
 ## Contributing

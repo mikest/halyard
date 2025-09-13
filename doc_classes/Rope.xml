@@ -48,6 +48,31 @@
 			</description>
 		</method>
 
+		<method name="get_all_links">
+			<return type="Array[Transform3D]" />
+			<description>
+				Returns a list of all the transforms for links used to render the rope.
+				
+				The link transform is the orient transform midway between two particles.
+				It is used to position the colliders and chain links if rendering.
+			</description>
+		</method>
+
+		<method name="get_link">
+			<return type="Transform3D" />
+			<param index="0" name="index" type="int" />
+			<description>
+				Returns an individual link at index, or Transform.IDENTITY if out of bounds.
+			</description>
+		</method>
+
+		<method name="get_link_count">
+			<return type="int" />
+			<description>
+				Returns the current number of links. Will be N-1 particles.
+			</description>
+		</method>
+
 	</methods>
 	<members>
 		<member name="rope_length" type="int">
