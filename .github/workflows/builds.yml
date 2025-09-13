@@ -137,7 +137,7 @@ jobs:
       - name: Download merged
         shell: sh
         run: |
-          wget --header="Authorization: token ${{ secrets.GITHUB_TOKEN }}" ${{ steps.upload.outputs.artifact-url }}
+          wget --header="Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" ${{ steps.upload.outputs.artifact-url }}
       - name: Log
         shell: sh
         run: |
