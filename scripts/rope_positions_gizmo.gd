@@ -38,7 +38,7 @@ func _redraw(gizmo: EditorNode3DGizmo):
 		if attach:
 			_draw_positions(gizmo, rope, rope.get_start_attachment(), rope.get_end_attachment(), attach, "attach", true)
 
-func _draw_positions(gizmo:EditorNode3DGizmo, rope: Rope, start_path: NodePath, end_path: NodePath, positions: RopePositions, style: StringName, flip: bool):
+func _draw_positions(gizmo: EditorNode3DGizmo, rope: Rope, start_path: NodePath, end_path: NodePath, positions: RopePositions, style: StringName, flip: bool):
 	var lines = PackedVector3Array()
 	var handles = PackedVector3Array()
 	var start = PackedVector3Array()
@@ -47,10 +47,10 @@ func _draw_positions(gizmo:EditorNode3DGizmo, rope: Rope, start_path: NodePath, 
 	var count := positions.position_count
 	for idx in count:
 		var path := positions.get_node(idx)
-		_push_positions_for_node(path, rope, lines, handles, flip)
+		_push_positions_for_node(path, rope, lines, handles, flip, idx)
 	
-	_push_positions_for_node(start_path, rope, lines, start, flip)
-	_push_positions_for_node(end_path, rope, lines, end, flip)
+	_push_positions_for_node(start_path, rope, lines, start, flip, 0)
+	_push_positions_for_node(end_path, rope, lines, end, flip, count - 1)
 	
 	if lines.size():
 		gizmo.add_lines(lines, get_material("main", gizmo))
@@ -61,14 +61,14 @@ func _draw_positions(gizmo:EditorNode3DGizmo, rope: Rope, start_path: NodePath, 
 	if end.size():
 		gizmo.add_handles(end, get_material("end_" + style, gizmo), [])
 
-func _push_positions_for_node(path: NodePath, rope:Rope, lines:PackedVector3Array, handles: PackedVector3Array, flip:bool):
-		var node : Node3D = rope.get_node_or_null(path)
+func _push_positions_for_node(path: NodePath, rope: Rope, lines: PackedVector3Array, handles: PackedVector3Array, flip: bool, index: int):
+		var node: Node3D = rope.get_node_or_null(path)
 		if node:
 			var xform := rope.global_transform.inverse()
 			var orientation := Transform3D(xform.basis, Vector3.ZERO)
-			orientation = orientation.rotated_local(Vector3.RIGHT, PI/4)
-			orientation = orientation.rotated_local(Vector3.UP, PI/4)
-			var d:= rope.get_rope_width() * 2
+			orientation = orientation.rotated_local(Vector3.RIGHT, PI / 4 + (PI / 32 * index))
+			orientation = orientation.rotated_local(Vector3.UP, PI / 4 + (PI / 32 * index))
+			var d := rope.get_rope_width() * 2
 		
 			var origin := node.global_position
 			var dir := Vector3.DOWN if flip else Vector3.UP
