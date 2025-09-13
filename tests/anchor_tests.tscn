@@ -17,7 +17,7 @@ albedo_color = Color(1, 0, 0, 1)
 
 [sub_resource type="RopeAppearance" id="RopeAppearance_1jhvu"]
 rope_lod = 4
-particles_per_meter = 4
+particles_per_meter = 4.0
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mcmdf"]
 albedo_color = Color(0, 0.75, 1, 1)
