@@ -20,17 +20,17 @@ jobs:
         target:
           [
             { platform: linux, arch: x86_64, os: ubuntu-22.04 },
-            #{ platform: linux, arch: x86_32, os: ubuntu-22.04 },
-            #{ platform: linux, arch: arm64, os: ubuntu-22.04-arm },
-            #{ platform: linux, arch: arm32, os: ubuntu-22.04-arm },
+            # { platform: linux, arch: x86_32, os: ubuntu-22.04 },
+            # { platform: linux, arch: arm64, os: ubuntu-22.04-arm },
+            # { platform: linux, arch: arm32, os: ubuntu-22.04-arm },
             { platform: windows, arch: x86_64, os: windows-latest },
-            #{ platform: windows, arch: x86_32, os: windows-latest },
-            #{ platform: windows, arch: arm64, os: windows-latest },
+            # { platform: windows, arch: x86_32, os: windows-latest },
+            # { platform: windows, arch: arm64, os: windows-latest },
             { platform: macos, arch: universal, os: macos-latest },
             # { platform: android, arch: x86_64, os: ubuntu-22.04 },
-            #{ platform: android, arch: x86_32, os: ubuntu-22.04 },
+            # { platform: android, arch: x86_32, os: ubuntu-22.04 },
             # { platform: android, arch: arm64, os: ubuntu-22.04 },
-            #{ platform: android, arch: arm32, os: ubuntu-22.04 },
+            # { platform: android, arch: arm32, os: ubuntu-22.04 },
             # { platform: ios, arch: arm64, os: macos-latest },
             # { platform: web, arch: wasm32, os: ubuntu-22.04 },
           ]
@@ -139,15 +139,15 @@ jobs:
       # and zip it all back up again...
       - name: Download Artifact
         uses: actions/download-artifact@v5
-        if: github.ref_type == 'tag'
         with:
           path: halyard
+      
+      # Reorganize the output files and zip back up into an archive
       - name: Log
         shell: sh
         run: |
-          tree
-          ls -R
           zip halyard-${{ github.event.release.tag_name || github.head_ref || github.ref_name }}.zip halyard/*
+          tree
 
       # ...so that it can be uploaded to the Release
       - name: Release
