@@ -137,6 +137,11 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           pattern: halyard-*
+      - name: Log
+        shell: sh
+        run: |
+          tree
+
       # artifact-url
       - name: Release
         uses: softprops/action-gh-release@v2
