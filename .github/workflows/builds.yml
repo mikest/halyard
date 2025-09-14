@@ -37,6 +37,7 @@ jobs:
         # target-type: [template_debug, template_release]
         target-type: [template_debug]
         # float-precision: [single, double]
+        float-precision: [single]
 
     runs-on: ${{ matrix.target.os }}
     steps:

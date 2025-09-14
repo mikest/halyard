@@ -24,9 +24,9 @@ jobs:
           ]
         # target-type: [template_debug, template_release]
         target-type: [template_debug]
+        float-precision: [single]
         godot-version: ['4.3', '4.4.1']
-        platform: ['ubuntu-22.04', 'windows-latest', 'macos-latest' ]
-    runs-on: ${{ matrix.platform }}
+    runs-on: ${{ matrix.target.platform }}
     steps:
       # Clone this repository
       - name: Checkout
