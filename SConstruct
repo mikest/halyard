@@ -60,5 +60,14 @@ library = env.SharedLibrary(
 # copy = env.Install("{}/bin/{}/".format(projectdir, env["platform"]), library)
 # default_args = [library, copy]
 
-default_args = [library]
+test_harness = [
+    env.Install(".test_harness/project/addons/halyard/bin/{}/".format(env["platform"]), library),
+    env.Command(".test_harness/project/tests", "tests", Copy("$TARGET", "$SOURCE")),
+    env.Command(".test_harness/project/scripts", "scripts", Copy("$TARGET", "$SOURCE")),
+    env.Command(".test_harness/project/halyard.gdextension", "halyard.gdextension", Copy("$TARGET", "$SOURCE")),
+    env.Command(".test_harness/project/plugin.gd", "plugin.gd", Copy("$TARGET", "$SOURCE")),
+    env.Command(".test_harness/project/plugin.cfg", "plugin.cfg", Copy("$TARGET", "$SOURCE"))
+    ]
+
+default_args = [library, test_harness]
 Default(*default_args)

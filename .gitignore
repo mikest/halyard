@@ -10,6 +10,12 @@
 bin/windows/*.ilk
 ~*.dll
 
+# Ignore the test harness
+.test_harness/project/*
+.test_harness/project/addons/*
+!.test_harness/project/project.godot
+!.test_harness/project/addons
+
 # Ignore the built libraries
 bin/**/*dll
 bin/**/*dylib

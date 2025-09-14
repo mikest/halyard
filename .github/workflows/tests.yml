@@ -1,0 +1,18 @@
+name: Build GDExtension
+on: [push, pull_request]
+
+jobs:
+  test:
+    strategy:
+       matrix:
+        godot-version: ['4.3', '4.4.1']
+        platform: ['ubuntu-22.04', 'windows-latest', 'macos-latest' ]
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Run Tests
+        uses: MikeSchulze/gdunit4-action@v1
+        with:
+          godot-version: ${{ matrix.godot-version }}
+          paths: 'res://tests'
+          project_dir: './.test_harness/project/'
+
