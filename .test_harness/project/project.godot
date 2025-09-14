@@ -10,10 +10,10 @@ config_version=5
 
 [application]
 
-config/name="rope-test"
+config/name="halyard-test-harness"
 config/features=PackedStringArray("4.3", "Forward Plus")
 config/icon="res://icon.svg"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/halyard/plugin.cfg")
+enabled=PackedStringArray("res://addons/halyard/plugin.cfg", "res://addons/gdUnit4/plugin.cfg")

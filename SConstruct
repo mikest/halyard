@@ -62,11 +62,12 @@ library = env.SharedLibrary(
 
 test_harness = [
     env.Install(".test_harness/project/addons/halyard/bin/{}/".format(env["platform"]), library),
-    env.Command(".test_harness/project/tests", "tests", Copy("$TARGET", "$SOURCE")),
-    env.Command(".test_harness/project/scripts", "scripts", Copy("$TARGET", "$SOURCE")),
-    env.Command(".test_harness/project/halyard.gdextension", "halyard.gdextension", Copy("$TARGET", "$SOURCE")),
-    env.Command(".test_harness/project/plugin.gd", "plugin.gd", Copy("$TARGET", "$SOURCE")),
-    env.Command(".test_harness/project/plugin.cfg", "plugin.cfg", Copy("$TARGET", "$SOURCE"))
+    env.Command(".test_harness/project/addons/halyard/tests", "tests", Copy("$TARGET", "$SOURCE")),
+    env.Command(".test_harness/project/addons/halyard/scripts", "scripts", Copy("$TARGET", "$SOURCE")),
+    env.Command(".test_harness/project/addons/halyard/halyard.gdextension", "halyard.gdextension", Copy("$TARGET", "$SOURCE")),
+    env.Command(".test_harness/project/addons/halyard/plugin.gd", "plugin.gd", Copy("$TARGET", "$SOURCE")),
+    env.Command(".test_harness/project/addons/halyard/plugin.cfg", "plugin.cfg", Copy("$TARGET", "$SOURCE")),
+    env.Command(".test_harness/project/addons/halyard/icons", "icons", Copy("$TARGET", "$SOURCE"))
     ]
 
 default_args = [library, test_harness]
