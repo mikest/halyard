@@ -1,4 +1,4 @@
-name: Build GDExtension
+name: Test Halyard
 on: [push, pull_request]
 
 jobs:
