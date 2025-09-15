@@ -10,6 +10,8 @@
 #include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/classes/physics_server3d.hpp>
 #include <godot_cpp/classes/wrapped.hpp>
+#include <godot_cpp/core/binder_common.hpp>
+#include <godot_cpp/core/gdvirtual.gen.inc>
 #include <godot_cpp/templates/local_vector.hpp>
 #include <godot_cpp/templates/pair.hpp>
 #include <godot_cpp/variant/typed_array.hpp>
@@ -57,7 +59,7 @@ class Rope : public GeometryInstance3D {
 
 	// rope geometry
 	float _rope_length = 4.0;
-	int _grow_from = 0;
+	int _grow_from = Start;
 	Ref<RopeAppearance> _appearance;
 
 	// simulation parameters
@@ -114,10 +116,12 @@ protected:
 	float get_current_rope_length() const;
 	float _get_average_segment_length() const;
 
+	int _get_index_for_position(float position) const;
+
 	// Anchors
 	void _update_anchors();
 	void _update_anchor(NodePath &anchor, float position);
-	bool _get_anchor_transform(const NodePath &path, Transform3D &xform) const;
+	bool _get_node_transform(const NodePath &path, Transform3D &xform) const;
 
 	// Physics
 	void _rebuild_rope();
@@ -174,6 +178,34 @@ public:
 	int get_link_count() const;
 	Transform3D get_link(int index) const;
 	TypedArray<Transform3D> get_all_links() const;
+
+	// subclassing callbacks
+
+	// These index ranges do not include the special cased start/end nodes.
+	GDVIRTUAL0RC(int, _get_anchor_count);
+	virtual int _get_anchor_count() const;
+
+	GDVIRTUAL0RC(int, _get_attachment_count);
+	virtual int _get_attachment_count() const;
+
+	// Return the position of the anchor along the rope in the range [-1, 0..1]
+	// If the position is -1, the anchor is disabled.
+	GDVIRTUAL1RC(float, _get_anchor_position, int);
+	virtual float _get_anchor_position(int idx) const;
+
+	GDVIRTUAL1RC(Transform3D, _get_anchor_transform, int);
+	virtual Transform3D _get_anchor_transform(int idx) const;
+
+	// Return the position of the attachment along the rope in the range [-1, 0..1]
+	// If the position is -1, the attachment is unattached.
+	GDVIRTUAL1RC(float, _get_attachment_position, int);
+	virtual float _get_attachment_position(int idx) const;
+
+	GDVIRTUAL1RC(NodePath, _get_attachment_nodepath, int);
+	virtual NodePath _get_attachment_nodepath(int idx) const;
+
+	GDVIRTUAL1RC(Transform3D, _get_attachment_transform, int);
+	Transform3D _get_attachment_transform(int idx) const;
 
 	// Exported Properties
 	PROPERTY_GET_SET(float, rope_length, _queue_rope_rebuild())

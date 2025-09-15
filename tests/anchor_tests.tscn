@@ -144,3 +144,25 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, 0)
 
 [node name="EndAnchor" type="Marker3D" parent="StretchedRope3"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
+
+[node name="Unachored" type="Rope" parent="."]
+rope_length = 1.0
+appearance = SubResource("RopeAppearance_1jhvu")
+stiffness = 0.1
+collision_layer = 0
+collision_mask = 0
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 5.75)
+material_override = SubResource("StandardMaterial3D_mcmdf")
+
+[node name="EndAnchored" type="Rope" parent="."]
+rope_length = 1.0
+end_anchor = NodePath("EndAnchor")
+appearance = SubResource("RopeAppearance_1jhvu")
+stiffness = 0.1
+collision_layer = 0
+collision_mask = 0
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 6.75)
+material_override = SubResource("StandardMaterial3D_mcmdf")
+
+[node name="EndAnchor" type="Marker3D" parent="EndAnchored"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)

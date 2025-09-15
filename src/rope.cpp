@@ -55,6 +55,16 @@ void Rope::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_link", "index"), &Rope::get_rope_frame);
 	ClassDB::bind_method(D_METHOD("get_all_links"), &Rope::get_all_rope_frames);
 
+	// virtuals
+	GDVIRTUAL_BIND(_get_anchor_count)
+	GDVIRTUAL_BIND(_get_anchor_transform)
+	GDVIRTUAL_BIND(_get_anchor_position)
+
+	GDVIRTUAL_BIND(_get_attachment_count)
+	GDVIRTUAL_BIND(_get_attachment_position)
+	GDVIRTUAL_BIND(_get_attachment_nodepath)
+	GDVIRTUAL_BIND(_get_attachment_transform)
+
 	// pass through
 	ClassDB::bind_method(D_METHOD("get_rope_width"), &Rope::get_rope_width);
 	ClassDB::bind_method(D_METHOD("get_rope_sides"), &Rope::get_rope_sides);
@@ -281,23 +291,44 @@ void Rope::_rebuild_rope() {
 	_frames.clear();
 
 	auto global_position = get_global_position();
-	auto end_location = global_position + _gravity.normalized() * get_rope_length();
-	bool end_attached = false;
-
-	Transform3D xform;
-	if (_get_anchor_transform(_end_anchor, xform)) {
-		end_location = xform.origin;
-		end_attached = true;
-	}
-
 	const int previous_count = _particles.size();
 	int particle_count = get_particle_count_for_length();
 	auto segment_length = get_rope_length() / particle_count;
 
-	// grow
-	Vector3 direction = (global_position - end_location).normalized();
-	Vector3 previous_pos = end_location;
+	// calculate our direction and previous position based upon
+	// the end we're expanding from
+	Vector3 direction = _gravity.normalized();
+	Vector3 previous_pos = global_position;
+	if (previous_count >= 2) {
+		if (_grow_from == Start) {
+			previous_pos = _particles[0].pos_cur;
+			direction = (_particles[1].pos_cur - previous_pos).normalized();
+		} else {
+			previous_pos = _particles[previous_count - 1].pos_cur;
+			direction = (_particles[previous_count - 2].pos_cur - previous_pos).normalized();
+		}
+	} else {
+		Vector3 start = global_position;
+		Vector3 end = global_position;
+		Transform3D xform;
+		if (_grow_from == Start) {
+			if (_get_node_transform(_start_anchor, xform))
+				start = xform.origin;
+			if (_get_node_transform(_end_anchor, xform))
+				end = xform.origin;
+		} else {
+			if (_get_node_transform(_start_anchor, xform))
+				end = xform.origin;
+			if (_get_node_transform(_end_anchor, xform))
+				start = xform.origin;
+		}
+		previous_pos = start;
+		direction = (end - start).normalized();
+		if (direction.length() == 0)
+			direction = _gravity.normalized();
+	}
 
+	// grow
 	while (_particles.size() < particle_count) {
 		Vector3 position = previous_pos + (direction * segment_length);
 		Particle particle;
@@ -310,33 +341,24 @@ void Rope::_rebuild_rope() {
 		direction = (position - previous_pos).normalized();
 		previous_pos = position;
 
-		if (_grow_from > 0)
-			_particles.push_back(particle);
-		else
+		if (_grow_from == Start)
 			_particles.insert(0, particle);
+		else
+			_particles.push_back(particle);
 	}
 
 	// shrink
 	if (particle_count > 0) {
 		while (_particles.size() > particle_count) {
-			if (_grow_from > 0)
-				_particles.remove_at(_particles.size() - 1);
-			else
+			if (_grow_from == Start)
 				_particles.remove_at(0);
+			else
+				_particles.remove_at(_particles.size() - 1);
 		}
 	}
 
 	_clear_physics_shapes();
 	_rebuild_physics_shapes();
-
-	Particle &start = _particles[0];
-	Particle &end = _particles[_particles.size() - 1];
-
-	start.attached = true;
-	end.attached = end_attached;
-	end.pos_prev = end_location;
-	end.pos_cur = end_location;
-
 	_rebuild_instances();
 	_update_anchors();
 
@@ -475,37 +497,144 @@ uint64_t Rope::get_particle_count_for_length() const {
 
 #pragma endregion
 
+#pragma region Subclassing
+
+int Rope::_get_anchor_count() const {
+	if (GDVIRTUAL_IS_OVERRIDDEN(_get_anchor_count)) {
+		int ret_val;
+		GDVIRTUAL_CALL(_get_anchor_count, ret_val);
+		return ret_val;
+	}
+
+	// default implementation
+	if (_anchors.is_valid())
+		return _anchors->get_position_count();
+	return 0;
+}
+
+int Rope::_get_attachment_count() const {
+	if (GDVIRTUAL_IS_OVERRIDDEN(_get_attachment_count)) {
+		int ret_val;
+		GDVIRTUAL_CALL(_get_attachment_count, ret_val);
+		return ret_val;
+	}
+
+	// default implementation
+	if (_appearance.is_valid()) {
+		if (_appearance->_attachments.is_valid())
+			return _appearance->_attachments->get_position_count();
+	}
+	return 0;
+}
+
+Transform3D Rope::_get_anchor_transform(int idx) const {
+	if (GDVIRTUAL_IS_OVERRIDDEN(_get_anchor_transform)) {
+		Transform3D ret_val;
+		GDVIRTUAL_CALL(_get_anchor_transform, idx, ret_val);
+		return ret_val;
+	}
+
+	// default implementation
+	if (_anchors.is_valid()) {
+		NodePath path = _anchors->get_node(idx);
+		Node3D *node = cast_to<Node3D>(get_node_or_null(path));
+		if (node)
+			return node->get_global_transform();
+	}
+	return Transform3D();
+}
+
+float Rope::_get_anchor_position(int idx) const {
+	if (GDVIRTUAL_IS_OVERRIDDEN(_get_anchor_position)) {
+		float ret_val;
+		GDVIRTUAL_CALL(_get_anchor_position, idx, ret_val);
+		return ret_val;
+	}
+
+	// default implementation
+	if (_anchors.is_valid()) {
+		float position = _anchors->get_position_at_index(idx, _rope_length);
+		return position;
+	}
+	return 0.0;
+}
+
+float Rope::_get_attachment_position(int idx) const {
+	if (GDVIRTUAL_IS_OVERRIDDEN(_get_attachment_position)) {
+		float ret_val;
+		GDVIRTUAL_CALL(_get_attachment_position, idx, ret_val);
+		return ret_val;
+	}
+
+	// default implementation
+	if (_appearance.is_valid()) {
+		if (_appearance->_attachments.is_valid()) {
+			return _appearance->_attachments->get_position_at_index(idx, _rope_length);
+		}
+	}
+	return 0.0;
+}
+
+NodePath Rope::_get_attachment_nodepath(int idx) const {
+	if (GDVIRTUAL_IS_OVERRIDDEN(_get_attachment_nodepath)) {
+		NodePath ret_val;
+		GDVIRTUAL_CALL(_get_attachment_nodepath, idx, ret_val);
+		return ret_val;
+	}
+
+	// default implementation
+	if (_appearance.is_valid()) {
+		if (_appearance->_attachments.is_valid()) {
+			return _appearance->_attachments->get_node(idx);
+		}
+	}
+	return NodePath();
+}
+
+Transform3D Rope::_get_attachment_transform(int idx) const {
+	if (GDVIRTUAL_IS_OVERRIDDEN(_get_attachment_transform)) {
+		Transform3D ret_val;
+		GDVIRTUAL_CALL(_get_attachment_transform, idx, ret_val);
+		return ret_val;
+	}
+
+	// default implementation
+	return Transform3D();
+}
+
+#pragma endregion
+
 #pragma region Anchors & Attachments
 
-void Rope::_update_anchor(NodePath &anchor, float position) {
+int Rope::_get_index_for_position(float position) const {
 	int last = _particles.size() - 1;
-	int index = Math::clamp(int(last * position), 0, last);
+	return Math::clamp(int(last * position), 0, last);
+}
 
+bool Rope::_get_node_transform(const NodePath &path, Transform3D &xform) const {
+	Node3D *node = cast_to<Node3D>(get_node_or_null(path));
+	if (node && node->is_visible()) {
+		xform = node->get_global_transform();
+		return true;
+	}
+
+	return false;
+}
+
+void Rope::_update_anchor(NodePath &anchor, float position) {
 	Transform3D xform;
-	if (_get_anchor_transform(anchor, xform)) {
+	if (_get_node_transform(anchor, xform)) {
+		int index = _get_index_for_position(position);
 		_particles[index].pos_cur = xform.origin;
 		_particles[index].pos_prev = xform.origin;
 		_particles[index].attached = true;
 	}
 }
 
-bool Rope::_get_anchor_transform(const NodePath &path, Transform3D &xform) const {
-	Node *node = get_node_or_null(path);
-	if (node && node->is_class("Node3D")) {
-		Node3D *node3d = (Node3D *)node;
-		if (node3d->is_visible()) {
-			xform = node3d->get_global_transform();
-			return true;
-		}
-	}
-
-	return false;
-}
-
 void Rope::_update_anchors() {
 	// for the first anchor, move the whole rope instead of the point
 	Transform3D xform;
-	if (_get_anchor_transform(_start_anchor, xform)) {
+	if (_get_node_transform(_start_anchor, xform)) {
 		set_global_position(xform.origin);
 	}
 
@@ -514,12 +643,16 @@ void Rope::_update_anchors() {
 		particle.attached = false;
 
 	// mark the mid anchors
-	if (_anchors != nullptr) {
-		int count = _anchors->get_position_count();
-		for (int idx = 0; idx < count; idx++) {
-			auto position = _anchors->get_position_at_index(idx, _rope_length);
-			auto node = _anchors->get_node(idx);
-			_update_anchor(node, position);
+	int count = _get_anchor_count();
+	for (int idx = 0; idx < count; idx++) {
+		auto position = _get_anchor_position(idx);
+		if (position != -1) {
+			auto xform = _get_anchor_transform(idx);
+			int index = _get_index_for_position(position);
+
+			_particles[index].pos_cur = xform.origin;
+			_particles[index].pos_prev = xform.origin;
+			_particles[index].attached = true;
 		}
 	}
 
@@ -957,7 +1090,6 @@ void Rope::_draw_rope() {
 			arrays.fill(Variant());
 			arrays[Mesh::ARRAY_VERTEX] = verts;
 			arrays[Mesh::ARRAY_NORMAL] = norms;
-			// arrays[Mesh::ARRAY_TANGENT] = new_tangents;
 			arrays[Mesh::ARRAY_TEX_UV] = uv1s;
 			_generated_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLE_STRIP, arrays);
 			_generated_mesh->surface_set_material(0, get_material());
@@ -967,15 +1099,15 @@ void Rope::_draw_rope() {
 		_align_attachment_node(get_start_attachment(), _frames[0], 0.0);
 
 		// mid attachments
-		auto attachments = get_attachments();
-		if (attachments != nullptr) {
-			int count = attachments->get_position_count();
-			for (int idx = 0; idx < count; idx++) {
-				float position = attachments->get_position_at_index(idx, _rope_length);
-				NodePath node = attachments->get_node(idx);
+		int count = _get_attachment_count();
+		for (int idx = 0; idx < count; idx++) {
+			float position = _get_attachment_position(idx);
+			if (position != -1) {
+				NodePath node = _get_attachment_nodepath(idx);
+				Transform3D xform = _get_attachment_transform(idx);
 
 				int index = Math::clamp(int(last_frame * position), 0, last_frame);
-				_align_attachment_node(node, _frames[index], 0.0);
+				_align_attachment_node(node, _frames[index] * xform, 0.0);
 			}
 		}
 
