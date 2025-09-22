@@ -1213,6 +1213,11 @@ void Rope::_stiff_rope() {
 			Particle p0 = _particles[i];
 			Particle p1 = _particles[i + 1];
 
+			// if both are attached skip
+			if (p0.attached && p1.attached) {
+				continue;
+			}
+
 			const Vector3 segment = p1.pos_cur - p0.pos_cur;
 			const float segment_length = segment.length();
 			const float stretch = segment_length - _get_average_segment_length();
@@ -1253,79 +1258,28 @@ void Rope::_verlet_process(float delta) {
 void Rope::_apply_forces() {
 	Transform3D gx = get_global_transform();
 	for (Particle &p : _particles) {
-		// p.pos_cur = gx.xform(p.pos_cur);
-		// p.pos_prev = gx.xform(p.pos_prev);
-
 		Vector3 total_acceleration = Vector3(0, 0, 0);
 
-		if (_apply_gravity) {
-			total_acceleration += _gravity * _gravity_scale;
-		}
+		// forces only on unattached
+		if (p.attached == false) {
+			if (_apply_gravity) {
+				total_acceleration += _gravity * _gravity_scale;
+			}
 
-		if (_apply_wind && _wind_noise != nullptr) {
-			Vector3 timed_position = p.pos_cur + Vector3(1, 1, 1) * _time;
-			float wind_force = _wind_noise->get_noise_3d(timed_position.x, timed_position.y, timed_position.z);
-			total_acceleration += _wind_scale * _wind * wind_force;
-		}
-		if (_apply_damping) {
-			Vector3 velocity = p.pos_cur - p.pos_prev;
-			Vector3 drag = -_damping_factor * velocity.length() * velocity;
-			total_acceleration += drag;
+			if (_apply_wind && _wind_noise != nullptr) {
+				Vector3 timed_position = p.pos_cur + Vector3(1, 1, 1) * _time;
+				float wind_force = _wind_noise->get_noise_3d(timed_position.x, timed_position.y, timed_position.z);
+				total_acceleration += _wind_scale * _wind * wind_force;
+			}
+			if (_apply_damping) {
+				Vector3 velocity = p.pos_cur - p.pos_prev;
+				Vector3 drag = -_damping_factor * velocity.length() * velocity;
+				total_acceleration += drag;
+			}
 		}
 
 		p.accel = total_acceleration;
-		// p.accel = gx.xform_inv(total_acceleration);
-		// p.pos_cur = gx.xform_inv(p.pos_cur);
-		// p.pos_prev = gx.xform_inv(p.pos_prev);
 	}
-}
-
-// NOTE: this doesn't quite work as expected...
-Vector3 reflect_sphere(Vector3 start, Vector3 end, Vector3 normal, Vector3 collision, float radius) {
-	// Calculate the direction and distance of movement
-	Vector3 direction = end - start;
-	float distance = direction.length();
-	if (distance < CMP_EPSILON) {
-		// No movement
-		return end;
-	}
-	direction = direction.normalized();
-
-	// Find the point where the sphere would touch the plane
-	// The plane is defined by (collision, normal)
-	// Move the sphere center to the point where the sphere's surface touches the plane
-	float start_to_plane = (start - collision).dot(normal) - radius;
-	float end_to_plane = (end - collision).dot(normal) - radius;
-
-	// If the sphere is moving away from the plane, do nothing
-	// if (start_to_plane < 0.0f && end_to_plane < 0.0f) {
-	// 	return end;
-	// }
-
-	// Find intersection point along the movement vector
-	float denom = direction.dot(normal);
-	if (Math::is_zero_approx(denom)) {
-		// Parallel to the plane, no collision
-		return end;
-	}
-
-	// t is the fraction along the movement vector where the sphere touches the plane
-	float t = ((collision - start).dot(normal) - radius) / denom;
-	t = Math::clamp(t, 0.0f, 1.0f);
-
-	// Compute the contact point
-	Vector3 contact_point = start + direction * (distance * t);
-
-	// Reflect the remaining movement after collision
-	Vector3 remaining = end - contact_point;
-	Vector3 reflected = remaining.bounce(normal);
-
-	// New end position after reflection
-	Vector3 end_position = contact_point + reflected;
-
-	// Optionally, you could return or output end_position
-	// For now, just for demonstration, print it
-	return end_position;
 }
 
 // NOTE: We do *not* use the collider shapes for collision detection of the rope
