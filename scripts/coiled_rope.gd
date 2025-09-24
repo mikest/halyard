@@ -83,7 +83,6 @@ func _rebuild_coil_positions():
 		var xform: Transform3D
 		xform = xform.translated_local(Vector3(x, y, 0))
 		xform = xform.rotated(axis, turn * TAU * (-1 if clockwise else 1))
-		xform = global_transform * xform
 		
 		_positions.push_back(xform.origin)
 		_turns.push_back(turn)
@@ -92,14 +91,17 @@ func _rebuild_coil_positions():
 		turn += 1.0 / anchors_per_turn
 
 
-# get the transform for the regular anchor
-func _get_transform_for_anchor_idx(anchor_idx) -> Transform3D:
-	var xform: Transform3D
-	var path := anchors.get_node(anchor_idx)
+func _get_nodepath_transform(path: NodePath) -> Transform3D:
+	var xform: Transform3D = global_transform
 	var node: Node3D = get_node_or_null(path)
 	if node:
 		xform = node.global_transform
 	return xform
+
+# get the transform for the regular anchor
+func _get_transform_for_anchor_idx(anchor_idx) -> Transform3D:
+	var path := anchors.get_node(anchor_idx)
+	return _get_nodepath_transform(path)
 
 
 #region Overloads
@@ -133,13 +135,17 @@ func _get_anchor_transform(idx: int) -> Transform3D:
 	var count := _get_anchor_count()
 	var coil_count := _get_coil_anchor_count()
 	
+	var start_xform := _get_nodepath_transform(start_anchor)
+	
 	# if we're past the coil return the normal anchors
 	if idx >= coil_count:
-		xform = _get_transform_for_anchor_idx(idx - coil_count)
+		var path := anchors.get_node(idx - coil_count)
+		xform = _get_nodepath_transform(path)
 	
 	# return the rotated coil position for this index
 	elif idx < _positions.size():
 		xform = Transform3D(Basis(), _positions[idx])
 		xform = xform.rotated(Vector3(1,0,0), (-_turns[coil_count] + offset_turns) * TAU * (-1 if clockwise else 1))
+		xform = start_xform * xform
 	return xform
 #endregion

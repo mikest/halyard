@@ -25,12 +25,13 @@ stiffness_iterations = 8
 stiffness = 1.5
 collision_layer = 0
 collision_mask = 0
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.48389614, -0.12379396)
 script = ExtResource("1_3qe50")
 clockwise = true
 radius = 0.1
 turns_per_layer = 6.0
 offset_turns = 0.063
-coiled = 0.452
+coiled = 0.511
 metadata/_custom_type_script = "uid://dnnxtqukra31q"
 
 [node name="Drum" type="Marker3D" parent="."]

@@ -21,6 +21,9 @@ class_name PullRope
 ## useful for preventing oscillations.
 @export var force_limit_mass_scale := 100.0
 
+## Distance over length rope must stretch to before pulling back
+@export var stretch_pull_threshold: float = 0.1
+
 #region Runtime
 func _ready() -> void:
 	if Engine.is_editor_hint(): return
@@ -32,12 +35,7 @@ func _physics_process(_delta: float) -> void:
 	var stretch := current - rope_length
 	
 	# the attachment will be aligned along the rope Tangent, so we'll use that to se the force direction
-	if pull_on and end_anchor:
-		var count := get_rope_frame_count()
-		var xform: Transform3D = get_rope_frame(count - 1)
-		xform = global_transform * xform
-		#DebugDraw3D.draw_gizmo(xform)
-		
+	if (stretch > stretch_pull_threshold) and pull_on and end_anchor:
 		# use a node as the pull poisition.
 		var pull_point := Vector3(0, 0, 0)
 		var pull_node: Node3D = get_node_or_null(end_anchor)
@@ -50,7 +48,15 @@ func _physics_process(_delta: float) -> void:
 		force = clampf(force, -force_limit, force_limit)
 		
 		# pull on the origin, not the center of mass so that we can have objects swinging from a joint.
+		var count := get_rope_frame_count()
+		var xform: Transform3D = get_rope_frame(count - 1)
+		xform = global_transform * xform
+		
 		var force_vector := -xform.basis.y.normalized() * force
+		
+		#DebugDraw3D.draw_ray(pull_on.global_position + pull_point, force_vector.normalized(), 25.0)
+		#DebugDraw3D.draw_text(global_position + Vector3.UP, str(stretch))
+		
 		pull_on.apply_force(force_vector, pull_point)
 	pass
 #endregion
