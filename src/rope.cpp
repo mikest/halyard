@@ -908,6 +908,13 @@ void Rope::_align_attachment_node(const NodePath &path, Transform3D xform, float
 void Rope::_draw_rope() {
 	_generated_mesh->clear_surfaces();
 
+	// Bail early if there are no particles in rope.
+	// This can happen if we get a draw call before the Rope is ready
+	if (_particles.size() == 0) {
+		WARN_PRINT("Skipping drawing, particle count is zero.");
+		return;
+	}
+
 	// recompute normal, tangents, and binormals
 	_compute_particle_normals();
 
