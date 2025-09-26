@@ -2,7 +2,7 @@
 
 [ext_resource type="PackedScene" path="res://addons/halyard/assets/rope-eye-splice.blend" id="1_rwnhk"]
 
-[sub_resource type="RopePositions" id="RopePositions_ntxkk"]
+[sub_resource type="RopeAttachmentPositions" id="RopeAttachmentPositions_ntxkk"]
 position_count = 3
 position_0/position = 0.25
 position_0/node = NodePath("Attachment1")
@@ -14,7 +14,7 @@ position_2/node = NodePath("Attachment3")
 [sub_resource type="RopeAppearance" id="RopeAppearance_6cjj2"]
 start_attachment = NodePath("StartAttachment")
 end_attachment = NodePath("EndAttachment")
-attachments = SubResource("RopePositions_ntxkk")
+attachments = SubResource("RopeAttachmentPositions_ntxkk")
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rwnhk"]
 albedo_color = Color(1, 0, 0, 1)

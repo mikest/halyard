@@ -1,33 +1,21 @@
+#pragma once
 #include "rope_positions.h"
-
-void RopePositions::_bind_methods() {
-	EXPORT_PROPERTY(Variant::INT, position_count, RopePositions);
-
-	GDVIRTUAL_BIND(get_position_at_index)
-
-	ClassDB::bind_method(D_METHOD("set_position", "index", "position"), &RopePositions::set_position);
-	ClassDB::bind_method(D_METHOD("get_position", "index"), &RopePositions::get_position);
-
-	ClassDB::bind_method(D_METHOD("set_node", "index", "node"), &RopePositions::set_node);
-	ClassDB::bind_method(D_METHOD("get_node", "index"), &RopePositions::get_node);
-}
 
 #define POSITION_PREFIX "position_"
 
 // Build up a dynamic list of properties for each element in the position vector.
-void RopePositions::_get_property_list(List<PropertyInfo> *p_list) const {
+void RopePositions::_rp_get_property_list(List<PropertyInfo> *p_list) const {
 	for (uint64_t idx = 0; idx < _positions.size(); ++idx) {
 		uint32_t usage = PROPERTY_USAGE_DEFAULT;
 		String name = POSITION_PREFIX + itos(idx);
 
 		p_list->push_back(PropertyInfo(Variant::NIL, name.capitalize(), PROPERTY_HINT_NONE, name + "/", PROPERTY_USAGE_GROUP));
-		// p_list->push_back(PropertyInfo(Variant::FLOAT, name + "/position", PROPERTY_HINT_RANGE, "0.0,1.0,0.01", usage));
 		p_list->push_back(PropertyInfo(Variant::FLOAT, name + "/position", PROPERTY_HINT_NONE, "", usage));
 		p_list->push_back(PropertyInfo(Variant::NODE_PATH, name + "/node", PROPERTY_HINT_NODE_PATH_TO_EDITED_NODE, "", usage));
 	}
 }
 
-bool RopePositions::_property_can_revert(const StringName &p_name) const {
+bool RopePositions::_rp_property_can_revert(const StringName &p_name) const {
 	if (p_name.begins_with(POSITION_PREFIX)) {
 		return true;
 	}
@@ -35,7 +23,7 @@ bool RopePositions::_property_can_revert(const StringName &p_name) const {
 	return false;
 }
 
-bool RopePositions::_property_get_revert(const StringName &p_name, Variant &r_property) const {
+bool RopePositions::_rp_property_get_revert(const StringName &p_name, Variant &r_property) const {
 	if (p_name.begins_with(POSITION_PREFIX)) {
 		Pair<uint64_t, String> subprop = _get_propname_with_index(p_name);
 		String sub_name = subprop.second;
@@ -51,15 +39,15 @@ bool RopePositions::_property_get_revert(const StringName &p_name, Variant &r_pr
 	return false;
 }
 
-bool RopePositions::_set(const StringName &p_name, const Variant &p_property) {
+bool RopePositions::_rp_set(const StringName &p_name, const Variant &p_property) {
 	if (p_name.begins_with(POSITION_PREFIX)) {
 		Pair<uint64_t, String> subprop = _get_propname_with_index(p_name);
 		uint64_t idx = subprop.first;
 		String sub_name = subprop.second;
 		if (sub_name == "position") {
-			set_position(idx, p_property);
+			_set_position(idx, p_property);
 		} else if (sub_name == "node") {
-			set_node(idx, p_property);
+			_set_nodepath(idx, p_property);
 		} else {
 			return false;
 		}
@@ -68,15 +56,15 @@ bool RopePositions::_set(const StringName &p_name, const Variant &p_property) {
 	return false;
 }
 
-bool RopePositions::_get(const StringName &p_name, Variant &r_property) const {
+bool RopePositions::_rp_get(const StringName &p_name, Variant &r_property) const {
 	if (p_name.begins_with(POSITION_PREFIX)) {
 		Pair<uint64_t, String> subprop = _get_propname_with_index(p_name);
 		uint64_t idx = subprop.first;
 		String sub_name = subprop.second;
 		if (sub_name == "position") {
-			r_property = get_position(idx);
+			r_property = _get_position(idx);
 		} else if (sub_name == "node") {
-			r_property = get_node(idx);
+			r_property = _get_nodepath(idx);
 		} else {
 			return false;
 		}
@@ -96,76 +84,107 @@ Pair<uint64_t, String> RopePositions::_get_propname_with_index(const StringName 
 	return Pair(idx, sub_name);
 }
 
-#pragma region Accessors
-
-float RopePositions::get_position_at_index(uint64_t idx, float rope_length) const {
-	if (!GDVIRTUAL_IS_OVERRIDDEN(get_position_at_index)) {
-		// rope_length ignored in default impl
-		return _positions.get(idx).position;
-	} else {
-		float ret_val;
-		GDVIRTUAL_CALL(get_position_at_index, idx, rope_length, ret_val);
-		return ret_val;
-	}
-}
-
-void RopePositions::set_position_count(uint64_t count) {
-	if (count > MAX_ROPE_POSITIONS) {
-		print_error("RopePositions: invalid count passed to set_position_count(), max_count:" + itos(MAX_ROPE_POSITIONS));
+void RopePositions::_set_count(uint64_t count) {
+	if (count > MAX_POSITIONS) {
+		print_error("RopePositions::_set_count: invalid count passed to set_position_count(), max_count:" + itos(MAX_POSITIONS));
 		return;
 	}
 
 	if (_positions.size() != count) {
 		_positions.resize(count);
-		notify_property_list_changed();
+		_notify_changed();
 	}
 }
-uint64_t RopePositions::get_position_count() const {
+
+uint64_t RopePositions::_get_count() const {
 	return _positions.size();
 }
 
-void RopePositions::set_position(uint64_t idx, float val) {
+void RopePositions::_set_position(uint64_t idx, float val) {
 	if (idx >= _positions.size()) {
-		print_error("RopePositions: invalid index passed to set_position()");
+		print_error("RopePositions::_set_position: index out of range.");
 		return;
 	}
 
 	Position p = _positions.get(idx);
 	p.position = val;
 	_positions.set(idx, p);
+
+	_notify_changed();
 }
 
-float RopePositions::get_position(uint64_t idx) const {
+float RopePositions::_get_position(uint64_t idx) const {
 	if (idx >= _positions.size()) {
-		print_error("RopePositions: invalid index passed to get_position()");
+		print_error("RopePositions::_get_position: index out of range.");
 		return -1.0;
 	}
 
 	return _positions.get(idx).position;
-	//return get_position_at_index(idx);
 }
 
-void RopePositions::set_node(uint64_t idx, const NodePath &val) {
+void RopePositions::_set_nodepath(uint64_t idx, const NodePath &val) {
 	if (idx >= _positions.size()) {
-		print_error("RopePositions: invalid index passed to set_node()");
+		print_error("RopePositions::_set_nodepath: index out of range.");
 		return;
 	}
 
 	Position p = _positions.get(idx);
 	p.node = val;
 	_positions.set(idx, p);
-	notify_property_list_changed();
+
+	_notify_changed();
 }
 
-const NodePath &RopePositions::get_node(uint64_t idx) const {
+NodePath RopePositions::_get_nodepath(uint64_t idx) const {
 	if (idx >= _positions.size()) {
-		print_error("RopePositions: invalid index passed to get_node()");
-		// dummy so we can return something without an access exception
-		static NodePath _ERROR_DUMMY_NODEPATH = "error";
-		return _ERROR_DUMMY_NODEPATH;
+		print_error("RopePositions::_get_nodepath: index out of range.");
+		return "error";
 	}
 
 	return _positions.get(idx).node;
 }
 
-#pragma endregion
+void RopePositions::_set_spacing(Spacing val) {
+	_spacing = val;
+}
+
+RopePositions::Spacing RopePositions::_get_spacing() const {
+	return _spacing;
+}
+
+float RopePositions::_position_for_distance(float distance, float rope_length) const {
+	if (rope_length == 0)
+		return 0.0;
+
+	float ret = 0.0;
+	switch (_spacing) {
+		case Scalar:
+			ret = distance;
+			break;
+		case DistanceFromStart:
+			ret = distance / rope_length;
+			break;
+		case DistanceFromEnd:
+			ret = 1.0 - (distance / rope_length);
+			break;
+	}
+
+	// clamp to the limits when the distance exceeds the rope length
+	return CLAMP(ret, 0.0f, 1.0f);
+}
+
+float RopePositions::_distance_for_position(float position, float rope_length) const {
+	if (rope_length == 0)
+		return 0.0;
+
+	switch (_spacing) {
+		case Scalar:
+			return position;
+		case DistanceFromStart:
+			return position * rope_length;
+		case DistanceFromEnd:
+			return rope_length - (position * rope_length);
+	}
+
+	return -1.0;
+}

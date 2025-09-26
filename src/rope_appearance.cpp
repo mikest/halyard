@@ -1,4 +1,5 @@
 #include "rope_appearance.h"
+#include "rope_attachments_base.h"
 
 void RopeAppearance::_bind_methods() {
 	// rope parameters
@@ -23,7 +24,16 @@ void RopeAppearance::_bind_methods() {
 	EXPORT_PROPERTY(Variant::FLOAT, end_offset, RopeAppearance);
 	ClassDB::bind_method(D_METHOD("set_attachments", "attachments"), &RopeAppearance::set_attachments);
 	ClassDB::bind_method(D_METHOD("get_attachments"), &RopeAppearance::get_attachments);
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "attachments", PROPERTY_HINT_RESOURCE_TYPE, "RopePositions"), "set_attachments", "get_attachments");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "attachments", PROPERTY_HINT_RESOURCE_TYPE, "RopeAttachmentsBase"), "set_attachments", "get_attachments");
+}
+
+void RopeAppearance::set_rope_sides(int p_rope_sides) {
+	_rope_sides = Math::clamp(p_rope_sides, -1, MAX_ROPE_SIDES);
+	_notify_change();
+}
+
+int RopeAppearance::get_rope_sides() const {
+	return _rope_sides;
 }
 
 void RopeAppearance::set_material(const Ref<Material> &p_material) {
@@ -44,4 +54,11 @@ Ref<ArrayMesh> RopeAppearance::get_array_mesh() const {
 	return _mesh;
 }
 
-#pragma endregion
+void RopeAppearance::set_attachments(const Ref<RopeAttachmentsBase> &p_attachments) {
+	_attachments = p_attachments;
+	_notify_change();
+}
+
+Ref<RopeAttachmentsBase> RopeAppearance::get_attachments() const {
+	return _attachments;
+}

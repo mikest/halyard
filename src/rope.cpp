@@ -1,4 +1,7 @@
 #include "rope.h"
+#include "rope_anchors_base.h"
+#include "rope_appearance.h"
+#include "rope_attachments_base.h"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/physics_direct_space_state3d.hpp>
 #include <godot_cpp/classes/physics_ray_query_parameters3d.hpp>
@@ -86,7 +89,7 @@ void Rope::_bind_methods() {
 	EXPORT_PROPERTY(Variant::NODE_PATH, end_anchor, Rope);
 	ClassDB::bind_method(D_METHOD("set_anchors", "anchors"), &Rope::set_anchors);
 	ClassDB::bind_method(D_METHOD("get_anchors"), &Rope::get_anchors);
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "anchors", PROPERTY_HINT_RESOURCE_TYPE, "RopePositions"), "set_anchors", "get_anchors");
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "anchors", PROPERTY_HINT_RESOURCE_TYPE, "RopeAnchorsBase"), "set_anchors", "get_anchors");
 
 	ClassDB::bind_method(D_METHOD("set_appearance", "appearance"), &Rope::set_appearance);
 	ClassDB::bind_method(D_METHOD("get_appearance"), &Rope::get_appearance);
@@ -387,6 +390,21 @@ bool Rope::_pop_rebuild() {
 
 #pragma region Accessors
 
+// appearance passthrough accessors
+#define APPEARENCE_ACCESSOR(m_type, m_name, m_default) \
+	m_type Rope::get_##m_name() const { return _appearance != nullptr ? _appearance->get_##m_name() : m_default; }
+APPEARENCE_ACCESSOR(float, rope_width, 0.125)
+APPEARENCE_ACCESSOR(float, rope_twist, 1.0)
+APPEARENCE_ACCESSOR(int, rope_lod, 2)
+APPEARENCE_ACCESSOR(Ref<Material>, material, nullptr)
+APPEARENCE_ACCESSOR(NodePath, start_attachment, NodePath())
+APPEARENCE_ACCESSOR(float, start_offset, 0.0)
+APPEARENCE_ACCESSOR(NodePath, end_attachment, NodePath())
+APPEARENCE_ACCESSOR(float, end_offset, 0.0)
+APPEARENCE_ACCESSOR(Ref<RopeAttachmentsBase>, attachments, nullptr)
+APPEARENCE_ACCESSOR(float, particles_per_meter, 2.0)
+#undef APPEARENCE_ACCESSOR
+
 void Rope::_on_appearance_changed() {
 	if (is_inside_tree())
 		_queue_rope_rebuild();
@@ -508,7 +526,7 @@ int Rope::_get_anchor_count() const {
 
 	// default implementation
 	if (_anchors.is_valid())
-		return _anchors->get_position_count();
+		return _anchors->get_anchor_count(this);
 	return 0;
 }
 
@@ -522,7 +540,7 @@ int Rope::_get_attachment_count() const {
 	// default implementation
 	if (_appearance.is_valid()) {
 		if (_appearance->_attachments.is_valid())
-			return _appearance->_attachments->get_position_count();
+			return _appearance->_attachments->get_attachment_count(this);
 	}
 	return 0;
 }
@@ -536,10 +554,7 @@ Transform3D Rope::_get_anchor_transform(int idx) const {
 
 	// default implementation
 	if (_anchors.is_valid()) {
-		NodePath path = _anchors->get_node(idx);
-		Node3D *node = cast_to<Node3D>(get_node_or_null(path));
-		if (node)
-			return node->get_global_transform();
+		return _anchors->get_anchor_transform(idx, this);
 	}
 	return Transform3D();
 }
@@ -553,7 +568,7 @@ float Rope::_get_anchor_position(int idx) const {
 
 	// default implementation
 	if (_anchors.is_valid()) {
-		float position = _anchors->get_position_at_index(idx, _rope_length);
+		float position = _anchors->get_anchor_position(idx, this);
 		return position;
 	}
 	return 0.0;
@@ -569,7 +584,7 @@ float Rope::_get_attachment_position(int idx) const {
 	// default implementation
 	if (_appearance.is_valid()) {
 		if (_appearance->_attachments.is_valid()) {
-			return _appearance->_attachments->get_position_at_index(idx, _rope_length);
+			return _appearance->_attachments->get_attachment_position(idx, this);
 		}
 	}
 	return 0.0;
@@ -585,7 +600,7 @@ NodePath Rope::_get_attachment_nodepath(int idx) const {
 	// default implementation
 	if (_appearance.is_valid()) {
 		if (_appearance->_attachments.is_valid()) {
-			return _appearance->_attachments->get_node(idx);
+			return _appearance->_attachments->get_attachment_nodepath(idx, this);
 		}
 	}
 	return NodePath();
@@ -660,6 +675,15 @@ void Rope::_update_anchors() {
 	// anchored and not stomped on by mid anchors above.
 	_update_anchor(_start_anchor, 0.0);
 	_update_anchor(_end_anchor, 1.0);
+}
+
+void Rope::set_anchors(const Ref<RopeAnchorsBase> &val) {
+	_anchors = val;
+	_queue_redraw();
+}
+
+Ref<RopeAnchorsBase> Rope::get_anchors() const {
+	return _anchors;
 }
 
 #pragma endregion

@@ -7,7 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://b6n2f4gcak8fp" path="res://addons/halyard/assets/vine-leaves-3.blend" id="5_ffr60"]
 [ext_resource type="PackedScene" uid="uid://dfoecgqwuprw2" path="res://addons/halyard/assets/vine-tip.blend" id="6_wimad"]
 
-[sub_resource type="RopePositions" id="RopePositions_hgskv"]
+[sub_resource type="RopeAnchorPositions" id="RopeAnchorPositions_hgskv"]
 position_count = 5
 position_0/position = 0.0
 position_0/node = NodePath("vine-leaves-2")
@@ -36,16 +36,16 @@ rope_lod = 4
 particles_per_meter = 1.0
 material = SubResource("StandardMaterial3D_nj0u4")
 end_attachment = NodePath("vine-tip")
-attachments = SubResource("RopePositions_hgskv")
+attachments = SubResource("RopeAnchorPositions_hgskv")
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_s32gx"]
 
-[sub_resource type="RopePositions" id="RopePositions_nj0u4"]
+[sub_resource type="RopeAnchorPositions" id="RopeAnchorPositions_nj0u4"]
 position_count = 1
 position_0/position = 0.2
 position_0/node = NodePath("../Vines/vine-leaves-4/Marker3D")
 
-[sub_resource type="RopePositions" id="RopePositions_3oq3m"]
+[sub_resource type="RopeAnchorPositions" id="RopeAnchorPositions_3oq3m"]
 position_count = 1
 position_0/position = 0.2
 position_0/node = NodePath("../Vines/vine-leaves-3/Marker3D")
@@ -95,7 +95,7 @@ transform = Transform3D(-0.25, 1.9106855e-15, 2.1855694e-08, 0, 0.25, -2.1855694
 rope_length = 8.0
 grow_from = 1
 start_anchor = NodePath("../Vines/vine-leaves-4")
-anchors = SubResource("RopePositions_nj0u4")
+anchors = SubResource("RopeAnchorPositions_nj0u4")
 appearance = SubResource("RopeAppearance_inl34")
 stiffness_iterations = 6
 stiffness = 1.5
@@ -130,7 +130,7 @@ transform = Transform3D(-0.24972112, -0.010461867, -0.005469053, 0.009918924, -0
 rope_length = 8.0
 grow_from = 1
 start_anchor = NodePath("../Vines/vine-leaves-3")
-anchors = SubResource("RopePositions_3oq3m")
+anchors = SubResource("RopeAnchorPositions_3oq3m")
 appearance = SubResource("RopeAppearance_inl34")
 stiffness_iterations = 6
 stiffness = 1.5

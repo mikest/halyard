@@ -4,7 +4,7 @@
 [ext_resource type="ArrayMesh" uid="uid://j3u082cbuveh" path="res://addons/halyard/assets/chain-link.res" id="2_vqcs3"]
 [ext_resource type="Script" path="res://addons/halyard/scripts/pull_rope.gd" id="3_i11ko"]
 
-[sub_resource type="RopePositions" id="RopePositions_50u00"]
+[sub_resource type="RopeAnchorPositions" id="RopeAnchorPositions_50u00"]
 position_count = 1
 position_0/position = 2.0
 position_0/node = NodePath("../AnchorChainHole")
@@ -26,7 +26,7 @@ link_mesh = ExtResource("2_vqcs3")
 rope_length = 4.61
 grow_from = 1
 end_anchor = NodePath("../Ball/Marker3D")
-anchors = SubResource("RopePositions_50u00")
+anchors = SubResource("RopeAnchorPositions_50u00")
 appearance = SubResource("RopeAppearance_06evi")
 stiffness_iterations = 4
 stiffness = 1.0

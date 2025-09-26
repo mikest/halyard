@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://ccqeo0jjod5r0" path="res://addons/halyard/scripts/distributed_rope_positions.gd" id="1_lks7b"]
 
-[sub_resource type="RopePositions" id="RopePositions_uix47"]
+[sub_resource type="RopeAttachmentPositions" id="RopeAttachmentPositions_uix47"]
 position_count = 7
 position_0/position = 0.0
 position_0/node = NodePath("AttachmentA1")
@@ -33,9 +33,9 @@ roughness = 0.3
 rope_width = 0.05
 rope_sides = 5
 material = SubResource("StandardMaterial3D_lks7b")
-attachments = SubResource("RopePositions_uix47")
+attachments = SubResource("RopeAttachmentPositions_uix47")
 
-[sub_resource type="RopePositions" id="RopePositions_lks7b"]
+[sub_resource type="RopeAnchorPositions" id="RopeAnchorPositions_lks7b"]
 position_count = 1
 position_0/position = 0.0
 position_0/node = NodePath("../SpokeThread/AttachmentB")
@@ -44,7 +44,7 @@ include_start = true
 include_end = true
 metadata/_custom_type_script = "uid://ccqeo0jjod5r0"
 
-[sub_resource type="RopePositions" id="RopePositions_18r7s"]
+[sub_resource type="RopeAnchorPositions" id="RopeAnchorPositions_18r7s"]
 position_count = 5
 position_0/position = 0.0
 position_0/node = NodePath("../SpokeThread2/AttachmentA1")
@@ -67,7 +67,7 @@ rope_sides = 5
 particles_per_meter = 12.0
 material = SubResource("StandardMaterial3D_lks7b")
 
-[sub_resource type="RopePositions" id="RopePositions_jiad6"]
+[sub_resource type="RopeAnchorPositions" id="RopeAnchorPositions_jiad6"]
 position_count = 5
 position_0/position = 0.0
 position_0/node = NodePath("../SpokeThread2/AttachmentA2")
@@ -84,7 +84,7 @@ include_start = true
 include_end = true
 metadata/_custom_type_script = "uid://ccqeo0jjod5r0"
 
-[sub_resource type="RopePositions" id="RopePositions_gueu6"]
+[sub_resource type="RopeAnchorPositions" id="RopeAnchorPositions_gueu6"]
 position_count = 5
 position_0/position = 0.0
 position_0/node = NodePath("../SpokeThread2/AttachmentA3")
@@ -160,7 +160,7 @@ transform = Transform3D(0.014991364, 0.047699675, 4.371139e-09, 0.047699675, -0.
 [node name="SpokeThread2" type="Rope" parent="."]
 start_anchor = NodePath("../Spoke2/StartAnchor")
 end_anchor = NodePath("../Spoke2/EndAnchor")
-anchors = SubResource("RopePositions_lks7b")
+anchors = SubResource("RopeAnchorPositions_lks7b")
 appearance = SubResource("RopeAppearance_18r7s")
 wind = Vector3(0, 0, 1)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.99999994, 0, -1.7320509)
@@ -189,7 +189,7 @@ transform = Transform3D(-0.034031525, 0.023817513, -0.027831301, 0.023712499, -0
 [node name="SpokeThread3" type="Rope" parent="."]
 start_anchor = NodePath("../Spoke3/StartAnchor")
 end_anchor = NodePath("../Spoke3/EndAnchor")
-anchors = SubResource("RopePositions_lks7b")
+anchors = SubResource("RopeAnchorPositions_lks7b")
 appearance = SubResource("RopeAppearance_18r7s")
 wind = Vector3(0, 0, 1)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.0000001, 0, -1.7320508)
@@ -219,7 +219,7 @@ transform = Transform3D(-0.03412467, -0.024066512, 0.027501091, -0.023562202, -0
 rope_length = 7.0
 start_anchor = NodePath("../SpokeThread/AttachmentA1")
 end_anchor = NodePath("../SpokeThread/AttachmentA1")
-anchors = SubResource("RopePositions_18r7s")
+anchors = SubResource("RopeAnchorPositions_18r7s")
 appearance = SubResource("RopeAppearance_lks7b")
 wind = Vector3(0, 0, 1)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5170549, -0.17693985, 0)
@@ -228,7 +228,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5170549, -0.17693985, 0)
 rope_length = 5.0
 start_anchor = NodePath("../SpokeThread/AttachmentA2")
 end_anchor = NodePath("../SpokeThread/AttachmentA2")
-anchors = SubResource("RopePositions_jiad6")
+anchors = SubResource("RopeAnchorPositions_jiad6")
 appearance = SubResource("RopeAppearance_lks7b")
 wind = Vector3(0, 0, 1)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.0181925, -0.3070109, 0)
@@ -237,7 +237,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.0181925, -0.3070109, 0)
 rope_length = 3.0
 start_anchor = NodePath("../SpokeThread/AttachmentA3")
 end_anchor = NodePath("../SpokeThread/AttachmentA3")
-anchors = SubResource("RopePositions_gueu6")
+anchors = SubResource("RopeAnchorPositions_gueu6")
 appearance = SubResource("RopeAppearance_lks7b")
 wind = Vector3(0, 0, 1)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.508904, -0.38596368, 0)

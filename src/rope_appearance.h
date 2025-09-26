@@ -9,13 +9,14 @@
 #include <godot_cpp/variant/variant.hpp>
 
 #include "property_utils.h"
-#include "rope_positions.h"
 
 #define MAX_ROPE_SIDES 64
 
 using namespace godot;
 
 class Rope;
+class RopeAttachmentsBase;
+
 class RopeAppearance : public Resource {
 	friend Rope;
 	GDCLASS(RopeAppearance, Resource)
@@ -30,7 +31,7 @@ class RopeAppearance : public Resource {
 	NodePath _start_attachment;
 	float _start_offset = 0.0;
 
-	Ref<RopePositions> _attachments;
+	Ref<RopeAttachmentsBase> _attachments;
 
 	NodePath _end_attachment;
 	float _end_offset = 0.0;
@@ -40,25 +41,18 @@ class RopeAppearance : public Resource {
 protected:
 	static void _bind_methods();
 	void _notify_change() {
-		// notify_property_list_changed();
 		emit_changed();
 	}
 
 public:
 	RopeAppearance() = default;
-	~RopeAppearance() override = default;
+	virtual ~RopeAppearance() override = default;
 
 	// Exported Properties
 	PROPERTY_GET_SET(float, rope_width, _notify_change())
 
-	void set_rope_sides(int p_rope_sides) {
-		_rope_sides = Math::clamp(p_rope_sides, -1, MAX_ROPE_SIDES);
-		_notify_change();
-	}
-
-	int get_rope_sides() const {
-		return _rope_sides;
-	}
+	void set_rope_sides(int p_rope_sides);
+	int get_rope_sides() const;
 
 	PROPERTY_GET_SET(float, rope_twist, _notify_change())
 	PROPERTY_GET_SET(int, rope_lod, _notify_change())
@@ -74,11 +68,8 @@ public:
 	PROPERTY_GET_SET(NodePath, end_attachment, _notify_change())
 	PROPERTY_GET_SET(float, end_offset, _notify_change())
 
-	void set_attachments(const Ref<RopePositions> &p_attachments) {
-		_attachments = p_attachments;
-		_notify_change();
-	}
-	Ref<RopePositions> get_attachments() const { return _attachments; }
+	void set_attachments(const Ref<RopeAttachmentsBase> &p_attachments);
+	Ref<RopeAttachmentsBase> get_attachments() const;
 
 	// simulation parameters
 	PROPERTY_GET_SET(float, particles_per_meter, _notify_change())

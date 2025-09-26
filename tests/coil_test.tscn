@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://dnnxtqukra31q" path="res://addons/halyard/scripts/coiled_rope.gd" id="1_3qe50"]
 [ext_resource type="ArrayMesh" uid="uid://j3u082cbuveh" path="res://addons/halyard/assets/chain-link.res" id="1_gn44e"]
 
-[sub_resource type="RopePositions" id="RopePositions_3qe50"]
+[sub_resource type="RopeAnchorPositions" id="RopeAnchorPositions_3qe50"]
 position_count = 1
 position_0/position = 0.0
 position_0/node = NodePath("../Drum")
@@ -19,7 +19,7 @@ link_mesh = ExtResource("1_gn44e")
 [node name="CoiledRope" type="Rope" parent="."]
 rope_length = 10.0
 end_anchor = NodePath("../ChainHole")
-anchors = SubResource("RopePositions_3qe50")
+anchors = SubResource("RopeAnchorPositions_3qe50")
 appearance = SubResource("RopeAppearance_xlb8c")
 stiffness_iterations = 8
 stiffness = 1.5

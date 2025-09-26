@@ -6,8 +6,11 @@
 #include <godot_cpp/godot.hpp>
 
 #include "rope.h"
+#include "rope_anchor_positions.h"
+#include "rope_anchors_base.h"
 #include "rope_appearance.h"
-#include "rope_positions.h"
+#include "rope_attachment_positions.h"
+#include "rope_attachments_base.h"
 
 using namespace godot;
 
@@ -16,7 +19,10 @@ void initialize_gdextension_types(ModuleInitializationLevel p_level) {
 		return;
 	}
 	GDREGISTER_CLASS(Rope);
-	GDREGISTER_CLASS(RopePositions);
+	GDREGISTER_CLASS(RopeAnchorsBase);
+	GDREGISTER_CLASS(RopeAnchorPositions);
+	GDREGISTER_CLASS(RopeAttachmentsBase);
+	GDREGISTER_CLASS(RopeAttachmentPositions);
 	GDREGISTER_CLASS(RopeAppearance);
 }
 

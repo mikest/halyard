@@ -18,11 +18,12 @@
 #include <godot_cpp/variant/variant.hpp>
 
 #include "property_utils.h"
-#include "rope_appearance.h"
-#include "rope_positions.h"
 
 using namespace godot;
-class RopePositions;
+
+class RopeAnchorsBase;
+class RopeAttachmentsBase;
+class RopeAppearance;
 
 class Rope : public GeometryInstance3D {
 	GDCLASS(Rope, GeometryInstance3D)
@@ -74,7 +75,7 @@ class Rope : public GeometryInstance3D {
 
 	// attachments
 	NodePath _start_anchor = ".";
-	Ref<RopePositions> _anchors;
+	Ref<RopeAnchorsBase> _anchors;
 	NodePath _end_anchor;
 
 	// forces
@@ -156,7 +157,7 @@ public:
 	};
 
 	Rope();
-	~Rope() override;
+	virtual ~Rope() override;
 
 	void _internal_ready();
 	void _internal_process(double delta);
@@ -216,12 +217,14 @@ public:
 
 	// anchors
 	PROPERTY_GET_SET(NodePath, start_anchor, _queue_redraw())
-	PROPERTY_GET_SET(Ref<RopePositions>, anchors, _queue_redraw())
 	PROPERTY_GET_SET(NodePath, end_anchor, _queue_redraw())
+
+	void set_anchors(const Ref<RopeAnchorsBase> &);
+	Ref<RopeAnchorsBase> get_anchors() const;
 
 	// appearance passthrough accessors
 #define APPEARENCE_ACCESSOR(m_type, m_name, m_default) \
-	m_type get_##m_name() const { return _appearance != nullptr ? _appearance->get_##m_name() : m_default; }
+	m_type get_##m_name() const;
 	APPEARENCE_ACCESSOR(float, rope_width, 0.125)
 	int get_rope_sides() const;
 	APPEARENCE_ACCESSOR(float, rope_twist, 1.0)
@@ -231,7 +234,7 @@ public:
 	APPEARENCE_ACCESSOR(float, start_offset, 0.0)
 	APPEARENCE_ACCESSOR(NodePath, end_attachment, NodePath())
 	APPEARENCE_ACCESSOR(float, end_offset, 0.0)
-	APPEARENCE_ACCESSOR(Ref<RopePositions>, attachments, nullptr)
+	APPEARENCE_ACCESSOR(Ref<RopeAttachmentsBase>, attachments, nullptr)
 	APPEARENCE_ACCESSOR(float, particles_per_meter, 2.0)
 #undef APPEARENCE_ACCESSOR
 

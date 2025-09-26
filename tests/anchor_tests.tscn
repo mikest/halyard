@@ -1,6 +1,6 @@
 [gd_scene load_steps=6 format=3 uid="uid://bl1snne1dyabg"]
 
-[sub_resource type="RopePositions" id="RopePositions_ntxkk"]
+[sub_resource type="RopeAnchorPositions" id="RopeAnchorPositions_ntxkk"]
 position_count = 3
 position_0/position = 0.25
 position_0/node = NodePath("Anchor1")
@@ -26,7 +26,7 @@ albedo_color = Color(0, 0.75, 1, 1)
 
 [node name="RelaxedRope" type="Rope" parent="."]
 end_anchor = NodePath("EndAnchor")
-anchors = SubResource("RopePositions_ntxkk")
+anchors = SubResource("RopeAnchorPositions_ntxkk")
 
 [node name="Anchor1" type="Marker3D" parent="RelaxedRope"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0, 0)
@@ -43,7 +43,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
 [node name="StretchedRope" type="Rope" parent="."]
 rope_length = 1.0
 end_anchor = NodePath("EndAnchor")
-anchors = SubResource("RopePositions_ntxkk")
+anchors = SubResource("RopeAnchorPositions_ntxkk")
 stiffness = 0.1
 collision_layer = 0
 collision_mask = 0
@@ -63,7 +63,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
 
 [node name="RelaxedRope2" type="Rope" parent="."]
 end_anchor = NodePath("EndAnchor")
-anchors = SubResource("RopePositions_ntxkk")
+anchors = SubResource("RopeAnchorPositions_ntxkk")
 appearance = SubResource("RopeAppearance_mcmdf")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.75)
 material_override = SubResource("StandardMaterial3D_ntxkk")
@@ -83,7 +83,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
 [node name="StretchedRope2" type="Rope" parent="."]
 rope_length = 1.0
 end_anchor = NodePath("EndAnchor")
-anchors = SubResource("RopePositions_ntxkk")
+anchors = SubResource("RopeAnchorPositions_ntxkk")
 appearance = SubResource("RopeAppearance_mcmdf")
 stiffness = 0.1
 collision_layer = 0
@@ -105,7 +105,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
 
 [node name="RelaxedRope3" type="Rope" parent="."]
 end_anchor = NodePath("EndAnchor")
-anchors = SubResource("RopePositions_ntxkk")
+anchors = SubResource("RopeAnchorPositions_ntxkk")
 appearance = SubResource("RopeAppearance_1jhvu")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3.75)
 material_override = SubResource("StandardMaterial3D_mcmdf")
@@ -125,7 +125,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
 [node name="StretchedRope3" type="Rope" parent="."]
 rope_length = 1.0
 end_anchor = NodePath("EndAnchor")
-anchors = SubResource("RopePositions_ntxkk")
+anchors = SubResource("RopeAnchorPositions_ntxkk")
 appearance = SubResource("RopeAppearance_1jhvu")
 stiffness = 0.1
 collision_layer = 0
