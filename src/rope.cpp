@@ -60,13 +60,13 @@ void Rope::_bind_methods() {
 
 	// virtuals
 	GDVIRTUAL_BIND(_get_anchor_count)
-	GDVIRTUAL_BIND(_get_anchor_transform)
-	GDVIRTUAL_BIND(_get_anchor_position)
+	GDVIRTUAL_BIND(_get_anchor_position, "idx")
+	GDVIRTUAL_BIND(_get_anchor_transform, "idx")
 
 	GDVIRTUAL_BIND(_get_attachment_count)
-	GDVIRTUAL_BIND(_get_attachment_position)
-	GDVIRTUAL_BIND(_get_attachment_nodepath)
-	GDVIRTUAL_BIND(_get_attachment_transform)
+	GDVIRTUAL_BIND(_get_attachment_position, "idx")
+	GDVIRTUAL_BIND(_get_attachment_nodepath, "idx")
+	GDVIRTUAL_BIND(_get_attachment_transform, "idx")
 
 	// pass through
 	ClassDB::bind_method(D_METHOD("get_rope_width"), &Rope::get_rope_width);

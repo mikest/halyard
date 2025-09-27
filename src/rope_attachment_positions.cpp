@@ -18,9 +18,9 @@ void RopeAttachmentPositions::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_nodepath", "index", "node", "rope"), &RopeAttachmentPositions::set_nodepath);
 	ClassDB::bind_method(D_METHOD("get_nodepath", "index", "rope"), &RopeAttachmentPositions::get_nodepath);
 
-	GDVIRTUAL_BIND(get_count);
-	GDVIRTUAL_BIND(get_position);
-	GDVIRTUAL_BIND(get_nodepath);
+	GDVIRTUAL_BIND(get_count, "rope");
+	GDVIRTUAL_BIND(get_position, "idx", "rope");
+	GDVIRTUAL_BIND(get_nodepath, "idx", "rope");
 }
 
 void RopeAttachmentPositions::_notify_changed() {

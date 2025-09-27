@@ -19,9 +19,9 @@ void RopeAnchorPositions::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("get_transform", "index", "rope"), &RopeAnchorPositions::get_transform);
 
-	GDVIRTUAL_BIND(get_count);
-	GDVIRTUAL_BIND(get_position);
-	GDVIRTUAL_BIND(get_transform);
+	GDVIRTUAL_BIND(get_count, "rope");
+	GDVIRTUAL_BIND(get_position, "idx", "rope");
+	GDVIRTUAL_BIND(get_transform, "idx", "rope");
 }
 
 void RopeAnchorPositions::_notify_changed() {

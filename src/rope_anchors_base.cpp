@@ -2,9 +2,10 @@
 #include "rope.h"
 
 void RopeAnchorsBase::_bind_methods() {
-	GDVIRTUAL_BIND(get_count);
-	GDVIRTUAL_BIND(get_position);
-	GDVIRTUAL_BIND(get_transform);
+	// rebind virtuals, as they are not inherited from base class
+	GDVIRTUAL_BIND(get_count, "rope");
+	GDVIRTUAL_BIND(get_position, "idx", "rope");
+	GDVIRTUAL_BIND(get_transform, "idx", "rope");
 }
 
 uint64_t RopeAnchorsBase::get_count(const Rope *rope) const {

@@ -2,9 +2,9 @@
 #include "rope.h"
 
 void RopeAttachmentsBase::_bind_methods() {
-	GDVIRTUAL_BIND(get_count);
-	GDVIRTUAL_BIND(get_position);
-	GDVIRTUAL_BIND(get_nodepath);
+	GDVIRTUAL_BIND(get_count, "rope");
+	GDVIRTUAL_BIND(get_position, "idx", "rope");
+	GDVIRTUAL_BIND(get_nodepath, "idx", "rope");
 }
 
 uint64_t RopeAttachmentsBase::get_count(const Rope *rope) const {

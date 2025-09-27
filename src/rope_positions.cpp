@@ -6,12 +6,11 @@
 // Build up a dynamic list of properties for each element in the position vector.
 void RopePositions::_rp_get_property_list(List<PropertyInfo> *p_list) const {
 	for (uint64_t idx = 0; idx < _positions.size(); ++idx) {
-		uint32_t usage = PROPERTY_USAGE_DEFAULT;
 		String name = POSITION_PREFIX + itos(idx);
 
 		p_list->push_back(PropertyInfo(Variant::NIL, name.capitalize(), PROPERTY_HINT_NONE, name + "/", PROPERTY_USAGE_GROUP));
-		p_list->push_back(PropertyInfo(Variant::FLOAT, name + "/position", PROPERTY_HINT_NONE, "", usage));
-		p_list->push_back(PropertyInfo(Variant::NODE_PATH, name + "/node", PROPERTY_HINT_NODE_PATH_TO_EDITED_NODE, "", usage));
+		p_list->push_back(PropertyInfo(Variant::FLOAT, name + "/position", PROPERTY_HINT_NONE, ""));
+		p_list->push_back(PropertyInfo(Variant::NODE_PATH, name + "/node", PROPERTY_HINT_NODE_PATH_TO_EDITED_NODE, ""));
 	}
 }
 
