@@ -26,14 +26,14 @@ public:
 	virtual ~RopeAnchorsBase() override = default;
 
 	// return the number of rope anchors
-	GDVIRTUAL1RC(uint64_t, get_anchor_count, const Rope *);
-	virtual uint64_t get_anchor_count(const Rope *) const;
+	GDVIRTUAL1RC(uint64_t, get_count, const Rope *);
+	virtual uint64_t get_count(const Rope *) const;
 
 	// return the scalar positions the rope should anchor at.
-	GDVIRTUAL2RC(float, get_anchor_position, uint64_t, const Rope *);
-	virtual float get_anchor_position(uint64_t, const Rope *) const;
+	GDVIRTUAL2RC(float, get_position, uint64_t, const Rope *);
+	virtual float get_position(uint64_t, const Rope *) const;
 
 	// return the anchor transforms for the index
-	GDVIRTUAL2RC(Transform3D, get_anchor_transform, uint64_t, const Rope *);
-	virtual Transform3D get_anchor_transform(uint64_t, const Rope *) const;
+	GDVIRTUAL2RC(Transform3D, get_transform, uint64_t, const Rope *);
+	virtual Transform3D get_transform(uint64_t, const Rope *) const;
 };

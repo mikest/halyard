@@ -1,6 +1,6 @@
 [gd_scene load_steps=7 format=3 uid="uid://cccskqmb0yr4k"]
 
-[ext_resource type="PackedScene" path="res://addons/halyard/assets/rope-eye-splice.blend" id="1_rwnhk"]
+[ext_resource type="PackedScene" uid="uid://n1hxvjgh5al4" path="res://addons/halyard/assets/rope-eye-splice.blend" id="1_rwnhk"]
 
 [sub_resource type="RopeAttachmentPositions" id="RopeAttachmentPositions_ntxkk"]
 position_count = 3
@@ -13,7 +13,9 @@ position_2/node = NodePath("Attachment3")
 
 [sub_resource type="RopeAppearance" id="RopeAppearance_6cjj2"]
 start_attachment = NodePath("StartAttachment")
+start_offset = 0.35
 end_attachment = NodePath("EndAttachment")
+end_offset = 0.35
 attachments = SubResource("RopeAttachmentPositions_ntxkk")
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_rwnhk"]
@@ -32,22 +34,22 @@ end_anchor = NodePath("EndAnchor")
 appearance = SubResource("RopeAppearance_6cjj2")
 
 [node name="StartAttachment" parent="RelaxedRope" instance=ExtResource("1_rwnhk")]
-transform = Transform3D(-0.2417097, -0.06384688, 2.1855694e-08, -0.06384688, 0.2417097, 0, -2.1130933e-08, -5.5816716e-09, -0.25, 0, 0, 0)
+transform = Transform3D(-0.24198058, -0.06281161, -0.00030835808, -0.06281162, 0.24196874, 0.0024150854, -0.00030832962, 0.0024150892, -0.24998814, 0.08618021, -0.33918744, -0.0033422045)
 
 [node name="Attachment1" type="CSGTorus3D" parent="RelaxedRope"]
-transform = Transform3D(-0.22501048, -0.10895083, 2.1855694e-08, -0.10895083, 0.22501048, 0, -1.9671042e-08, -9.5247845e-09, -0.25, 0.3026657, -0.9590226, 0)
+transform = Transform3D(-0.22550118, -0.10793028, -0.0005273777, -0.107927985, 0.22548105, 0.003138228, -0.0008791846, 0.0030583716, -0.24997975, 0.29824677, -0.9603232, -0.010717741)
 material_override = SubResource("StandardMaterial3D_rwnhk")
 
 [node name="Attachment2" type="CSGTorus3D" parent="RelaxedRope"]
-transform = Transform3D(-0.0013362294, -0.24999642, 2.1855694e-08, -0.24999642, 0.0013362294, 0, -1.1681689e-10, -2.1855382e-08, -0.25, 1.0025195, -1.630267, 0)
+transform = Transform3D(4.980735e-05, -0.25, -2.7614828e-07, -0.24998258, -4.980714e-05, 0.0029508797, -0.0029508797, -3.1177294e-07, -0.24998258, 0.9973677, -1.6306367, -0.02122186)
 material_override = SubResource("StandardMaterial3D_j6hj2")
 
 [node name="Attachment3" type="CSGTorus3D" parent="RelaxedRope"]
-transform = Transform3D(0.22577266, -0.10736248, 2.1855694e-08, -0.10736248, -0.22577266, 0, 1.9737673e-08, -9.385926e-09, -0.25, 1.7053063, -0.9600615, 0)
+transform = Transform3D(0.21825744, -0.12191185, 0.001086898, -0.12191527, -0.21823543, 0.0031557805, -0.00059010956, -0.0032851284, -0.24997771, 1.5855402, -1.1883057, -0.014001987)
 material_override = SubResource("StandardMaterial3D_y3h6m")
 
 [node name="EndAttachment" parent="RelaxedRope" instance=ExtResource("1_rwnhk")]
-transform = Transform3D(0.24218203, 0.06203118, -5.4229377e-09, -0.06203118, 0.24218203, -2.1172225e-08, 0, 2.1855696e-08, 0.25, 2, 0, 0)
+transform = Transform3D(0.24183066, 0.06338295, -0.000729813, -0.06338703, 0.24181974, -0.0023016627, 0.00012238807, 0.0024114933, 0.24998835, 1.9121288, -0.33876815, -0.0033568926)
 
 [node name="EndAnchor" type="Marker3D" parent="RelaxedRope"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
@@ -62,22 +64,22 @@ collision_mask = 0
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1)
 
 [node name="StartAttachment" parent="StretchedRope" instance=ExtResource("1_rwnhk")]
-transform = Transform3D(-0.002828646, -0.249984, 2.1855694e-08, -0.249984, 0.002828646, 0, -2.4728808e-10, -2.1854294e-08, -0.25, 0, 0, 0)
+transform = Transform3D(-0.002828646, -0.249984, 2.1855694e-08, -0.249984, 0.002828646, 0, -2.4728808e-10, -2.1854294e-08, -0.25, 0.3499645, -0.004983635, 0)
 
 [node name="Attachment1" type="CSGTorus3D" parent="StretchedRope"]
-transform = Transform3D(-0.003472176, -0.24997589, 2.1855694e-08, -0.24997589, 0.003472176, 0, -3.0354727e-10, -2.1853586e-08, -0.25, 0.48355073, -0.006885957, 0)
+transform = Transform3D(-0.003472176, -0.24997589, 2.1855694e-08, -0.24997589, 0.003472176, 0, -3.0354727e-10, -2.1853586e-08, -0.25, 0.48355073, -0.0068859565, 0)
 material_override = SubResource("StandardMaterial3D_rwnhk")
 
 [node name="Attachment2" type="CSGTorus3D" parent="StretchedRope"]
-transform = Transform3D(1.0927847e-08, -0.25, 2.1855694e-08, -0.25, -1.0927847e-08, 0, 9.553427e-16, -2.1855694e-08, -0.25, 1.0263159, -0.011613112, 0)
+transform = Transform3D(1.0927847e-08, -0.25, 2.1855694e-08, -0.25, -1.0927847e-08, 0, 9.553427e-16, -2.1855694e-08, -0.25, 1.0263159, -0.01161311, 0)
 material_override = SubResource("StandardMaterial3D_j6hj2")
 
 [node name="Attachment3" type="CSGTorus3D" parent="StretchedRope"]
-transform = Transform3D(0.0038891763, -0.24996975, 2.1855694e-08, -0.24996975, -0.0038891763, 0, 3.4000258e-10, -2.185305e-08, -0.25, 1.5460527, -0.0065323757, 0)
+transform = Transform3D(0.0038891763, -0.24996975, 2.1855694e-08, -0.24996975, -0.0038891763, 0, 3.4000258e-10, -2.185305e-08, -0.25, 1.5460527, -0.006532374, 0)
 material_override = SubResource("StandardMaterial3D_y3h6m")
 
 [node name="EndAttachment" parent="StretchedRope" instance=ExtResource("1_rwnhk")]
-transform = Transform3D(0.0029815214, 0.24998222, -2.1854142e-08, -0.24998222, 0.0029815214, -2.6065394e-10, -1.0269563e-15, 2.1855696e-08, 0.25, 2, 0, 0)
+transform = Transform3D(0.0029815214, 0.24998222, -2.1854142e-08, -0.24998222, 0.0029815214, -2.6065392e-10, -9.992007e-16, 2.1855696e-08, 0.25, 1.6500362, -0.005036034, 0)
 
 [node name="EndAnchor" type="Marker3D" parent="StretchedRope"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)

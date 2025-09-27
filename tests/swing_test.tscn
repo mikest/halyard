@@ -74,7 +74,7 @@ pull_on = NodePath("../RigidBody3D")
 metadata/_custom_type_script = "uid://dl6y1t3o1yx0o"
 
 [node name="EndAttach" type="Marker3D" parent="Rope"]
-transform = Transform3D(-0.125, -1.2761932e-08, 2.1208932e-09, 8.2658085e-09, -0.09454983, -0.08176387, 9.951961e-09, -0.08176387, 0.09454983, 0, -1.8375678, -1.2649236)
+transform = Transform3D(-0.125, -1.0927847e-08, 0, 7.2070847e-09, -0.08243944, -0.09396137, 8.214364e-09, -0.09396137, 0.08243944, 0, -1.8375678, -1.2649236)
 
 [node name="Rope" type="Rope" parent="Rope"]
 rope_length = 0.3
@@ -109,7 +109,7 @@ pull_on = NodePath("../RigidBody3D")
 metadata/_custom_type_script = "uid://dl6y1t3o1yx0o"
 
 [node name="EndAttach" type="Marker3D" parent="Rope2"]
-transform = Transform3D(-0.125, -1.2384347e-08, 1.7175967e-09, 8.33463e-09, -0.09533705, -0.08084459, 9.319664e-09, -0.08084459, 0.09533705, 0, -1.8375678, -1.2649236)
+transform = Transform3D(-0.125, -1.0927847e-08, 0, 7.1651214e-09, -0.081959434, -0.09438036, 8.250993e-09, -0.09438036, 0.081959434, 0, -1.8375678, -1.2649236)
 
 [node name="Rope" type="Rope" parent="Rope2"]
 rope_length = 0.3

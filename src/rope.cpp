@@ -526,7 +526,7 @@ int Rope::_get_anchor_count() const {
 
 	// default implementation
 	if (_anchors.is_valid())
-		return _anchors->get_anchor_count(this);
+		return _anchors->get_count(this);
 	return 0;
 }
 
@@ -540,7 +540,7 @@ int Rope::_get_attachment_count() const {
 	// default implementation
 	if (_appearance.is_valid()) {
 		if (_appearance->_attachments.is_valid())
-			return _appearance->_attachments->get_attachment_count(this);
+			return _appearance->_attachments->get_count(this);
 	}
 	return 0;
 }
@@ -554,7 +554,7 @@ Transform3D Rope::_get_anchor_transform(int idx) const {
 
 	// default implementation
 	if (_anchors.is_valid()) {
-		return _anchors->get_anchor_transform(idx, this);
+		return _anchors->get_transform(idx, this);
 	}
 	return Transform3D();
 }
@@ -568,7 +568,7 @@ float Rope::_get_anchor_position(int idx) const {
 
 	// default implementation
 	if (_anchors.is_valid()) {
-		float position = _anchors->get_anchor_position(idx, this);
+		float position = _anchors->get_position(idx, this);
 		return position;
 	}
 	return 0.0;
@@ -584,7 +584,7 @@ float Rope::_get_attachment_position(int idx) const {
 	// default implementation
 	if (_appearance.is_valid()) {
 		if (_appearance->_attachments.is_valid()) {
-			return _appearance->_attachments->get_attachment_position(idx, this);
+			return _appearance->_attachments->get_position(idx, this);
 		}
 	}
 	return 0.0;
@@ -600,7 +600,7 @@ NodePath Rope::_get_attachment_nodepath(int idx) const {
 	// default implementation
 	if (_appearance.is_valid()) {
 		if (_appearance->_attachments.is_valid()) {
-			return _appearance->_attachments->get_attachment_nodepath(idx, this);
+			return _appearance->_attachments->get_nodepath(idx, this);
 		}
 	}
 	return NodePath();

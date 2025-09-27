@@ -1,17 +1,9 @@
-[gd_scene load_steps=8 format=3 uid="uid://8r23wy3n04eu"]
+[gd_scene load_steps=6 format=3 uid="uid://8r23wy3n04eu"]
 
-[ext_resource type="Script" path="res://addons/halyard/scripts/offset_rope_positions.gd" id="1_5q3c7"]
-[ext_resource type="Script" path="res://addons/halyard/scripts/pull_rope.gd" id="2_56k4y"]
-
-[sub_resource type="RopeAnchorPositions" id="RopeAnchorPositions_p4qpy"]
-position_count = 1
-position_0/position = 1.0
-position_0/node = NodePath("Anchor")
-script = ExtResource("1_5q3c7")
-metadata/_custom_type_script = "uid://ehha186u4br6"
+[ext_resource type="Script" uid="uid://dl6y1t3o1yx0o" path="res://addons/halyard/scripts/pull_rope.gd" id="2_56k4y"]
 
 [sub_resource type="RopeAppearance" id="RopeAppearance_5q3c7"]
-particles_per_meter = 8
+particles_per_meter = 8.0
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_5q3c7"]
 
@@ -26,7 +18,6 @@ albedo_color = Color(0.75686276, 0.4, 0.4836397, 1)
 [node name="PullRope" type="Rope" parent="." node_paths=PackedStringArray("pull_on")]
 rope_length = 3.0
 end_anchor = NodePath("../RigidBody3D/Marker3D")
-anchors = SubResource("RopeAnchorPositions_p4qpy")
 appearance = SubResource("RopeAppearance_5q3c7")
 stiffness = 1.0
 collision_layer = 0
@@ -55,7 +46,6 @@ shape = SubResource("BoxShape3D_5q3c7")
 [node name="PullRope2" type="Rope" parent="." node_paths=PackedStringArray("pull_on")]
 rope_length = 3.0
 end_anchor = NodePath("../RigidBody3D/Marker3D")
-anchors = SubResource("RopeAnchorPositions_p4qpy")
 appearance = SubResource("RopeAppearance_5q3c7")
 stiffness = 1.0
 collision_layer = 0
@@ -72,7 +62,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6589301, -0.8506646, -2.17
 [node name="PullRope3" type="Rope" parent="." node_paths=PackedStringArray("pull_on")]
 rope_length = 3.0
 end_anchor = NodePath("../RigidBody3D2/Marker3D")
-anchors = SubResource("RopeAnchorPositions_p4qpy")
 appearance = SubResource("RopeAppearance_5q3c7")
 stiffness = 1.0
 collision_layer = 0

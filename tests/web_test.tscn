@@ -1,6 +1,6 @@
 [gd_scene load_steps=10 format=3 uid="uid://c6pq3mg86lkun"]
 
-[ext_resource type="Script" uid="uid://ccqeo0jjod5r0" path="res://addons/halyard/scripts/distributed_rope_positions.gd" id="1_lks7b"]
+[ext_resource type="Script" uid="uid://ccqeo0jjod5r0" path="res://addons/halyard/scripts/distributed_anchors.gd" id="1_lks7b"]
 
 [sub_resource type="RopeAttachmentPositions" id="RopeAttachmentPositions_uix47"]
 position_count = 7

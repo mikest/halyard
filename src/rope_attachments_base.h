@@ -26,15 +26,15 @@ public:
 	virtual ~RopeAttachmentsBase() override = default;
 
 	// return the number of rope attachments
-	GDVIRTUAL1RC(uint64_t, get_attachment_count, const Rope *);
-	virtual uint64_t get_attachment_count(const Rope *) const;
+	GDVIRTUAL1RC(uint64_t, get_count, const Rope *);
+	virtual uint64_t get_count(const Rope *) const;
 
 	// return the scalar position for the attachment at the index
 	// 0 is start, and 1 is end position.
-	GDVIRTUAL2RC(float, get_attachment_position, uint64_t, const Rope *);
-	virtual float get_attachment_position(uint64_t, const Rope *) const;
+	GDVIRTUAL2RC(float, get_position, uint64_t, const Rope *);
+	virtual float get_position(uint64_t, const Rope *) const;
 
 	// return the nodepath for the attachment
-	GDVIRTUAL2RC(NodePath, get_attachment_nodepath, uint64_t, const Rope *);
-	virtual NodePath get_attachment_nodepath(uint64_t, const Rope *) const;
+	GDVIRTUAL2RC(NodePath, get_nodepath, uint64_t, const Rope *);
+	virtual NodePath get_nodepath(uint64_t, const Rope *) const;
 };

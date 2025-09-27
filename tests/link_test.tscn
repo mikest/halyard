@@ -1,23 +1,22 @@
 [gd_scene load_steps=4 format=3 uid="uid://c6m5djyl84pub"]
 
-[ext_resource type="ArrayMesh" path="res://addons/halyard/assets/chain-link.res" id="1_5qxvb"]
-[ext_resource type="PackedScene" path="res://addons/halyard/assets/rope-endcap.blend" id="2_of4qs"]
+[ext_resource type="ArrayMesh" uid="uid://j3u082cbuveh" path="res://addons/halyard/assets/chain-link.res" id="1_5qxvb"]
+[ext_resource type="PackedScene" uid="uid://v81l42df6bcu" path="res://addons/halyard/assets/rope-endcap.blend" id="2_of4qs"]
 
 [sub_resource type="RopeAppearance" id="RopeAppearance_nksku"]
 rope_lod = 1
+particles_per_meter = 8.0
 link_mesh = ExtResource("1_5qxvb")
 end_attachment = NodePath("../rope-endcap")
-particles_per_meter = 8
 
 [node name="Node3D" type="Node3D"]
 
 [node name="Rope" type="Rope" parent="."]
 rope_length = 1.0
 appearance = SubResource("RopeAppearance_nksku")
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.2882643, -1.0824975, -1.973421)
 
 [node name="Marker3D" type="Marker3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.244116, 0, 0)
 
 [node name="rope-endcap" parent="." instance=ExtResource("2_of4qs")]
-transform = Transform3D(-0.25, -2.1855694e-08, 0, 2.1855694e-08, -0.25, 2.1855694e-08, -1.9106855e-15, 2.1855694e-08, 0.25, -1.2882643, -2.1296084, -1.973421)
+transform = Transform3D(-0.24595787, 0.044371296, -0.005992973, -0.044319067, -0.23650815, 0.06782121, 0.0063677114, 0.06778706, 0.24055013, 0.13866328, -1.0133152, 0.21165706)

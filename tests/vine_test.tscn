@@ -1,28 +1,16 @@
 [gd_scene load_steps=13 format=3 uid="uid://7k3vhebutfjr"]
 
-[ext_resource type="Script" uid="uid://ccqeo0jjod5r0" path="res://addons/halyard/scripts/distributed_rope_positions.gd" id="1_jjsnd"]
+[ext_resource type="Script" uid="uid://ce7j4ynkxlei4" path="res://addons/halyard/scripts/distributed_attachments.gd" id="1_jjsnd"]
 [ext_resource type="Script" uid="uid://dl6y1t3o1yx0o" path="res://addons/halyard/scripts/pull_rope.gd" id="2_apsf4"]
 [ext_resource type="PackedScene" uid="uid://cqloonmxh6jlk" path="res://addons/halyard/assets/vine-leaves-1.blend" id="3_a5k72"]
 [ext_resource type="PackedScene" uid="uid://dyltm64duqac0" path="res://addons/halyard/assets/vine-leaves-2.blend" id="4_boql4"]
 [ext_resource type="PackedScene" uid="uid://b6n2f4gcak8fp" path="res://addons/halyard/assets/vine-leaves-3.blend" id="5_ffr60"]
 [ext_resource type="PackedScene" uid="uid://dfoecgqwuprw2" path="res://addons/halyard/assets/vine-tip.blend" id="6_wimad"]
 
-[sub_resource type="RopeAnchorPositions" id="RopeAnchorPositions_hgskv"]
-position_count = 5
-position_0/position = 0.0
-position_0/node = NodePath("vine-leaves-2")
-position_1/position = 0.0
-position_1/node = NodePath("vine-leaves-3")
-position_2/position = 0.0
-position_2/node = NodePath("vine-leaves-1")
-position_3/position = 0.0
-position_3/node = NodePath("vine-leaves-4")
-position_4/position = 0.0
-position_4/node = NodePath("vine-leaves-5")
+[sub_resource type="RopeAttachmentsBase" id="RopeAttachmentsBase_apsf4"]
 script = ExtResource("1_jjsnd")
 include_start = true
-include_end = true
-metadata/_custom_type_script = "uid://ccqeo0jjod5r0"
+metadata/_custom_type_script = "uid://ce7j4ynkxlei4"
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_nj0u4"]
 resource_name = "Material"
@@ -36,13 +24,14 @@ rope_lod = 4
 particles_per_meter = 1.0
 material = SubResource("StandardMaterial3D_nj0u4")
 end_attachment = NodePath("vine-tip")
-attachments = SubResource("RopeAnchorPositions_hgskv")
+attachments = SubResource("RopeAttachmentsBase_apsf4")
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_s32gx"]
 
 [sub_resource type="RopeAnchorPositions" id="RopeAnchorPositions_nj0u4"]
+spacing = 1
 position_count = 1
-position_0/position = 0.2
+position_0/position = 1.0
 position_0/node = NodePath("../Vines/vine-leaves-4/Marker3D")
 
 [sub_resource type="RopeAnchorPositions" id="RopeAnchorPositions_3oq3m"]
@@ -68,28 +57,28 @@ script = ExtResource("2_apsf4")
 force_strength = 10.0
 
 [node name="vine-leaves-1" parent="Vines" instance=ExtResource("3_a5k72")]
-transform = Transform3D(-0.25, 0, 2.1855694e-08, 0, 0.25, 0, -2.1855694e-08, 0, -0.25, 0, -1.0009153, 0)
+transform = Transform3D(-0.25, 0, 2.1855694e-08, 0, 0.25, 0, -2.1855694e-08, 0, -0.25, 0, -1.0007086, 0)
 
 [node name="vine-leaves-2" parent="Vines" instance=ExtResource("4_boql4")]
-transform = Transform3D(-0.25, 0, 2.1855694e-08, 0, 0.25, 0, -2.1855694e-08, 0, -0.25, 0, 0.9992914, 0)
+transform = Transform3D(-0.25, 0, 2.1855694e-08, 0, 0.25, 0, -2.1855694e-08, 0, -0.25, 0, -2.000858, 0)
 
 [node name="vine-leaves-4" parent="Vines" instance=ExtResource("4_boql4")]
-transform = Transform3D(-0.25, 0, 2.1855694e-08, 0, 0.25, 0, -2.1855694e-08, 0, -0.25, 0, -2.0008934, 0)
+transform = Transform3D(-0.25, 0, 2.1855694e-08, 0, 0.25, 0, -2.1855694e-08, 0, -0.25, 0, -3.0009155, 0)
 
 [node name="Marker3D" type="Marker3D" parent="Vines/vine-leaves-4"]
 transform = Transform3D(0.999072, 0.043047294, -0.0016079308, -0.043008987, 0.99889433, 0.018988263, 0.002423544, -0.018901471, 0.99981844, 1.5893184, -7.0645123, -3.9760494)
 
 [node name="vine-leaves-3" parent="Vines" instance=ExtResource("5_ffr60")]
-transform = Transform3D(-0.25, 0, 2.1855694e-08, 0, 0.25, 0, -2.1855694e-08, 0, -0.25, 0, -0.0008583069, 0)
+transform = Transform3D(-0.25, 0, 2.1855694e-08, 0, 0.25, 0, -2.1855694e-08, 0, -0.25, 0, -4.0008936, 0)
 
 [node name="Marker3D" type="Marker3D" parent="Vines/vine-leaves-3"]
 transform = Transform3D(0.9920111, 0.12615114, -3.696267e-05, -0.12612782, 0.99183315, 0.018933477, 0.0024251395, -0.018777562, 0.99982077, -1.3815861, -2.3587017, -0.22634792)
 
 [node name="vine-leaves-5" parent="Vines" instance=ExtResource("5_ffr60")]
-transform = Transform3D(-0.25, -2.1855694e-08, 0, 2.1855694e-08, -0.25, 0, 0, 0, 0.25, 0, -3.0008063, 0)
+transform = Transform3D(-0.25, 0, 2.1855694e-08, 0, 0.25, 0, -2.1855694e-08, 0, -0.25, 0, -5.000807, 0)
 
 [node name="vine-tip" parent="Vines" instance=ExtResource("6_wimad")]
-transform = Transform3D(-0.25, 1.9106855e-15, 2.1855694e-08, 0, 0.25, -2.1855694e-08, -2.1855694e-08, -2.1855694e-08, -0.25, 0, -2.0006685, 0)
+transform = Transform3D(-0.25, -2.1855694e-08, 0, 2.1855694e-08, -0.25, 2.1855694e-08, -1.9106855e-15, 2.1855694e-08, 0.25, 0, -6.0006685, 0)
 
 [node name="Vines2" type="Rope" parent="."]
 rope_length = 8.0
@@ -104,27 +93,27 @@ wind = Vector3(-1, 0, 0)
 wind_noise = SubResource("FastNoiseLite_s32gx")
 damping_factor = 300.0
 unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3003719, -3.2596052, -3.1271908)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3003719, -4.2596273, -3.1271908)
 script = ExtResource("2_apsf4")
 force_strength = 10.0
 
 [node name="vine-leaves-1" parent="Vines2" instance=ExtResource("3_a5k72")]
-transform = Transform3D(-0.24973322, 0.01009384, 0.005605789, 0.009621962, 0.2490321, -0.0197593, -0.0063818744, -0.01952246, -0.24915485, -0.2820075, -3.8508122, 0.64542365)
+transform = Transform3D(-0.24969998, 0.011855864, 0.003058788, 0.011407358, 0.24795114, -0.02983471, -0.0044485847, -0.029659336, -0.24819455, -0.42805928, -2.0700555, 1.0708888)
 
 [node name="vine-leaves-2" parent="Vines2" instance=ExtResource("4_boql4")]
-transform = Transform3D(-0.24985279, 0.007005724, 0.0049494207, 0.0067316038, 0.24954939, -0.013408469, -0.0053162435, -0.013267304, -0.2495911, -0.20780677, -1.0945709, 0.5165243)
+transform = Transform3D(-0.24986054, 0.004391122, 0.007101109, 0.004073024, 0.24971999, -0.011105737, -0.0072882217, -0.01098385, -0.24965224, -0.42166302, -3.2659802, 1.0548806)
 
 [node name="vine-leaves-4" parent="Vines2" instance=ExtResource("4_boql4")]
-transform = Transform3D(-0.24969901, 0.010941171, 0.0055403737, 0.010431803, 0.24887066, -0.02132082, -0.006448445, -0.021063965, -0.24902755, -0.33481458, -5.096554, 0.74730253)
+transform = Transform3D(-0.2498524, 0.0048642065, 0.0070790984, 0.00451174, 0.2496562, -0.0123052765, -0.0073087853, -0.012170256, -0.2495966, -0.4496156, -4.764344, 1.1248164)
 
 [node name="vine-leaves-3" parent="Vines2" instance=ExtResource("5_ffr60")]
-transform = Transform3D(-0.24974847, 0.009709478, 0.0056058248, 0.00924004, 0.2490508, -0.01970583, -0.006349874, -0.019478811, -0.24915908, -0.22345665, -2.3564136, 0.5307205)
+transform = Transform3D(-0.24984874, 0.005062927, 0.0070692254, 0.0046962043, 0.24962778, -0.012802876, -0.0073179808, -0.012662335, -0.24957186, -0.47458935, -6.0126085, 1.1872944)
 
 [node name="vine-leaves-5" parent="Vines2" instance=ExtResource("5_ffr60")]
-transform = Transform3D(-0.24968879, 0.011194089, 0.0054959278, 0.010661718, 0.24877314, -0.022321481, -0.006468432, -0.022059312, -0.24894084, -0.3903076, -6.3401575, 0.8552182)
+transform = Transform3D(-0.24985132, 0.004924192, 0.0070761465, 0.004567344, 0.24964762, -0.012458194, -0.0073115584, -0.0123215085, -0.2495891, -0.4996512, -7.2607183, 1.2499843)
 
 [node name="vine-tip" parent="Vines2" instance=ExtResource("6_wimad")]
-transform = Transform3D(-0.24972112, -0.010461867, -0.005469053, 0.009918924, -0.24874848, 0.022930568, -0.006401261, 0.022688001, 0.24888608, -0.45420212, -7.8321705, 0.9903631)
+transform = Transform3D(-0.24985842, -0.004517635, -0.0070959493, 0.004190251, -0.24970345, 0.011428982, -0.00729406, 0.011303575, 0.24963778, -0.52737707, -8.758628, 1.3193581)
 
 [node name="Vines3" type="Rope" parent="."]
 rope_length = 8.0
@@ -139,27 +128,27 @@ wind = Vector3(-1, 0, 0)
 wind_noise = SubResource("FastNoiseLite_s32gx")
 damping_factor = 300.0
 unique_name_in_owner = true
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3003719, -1.2595701, -3.1271908)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3003719, -5.259605, -3.1271908)
 script = ExtResource("2_apsf4")
 force_strength = 10.0
 
 [node name="vine-leaves-1" parent="Vines3" instance=ExtResource("3_a5k72")]
-transform = Transform3D(-0.24932736, -0.018155465, -0.0024986416, -0.018121738, 0.24932031, -0.003314222, 0.0027325333, -0.0031241858, -0.24996555, 0.66107106, -3.8575354, 0.10992885)
+transform = Transform3D(-0.24967581, -0.01245549, -0.0026186795, -0.012432844, 0.24968112, -0.0021844525, 0.002724173, -0.0020513893, -0.24997675, 0.3728025, -0.8110132, 0.061085224)
 
 [node name="vine-leaves-2" parent="Vines3" instance=ExtResource("4_boql4")]
-transform = Transform3D(-0.24952814, -0.015206698, -0.002112215, -0.015183239, 0.24952349, -0.0027378702, 0.002274725, -0.0026044215, -0.24997608, 0.54155976, -1.0997198, 0.08881402)
+transform = Transform3D(-0.24993238, -0.0050764373, -0.0028344577, -0.00506654, 0.24994704, -0.0008989335, 0.0028521104, -0.0008412468, -0.24998233, 0.37293082, -2.090703, 0.06116271)
 
 [node name="vine-leaves-4" parent="Vines3" instance=ExtResource("4_boql4")]
-transform = Transform3D(-0.24921018, -0.019701658, -0.0024766703, -0.019664962, 0.24919929, -0.0036059115, 0.0027529073, -0.0033997048, -0.24996173, 0.7559439, -5.104731, 0.12624836)
+transform = Transform3D(-0.24989909, -0.006514466, -0.0028289035, -0.006501865, 0.24991281, -0.0011447292, 0.002857746, -0.0010706946, -0.24998137, 0.40735006, -3.5905528, 0.06683254)
 
 [node name="vine-leaves-3" parent="Vines3" instance=ExtResource("5_ffr60")]
-transform = Transform3D(-0.2493621, -0.017671233, -0.0025050915, -0.017638547, 0.24935628, -0.0032125493, 0.00272572, -0.0030276075, -0.24996682, 0.555202, -2.3614435, 0.091721535)
+transform = Transform3D(-0.24985284, -0.008099888, -0.00282102, -0.0080842525, 0.24986522, -0.0014204668, 0.0028655217, -0.0013284072, -0.24998005, 0.44358414, -4.8400884, 0.07278347)
 
 [node name="vine-leaves-5" parent="Vines3" instance=ExtResource("5_ffr60")]
-transform = Transform3D(-0.24906346, -0.021479899, -0.0024498038, -0.021439863, 0.2490479, -0.003933782, 0.002778463, -0.0037089516, -0.24995704, 0.8587785, -6.349927, 0.14400625)
+transform = Transform3D(-0.2497656, -0.010452993, -0.002805851, -0.010432729, 0.24977542, -0.001840496, 0.0028802855, -0.0017216797, -0.24997747, 0.48974454, -6.089147, 0.08036852)
 
 [node name="vine-tip" parent="Vines3" instance=ExtResource("6_wimad")]
-transform = Transform3D(-0.24880402, 0.024306346, 0.0024012846, -0.024260791, -0.2487798, 0.0044750664, 0.0028246546, 0.0042206296, 0.24994841, 1.0002577, -7.842539, 0.16854072)
+transform = Transform3D(-0.24963063, 0.013296369, 0.0027831136, -0.013270565, -0.24963653, 0.002342645, 0.0029036622, 0.00219145, 0.24997352, 0.5651993, -7.5869565, 0.092803)
 
 [editable path="Vines/vine-tip"]
 [editable path="Vines2/vine-tip"]

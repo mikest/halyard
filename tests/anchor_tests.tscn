@@ -1,19 +1,37 @@
-[gd_scene load_steps=6 format=3 uid="uid://bl1snne1dyabg"]
+[gd_scene load_steps=12 format=3 uid="uid://bl1snne1dyabg"]
 
-[sub_resource type="RopeAnchorPositions" id="RopeAnchorPositions_ntxkk"]
-position_count = 3
-position_0/position = 0.25
-position_0/node = NodePath("Anchor1")
-position_1/position = 0.5
-position_1/node = NodePath("Anchor2")
-position_2/position = 0.75
-position_2/node = NodePath("Anchor3")
+[ext_resource type="Script" uid="uid://ccqeo0jjod5r0" path="res://addons/halyard/scripts/distributed_anchors.gd" id="1_mcmdf"]
+
+[sub_resource type="RopeAnchorsBase" id="RopeAnchorsBase_1jhvu"]
+script = ExtResource("1_mcmdf")
+include_start = true
+metadata/_custom_type_script = "uid://ccqeo0jjod5r0"
+
+[sub_resource type="RopeAnchorsBase" id="RopeAnchorsBase_peyb8"]
+script = ExtResource("1_mcmdf")
+include_start = true
+metadata/_custom_type_script = "uid://ccqeo0jjod5r0"
+
+[sub_resource type="RopeAnchorsBase" id="RopeAnchorsBase_oly0m"]
+script = ExtResource("1_mcmdf")
+include_start = true
+metadata/_custom_type_script = "uid://ccqeo0jjod5r0"
 
 [sub_resource type="RopeAppearance" id="RopeAppearance_mcmdf"]
 rope_lod = 4
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ntxkk"]
 albedo_color = Color(1, 0, 0, 1)
+
+[sub_resource type="RopeAnchorsBase" id="RopeAnchorsBase_7f8vo"]
+script = ExtResource("1_mcmdf")
+include_start = true
+metadata/_custom_type_script = "uid://ccqeo0jjod5r0"
+
+[sub_resource type="RopeAnchorsBase" id="RopeAnchorsBase_vt1j4"]
+script = ExtResource("1_mcmdf")
+include_start = true
+metadata/_custom_type_script = "uid://ccqeo0jjod5r0"
 
 [sub_resource type="RopeAppearance" id="RopeAppearance_1jhvu"]
 rope_lod = 4
@@ -22,11 +40,15 @@ particles_per_meter = 4.0
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mcmdf"]
 albedo_color = Color(0, 0.75, 1, 1)
 
+[sub_resource type="RopeAnchorsBase" id="RopeAnchorsBase_4d12w"]
+script = ExtResource("1_mcmdf")
+include_start = true
+metadata/_custom_type_script = "uid://ccqeo0jjod5r0"
+
 [node name="Node3D" type="Node3D"]
 
 [node name="RelaxedRope" type="Rope" parent="."]
-end_anchor = NodePath("EndAnchor")
-anchors = SubResource("RopeAnchorPositions_ntxkk")
+anchors = SubResource("RopeAnchorsBase_1jhvu")
 
 [node name="Anchor1" type="Marker3D" parent="RelaxedRope"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0, 0)
@@ -42,8 +64,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
 
 [node name="StretchedRope" type="Rope" parent="."]
 rope_length = 1.0
-end_anchor = NodePath("EndAnchor")
-anchors = SubResource("RopeAnchorPositions_ntxkk")
+anchors = SubResource("RopeAnchorsBase_peyb8")
 stiffness = 0.1
 collision_layer = 0
 collision_mask = 0
@@ -62,8 +83,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, 0)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
 
 [node name="RelaxedRope2" type="Rope" parent="."]
-end_anchor = NodePath("EndAnchor")
-anchors = SubResource("RopeAnchorPositions_ntxkk")
+anchors = SubResource("RopeAnchorsBase_oly0m")
 appearance = SubResource("RopeAppearance_mcmdf")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.75)
 material_override = SubResource("StandardMaterial3D_ntxkk")
@@ -82,8 +102,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
 
 [node name="StretchedRope2" type="Rope" parent="."]
 rope_length = 1.0
-end_anchor = NodePath("EndAnchor")
-anchors = SubResource("RopeAnchorPositions_ntxkk")
+anchors = SubResource("RopeAnchorsBase_7f8vo")
 appearance = SubResource("RopeAppearance_mcmdf")
 stiffness = 0.1
 collision_layer = 0
@@ -104,8 +123,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, 0)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
 
 [node name="RelaxedRope3" type="Rope" parent="."]
-end_anchor = NodePath("EndAnchor")
-anchors = SubResource("RopeAnchorPositions_ntxkk")
+anchors = SubResource("RopeAnchorsBase_vt1j4")
 appearance = SubResource("RopeAppearance_1jhvu")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3.75)
 material_override = SubResource("StandardMaterial3D_mcmdf")
@@ -124,8 +142,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
 
 [node name="StretchedRope3" type="Rope" parent="."]
 rope_length = 1.0
-end_anchor = NodePath("EndAnchor")
-anchors = SubResource("RopeAnchorPositions_ntxkk")
+anchors = SubResource("RopeAnchorsBase_4d12w")
 appearance = SubResource("RopeAppearance_1jhvu")
 stiffness = 0.1
 collision_layer = 0

@@ -1,16 +1,7 @@
-[gd_scene load_steps=7 format=3 uid="uid://b5q5mxkwn7e2y"]
+[gd_scene load_steps=5 format=3 uid="uid://b5q5mxkwn7e2y"]
 
-[ext_resource type="Script" path="res://addons/halyard/scripts/offset_rope_positions.gd" id="1_06evi"]
 [ext_resource type="ArrayMesh" uid="uid://j3u082cbuveh" path="res://addons/halyard/assets/chain-link.res" id="2_vqcs3"]
-[ext_resource type="Script" path="res://addons/halyard/scripts/pull_rope.gd" id="3_i11ko"]
-
-[sub_resource type="RopeAnchorPositions" id="RopeAnchorPositions_50u00"]
-position_count = 1
-position_0/position = 2.0
-position_0/node = NodePath("../AnchorChainHole")
-script = ExtResource("1_06evi")
-from = 0
-metadata/_custom_type_script = "uid://ehha186u4br6"
+[ext_resource type="Script" uid="uid://dl6y1t3o1yx0o" path="res://addons/halyard/scripts/pull_rope.gd" id="3_i11ko"]
 
 [sub_resource type="RopeAppearance" id="RopeAppearance_06evi"]
 rope_twist = 0.5
@@ -26,7 +17,6 @@ link_mesh = ExtResource("2_vqcs3")
 rope_length = 4.61
 grow_from = 1
 end_anchor = NodePath("../Ball/Marker3D")
-anchors = SubResource("RopeAnchorPositions_50u00")
 appearance = SubResource("RopeAppearance_06evi")
 stiffness_iterations = 4
 stiffness = 1.0

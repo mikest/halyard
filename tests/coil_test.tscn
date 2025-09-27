@@ -31,7 +31,7 @@ clockwise = true
 radius = 0.1
 turns_per_layer = 6.0
 offset_turns = 0.063
-coiled = 0.511
+coiled = 0.406
 metadata/_custom_type_script = "uid://dnnxtqukra31q"
 
 [node name="Drum" type="Marker3D" parent="."]

@@ -33,17 +33,18 @@ public:
 	RopeAttachmentPositions() = default;
 	virtual ~RopeAttachmentPositions() = default;
 
+	void set_position_count(uint64_t count) { _set_count(count); }
+	uint64_t get_position_count() const { return _get_count(); }
+
 	void set_spacing(Spacing val) { _set_spacing(val); }
 	Spacing get_spacing() const { return _get_spacing(); }
 
-	void set_count(uint64_t count) { _set_count(count); }
-	uint64_t get_count() const { return _get_count(); }
-	uint64_t get_attachment_count(const Rope *rope = nullptr) const { return _get_count(); }
+	virtual uint64_t get_count(const Rope *rope) const;
 
 	// these return Scalar positions
-	void set_attachment_position(uint64_t idx, float val, const Rope *rope);
-	virtual float get_attachment_position(uint64_t idx, const Rope *rope) const;
+	void set_position(uint64_t idx, float val, const Rope *rope);
+	virtual float get_position(uint64_t idx, const Rope *rope) const;
 
-	void set_attachment_nodepath(uint64_t idx, const NodePath &val) { _set_nodepath(idx, val); }
-	virtual NodePath get_attachment_nodepath(uint64_t idx, const Rope *rope = nullptr) const { return _get_nodepath(idx); }
+	void set_nodepath(uint64_t idx, const NodePath &val, const Rope *rope);
+	virtual NodePath get_nodepath(uint64_t idx, const Rope *rope) const;
 };

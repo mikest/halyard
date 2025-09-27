@@ -33,8 +33,8 @@ var _dirty: bool = true
 
 
 func _process(delta: float) -> void:
-	if debug:
-		DebugDraw3D.draw_point_path(_positions, DebugDraw3D.POINT_TYPE_SQUARE, 0.01, Color.BLUE)
+	#if debug:
+		#DebugDraw3D.draw_point_path(_positions, DebugDraw3D.POINT_TYPE_SQUARE, 0.01, Color.BLUE)
 	
 	# rebuild positions for coils when the parameters change
 	if _dirty:
@@ -100,8 +100,7 @@ func _get_nodepath_transform(path: NodePath) -> Transform3D:
 
 # get the transform for the regular anchor
 func _get_transform_for_anchor_idx(anchor_idx) -> Transform3D:
-	var path := anchors.get_node(anchor_idx)
-	return _get_nodepath_transform(path)
+	return anchors.get_transform(anchor_idx, self)
 
 
 #region Overloads
@@ -139,8 +138,7 @@ func _get_anchor_transform(idx: int) -> Transform3D:
 	
 	# if we're past the coil return the normal anchors
 	if idx >= coil_count:
-		var path := anchors.get_node(idx - coil_count)
-		xform = _get_nodepath_transform(path)
+		xform = anchors.get_transform(idx - coil_count, self)
 	
 	# return the rotated coil position for this index
 	elif idx < _positions.size():

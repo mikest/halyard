@@ -1,13 +1,11 @@
-[gd_scene load_steps=3 format=3 uid="uid://uyxawsqlqrb4"]
+[gd_scene load_steps=4 format=3 uid="uid://uyxawsqlqrb4"]
 
-[sub_resource type="RopeAnchorPositions" id="RopeAnchorPositions_ntxkk"]
-position_count = 3
-position_0/position = 0.25
-position_0/node = NodePath("")
-position_1/position = 0.5
-position_1/node = NodePath("")
-position_2/position = 0.75
-position_2/node = NodePath("")
+[ext_resource type="Script" uid="uid://ccqeo0jjod5r0" path="res://addons/halyard/scripts/distributed_anchors.gd" id="1_iqonh"]
+
+[sub_resource type="RopeAnchorsBase" id="RopeAnchorsBase_u3alf"]
+script = ExtResource("1_iqonh")
+include_start = true
+metadata/_custom_type_script = "uid://ccqeo0jjod5r0"
 
 [sub_resource type="RopeAppearance" id="RopeAppearance_do1de"]
 rope_width = 0.125
@@ -18,7 +16,7 @@ rope_lod = 10
 [node name="StretchedRope" type="Rope" parent="."]
 rope_length = 1.0
 end_anchor = NodePath("EndAnchor")
-anchors = SubResource("RopeAnchorPositions_ntxkk")
+anchors = SubResource("RopeAnchorsBase_u3alf")
 stiffness = 0.1
 collision_layer = 0
 collision_mask = 0

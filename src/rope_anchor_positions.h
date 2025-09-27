@@ -31,22 +31,24 @@ protected:
 
 public:
 	RopeAnchorPositions() = default;
-	virtual ~RopeAnchorPositions() override = default;
+	virtual ~RopeAnchorPositions() = default;
+
+	void set_position_count(uint64_t count) { _set_count(count); }
+	uint64_t get_position_count() const { return _get_count(); }
 
 	void set_spacing(Spacing val) { _set_spacing(val); }
 	Spacing get_spacing() const { return _get_spacing(); }
 
-	void set_count(uint64_t count) { _set_count(count); }
-	uint64_t get_count() const { return _get_count(); }
-	uint64_t get_anchor_count(const Rope *rope = nullptr) const { return _get_count(); }
+	virtual uint64_t get_count(const Rope *rope) const;
 
 	// these return Scalar positions
-	void set_anchor_position(uint64_t idx, float val, const Rope *rope);
-	float get_anchor_position(uint64_t idx, const Rope *rope) const;
+	void set_position(uint64_t idx, float val, const Rope *rope);
+	float get_position(uint64_t idx, const Rope *rope) const;
 
-	void set_anchor_node(uint64_t idx, const NodePath &val) { _set_nodepath(idx, val); }
-	NodePath get_anchor_node(uint64_t idx) const { return _get_nodepath(idx); }
+	void set_nodepath(uint64_t idx, const NodePath &val, const Rope *rope);
+	NodePath get_nodepath(uint64_t idx, const Rope *rope) const;
 
 	// NOTE: overriding is possible for further transforming
-	virtual Transform3D get_anchor_transform(uint64_t idx, const Rope *rope) const;
+	GDVIRTUAL2RC(Transform3D, get_transform, uint64_t, const Rope *);
+	virtual Transform3D get_transform(uint64_t idx, const Rope *rope) const;
 };
