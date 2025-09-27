@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="RopeAttachmentsBase" inherits="Resource" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="get_count" qualifiers="virtual const">
+			<return type="int" />
+			<param index="0" name="" type="Rope" />
+			<description>
+			</description>
+		</method>
+		<method name="get_nodepath" qualifiers="virtual const">
+			<return type="NodePath" />
+			<param index="0" name="" type="int" />
+			<param index="1" name="" type="Rope" />
+			<description>
+			</description>
+		</method>
+		<method name="get_position" qualifiers="virtual const">
+			<return type="float" />
+			<param index="0" name="" type="int" />
+			<param index="1" name="" type="Rope" />
+			<description>
+			</description>
+		</method>
+	</methods>
+</class>

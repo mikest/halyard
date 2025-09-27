@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="RopeAnchorPositions" inherits="RopeAnchorsBase" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="get_count" qualifiers="virtual const">
+			<return type="int" />
+			<param index="0" name="" type="Rope" />
+			<description>
+			</description>
+		</method>
+		<method name="get_count" qualifiers="const">
+			<return type="int" />
+			<param index="0" name="rope" type="Rope" />
+			<description>
+			</description>
+		</method>
+		<method name="get_nodepath" qualifiers="const">
+			<return type="NodePath" />
+			<param index="0" name="index" type="int" />
+			<param index="1" name="rope" type="Rope" />
+			<description>
+			</description>
+		</method>
+		<method name="get_position" qualifiers="virtual const">
+			<return type="float" />
+			<param index="0" name="" type="int" />
+			<param index="1" name="" type="Rope" />
+			<description>
+			</description>
+		</method>
+		<method name="get_position" qualifiers="const">
+			<return type="float" />
+			<param index="0" name="index" type="int" />
+			<param index="1" name="rope" type="Rope" />
+			<description>
+			</description>
+		</method>
+		<method name="get_transform" qualifiers="virtual const">
+			<return type="Transform3D" />
+			<param index="0" name="" type="int" />
+			<param index="1" name="" type="Rope" />
+			<description>
+			</description>
+		</method>
+		<method name="get_transform" qualifiers="const">
+			<return type="Transform3D" />
+			<param index="0" name="index" type="int" />
+			<param index="1" name="rope" type="Rope" />
+			<description>
+			</description>
+		</method>
+		<method name="set_nodepath">
+			<return type="void" />
+			<param index="0" name="index" type="int" />
+			<param index="1" name="node" type="NodePath" />
+			<param index="2" name="rope" type="Rope" />
+			<description>
+			</description>
+		</method>
+		<method name="set_position">
+			<return type="void" />
+			<param index="0" name="index" type="int" />
+			<param index="1" name="position" type="float" />
+			<param index="2" name="rope" type="Rope" />
+			<description>
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="position_count" type="int" setter="set_position_count" getter="get_position_count" default="0">
+		</member>
+		<member name="spacing" type="int" setter="set_spacing" getter="get_spacing" enum="RopePositions.Spacing" default="0">
+		</member>
+	</members>
+	<constants>
+		<constant name="Scalar" value="0" enum="Spacing">
+		</constant>
+		<constant name="DistanceFromStart" value="1" enum="Spacing">
+		</constant>
+		<constant name="DistanceFromEnd" value="2" enum="Spacing">
+		</constant>
+	</constants>
+</class>

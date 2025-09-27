@@ -11,123 +11,273 @@
 	<tutorials>
 	</tutorials>
 	<methods>
-		<method name="get_baked_mesh">
-			<return type="Mesh" />
+		<method name="_get_anchor_count" qualifiers="virtual const">
+			<return type="int" />
 			<description>
-				Returns the current mesh of the rope. Changes every physics frame.
+				Returns the number of anchors, excluding the fixed start and end anchor. Default implementation returns the number of anchors in the attached [class]RopeAnchorsBase[/class] object.
+
+				You can overload this to alter the number of anchors the rope will ask for in the related overloads.
 			</description>
 		</method>
+		<method name="_get_anchor_position" qualifiers="virtual const">
+			<return type="float" />
+			<param index="0" name="" type="int" />
+			<description>
+				returns the position [0..1] of the anchor in the range [0.._get_anchor_count()-1].
+			</description>
+		</method>
+		<method name="_get_anchor_transform" qualifiers="virtual const">
+			<return type="Transform3D" />
+			<param index="0" name="" type="int" />
+			<description>
+				returns the transform for the anchor in the range [0.._get_anchor_count()-1].
+			</description>
+		</method>
+		<method name="_get_attachment_count" qualifiers="virtual const">
+			<return type="int" />
+			<description>
+				returns the number of attachments, excluding the start and end attachments. Default implementation
+				returns the number of attachments in RopeAppearance.attachments if present.
 
-		<method name="get_all_rope_frames">
-			<return type="Array[Transform3D]" />
+				You can overload this to alter the number of attachments the rope will ask for in related overloads.
+			</description>
+		</method>
+		<method name="_get_attachment_nodepath" qualifiers="virtual const">
+			<return type="NodePath" />
+			<param index="0" name="" type="int" />
+			<description>
+				returns the NodePath (relative to rope) for the attachment in the range [0.._get_attachment_count()-1]
+			</description>
+		</method>
+		<method name="_get_attachment_position" qualifiers="virtual const">
+			<return type="float" />
+			<param index="0" name="" type="int" />
+			<description>
+				returns the rope position [0..1] for the attachment in the range [0.._get_attachment_count()-1]
+			</description>
+		</method>
+		<method name="_get_attachment_transform" qualifiers="virtual const">
+			<return type="Transform3D" />
+			<param index="0" name="" type="int" />
+			<description>
+				returns the attachment transform for the attachment in the range [0.._get_attachment_count()-1]
+			</description>
+		</method>
+		<method name="get_all_links" qualifiers="const">
+			<return type="Transform3D[]" />
+			<description>
+				Returns a list of all the transforms for links used to render the rope.
+
+				The link transform is the orient transform midway between two particles.
+				It is used to position the colliders and chain links if rendering.
+
+				There will be N-1 links per rope simulation particle.
+			</description>
+		</method>
+		<method name="get_all_rope_frames" qualifiers="const">
+			<return type="Transform3D[]" />
 			<description>
 				Returns a list of all the transform frames used to render the rope. The frame tangents and normals are aligned along the rope and there will be
 				more frames for higher LODs.
 			</description>
 		</method>
-
-		<method name="get_rope_frame">
-			<return type="Transform3D" />
-			<param index="0" name="index" type="int" />
+		<method name="get_attachments" qualifiers="const">
+			<return type="RopeAttachmentsBase" />
 			<description>
-				Returns an individual frame at index, or Transform.IDENTITY if out of bounds.
 			</description>
 		</method>
-
-		<method name="get_rope_frame_count">
-			<return type="int" />
+		<method name="get_baked_mesh" qualifiers="const">
+			<return type="ArrayMesh" />
 			<description>
-				Returns the current number of frames.
+				Returns the current mesh of the rope. Changes every physics frame.
 			</description>
 		</method>
-
-		<method name="get_particle_positions">
-			<return type="Array[Vector3]" />
+		<method name="get_current_rope_length" qualifiers="const">
+			<return type="float" />
 			<description>
-				Returns the current positions for the rope particles. Particle positions are used to simulate the physics.
+				returns the current length of the rope, which may be different than the specified length of the rope due to stretching.
 			</description>
 		</method>
-
-		<method name="get_all_links">
-			<return type="Array[Transform3D]" />
+		<method name="get_end_attachment" qualifiers="const">
+			<return type="NodePath" />
 			<description>
-				Returns a list of all the transforms for links used to render the rope.
-				
-				The link transform is the orient transform midway between two particles.
-				It is used to position the colliders and chain links if rendering.
 			</description>
 		</method>
-
-		<method name="get_link">
+		<method name="get_end_offset" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_link" qualifiers="const">
 			<return type="Transform3D" />
 			<param index="0" name="index" type="int" />
 			<description>
 				Returns an individual link at index, or Transform.IDENTITY if out of bounds.
 			</description>
 		</method>
-
-		<method name="get_link_count">
+		<method name="get_link_count" qualifiers="const">
 			<return type="int" />
 			<description>
 				Returns the current number of links. Will be N-1 particles.
 			</description>
 		</method>
-
+		<method name="get_particle_count_for_length" qualifiers="const">
+			<return type="int" />
+			<description>
+				returns the number of particles in the rope.
+			</description>
+		</method>
+		<method name="get_particle_positions" qualifiers="const">
+			<return type="Vector3[]" />
+			<description>
+				Returns the current positions for the rope particles. Particle positions are used to simulate the physics.
+			</description>
+		</method>
+		<method name="get_particles_per_meter" qualifiers="const">
+			<return type="float" />
+			<description>
+				returns the number of particles per meter to generate for the rope. this will also impact the link and frame counts.
+			</description>
+		</method>
+		<method name="get_rope_frame" qualifiers="const">
+			<return type="Transform3D" />
+			<param index="0" name="index" type="int" />
+			<description>
+				Returns an individual frame at index, or Transform.IDENTITY if out of bounds.
+			</description>
+		</method>
+		<method name="get_rope_frame_count" qualifiers="const">
+			<return type="int" />
+			<description>
+				Returns the current number of frames.
+			</description>
+		</method>
+		<method name="get_rope_lod" qualifiers="const">
+			<return type="int" />
+			<description>
+				returns the number of catmul spline points per rope simulation particle to generate along the rope. 
+			</description>
+		</method>
+		<method name="get_rope_sides" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_rope_twist" qualifiers="const">
+			<return type="float" />
+			<description>
+				returns the V coordinate multiplier for texture UV coordinates.
+			</description>
+		</method>
+		<method name="get_rope_width" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_start_attachment" qualifiers="const">
+			<return type="NodePath" />
+			<description>
+			</description>
+		</method>
+		<method name="get_start_offset" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
 	</methods>
 	<members>
-		<member name="rope_length" type="int">
-			Length of the rope. Segments will be `rope_length / rope_particles` long.
-        </member>
-		<member name="start_anchor" type="NodePath">
-			NodePath to a node to anchor the start of the rope to. The origin of the rope will follow this node. Can point to self.
-		</member>
-		<member name="end_anchor" type="NodePath">
-			NodePath to a node to anchor the end of the rope to. The end of the rope will follow this node.
-		</member>
-		<member name="anchors" type="RopePositions">
+		<member name="anchors" type="RopeAnchorsBase" setter="set_anchors" getter="get_anchors">
 			A RopePositions resource containing additional anchors to attach the rope to. All anchors will be aligned to the nearest frame, and so the positions
 			are dependent on the number of particles in the rope and the LOD.
 		</member>
-		<member name="appearance" type="RopeAppearance">
+		<member name="appearance" type="RopeAppearance" setter="set_appearance"
+			getter="get_appearance">
 			A RopeAppearance resource containing properties that control how the rope is rendered.
 		</member>
-
-		<member name="simulation_rate" type="float">
+		<member name="apply_damping" type="bool" setter="set_apply_damping"
+			getter="get_apply_damping" default="true">
+		</member>
+		<member name="apply_gravity" type="bool" setter="set_apply_gravity"
+			getter="get_apply_gravity" default="true">
+		</member>
+		<member name="apply_wind" type="bool" setter="set_apply_wind" getter="get_apply_wind"
+			default="false">
+		</member>
+		<member name="collision_layer" type="int" setter="set_collision_layer"
+			getter="get_collision_layer" default="1">
+		</member>
+		<member name="collision_mask" type="int" setter="set_collision_mask"
+			getter="get_collision_mask" default="1">
+		</member>
+		<member name="damping_factor" type="float" setter="set_damping_factor"
+			getter="get_damping_factor" default="100.0">
+		</member>
+		<member name="end_anchor" type="NodePath" setter="set_end_anchor" getter="get_end_anchor"
+			default="NodePath(&quot;&quot;)">
+			NodePath to a node to anchor the end of the rope to. The end of the rope will follow this node.
+		</member>
+		<member name="friction" type="float" setter="set_friction" getter="get_friction"
+			default="0.5">
+			At 0.0 the rope will slide off surfaces. At 1.0 the rope will stick to surfaces.
+		</member>
+		<member name="gravity" type="Vector3" setter="set_gravity" getter="get_gravity"
+			default="Vector3(0, -9.8, 0)">
+			Gravity vector to apply to the rope simulation. Default is (0, -9.8, 0).
+		</member>
+		<member name="gravity_scale" type="float" setter="set_gravity_scale"
+			getter="get_gravity_scale" default="1.0">
+		</member>
+		<member name="grow_from" type="int" setter="set_grow_from" getter="get_grow_from"
+			default="0">
+		</member>
+		<member name="preprocess_time" type="float" setter="set_preprocess_time"
+			getter="get_preprocess_time" default="1.0">
+			Virtual time to calculate into the future before first render.
+			This will run [code]preprocess_time * simulation_rate[/code] frames as fast as possible.
+		</member>
+		<member name="rope_length" type="float" setter="set_rope_length" getter="get_rope_length"
+			default="4.0">
+			Length of the rope. Segments will be `rope_length / rope_particles` long.
+		</member>
+		<member name="simulate" type="bool" setter="set_simulate" getter="get_simulate"
+			default="true">
+		</member>
+		<member name="simulation_rate" type="float" setter="set_simulation_rate"
+			getter="get_simulation_rate" default="60.0">
 			Framerate to run the simulation at in FPS.
-        </member>
-		<member name="stiffness_iterations" type="int">
-			When performing stiffness calculations, the number of passes through the rope to run per frame.
-			Higher values will improve stiffness stability.
-        </member>
-		<member name="stiffness" type="float">
+		</member>
+		<member name="start_anchor" type="NodePath" setter="set_start_anchor"
+			getter="get_start_anchor" default="NodePath(&quot;.&quot;)">
+			NodePath to a node to anchor the start of the rope to. The origin of the rope will follow this node. Can point to self.
+		</member>
+		<member name="stiffness" type="float" setter="set_stiffness" getter="get_stiffness"
+			default="0.9">
 			Stiffness factor. Controls stretchyness of rope.
 			Should be around [0.8 - 1.2] for a realistic rope.
 			Higher values may lead to instability in the simulation.
-        </member>
-		<member name="friction" type="float">
-			At 0.0 the rope will slide off surfaces. At 1.0 the rope will stick to surfaces.
-        </member>
-		<member name="preprocess_time" type="float">
-			Virtual time to calculate into the future before first render.
-			This will run [code]preprocess_time * simulation_rate[/code] frames as fast as possible.
-        </member>
-
-		<member name="wind" type="Vector3">
+		</member>
+		<member name="stiffness_iterations" type="int" setter="set_stiffness_iterations"
+			getter="get_stiffness_iterations" default="2">
+			When performing stiffness calculations, the number of passes through the rope to run per frame.
+			Higher values will improve stiffness stability.
+		</member>
+		<member name="wind" type="Vector3" setter="set_wind" getter="get_wind"
+			default="Vector3(1, 0, 0)">
 			Wind direction.
 		</member>
-		<member name="wind_scale" type="float">
-			Scale factor to apply to the wind vector when applying it to the rope simulation.
-		</member>
-		<member name="wind_noise" type="FastNoiseLite">
+		<member name="wind_noise" type="FastNoiseLite" setter="set_wind_noise"
+			getter="get_wind_noise">
 			Wind noise.
 		</member>
-
-		<member name="gravity" type="Vector3">
-			Gravity vector to apply to the rope simulation. Default is (0, -9.8, 0).
+		<member name="wind_scale" type="float" setter="set_wind_scale" getter="get_wind_scale"
+			default="20.0">
+			Scale factor to apply to the wind vector when applying it to the rope simulation.
 		</member>
-		<member name="damping" type="float">
-			Velocity damping factor to apply to the rope simulation. 0 is undamped, 100 is heavily damped.
-		</member>
-
 	</members>
+	<constants>
+		<constant name="Start" value="0" enum="From">
+		</constant>
+		<constant name="End" value="1" enum="From">
+		</constant>
+	</constants>
 </class>
