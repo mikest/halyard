@@ -332,6 +332,7 @@ void Rope::_rebuild_rope() {
 	}
 
 	// grow
+	int insert_idx = 0;
 	while (_particles.size() < particle_count) {
 		Vector3 position = previous_pos + (direction * segment_length);
 		Particle particle;
@@ -345,7 +346,7 @@ void Rope::_rebuild_rope() {
 		previous_pos = position;
 
 		if (_grow_from == Start)
-			_particles.insert(0, particle);
+			_particles.insert(insert_idx++, particle);
 		else
 			_particles.push_back(particle);
 	}

@@ -3,6 +3,8 @@
 [ext_resource type="Script" uid="uid://ccqeo0jjod5r0" path="res://addons/halyard/scripts/distributed_anchors.gd" id="1_iqonh"]
 
 [sub_resource type="RopeAnchorsBase" id="RopeAnchorsBase_u3alf"]
+resource_local_to_scene = false
+resource_name = ""
 script = ExtResource("1_iqonh")
 include_start = true
 metadata/_custom_type_script = "uid://ccqeo0jjod5r0"

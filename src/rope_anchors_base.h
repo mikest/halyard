@@ -14,7 +14,6 @@
 #include <godot_cpp/variant/variant.hpp>
 
 using namespace godot;
-
 class RopeAnchorsBase : public Resource {
 	GDCLASS(RopeAnchorsBase, Resource)
 

@@ -19,9 +19,11 @@ void initialize_gdextension_types(ModuleInitializationLevel p_level) {
 		return;
 	}
 	GDREGISTER_CLASS(Rope);
-	GDREGISTER_CLASS(RopeAnchorsBase);
+
+	GDREGISTER_VIRTUAL_CLASS(RopeAnchorsBase);
+	GDREGISTER_VIRTUAL_CLASS(RopeAttachmentsBase);
+
 	GDREGISTER_CLASS(RopeAnchorPositions);
-	GDREGISTER_CLASS(RopeAttachmentsBase);
 	GDREGISTER_CLASS(RopeAttachmentPositions);
 	GDREGISTER_CLASS(RopeAppearance);
 }

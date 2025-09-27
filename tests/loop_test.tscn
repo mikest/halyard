@@ -1,0 +1,29 @@
+[gd_scene load_steps=3 format=3 uid="uid://cdaegd7eyvro7"]
+
+[sub_resource type="RopeAnchorPositions" id="RopeAnchorPositions_itvwi"]
+position_count = 2
+position_0/position = 0.1
+position_0/node = NodePath("Marker3D")
+position_1/position = 0.9
+position_1/node = NodePath("Marker3D2")
+
+[sub_resource type="RopeAppearance" id="RopeAppearance_pcr4g"]
+rope_width = 0.125
+particles_per_meter = 6.0
+
+[node name="LoopTest" type="Node3D"]
+
+[node name="Rope" type="Rope" parent="."]
+rope_length = 2.0
+end_anchor = NodePath(".")
+anchors = SubResource("RopeAnchorPositions_itvwi")
+appearance = SubResource("RopeAppearance_pcr4g")
+stiffness_iterations = 5
+stiffness = 1.5
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.010849498, 0.22432345, 0)
+
+[node name="Marker3D" type="Marker3D" parent="Rope"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.12081373, -0.32995406, 0)
+
+[node name="Marker3D2" type="Marker3D" parent="Rope"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.06283578, -0.32995406, 0)
