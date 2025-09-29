@@ -254,7 +254,7 @@
 			default="0.9">
 			Stiffness factor. Controls stretchyness of rope.
 			Should be around [0.8 - 1.2] for a realistic rope.
-			Higher values may lead to instability in the simulation.
+			Higher values may lead to instability in the simulation. Increasing stiffness_iterations may restabilize.
 		</member>
 		<member name="stiffness_iterations" type="int" setter="set_stiffness_iterations"
 			getter="get_stiffness_iterations" default="2">

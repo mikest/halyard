@@ -3,16 +3,22 @@
 [ext_resource type="Script" uid="uid://ccqeo0jjod5r0" path="res://addons/halyard/scripts/distributed_anchors.gd" id="1_mcmdf"]
 
 [sub_resource type="RopeAnchorsBase" id="RopeAnchorsBase_1jhvu"]
+resource_local_to_scene = false
+resource_name = ""
 script = ExtResource("1_mcmdf")
 include_start = true
 metadata/_custom_type_script = "uid://ccqeo0jjod5r0"
 
 [sub_resource type="RopeAnchorsBase" id="RopeAnchorsBase_peyb8"]
+resource_local_to_scene = false
+resource_name = ""
 script = ExtResource("1_mcmdf")
 include_start = true
 metadata/_custom_type_script = "uid://ccqeo0jjod5r0"
 
 [sub_resource type="RopeAnchorsBase" id="RopeAnchorsBase_oly0m"]
+resource_local_to_scene = false
+resource_name = ""
 script = ExtResource("1_mcmdf")
 include_start = true
 metadata/_custom_type_script = "uid://ccqeo0jjod5r0"
@@ -24,11 +30,15 @@ rope_lod = 4
 albedo_color = Color(1, 0, 0, 1)
 
 [sub_resource type="RopeAnchorsBase" id="RopeAnchorsBase_7f8vo"]
+resource_local_to_scene = false
+resource_name = ""
 script = ExtResource("1_mcmdf")
 include_start = true
 metadata/_custom_type_script = "uid://ccqeo0jjod5r0"
 
 [sub_resource type="RopeAnchorsBase" id="RopeAnchorsBase_vt1j4"]
+resource_local_to_scene = false
+resource_name = ""
 script = ExtResource("1_mcmdf")
 include_start = true
 metadata/_custom_type_script = "uid://ccqeo0jjod5r0"
@@ -41,6 +51,8 @@ particles_per_meter = 4.0
 albedo_color = Color(0, 0.75, 1, 1)
 
 [sub_resource type="RopeAnchorsBase" id="RopeAnchorsBase_4d12w"]
+resource_local_to_scene = false
+resource_name = ""
 script = ExtResource("1_mcmdf")
 include_start = true
 metadata/_custom_type_script = "uid://ccqeo0jjod5r0"

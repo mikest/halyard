@@ -1,14 +1,16 @@
-[gd_scene load_steps=6 format=3 uid="uid://8r23wy3n04eu"]
+[gd_scene load_steps=7 format=3 uid="uid://8r23wy3n04eu"]
 
 [ext_resource type="Script" uid="uid://dl6y1t3o1yx0o" path="res://addons/halyard/scripts/pull_rope.gd" id="2_56k4y"]
 
 [sub_resource type="RopeAppearance" id="RopeAppearance_5q3c7"]
 particles_per_meter = 8.0
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_5q3c7"]
-
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5q3c7"]
 albedo_color = Color(0.4, 0.41672796, 0.75686276, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_5q3c7"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_4fimv"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_56k4y"]
 albedo_color = Color(0.75686276, 0.4, 0.4836397, 1)
@@ -20,8 +22,8 @@ rope_length = 3.0
 end_anchor = NodePath("../RigidBody3D/Marker3D")
 appearance = SubResource("RopeAppearance_5q3c7")
 stiffness = 1.0
-collision_layer = 0
-collision_mask = 0
+collision_mask = 16
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 0)
 script = ExtResource("2_56k4y")
 pull_on = NodePath("../RigidBody3D")
 force_stiffness = 2.0
@@ -30,25 +32,12 @@ metadata/_custom_type_script = "uid://dl6y1t3o1yx0o"
 [node name="Anchor" type="Marker3D" parent="PullRope"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.8065012, -1.0421216, 1.1630392)
 
-[node name="RigidBody3D" type="RigidBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6.27233, 0)
-linear_damp = 1.0
-angular_damp = 1.0
-
-[node name="CSGBox3D" type="CSGBox3D" parent="RigidBody3D"]
-
-[node name="Marker3D" type="Marker3D" parent="RigidBody3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.5, 0.5)
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="RigidBody3D"]
-shape = SubResource("BoxShape3D_5q3c7")
-
 [node name="PullRope2" type="Rope" parent="." node_paths=PackedStringArray("pull_on")]
 rope_length = 3.0
 end_anchor = NodePath("../RigidBody3D/Marker3D")
 appearance = SubResource("RopeAppearance_5q3c7")
 stiffness = 1.0
-collision_layer = 0
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 0)
 material_override = SubResource("StandardMaterial3D_5q3c7")
 script = ExtResource("2_56k4y")
 pull_on = NodePath("../RigidBody3D")
@@ -59,37 +48,52 @@ metadata/_custom_type_script = "uid://dl6y1t3o1yx0o"
 [node name="Anchor" type="Marker3D" parent="PullRope2"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6589301, -0.8506646, -2.1791496)
 
+[node name="RigidBody3D" type="RigidBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6.27233, 0)
+linear_damp = 1.0
+angular_damp = 1.0
+
+[node name="CSGBox3D" type="CSGBox3D" parent="RigidBody3D"]
+
+[node name="Marker3D" type="Marker3D" parent="RigidBody3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.6, 0.6, 0.6)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RigidBody3D"]
+shape = SubResource("BoxShape3D_5q3c7")
+
 [node name="PullRope3" type="Rope" parent="." node_paths=PackedStringArray("pull_on")]
-rope_length = 3.0
+rope_length = 2.5
 end_anchor = NodePath("../RigidBody3D2/Marker3D")
 appearance = SubResource("RopeAppearance_5q3c7")
-stiffness = 1.0
+stiffness_iterations = 10
+stiffness = 0.88
 collision_layer = 0
+apply_wind = true
+wind_noise = SubResource("FastNoiseLite_4fimv")
+apply_damping = false
 material_override = SubResource("StandardMaterial3D_56k4y")
 script = ExtResource("2_56k4y")
 pull_on = NodePath("../RigidBody3D2")
-force_stiffness = 2.0
-force_limit_mass_scale = 50.0
 metadata/_custom_type_script = "uid://dl6y1t3o1yx0o"
 
 [node name="Anchor" type="Marker3D" parent="PullRope3"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5173962, 1.3833404, -0.8770902)
 
 [node name="RigidBody3D2" type="RigidBody3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.99999994, 0, 0, 0, 0.99999994, -2.7849505, -2.5503683, 4.8961296)
+transform = Transform3D(1, 0, 0, 0, 0.99999994, 0, 0, 0, 0.99999994, -0.4659276, -2.5503683, 11.024939)
 linear_damp = 1.0
 angular_damp = 1.0
 
 [node name="CSGBox3D" type="CSGBox3D" parent="RigidBody3D2"]
 
 [node name="Marker3D" type="Marker3D" parent="RigidBody3D2"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.5, 0.5)
+transform = Transform3D(1, 0, 0, 0, 0.9999999, 0, 0, 0, 0.9999999, 0.6, 0.6, 0.6)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="RigidBody3D2"]
 shape = SubResource("BoxShape3D_5q3c7")
 
 [node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.84504724, 0.5346916, 0, -0.5346916, 0.84504724, 0, 0, 7.904585)
+transform = Transform3D(0.9102, -0.22145271, 0.34999242, 0, 0.8450473, 0.53469163, -0.41416907, -0.4866763, 0.76916206, 3.7631125, 0, 6.3949885)
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 0.4408167, 0.89759713, 0, -0.89759713, 0.4408167, 0, 0, 6.9154296)

@@ -17,7 +17,7 @@ link_mesh = ExtResource("1_gn44e")
 [node name="CoilTest" type="Node3D"]
 
 [node name="CoiledRope" type="Rope" parent="."]
-rope_length = 10.0
+rope_length = 29.925
 end_anchor = NodePath("../ChainHole")
 anchors = SubResource("RopeAnchorPositions_3qe50")
 appearance = SubResource("RopeAppearance_xlb8c")
@@ -31,7 +31,7 @@ clockwise = true
 radius = 0.1
 turns_per_layer = 6.0
 offset_turns = 0.063
-coiled = 0.805
+coiled = 0.947
 metadata/_custom_type_script = "uid://dnnxtqukra31q"
 
 [node name="Drum" type="Marker3D" parent="."]

@@ -1,5 +1,7 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<class name="RopeAppearance" inherits="Resource" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<?xml version="1.0" encoding="UTF-8"?>
+<class name="RopeAppearance" inherits="Resource"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
 		A resource for describing the appearance of a Rope.
 	</brief_description>
@@ -9,20 +11,24 @@
 	<tutorials>
 	</tutorials>
 	<members>
-		<member name="attachments" type="RopeAttachmentsBase" setter="set_attachments" getter="get_attachments">
+		<member name="attachments" type="RopeAttachmentsBase" setter="set_attachments"
+			getter="get_attachments">
 		</member>
-		<member name="end_attachment" type="NodePath" setter="set_end_attachment" getter="get_end_attachment" default="NodePath(&quot;&quot;)">
+		<member name="end_attachment" type="NodePath" setter="set_end_attachment"
+			getter="get_end_attachment" default="NodePath(&quot;&quot;)">
 			NodePath to a node to attach to the end of the rope. The node will be aligned to the rope's end frame.
 		</member>
-		<member name="end_offset" type="float" setter="set_end_offset" getter="get_end_offset" default="0.0">
-			Offset along the rope to attach the end node to. In meters.
+		<member name="end_offset" type="float" setter="set_end_offset" getter="get_end_offset"
+			default="0.0">
+			Offset along the rope to attach the end node to. Distance along tangent, in local attachments scale, not the rope scale. Offset is independent of rope width.
 		</member>
 		<member name="link_mesh" type="ArrayMesh" setter="set_link_mesh" getter="get_link_mesh">
 		</member>
 		<member name="material" type="Material" setter="set_material" getter="get_material">
 			The material to use when rendering the rope. If null, the default material will be used.
 		</member>
-		<member name="particles_per_meter" type="float" setter="set_particles_per_meter" getter="get_particles_per_meter" default="2.0">
+		<member name="particles_per_meter" type="float" setter="set_particles_per_meter"
+			getter="get_particles_per_meter" default="2.0">
 			Number of particles per meter of rope. The smallest number of particles you can have is 2.
 		</member>
 		<member name="rope_lod" type="int" setter="set_rope_lod" getter="get_rope_lod" default="2">
@@ -30,20 +36,25 @@
 A catmull spline will be used to interpolate along the rope, increasing curvature.
 Switch to wireframe view to see impact of this setting on polygon count.
 		</member>
-		<member name="rope_sides" type="int" setter="set_rope_sides" getter="get_rope_sides" default="-1">
+		<member name="rope_sides" type="int" setter="set_rope_sides" getter="get_rope_sides"
+			default="-1">
 			Number of sides to render the rope with. Minimum is 3. If less than 3 the rope sides will be based on the rope_width.
 		</member>
-		<member name="rope_twist" type="float" setter="set_rope_twist" getter="get_rope_twist" default="1.0">
+		<member name="rope_twist" type="float" setter="set_rope_twist" getter="get_rope_twist"
+			default="1.0">
 			The rate at which the V parameter of the UV texture space repeats along the rope.
 		</member>
-		<member name="rope_width" type="float" setter="set_rope_width" getter="get_rope_width" default="0.25">
+		<member name="rope_width" type="float" setter="set_rope_width" getter="get_rope_width"
+			default="0.25">
 			Diameter of the rope. The rope caps will be scaled by this value as well.
 		</member>
-		<member name="start_attachment" type="NodePath" setter="set_start_attachment" getter="get_start_attachment" default="NodePath(&quot;&quot;)">
+		<member name="start_attachment" type="NodePath" setter="set_start_attachment"
+			getter="get_start_attachment" default="NodePath(&quot;&quot;)">
 			NodePath to a node to attach tp the start of the rope. The node will be aligned to the rope's start frame.
 		</member>
-		<member name="start_offset" type="float" setter="set_start_offset" getter="get_start_offset" default="0.0">
-			Offset along the rope to attach the start node to. In meters.
+		<member name="start_offset" type="float" setter="set_start_offset" getter="get_start_offset"
+			default="0.0">
+			Offset along the rope to attach the start node to. Distance along tangent, in local attachments scale, not the rope scale. Offset is independent of rope width.
 		</member>
 	</members>
 </class>

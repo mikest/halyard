@@ -70,6 +70,10 @@ class Rope : public GeometryInstance3D {
 	float _stiffness = 0.9;
 	float _friction = 0.5;
 
+	// initial simulation
+	int _preprocess_time = 1.0;
+	bool _jitter_initial_position = true;
+
 	int _collision_layer = 1;
 	int _collision_mask = 1;
 
@@ -90,9 +94,6 @@ class Rope : public GeometryInstance3D {
 
 	bool _apply_damping = true;
 	float _damping_factor = 100.0;
-
-	// initial simulation
-	int _preprocess_time = 1.0;
 
 protected:
 	static void _bind_methods();
@@ -131,7 +132,7 @@ protected:
 
 	void _update_physics(float delta, int iterations);
 	void _apply_chain_constraint(int from_idx);
-	void _stiff_rope();
+	void _stiff_rope(int interations);
 	void _verlet_process(float delta);
 	void _apply_forces();
 	void _apply_constraints();
@@ -157,6 +158,7 @@ public:
 	};
 
 	Rope();
+	Rope(const Rope &other);
 	virtual ~Rope() override;
 
 	void _internal_ready();
@@ -245,6 +247,10 @@ public:
 	PROPERTY_GET_SET(float, stiffness, {})
 	PROPERTY_GET_SET(float, friction, {})
 
+	// initial simulation
+	PROPERTY_GET_SET(float, preprocess_time, {})
+	PROPERTY_GET_SET(bool, jitter_initial_position, {})
+
 	int get_collision_layer() const;
 	void set_collision_layer(int layer);
 	int get_collision_mask() const;
@@ -262,9 +268,6 @@ public:
 
 	PROPERTY_GET_SET(bool, apply_damping, {})
 	PROPERTY_GET_SET(float, damping_factor, {})
-
-	// initial simulation
-	PROPERTY_GET_SET(float, preprocess_time, {})
 };
 
 VARIANT_ENUM_CAST(Rope::From);

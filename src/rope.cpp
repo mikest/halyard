@@ -12,6 +12,9 @@
 #include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
+// dump initial conditions for debugging stretch grow directions.
+#define DEBUG_INITIAL_POS false
+
 // Basis indexes
 const int X = 0;
 const int Y = 1;
@@ -24,6 +27,9 @@ Rope::Rope() {
 	auto ps = PhysicsServer3D::get_singleton();
 	_physics_body = ps->body_create();
 	ps->body_set_mode(_physics_body, PhysicsServer3D::BODY_MODE_STATIC);
+}
+
+Rope::Rope(const Rope &other) {
 }
 
 Rope::~Rope() {
@@ -84,6 +90,7 @@ void Rope::_bind_methods() {
 
 	EXPORT_PROPERTY(Variant::FLOAT, rope_length, Rope);
 	EXPORT_PROPERTY_ENUM(grow_from, "Start,End", Rope);
+	EXPORT_PROPERTY(Variant::BOOL, jitter_initial_position, Rope);
 
 	EXPORT_PROPERTY(Variant::NODE_PATH, start_anchor, Rope);
 	EXPORT_PROPERTY(Variant::NODE_PATH, end_anchor, Rope);
@@ -101,7 +108,7 @@ void Rope::_bind_methods() {
 	EXPORT_PROPERTY(Variant::FLOAT, preprocess_time, Rope);
 	EXPORT_PROPERTY(Variant::FLOAT, simulation_rate, Rope);
 	EXPORT_PROPERTY_RANGED(Variant::INT, stiffness_iterations, Rope, "1,50,1,hide_slider");
-	EXPORT_PROPERTY(Variant::FLOAT, stiffness, Rope);
+	EXPORT_PROPERTY_RANGED(Variant::FLOAT, stiffness, Rope, "0.01,1.99,0.01");
 	EXPORT_PROPERTY_RANGED(Variant::FLOAT, friction, Rope, "0.0,1.0,0.01");
 
 	ClassDB::bind_method(D_METHOD("set_collision_layer", "collision_layer"), &Rope::set_collision_layer);
@@ -287,6 +294,13 @@ void Rope::_rebuild_instances() {
 	}
 }
 
+Vector3 _small_offset(float d) {
+	float x = rand() % 2 ? -1.0 : 1.0;
+	float y = rand() % 2 ? -1.0 : 1.0;
+	float z = rand() % 2 ? -1.0 : 1.0;
+	return Vector3(x * d, y * d, z * d);
+}
+
 void Rope::_rebuild_rope() {
 	// free previous shapes
 	_clear_physics_shapes();
@@ -296,19 +310,18 @@ void Rope::_rebuild_rope() {
 	auto global_position = get_global_position();
 	const int previous_count = _particles.size();
 	int particle_count = get_particle_count_for_length();
-	auto segment_length = get_rope_length() / particle_count;
 
 	// calculate our direction and previous position based upon
 	// the end we're expanding from
 	Vector3 direction = _gravity.normalized();
-	Vector3 previous_pos = global_position;
+	Vector3 current_pos = global_position;
 	if (previous_count >= 2) {
 		if (_grow_from == Start) {
-			previous_pos = _particles[0].pos_cur;
-			direction = (_particles[1].pos_cur - previous_pos).normalized();
+			current_pos = _particles[0].pos_cur;
+			direction = current_pos.direction_to(_particles[1].pos_cur);
 		} else {
-			previous_pos = _particles[previous_count - 1].pos_cur;
-			direction = (_particles[previous_count - 2].pos_cur - previous_pos).normalized();
+			current_pos = _particles[previous_count - 1].pos_cur;
+			direction = current_pos.direction_to(_particles[previous_count - 2].pos_cur);
 		}
 	} else {
 		Vector3 start = global_position;
@@ -325,31 +338,46 @@ void Rope::_rebuild_rope() {
 			if (_get_node_transform(_end_anchor, xform))
 				start = xform.origin;
 		}
-		previous_pos = start;
+		current_pos = start;
 		direction = (end - start).normalized();
 		if (direction.length() == 0)
 			direction = _gravity.normalized();
 	}
 
 	// grow
+	auto segment_length = _rope_length / (particle_count - 1);
 	int insert_idx = 0;
 	while (_particles.size() < particle_count) {
-		Vector3 position = previous_pos + (direction * segment_length);
 		Particle particle;
-		particle.pos_prev = position;
-		particle.pos_cur = position;
-		particle.accel = _gravity * _gravity_scale;
+		// NOTE: this flag generates a small initial offset to the calculated previous position
+		// so the simulation isn't "perfectly aligned" which can cause problems growing the rope
+		// in a direction perfectly aligned with the gravity vector.
+		//
+		// If the row grows too slowly "stacking" can still occur as the stiffness will stablize it.
+		Vector3 jitter_prev = (_jitter_initial_position ? _small_offset(segment_length / 10.0) : Vector3());
+		Vector3 jitter_cur = (_jitter_initial_position ? _small_offset(segment_length / 10.0) : Vector3());
+		particle.pos_prev = current_pos + jitter_prev;
+		particle.pos_cur = current_pos + jitter_cur;
 		particle.attached = false;
 
 		// for next particle
-		direction = (position - previous_pos).normalized();
-		previous_pos = position;
+		auto jitter_dir = (direction + (_jitter_initial_position ? _small_offset(0.1) : Vector3())).normalized();
+		current_pos = current_pos + (direction * segment_length);
 
 		if (_grow_from == Start)
 			_particles.insert(insert_idx++, particle);
 		else
 			_particles.push_back(particle);
+
+		_stiff_rope(1);
 	}
+
+#if DEBUG_INITIAL_POS
+	print_line("Rebuild Rope:");
+	for (auto &p : _particles) {
+		print_line(p.pos_cur);
+	}
+#endif
 
 	// shrink
 	if (particle_count > 0) {
@@ -692,6 +720,7 @@ Ref<RopeAnchorsBase> Rope::get_anchors() const {
 #pragma region Frame Calculations
 
 float Rope::_get_average_segment_length() const {
+	// segment count is N-1 particle count
 	return get_rope_length() / float(_particles.size() - 1);
 }
 
@@ -744,27 +773,29 @@ Pair<Vector3, Vector3> Rope::_catmull_interpolate(const Vector3 &p0, const Vecto
 }
 
 void Rope::_compute_particle_normals() {
-	auto origin = get_global_position();
+	if (_particles.size()) {
+		auto origin = get_global_position();
 
-	auto start = _particles[0];
-	start.T = (_particles[1].pos_cur - start.pos_cur).normalized();
-	start.N = (start.pos_cur - origin).normalized();
-	start.B = start.N.cross(start.T).normalized();
-	_particles[0] = start;
+		auto start = _particles[0];
+		start.T = (_particles[1].pos_cur - start.pos_cur).normalized();
+		start.N = (start.pos_cur - origin).normalized();
+		start.B = start.N.cross(start.T).normalized();
+		_particles[0] = start;
 
-	auto end_index = _particles.size() - 1;
-	auto end = _particles[end_index];
-	end.T = (end.pos_cur - _particles[end_index - 1].pos_cur).normalized();
-	end.N = (end.pos_cur - origin).normalized();
-	end.B = end.N.cross(end.T).normalized();
-	_particles[end_index] = end;
+		auto end_index = _particles.size() - 1;
+		auto end = _particles[end_index];
+		end.T = (end.pos_cur - _particles[end_index - 1].pos_cur).normalized();
+		end.N = (end.pos_cur - origin).normalized();
+		end.B = end.N.cross(end.T).normalized();
+		_particles[end_index] = end;
 
-	for (int i = 1; i < _particles.size() - 1; i++) {
-		auto particle = _particles[i];
-		particle.T = (_particles[i + 1].pos_cur - _particles[i - 1].pos_cur).normalized();
-		particle.N = (particle.pos_cur - origin).normalized();
-		particle.B = particle.N.cross(particle.T).normalized();
-		_particles[i] = particle;
+		for (int i = 1; i < _particles.size() - 1; i++) {
+			auto particle = _particles[i];
+			particle.T = (_particles[i + 1].pos_cur - _particles[i - 1].pos_cur).normalized();
+			particle.N = (particle.pos_cur - origin).normalized();
+			particle.B = particle.N.cross(particle.T).normalized();
+			_particles[i] = particle;
+		}
 	}
 }
 
@@ -869,7 +900,8 @@ void Rope::_calculate_frames_for_particles(LocalVector<Transform3D> &frames) con
 	}
 
 	// clip the frames by the start and end offsets
-	auto start_offset = get_start_offset();
+	// offset is scaled by rope width so the offset position is independent of rope size
+	auto start_offset = get_start_offset() * get_rope_width();
 	Basis start_basis = frames[0].basis;
 	while (start_offset > 0.0 && frames.size() > 2) {
 		// distance to next frame
@@ -890,8 +922,8 @@ void Rope::_calculate_frames_for_particles(LocalVector<Transform3D> &frames) con
 		}
 	}
 
-	// clip the end offset by walking in reverse
-	auto end_offset = get_end_offset();
+	// clip the end offset by walking in reverse.
+	auto end_offset = get_end_offset() * get_rope_width();
 	Basis end_basis = frames[frames.size() - 1].basis;
 	while (end_offset > 0.0 && frames.size() > 2) {
 		// distance to next frame
@@ -1216,7 +1248,7 @@ void Rope::_update_physics(float delta, int iterations) {
 		_apply_constraints();
 		_verlet_process(delta);
 
-		_stiff_rope();
+		_stiff_rope(_stiffness_iterations);
 
 		// now that everything has moved, recalc link positions
 		_calculate_links_for_particles(_links);
@@ -1228,15 +1260,22 @@ void Rope::_prepare_physics_server() {
 	// no-op for now
 }
 
-void Rope::_stiff_rope() {
+void Rope::_stiff_rope(int iterations) {
 	// Calculate the maximum allowed rope length
-	const float max_length = get_rope_length() * 1.1f; // Allow 10% stretch, adjust as needed
+	const float max_segment_length = _get_average_segment_length();
+	const float stiffness = Math::clamp(_stiffness, 0.0f, 2.0f);
 
-	for (int j = 0; j < _stiffness_iterations; j++) {
+#if DEBUG_INITIAL_POS
+	static int _once = 10;
+	if (_once)
+		print_line("Initial _stiff_rope:");
+#endif
+
+	for (int j = 0; j < iterations; j++) {
 		// First, apply the usual constraints between particles
 		for (int i = 0; i < _particles.size() - 1; i++) {
-			Particle p0 = _particles[i];
-			Particle p1 = _particles[i + 1];
+			Particle &p0 = _particles[i];
+			Particle &p1 = _particles[i + 1];
 
 			// if both are attached skip
 			if (p0.attached && p1.attached) {
@@ -1244,28 +1283,36 @@ void Rope::_stiff_rope() {
 			}
 
 			const Vector3 segment = p1.pos_cur - p0.pos_cur;
-			const float segment_length = segment.length();
-			const float stretch = segment_length - _get_average_segment_length();
-			const float limit = segment_length / 2.0;
-			float scalar_stretch = Math::clamp(stretch * _stiffness, -limit, limit);
+			const Vector3 direction = segment.normalized();
+			const float length = segment.length();
+			float stretch = (length - max_segment_length);
 
-			Vector3 direction = segment.normalized();
+#if DEBUG_INITIAL_POS
+			if (_once) {
+				print_line(segment, direction, length, " stretch:", stretch, " adj:", stretch * stiffness);
+			}
+#endif
+
+			// prevent overshoot
+			stretch = Math::clamp(stretch * stiffness, -length, length);
 
 			// If either particle is attached, only move the other one
 			if (p0.attached) {
-				p1.pos_cur -= direction * scalar_stretch;
+				p1.pos_cur -= direction * stretch;
 			} else if (p1.attached) {
-				p0.pos_cur += direction * scalar_stretch;
+				p0.pos_cur += direction * stretch;
 			} else {
-				Vector3 half_stretch = direction * 0.5f * scalar_stretch;
+				const Vector3 half_stretch = direction * 0.5f * stretch;
 				p0.pos_cur += half_stretch;
 				p1.pos_cur -= half_stretch;
 			}
-
-			_particles[i] = p0;
-			_particles[i + 1] = p1;
 		}
 	}
+
+#if DEBUG_INITIAL_POS
+	if (_once)
+		_once--;
+#endif
 }
 
 void Rope::_verlet_process(float delta) {
@@ -1281,11 +1328,10 @@ void Rope::_verlet_process(float delta) {
 }
 
 void Rope::_apply_forces() {
-	Transform3D gx = get_global_transform();
 	for (Particle &p : _particles) {
 		Vector3 total_acceleration = Vector3(0, 0, 0);
 
-		// forces only on unattached
+		// forces act only on unattached
 		if (p.attached == false) {
 			if (_apply_gravity) {
 				total_acceleration += _gravity * _gravity_scale;
@@ -1296,6 +1342,7 @@ void Rope::_apply_forces() {
 				float wind_force = _wind_noise->get_noise_3d(timed_position.x, timed_position.y, timed_position.z);
 				total_acceleration += _wind_scale * _wind * wind_force;
 			}
+
 			if (_apply_damping) {
 				Vector3 velocity = p.pos_cur - p.pos_prev;
 				Vector3 drag = -_damping_factor * velocity.length() * velocity;

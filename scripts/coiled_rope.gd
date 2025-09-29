@@ -143,7 +143,8 @@ func _get_anchor_transform(idx: int) -> Transform3D:
 	# return the rotated coil position for this index
 	elif idx < _positions.size():
 		xform = Transform3D(Basis(), _positions[idx])
-		xform = xform.rotated(Vector3(1,0,0), (-_turns[coil_count-1] + offset_turns) * TAU * (-1 if clockwise else 1))
+		var turn_idx = clamp(coil_count-1, 0, _turns.size()-1)
+		xform = xform.rotated(Vector3(1,0,0), (-_turns[turn_idx] + offset_turns) * TAU * (-1 if clockwise else 1))
 		xform = start_xform * xform
 	return xform
 #endregion

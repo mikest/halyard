@@ -1,0 +1,87 @@
+[gd_scene load_steps=3 format=3 uid="uid://cdaegd7eyvro7"]
+
+[ext_resource type="Script" uid="uid://bcdcm8n1fxhb2" path="res://addons/halyard/tests/stiffness_test.gd" id="1_e1fi5"]
+
+[sub_resource type="RopeAppearance" id="RopeAppearance_pcr4g"]
+rope_width = 0.125
+rope_lod = 8
+particles_per_meter = 10.0
+
+[node name="StiffnessTest" type="Node3D"]
+
+[node name="Node3D" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1579379, 0)
+script = ExtResource("1_e1fi5")
+
+[node name="Rope" type="Rope" parent="Node3D"]
+rope_length = 2.0
+end_anchor = NodePath("Label3D")
+appearance = SubResource("RopeAppearance_pcr4g")
+stiffness = 1.0
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0)
+
+[node name="Label3D" type="Label3D" parent="Node3D/Rope"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 0)
+billboard = 1
+text = "Stiffness: 1.0
+Iterations: 2"
+vertical_alignment = 2
+
+[node name="Rope2" type="Rope" parent="Node3D"]
+rope_length = 2.0
+end_anchor = NodePath("Label3D")
+appearance = SubResource("RopeAppearance_pcr4g")
+stiffness_iterations = 10
+stiffness = 1.0
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1)
+
+[node name="Label3D" type="Label3D" parent="Node3D/Rope2"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 0)
+billboard = 1
+text = "Stiffness: 1.0
+Iterations: 10"
+vertical_alignment = 2
+
+[node name="Rope3" type="Rope" parent="Node3D"]
+rope_length = 2.0
+end_anchor = NodePath("Label3D")
+appearance = SubResource("RopeAppearance_pcr4g")
+stiffness_iterations = 10
+stiffness = 1.8
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 3)
+
+[node name="Label3D" type="Label3D" parent="Node3D/Rope3"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 0)
+billboard = 1
+text = "Stiffness: 1.8
+Iterations: 10"
+vertical_alignment = 2
+
+[node name="Rope4" type="Rope" parent="Node3D"]
+rope_length = 2.0
+end_anchor = NodePath("Label3D")
+appearance = SubResource("RopeAppearance_pcr4g")
+stiffness = 0.5
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, -1)
+
+[node name="Label3D" type="Label3D" parent="Node3D/Rope4"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 0)
+billboard = 1
+text = "Stiffness: 0.5
+Iterations: 2"
+vertical_alignment = 2
+
+[node name="Rope5" type="Rope" parent="Node3D"]
+rope_length = 2.0
+end_anchor = NodePath("Label3D")
+appearance = SubResource("RopeAppearance_pcr4g")
+stiffness_iterations = 5
+stiffness = 1.8
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 2)
+
+[node name="Label3D" type="Label3D" parent="Node3D/Rope5"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 0)
+billboard = 1
+text = "Stiffness: 1.8
+Iterations: 5"
+vertical_alignment = 2
