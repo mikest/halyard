@@ -187,8 +187,7 @@
 	</methods>
 	<members>
 		<member name="anchors" type="RopeAnchorsBase" setter="set_anchors" getter="get_anchors">
-			A RopePositions resource containing additional anchors to attach the rope to. All anchors will be aligned to the nearest frame, and so the positions
-			are dependent on the number of particles in the rope and the LOD.
+			A RopeAnchorsBase resource containing additional anchors to attach the rope to. All anchors will be aligned to the nearest frame, and so the positions are dependent on the number of particles in the rope and the LOD.
 		</member>
 		<member name="appearance" type="RopeAppearance" setter="set_appearance"
 			getter="get_appearance">
