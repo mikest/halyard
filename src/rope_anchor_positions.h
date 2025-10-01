@@ -39,13 +39,15 @@ public:
 	void set_spacing(Spacing val) { _set_spacing(val); }
 	Spacing get_spacing() const { return _get_spacing(); }
 
+	//GDVIRTUAL1RC(uint64_t, get_count, const Rope *);
 	virtual uint64_t get_count(const Rope *rope) const override;
 
 	// these return Scalar positions
 	void set_position(uint64_t idx, float val, const Rope *rope);
+	//GDVIRTUAL2RC(float, get_position, uint64_t, const Rope *);
 	virtual float get_position(uint64_t idx, const Rope *rope) const override;
 
-	GDVIRTUAL2RC(Transform3D, get_transform, uint64_t, const Rope *);
+	//GDVIRTUAL2RC(Transform3D, get_transform, uint64_t, const Rope *);
 	virtual Transform3D get_transform(uint64_t idx, const Rope *rope) const override;
 
 	// via RopePositions

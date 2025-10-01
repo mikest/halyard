@@ -10,17 +10,16 @@ void RopeAttachmentPositions::_bind_methods() {
 	EXPORT_PROPERTY(Variant::INT, position_count, RopeAttachmentPositions);
 
 	ClassDB::bind_method(D_METHOD("get_count", "rope"), &RopeAttachmentPositions::get_count);
+	// GDVIRTUAL_BIND(get_count, "rope");
 
 	// NOTE: the resource loader will use the _set_xxx calls on the RopePositions class, not these calls
 	ClassDB::bind_method(D_METHOD("set_position", "index", "position", "rope"), &RopeAttachmentPositions::set_position);
 	ClassDB::bind_method(D_METHOD("get_position", "index", "rope"), &RopeAttachmentPositions::get_position);
+	// GDVIRTUAL_BIND(get_position, "idx", "rope");
 
 	ClassDB::bind_method(D_METHOD("set_nodepath", "index", "node", "rope"), &RopeAttachmentPositions::set_nodepath);
 	ClassDB::bind_method(D_METHOD("get_nodepath", "index", "rope"), &RopeAttachmentPositions::get_nodepath);
-
-	GDVIRTUAL_BIND(get_count, "rope");
-	GDVIRTUAL_BIND(get_position, "idx", "rope");
-	GDVIRTUAL_BIND(get_nodepath, "idx", "rope");
+	// GDVIRTUAL_BIND(get_nodepath, "idx", "rope");
 }
 
 void RopeAttachmentPositions::_notify_changed() {
@@ -28,8 +27,16 @@ void RopeAttachmentPositions::_notify_changed() {
 }
 
 uint64_t RopeAttachmentPositions::get_count(const Rope *rope) const {
-	ERR_FAIL_NULL_V_MSG(rope, 0, "Missing rope");
-	return get_position_count();
+	uint64_t ret_val = 0;
+	ERR_FAIL_NULL_V_MSG(rope, ret_val, "Missing rope");
+
+	if (GDVIRTUAL_IS_OVERRIDDEN(get_count)) {
+		GDVIRTUAL_CALL(get_count, rope, ret_val);
+	} else if (rope) {
+		ret_val = get_position_count();
+	}
+
+	return ret_val;
 }
 
 void RopeAttachmentPositions::set_position(uint64_t idx, float val, const Rope *rope) {
@@ -38,8 +45,16 @@ void RopeAttachmentPositions::set_position(uint64_t idx, float val, const Rope *
 }
 
 float RopeAttachmentPositions::get_position(uint64_t idx, const Rope *rope) const {
-	ERR_FAIL_NULL_V_MSG(rope, -1.0, "Missing rope");
-	return _position_for_distance(_get_position(idx), rope->get_rope_length());
+	float ret_val = -1.0;
+	ERR_FAIL_NULL_V_MSG(rope, ret_val, "Missing rope");
+
+	if (GDVIRTUAL_IS_OVERRIDDEN(get_position)) {
+		GDVIRTUAL_CALL(get_position, idx, rope, ret_val);
+	} else if (rope) {
+		ret_val = _position_for_distance(_get_position(idx), rope->get_rope_length());
+	}
+
+	return ret_val;
 }
 
 void RopeAttachmentPositions::set_nodepath(uint64_t idx, const NodePath &val, const Rope *rope) {
@@ -48,6 +63,14 @@ void RopeAttachmentPositions::set_nodepath(uint64_t idx, const NodePath &val, co
 }
 
 NodePath RopeAttachmentPositions::get_nodepath(uint64_t idx, const Rope *rope) const {
-	ERR_FAIL_NULL_V_MSG(rope, NodePath(), "Missing rope");
-	return _get_nodepath(idx);
+	NodePath ret_val;
+	ERR_FAIL_NULL_V_MSG(rope, ret_val, "Missing rope");
+
+	if (GDVIRTUAL_IS_OVERRIDDEN(get_nodepath)) {
+		GDVIRTUAL_CALL(get_nodepath, idx, rope, ret_val);
+	} else if (rope) {
+		ret_val = _get_nodepath(idx);
+	}
+
+	return ret_val;
 }

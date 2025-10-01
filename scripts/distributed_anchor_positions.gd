@@ -1,12 +1,12 @@
 @tool
-extends RopeAttachmentsBase
-class_name DistributedAttachments
+extends RopeAnchorPositions
+class_name DistributedAnchorPositions
 
 @export var include_start: bool
 @export var include_end: bool
 
-func get_count(rope: Rope) -> int:
-	return rope.get_child_count()
+# func get_count(rope: Rope) -> int:
+	# return get_particle_positions()
 
 func get_position(idx: int, rope: Rope) -> float:
 	var count := get_count(rope)
@@ -23,10 +23,3 @@ func get_position(idx: int, rope: Rope) -> float:
 		return 1.0 / (count) * idx
 		
 	return 0.0
-
-func get_nodepath(idx: int, rope: Rope) -> NodePath:
-	if idx < rope.get_child_count():
-		var node := rope.get_child(idx)
-		if node:
-			return rope.get_path_to(node)
-	return ""

@@ -31,12 +31,10 @@ func _redraw(gizmo: EditorNode3DGizmo):
 	var rope: Rope = gizmo.get_node_3d()
 	if rope:
 		var anchors := rope.anchors
-		if anchors:
-			_draw_anchors(gizmo, rope, rope.start_anchor, rope.end_anchor, anchors, "anchor", false)
+		_draw_anchors(gizmo, rope, rope.start_anchor, rope.end_anchor, anchors, "anchor", false)
 		
 		var attach := rope.get_attachments()
-		if attach:
-			_draw_attachments(gizmo, rope, rope.get_start_attachment(), rope.get_end_attachment(), attach, "attach", true)
+		_draw_attachments(gizmo, rope, rope.get_start_attachment(), rope.get_end_attachment(), attach, "attach", true)
 
 func _draw_anchors(gizmo: EditorNode3DGizmo, rope: Rope, start_path: NodePath, end_path: NodePath, anchors: RopeAnchorsBase, style: StringName, flip: bool):
 	var lines = PackedVector3Array()
@@ -44,11 +42,13 @@ func _draw_anchors(gizmo: EditorNode3DGizmo, rope: Rope, start_path: NodePath, e
 	var start = PackedVector3Array()
 	var end = PackedVector3Array()
 	
-	var count := anchors.get_count(rope)
-	for idx in count:
-		var xform := anchors.get_transform(idx, rope)
-		_push_position(xform, rope, lines, handles, flip, idx)
-	
+	var count := 0
+	if anchors:
+		count = anchors.get_count(rope)
+		for idx in count:
+			var xform := anchors.get_transform(idx, rope)
+			_push_position(xform, rope, lines, handles, flip, idx)
+
 	_push_positions_for_node(start_path, rope, lines, start, flip, 0)
 	_push_positions_for_node(end_path, rope, lines, end, flip, count - 1)
 	
@@ -67,10 +67,12 @@ func _draw_attachments(gizmo: EditorNode3DGizmo, rope: Rope, start_path: NodePat
 	var start = PackedVector3Array()
 	var end = PackedVector3Array()
 	
-	var count := attachments.get_count(rope)
-	for idx in count:
-		var path := attachments.get_nodepath(idx, rope)
-		_push_positions_for_node(path, rope, lines, handles, flip, idx)
+	var count := 0
+	if attachments:
+		count = attachments.get_count(rope)
+		for idx in count:
+			var path := attachments.get_nodepath(idx, rope)
+			_push_positions_for_node(path, rope, lines, handles, flip, idx)
 	
 	_push_positions_for_node(start_path, rope, lines, start, flip, 0)
 	_push_positions_for_node(end_path, rope, lines, end, flip, count - 1)
