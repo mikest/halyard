@@ -29,7 +29,7 @@ float RopeAttachmentsBase::get_position(uint64_t idx, const Rope *rope) const {
 
 NodePath RopeAttachmentsBase::get_nodepath(uint64_t idx, const Rope *rope) const {
 	if (!GDVIRTUAL_IS_OVERRIDDEN(get_nodepath)) {
-		ERR_FAIL_V_MSG(Transform3D(), "get_nodepath must be overriden");
+		ERR_FAIL_V_MSG(NodePath(), "get_nodepath must be overriden");
 	} else {
 		NodePath ret_val;
 		GDVIRTUAL_CALL(get_nodepath, idx, rope, ret_val);
