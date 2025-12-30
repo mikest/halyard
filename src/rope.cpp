@@ -180,7 +180,7 @@ void Rope::_notification(int p_what) {
 		} break;
 
 		case NOTIFICATION_VISIBILITY_CHANGED: {
-			// _update_pickable();
+			_set_instances_visible(visible);
 		} break;
 
 			// case NOTIFICATION_DISABLED: {
@@ -258,6 +258,15 @@ void Rope::_internal_physics_process(double delta) {
 	_simulation_delta = 0.0;
 }
 
+void Rope::_set_instances_visible(bool p_visible) {
+	auto rs = RenderingServer::get_singleton();
+	ERR_FAIL_NULL_MSG(rs, "RenderingServer missing");
+
+	for (auto &rid : _instances) {
+		rs->instance_set_visible(rid, p_visible);
+	}
+}
+
 void Rope::_clear_instances() {
 	auto rs = RenderingServer::get_singleton();
 	ERR_FAIL_NULL_MSG(rs, "RenderingServer missing");
@@ -287,6 +296,8 @@ void Rope::_rebuild_instances() {
 					RID instance = rs->instance_create2(mesh->get_rid(), scenario);
 					if (instance.is_valid()) {
 						_instances.push_back(instance);
+						rs->instance_attach_object_instance_id(instance, get_instance_id());
+						rs->instance_set_visible(instance, is_visible_in_tree());
 					}
 				}
 			}

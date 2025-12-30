@@ -146,6 +146,7 @@ protected:
 	void _draw_rope();
 	void _queue_redraw();
 	bool _pop_is_dirty();
+	void _set_instances_visible(bool p_visible);
 	void _clear_instances();
 	void _rebuild_instances();
 
