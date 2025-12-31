@@ -1197,6 +1197,13 @@ void Rope::_draw_rope() {
 	if (_particles.size() == 0)
 		return;
 
+	// Bail early if there are no particles in rope.
+	// This can happen if we get a draw call before the Rope is ready
+	if (_particles.size() == 0) {
+		WARN_PRINT("Skipping drawing, particle count is zero.");
+		return;
+	}
+
 	// recompute normal, tangents, and binormals
 	_compute_particle_normals();
 
