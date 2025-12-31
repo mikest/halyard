@@ -2,12 +2,16 @@
 #include "rope_anchors_base.h"
 #include "rope_appearance.h"
 #include "rope_attachments_base.h"
+#include <godot_cpp/classes/camera3d.hpp>
+#include <godot_cpp/classes/editor_interface.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/physics_direct_space_state3d.hpp>
 #include <godot_cpp/classes/physics_ray_query_parameters3d.hpp>
 #include <godot_cpp/classes/physics_server3d.hpp>
 #include <godot_cpp/classes/rendering_server.hpp>
 #include <godot_cpp/classes/sphere_shape3d.hpp>
+#include <godot_cpp/classes/sub_viewport.hpp>
+#include <godot_cpp/classes/viewport.hpp>
 #include <godot_cpp/classes/world3d.hpp>
 #include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -1106,8 +1110,88 @@ void Rope::_align_attachment_node(const NodePath &path, Transform3D xform, float
 	}
 }
 
+void Rope::_update_aabb() {
+	AABB aabb;
+	// need at least one particle to compute bounds
+	if (_particles.size() == 0) {
+		aabb = AABB();
+		return;
+	}
+
+	// compute aabb from particle positions (local space)
+	Vector3 pos_cur = to_local(_particles[0].pos_cur);
+	Vector3 aabb_min = pos_cur;
+	Vector3 aabb_max = pos_cur;
+	for (int i = 1; i < _particles.size(); i++) {
+		pos_cur = to_local(_particles[i].pos_cur);
+		aabb_min = aabb_min.min(pos_cur);
+		aabb_max = aabb_max.max(pos_cur);
+	}
+
+	// expand by rope radius
+	float r = get_rope_width() * 0.5f;
+	aabb_min -= Vector3(r, r, r);
+	aabb_max += Vector3(r, r, r);
+
+	aabb.position = aabb_min;
+	aabb.size = aabb_max - aabb_min;
+
+	// update mesh and visual instance
+	_generated_mesh->set_custom_aabb(aabb);
+	set_custom_aabb(aabb);
+}
+
+float Rope::_lod_factor() const {
+	// Compute the distance from the main camera to the rope's surface.
+	// Build an AABB from particle world positions, expand by rope radius,
+	// then measure the shortest distance from the camera to the AABB surface.
+	float lod_factor = 1.0f;
+
+	// need at least one particle to compute bounds
+	if (_particles.size() == 0)
+		return lod_factor;
+
+	// find camera
+	Camera3D *cam = nullptr;
+	if (Engine::get_singleton()->is_editor_hint()) {
+		EditorInterface *interface = EditorInterface::get_singleton();
+		SubViewport *viewport = interface->get_editor_viewport_3d(0);
+		if (viewport)
+			cam = viewport->get_camera_3d();
+
+	} else {
+		Viewport *viewport = get_viewport();
+		if (viewport)
+			cam = viewport->get_camera_3d();
+	}
+	if (!cam)
+		return lod_factor;
+
+	// if camera is orthogonal just return a small constant
+	if (cam->get_projection() == Camera3D::PROJECTION_ORTHOGONAL)
+		return 1.0f;
+
+	float multiplier = cam->get_camera_projection().get_lod_multiplier();
+	Vector3 camera_position = cam->get_global_position();
+
+	// compute aabb from particle positions (world space)
+	AABB aabb = get_custom_aabb();
+	Vector3 aabb_min = to_global(aabb.position);
+	Vector3 aabb_max = to_global(aabb.position + aabb.size);
+
+	// use the rope width as model size basis so that the length of rope doesn't affect LOD
+	Vector3 surface_distance = Vector3(0.0, 0.0, 0.0).max(aabb_min - camera_position).max(camera_position - aabb_max);
+	float surf_distance = surface_distance.length() * multiplier;
+	float model_size = get_rope_width();
+
+	// this 32 is a fudge factor based on taste, i'd like it to be based on something more concrete...
+	lod_factor = 1.0 / surf_distance * model_size * get_lod_bias() * 16.0;
+	return lod_factor;
+}
+
 void Rope::_draw_rope() {
 	_generated_mesh->clear_surfaces();
+	_update_aabb();
 
 	// nothing to draw
 	if (_particles.size() == 0)
@@ -1121,12 +1205,15 @@ void Rope::_draw_rope() {
 
 	// Need at least two frames to draw a rope
 	if (_frames.size() >= 2) {
+		auto diameter = get_rope_width();
+		const auto radius = diameter * 0.5;
+
 		// tube parameters. set the number of sides based on rope width
 		// A 0.1 thickness rope will have 6 sides
 		// A 1.0 thickness rope will have 12 sides
-		auto diameter = get_rope_width();
-		const auto radius = diameter * 0.5;
-		int sides = get_rope_sides();
+		float lod_factor = _lod_factor(); // calucate the lod scaling factor
+		int min_sides = MIN(get_rope_sides(), 6); // min LOD sizing to 6 sides
+		int sides = CLAMP(get_rope_sides() * lod_factor, min_sides, get_rope_sides());
 
 		// emit geometry
 		const int last_frame = _frames.size() - 1;

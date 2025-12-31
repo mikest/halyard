@@ -1,0 +1,44 @@
+[gd_scene load_steps=7 format=3 uid="uid://5x0v0fpy5m4g"]
+
+[ext_resource type="Texture2D" uid="uid://cacfut71tgp5v" path="res://addons/halyard/assets/four-ply-rope.png" id="1_ise2c"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ooc0l"]
+albedo_texture = ExtResource("1_ise2c")
+
+[sub_resource type="RopeAppearance" id="RopeAppearance_cwtjs"]
+rope_lod = 1
+material = SubResource("StandardMaterial3D_ooc0l")
+
+[sub_resource type="RopeAppearance" id="RopeAppearance_ise2c"]
+rope_sides = 64
+rope_lod = 1
+material = SubResource("StandardMaterial3D_ooc0l")
+
+[sub_resource type="RopeAppearance" id="RopeAppearance_ooc0l"]
+rope_sides = 3
+rope_lod = 1
+material = SubResource("StandardMaterial3D_ooc0l")
+
+[sub_resource type="BoxOccluder3D" id="BoxOccluder3D_cwtjs"]
+size = Vector3(9, 10.906478, 1)
+
+[node name="Node3D" type="Node3D"]
+
+[node name="Rope_Default" type="Rope" parent="."]
+appearance = SubResource("RopeAppearance_cwtjs")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.1664596, 0, 0.07818252)
+custom_aabb = AABB(-0.125, -4.1721106, -0.125, 0.2525884, 4.2971106, 0.25293303)
+
+[node name="Rope_MaxSides" type="Rope" parent="."]
+appearance = SubResource("RopeAppearance_ise2c")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.1664596, 0, 0.81526095)
+custom_aabb = AABB(-0.125, -4.1721067, -0.125, 0.25417614, 4.2971067, 0.2540015)
+
+[node name="Rope_MinSides" type="Rope" parent="."]
+appearance = SubResource("RopeAppearance_ooc0l")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.1664596, 0, -0.87713116)
+custom_aabb = AABB(-0.125, -4.1721063, -0.125, 0.25608885, 4.2971063, 0.25236237)
+
+[node name="OccluderInstance3D" type="OccluderInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.70252705, -1.4621964, 4.374258)
+occluder = SubResource("BoxOccluder3D_cwtjs")

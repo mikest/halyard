@@ -143,6 +143,8 @@ protected:
 	void _prepare_physics_server();
 
 	// Mesh building
+	void _update_aabb();
+	float _lod_factor() const;
 	void _draw_rope();
 	void _queue_redraw();
 	bool _pop_is_dirty();

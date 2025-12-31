@@ -44,6 +44,7 @@ include_start = true
 metadata/_custom_type_script = "uid://ccqeo0jjod5r0"
 
 [sub_resource type="RopeAppearance" id="RopeAppearance_1jhvu"]
+rope_sides = 64
 rope_lod = 4
 particles_per_meter = 4.0
 
