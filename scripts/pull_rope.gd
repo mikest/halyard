@@ -27,36 +27,36 @@ class_name PullRope
 #region Runtime
 func _ready() -> void:
 	if Engine.is_editor_hint(): return
-	pass
+	
+	# Bug: the transforms at the _end_ of the rope are messed up for LOD>1
+	# so we force it here
+	if appearance:
+		appearance.rope_lod = 1
+
 
 ## This rope will pull on its end_anchor if the end anchor is a RigidBody3D
 func _physics_process(_delta: float) -> void:
 	var current := get_current_rope_length()
 	var stretch := current - rope_length
 	
-	# the attachment will be aligned along the rope Tangent, so we'll use that to se the force direction
+	# the last link transform will be aligned along the rope Tangent, so we'll use that to se the force direction
 	if (stretch > stretch_pull_threshold) and pull_on and end_anchor:
-		# use a node as the pull poisition.
-		var pull_point := Vector3(0, 0, 0)
-		var pull_node: Node3D = get_node_or_null(end_anchor)
-		if pull_node:
-			pull_point = pull_node.global_position - pull_on.global_position
 		
-		# cap the pull force at a multiple of the body mass to keep from wildly oscillating if the stretch is too large
-		var force := pow(stretch, force_stiffness) * pull_on.mass * force_strength
-		var force_limit := pull_on.mass * force_limit_mass_scale
-		force = clampf(force, -force_limit, force_limit)
+		var link_count := get_link_count()
+		if link_count >= 4:
+			# Bug: Use count - 2 link position as the last link xform is messed up from the catmul interpolation
+			var end: Transform3D = global_transform * get_link(link_count-2)
 		
-		# pull on the origin, not the center of mass so that we can have objects swinging from a joint.
-		var count := get_rope_frame_count()
-		var xform: Transform3D = get_rope_frame(count - 1)
-		xform = global_transform * xform
+			# use a node as the pull poisition.
+			var pull_point := end.origin - pull_on.global_position
+			var dir := -end.basis.y
 		
-		var force_vector := -xform.basis.y.normalized() * force
-		
-		#DebugDraw3D.draw_ray(pull_on.global_position + pull_point, force_vector.normalized(), 25.0)
-		#DebugDraw3D.draw_text(global_position + Vector3.UP, str(stretch))
-		
-		pull_on.apply_force(force_vector, pull_point)
+			# cap the pull force at a multiple of the body mass to keep from wildly oscillating if the stretch is too large
+			var force := pow(stretch, force_stiffness) * pull_on.mass * force_strength
+			var force_limit := pull_on.mass * force_limit_mass_scale
+			force = clampf(force, -force_limit, force_limit)
+
+			var force_vector := dir * force
+			pull_on.apply_force(force_vector, pull_point)
 	pass
 #endregion
