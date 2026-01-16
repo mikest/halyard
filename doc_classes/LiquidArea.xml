@@ -29,7 +29,7 @@
         </method>
 
         <method name="update_transforms_for_points" qualifiers="virtual const">
-            <return />
+             <return type="void" />
             <param index="0" name="global_points" type="PackedVector3Array" />
             <param index="1" name="transforms" type="Array[Transform3D]" />
             <description>
