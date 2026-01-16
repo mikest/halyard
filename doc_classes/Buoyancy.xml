@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<class name="Buoyancy" inherits="Node"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+    <brief_description>
+        Adds buoyancy simulation for a single collider interacting with a LiquidArea.
+    </brief_description>
+    <description>
+        Manages buoyancy interactions between a collider (ConvexPolygonShape3D recommended) and a single LiquidArea in the scene. Can calculate submerged volume and centroids, optionally apply forces to a parent RigidBody3D, and update mass properties from collider geometry.
+    </description>
+    <tutorials>
+    </tutorials>
+    <methods>
+        <method name="set_liquid_area">
+            <return />
+            <param index="0" name="liquid_area" type="LiquidArea" />
+            <description>
+                Assign the LiquidArea node to sample liquid transforms from.
+            </description>
+        </method>
+        <method name="get_liquid_area" qualifiers="const">
+            <return type="LiquidArea" />
+            <description></description>
+        </method>
+
+        <method name="set_collider">
+            <return />
+            <param index="0" name="collider" type="CollisionShape3D" />
+            <description></description>
+        </method>
+        <method name="get_collider" qualifiers="const">
+            <return type="CollisionShape3D" />
+            <description></description>
+        </method>
+
+        <method name="set_apply_forces">
+            <return />
+            <param index="0" name="apply_forces" type="bool" />
+            <description>
+                If true, buoyancy forces will be applied to the parent RigidBody3D during physics.
+            </description>
+        </method>
+        <method name="get_apply_forces" qualifiers="const">
+            <return type="bool" />
+            <description></description>
+        </method>
+
+        <method name="set_ignore_waves">
+            <return />
+            <param index="0" name="ignore_waves" type="bool" />
+            <description>
+                When true, a flat plane at the LiquidArea origin is used (faster). Otherwise the
+                liquid surface transform is sampled per vertex.
+            </description>
+        </method>
+        <method name="get_ignore_waves" qualifiers="const">
+            <return type="bool" />
+            <description></description>
+        </method>
+
+        <method name="set_submerged_linear_drag">
+            <return />
+            <param index="0" name="submerged_linear_drag" type="float" />
+            <description></description>
+        </method>
+        <method name="get_submerged_linear_drag" qualifiers="const">
+            <return type="float" />
+            <description></description>
+        </method>
+
+        <method name="set_submerged_angular_drag">
+            <return />
+            <param index="0" name="submerged_angular_drag" type="float" />
+            <description></description>
+        </method>
+        <method name="get_submerged_angular_drag" qualifiers="const">
+            <return type="float" />
+            <description></description>
+        </method>
+
+        <method name="set_linear_drag_scale">
+            <return />
+            <param index="0" name="linear_drag_scale" type="Vector3" />
+            <description></description>
+        </method>
+        <method name="get_linear_drag_scale" qualifiers="const">
+            <return type="Vector3" />
+            <description></description>
+        </method>
+
+        <method name="set_angular_drag_scale">
+            <return />
+            <param index="0" name="angular_drag_scale" type="Vector3" />
+            <description></description>
+        </method>
+        <method name="get_angular_drag_scale" qualifiers="const">
+            <return type="Vector3" />
+            <description></description>
+        </method>
+
+        <method name="set_calculate_mass_properties">
+            <return />
+            <param index="0" name="calculate_mass_properties" type="bool" />
+            <description>
+                When true, mass, center of mass and inertia will be calculated from the collider mesh and applied to the parent RigidBody3D.
+            </description>
+        </method>
+        <method name="get_calculate_mass_properties" qualifiers="const">
+            <return type="bool" />
+            <description></description>
+        </method>
+
+        <method name="set_density">
+            <return />
+            <param index="0" name="density" type="float" />
+            <description>
+                Material density used when calculating mass from computed volume (kg/m^3).
+            </description>
+        </method>
+        <method name="get_density" qualifiers="const">
+            <return type="float" />
+            <description></description>
+        </method>
+
+        <method name="set_com_offset">
+            <return />
+            <param index="0" name="com_offset" type="Vector3" />
+            <description></description>
+        </method>
+        <method name="get_com_offset" qualifiers="const">
+            <return type="Vector3" />
+            <description></description>
+        </method>
+
+        <method name="get_volume" qualifiers="const">
+            <return type="float" />
+            <description>
+                Returns the total mesh volume calculated from the collider's debug mesh.
+            </description>
+        </method>
+
+        <method name="get_centroid" qualifiers="const">
+            <return type="Vector3" />
+            <description></description>
+        </method>
+
+        <method name="get_submerged_volume" qualifiers="const">
+            <return type="float" />
+            <description></description>
+        </method>
+
+        <method name="get_submerged_centroid" qualifiers="const">
+            <return type="Vector3" />
+            <description></description>
+        </method>
+
+        <method name="get_buoyancy_normal" qualifiers="const">
+            <return type="Vector3" />
+            <description></description>
+        </method>
+
+        <method name="apply_buoyancy_forces">
+            <return />
+            <param index="0" name="body" type="RigidBody3D" />
+            <param index="1" name="delta" type="float" />
+            <description>
+                Apply buoyant, drag and current forces to the provided body. Typically called automatically during physics when [code]apply_forces[/code] is enabled.
+            </description>
+        </method>
+
+        <method name="get_mass" qualifiers="const">
+            <return type="float" />
+            <description></description>
+        </method>
+        <method name="get_center_of_mass" qualifiers="const">
+            <return type="Vector3" />
+            <description></description>
+        </method>
+        <method name="get_inertia" qualifiers="const">
+            <return type="Vector3" />
+            <description></description>
+        </method>
+
+        <method name="_get_buoyancy_time" qualifiers="const">
+            <return type="float" />
+            <description>
+                Internal metric: time in microseconds spent computing buoyancy in the last physics step.
+            </description>
+        </method>
+    </methods>
+    <members>
+        <member name="liquid_area" type="LiquidArea" setter="set_liquid_area"
+            getter="get_liquid_area">
+            Node reference to the LiquidArea to sample from.
+        </member>
+        <member name="collider" type="CollisionShape3D" setter="set_collider" getter="get_collider">
+            The collider shape to compute submerged volume from (ConvexPolygonShape3D recommended).
+        </member>
+        <member name="apply_forces" type="bool" setter="set_apply_forces" getter="get_apply_forces"
+            default="true">
+            When true, forces are applied to the parent RigidBody3D.
+        </member>
+        <member name="ignore_waves" type="bool" setter="set_ignore_waves" getter="get_ignore_waves"
+            default="false">
+            Use a flat liquid plane at the LiquidArea origin instead of sampling surface transforms.
+        </member>
+        <member name="submerged_linear_drag" type="float" setter="set_submerged_linear_drag"
+            getter="get_submerged_linear_drag" default="1.0">
+        </member>
+        <member name="submerged_angular_drag" type="float" setter="set_submerged_angular_drag"
+            getter="get_submerged_angular_drag" default="1.0">
+        </member>
+        <member name="linear_drag_scale" type="Vector3" setter="set_linear_drag_scale"
+            getter="get_linear_drag_scale" default="Vector3(1,1,1)">
+        </member>
+        <member name="angular_drag_scale" type="Vector3" setter="set_angular_drag_scale"
+            getter="get_angular_drag_scale" default="Vector3(1,1,1)">
+        </member>
+        <member name="calculate_mass_properties" type="bool" setter="set_calculate_mass_properties"
+            getter="get_calculate_mass_properties" default="false">
+            When enabled, updates mass, center of mass and inertia on the parent body from the collider mesh and [code]density[/code].
+        </member>
+        <member name="density" type="float" setter="set_density" getter="get_density"
+            default="500.0">
+            Material density used when calculating mass from the computed volume (kg/m^3).
+        </member>
+        <member name="com_offset" type="Vector3" setter="set_com_offset" getter="get_com_offset">
+            Center-of-mass offset applied when [code]calculate_mass_properties[/code] is enabled.
+        </member>
+        <member name="volume" type="float" getter="get_volume" default="0.0">
+            Read-only: the calculated mesh volume.
+        </member>
+        <member name="centroid" type="Vector3" getter="get_centroid">
+            Read-only: the mesh centroid in world space.
+        </member>
+        <member name="body_mass" type="float" getter="get_mass">
+            Read-only: current mass reported by the parent RigidBody3D.
+        </member>
+        <member name="body_center_of_mass" type="Vector3" getter="get_center_of_mass">
+            Read-only: parent RigidBody3D center of mass.
+        </member>
+        <member name="body_inertia" type="Vector3" getter="get_inertia">
+            Read-only: parent RigidBody3D inertia.
+        </member>
+    </members>
+</class>
