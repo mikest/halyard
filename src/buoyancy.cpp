@@ -74,6 +74,8 @@ void Buoyancy::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_center_of_mass"), &Buoyancy::get_center_of_mass);
 	ClassDB::bind_method(D_METHOD("get_inertia"), &Buoyancy::get_inertia);
 
+	ClassDB::bind_method(D_METHOD("_get_buoyancy_time"), &Buoyancy::_get_buoyancy_time);
+
 	// Function calls
 	ClassDB::bind_method(D_METHOD("apply_buoyancy_forces"), &Buoyancy::apply_buoyancy_forces);
 
@@ -136,9 +138,9 @@ PackedStringArray Buoyancy::_get_configuration_warnings() const {
 		}
 	}
 
-	if (!_liquid_area) {
-		what.append("Missing LiquidArea. First LiquidArea in the scene tree will be used,\n or liquid level will be Vector3.ZERO");
-	}
+	// if (!_liquid_area) {
+	// 	what.append("Missing LiquidArea. First LiquidArea in the scene tree will be used,\n or liquid level will be Vector3.ZERO");
+	// }
 
 	return what;
 }
@@ -171,13 +173,17 @@ void Buoyancy::_notification(int p_what) {
 					}
 				}
 			}
-		}
+		} break;
+
+		case NOTIFICATION_EXIT_TREE: {
+		 	_liquid_area = nullptr;
+		} break;
 
 		case NOTIFICATION_INTERNAL_PROCESS:{
 			if (_dirty && is_node_ready()) {
 				_update_statics();
 			}
-		}
+		} break;
 
 		case NOTIFICATION_PHYSICS_PROCESS: {
 			if (!Engine::get_singleton()->is_editor_hint() && is_node_ready()) {
@@ -196,6 +202,7 @@ void Buoyancy::_notification(int p_what) {
 					}
 
 					uint64_t elapsed = Time::get_singleton()->get_ticks_usec() - time;
+					_buoyancy_time = elapsed;
 					// UtilityFunctions::print("Buoyancy physics process time (usec): ", elapsed);
 				}
 			}
@@ -340,6 +347,10 @@ Vector3 Buoyancy::get_inertia() const {
 	return body ? body->get_inertia() : Vector3(0, 0, 0);
 }
 
+float Buoyancy::_get_buoyancy_time() const {
+	return _buoyancy_time;
+}
+
 
 void Buoyancy::_update_statics() {
 	if(!_collider){
@@ -347,8 +358,8 @@ void Buoyancy::_update_statics() {
 	}
 
 	Ref<Shape3D> shape = _collider->get_shape();
-	if (shape.is_valid() && Object::cast_to<ConvexPolygonShape3D>(*shape)) {
-		_buoyancy_mesh = Object::cast_to<ConvexPolygonShape3D>(*shape)->get_debug_mesh();
+	if (shape.is_valid()) {
+		_buoyancy_mesh = shape->get_debug_mesh();
 	}
 
 	if (_buoyancy_mesh.is_valid() && _buoyancy_mesh->get_surface_count()) {
@@ -617,14 +628,21 @@ void Buoyancy::apply_buoyancy_forces(RigidBody3D *body, float delta) {
 		// Underwater drag. We must get the current state directly from the Physics server.
 		Vector3 linear_drag = one - _submerged_linear_drag * _linear_drag_scale * delta * ratio;
 		Vector3 linear_velocity = PhysicsServer3D::get_singleton()->body_get_state(body->get_rid(), PhysicsServer3D::BODY_STATE_LINEAR_VELOCITY);
+		// Vector3 linear_velocity = body->get_linear_velocity();
+		
 		Vector3 local_vel = basis.xform_inv(linear_velocity);
-		local_vel *= linear_drag;
-		body->set_linear_velocity(basis.xform(local_vel));
+		Vector3 global_vel = basis.xform(local_vel * linear_drag);
+
+		//PhysicsServer3D::get_singleton()->body_set_state(body->get_rid(), PhysicsServer3D::BODY_STATE_LINEAR_VELOCITY, global_vel);
+		body->set_linear_velocity(global_vel);
 
 		Vector3 angular_drag = one - _submerged_angular_drag * _angular_drag_scale * delta * ratio;
 		Vector3 angular_velocity = PhysicsServer3D::get_singleton()->body_get_state(body->get_rid(), PhysicsServer3D::BODY_STATE_ANGULAR_VELOCITY);
+		// Vector3 angular_velocity = body->get_angular_velocity();
 		Vector3 local_ang = basis.xform_inv(angular_velocity);
-		local_ang *= angular_drag;
-		body->set_angular_velocity(basis.xform(local_ang));
+		Vector3 global_ang = basis.xform(local_ang * angular_drag);
+
+		//PhysicsServer3D::get_singleton()->body_set_state(body->get_rid(), PhysicsServer3D::BODY_STATE_ANGULAR_VELOCITY, global_ang);
+		body->set_angular_velocity(global_ang);
 	}
 }

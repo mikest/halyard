@@ -3,7 +3,7 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://goc6jks5bb05"
+uid="uid://y8jcv0kuhkbm"
 path="res://.godot/imported/rope-endcap-rope-loop.blend-5e0b733032969bf23fae464eb21fd06b.scn"
 
 [deps]
@@ -56,4 +56,4 @@ blender/materials/export_materials=1
 blender/animation/limit_playback=true
 blender/animation/always_sample=true
 blender/animation/group_tracks=true
-gltf/naming_version=0
+gltf/naming_version=2

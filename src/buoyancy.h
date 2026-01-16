@@ -63,6 +63,7 @@ private:
 	Vector3 _mesh_centroid = Vector3(0, 0, 0);
 	float _mesh_volume = 0.0f;
 	float _sign = -1.0f;
+	float _buoyancy_time = 0.0;
 
 	// statics need updating
 	bool _dirty = true;
@@ -152,6 +153,8 @@ public:
 	float get_mass() const;
 	Vector3 get_center_of_mass() const;
 	Vector3 get_inertia() const;
+
+	float _get_buoyancy_time() const;
 
 private:
 	void _update_statics();
