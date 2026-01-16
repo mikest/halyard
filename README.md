@@ -1,5 +1,5 @@
 
-# Halyard: A Fast Verlet Rope Library
+# Halyard: A Fast Verlet Rope and Volume Buoyancy Library
 
 A high-performance, cross-platform rope simulation library using the Verlet integration method. For when you need rope, and you need it quickly.
 
@@ -7,6 +7,7 @@ A high-performance, cross-platform rope simulation library using the Verlet inte
 
 ## Features
 
+### Rope
 - Fast rope physics using Verlet integration.
 - Supports arbitrary rope attachment points and anchors for complex rigging.
 - Configurable rope length, stiffness, and segment count.
@@ -27,6 +28,11 @@ A high-performance, cross-platform rope simulation library using the Verlet inte
 The attachment system can used to create complicated rigging arrangements like cargo nets, spider webs and ratlines.
 The anchors can be used to create the illusion of pulleys.
 
+### Buoyancy
+- Support for custom liquid heightmap sampling
+- Axis-independent drag.
+- Mesh waterline volume estimation.
+- Auto-calculation of mass properties.
 
 ## Installation
 
