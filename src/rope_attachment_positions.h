@@ -40,14 +40,14 @@ public:
 	Spacing get_spacing() const { return _get_spacing(); }
 
 	//GDVIRTUAL1RC(uint64_t, get_count, const Rope *);
-	virtual uint64_t get_count(const Rope *rope) const;
+	virtual uint64_t get_count(const Rope *rope) const override;
 
 	// these return Scalar positions
 	void set_position(uint64_t idx, float val, const Rope *rope);
 	//GDVIRTUAL2RC(float, get_position, uint64_t, const Rope *);
-	virtual float get_position(uint64_t idx, const Rope *rope) const;
+	virtual float get_position(uint64_t idx, const Rope *rope) const override;
 
 	//GDVIRTUAL2RC(NodePath, set_nodepath, uint64_t, const Rope *);
 	void set_nodepath(uint64_t idx, const NodePath &val, const Rope *rope);
-	virtual NodePath get_nodepath(uint64_t idx, const Rope *rope) const;
+	virtual NodePath get_nodepath(uint64_t idx, const Rope *rope) const override;
 };
