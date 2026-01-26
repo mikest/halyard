@@ -7,6 +7,10 @@ Rope = "./icons/Rope.svg"
 RopePositions = "./icons/RopePositions.svg"
 RopeAppearance = "./icons/RopeAppearance.svg"
 
+Buoyancy = "./icons/Buoyancy.svg"
+CharacterBuoyancy = "./icons/CharacterBuoyancy.svg"
+
+
 [libraries]
 ; Relative paths ensure that our GDExtension can be placed anywhere in the project directory.
 macos.single.debug = "bin/macos/libHalyard.macos.template_debug.dylib"
