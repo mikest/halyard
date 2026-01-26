@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<class name="CharacterBuoyancy" inherits="Node"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+    <brief_description>
+        Provides lightweight buoyancy support for characters using probe points or a LiquidArea.
+    </brief_description>
+    <description>
+        [CharacterBuoyancy] computes simple buoyant forces for a character by sampling a set of probe points (local-space) by querying the [LiquidArea] in the scene. If one is not specified it may auto-assign the first LiquidArea found in the tree.
+
+        It updates the parent [CharacterBody3D] velocity when [member apply_forces] is enabled and exposes properties to tune buoyancy strength, mass, drag and gravity. You can also disable force application and apply them manually with apply_buoyancy_velocity(). While the probes are sampled at their global position against the liquid surface, the resulting buoyant velocity is applied to the character body as a whole, each probe contributing a fraction to the final force only if it is submerged.
+
+        It is recommended to update the probes with points from your character skeleton to balance out the buoyant forces.
+
+        Velocity is applied in the internal physics process to ensure they are calculated before the main physics step. If you need to customize the probe positions used to sample the liquid surface before physics processing, disable automatic application of forces and call apply_buoyancy_velocity() manually after updating the probes.
+        
+        The component also reports how many probes are submerged as a [member submerged_ratio] and emits a [signal submerged_changed] signal when the submerged state changes.
+    </description>
+    <tutorials>
+    </tutorials>
+
+    <methods>
+        <method name="apply_buoyancy_velocity">
+            <return type="void" />
+            <param index="0" name="delta" type="float" />
+            <description>Apply buoyancy velocity updates to the parent [CharacterBody3D] for the given physics [code]delta[/code].</description>
+        </method>
+
+        <method name="set_liquid_area">
+            <return type="void" />
+            <param index="0" name="liquid_area" type="LiquidArea" />
+            <description>Set the [LiquidArea] node to sample for liquid transforms. If omitted the first LiquidArea in the scene may be auto-assigned.</description>
+        </method>
+
+        <method name="get_liquid_area" qualifiers="const">
+            <return type="LiquidArea" />
+            <description>Returns the assigned [LiquidArea] node, or [code]null[/code] if none is set.</description>
+        </method>
+
+        <method name="set_probes">
+            <return type="void" />
+            <param index="0" name="local_probes" type="PackedVector3Array" />
+            <description>Set local-space probe positions used to sample the liquid surface. If empty a fallback probe is derived from the parent character model.</description>
+        </method>
+
+        <method name="get_probes" qualifiers="const">
+            <return type="PackedVector3Array" />
+            <description>Returns the configured local probe positions.</description>
+        </method>
+
+        <method name="set_apply_forces">
+            <return type="void" />
+            <param index="0" name="enabled" type="bool" />
+            <description>Enable or disable applying buoyancy forces to the parent body.</description>
+        </method>
+
+        <method name="get_apply_forces" qualifiers="const">
+            <return type="bool" />
+            <description>Returns whether forces are applied to the parent body.</description>
+        </method>
+
+        <method name="set_buoyancy">
+            <return type="void" />
+            <param index="0" name="buoyancy" type="float" />
+            <description>Overall buoyancy multiplier applied per probe.</description>
+        </method>
+
+        <method name="get_buoyancy" qualifiers="const">
+            <return type="float" />
+            <description>Returns the current buoyancy multiplier applied per probe.</description>
+        </method>
+
+        <method name="set_mass">
+            <return type="void" />
+            <param index="0" name="mass" type="float" />
+            <description>Mass used when converting buoyant force into velocity change.</description>
+        </method>
+
+        <method name="get_mass" qualifiers="const">
+            <return type="float" />
+            <description>Returns the mass value used when converting buoyant force into velocity change.</description>
+        </method>
+
+        <method name="set_wave_influence">
+            <return type="void" />
+            <param index="0" name="influence" type="float" />
+            <description>Blend factor for wave influence when sampling ocean waves. (Reserved, currently informational.)</description>
+        </method>
+
+        <method name="get_wave_influence" qualifiers="const">
+            <return type="float" />
+            <description>Returns the blend factor for wave influence when sampling ocean or wave transforms.</description>
+        </method>
+
+        <method name="set_submerged_linear_drag">
+            <return type="void" />
+            <param index="0" name="drag" type="float" />
+            <description>Linear damping applied to velocity while submerged (per probe proportion).</description>
+        </method>
+
+        <method name="get_submerged_linear_drag" qualifiers="const">
+            <return type="float" />
+            <description>Returns the linear damping applied to the body's velocity while submerged.</description>
+        </method>
+
+        <method name="set_gravity">
+            <return type="void" />
+            <param index="0" name="gravity" type="Vector3" />
+            <description>Gravity vector used when calculating buoyant force direction and magnitude.</description>
+        </method>
+
+        <method name="get_gravity" qualifiers="const">
+            <return type="Vector3" />
+            <description>Returns the gravity vector used when calculating buoyant force direction and magnitude.</description>
+        </method>
+
+        <method name="get_buoyancy_time" qualifiers="const">
+            <return type="int" />
+            <description>Microseconds spent computing buoyancy in the most recent physics step.</description>
+        </method>
+
+        <method name="get_submerged" qualifiers="const">
+            <return type="bool" />
+            <description>True if at least one probe was submerged in the last physics update.</description>
+        </method>
+
+        <method name="set_submerged_ratio">
+            <return type="void" />
+            <param index="0" name="ratio" type="float" />
+            <description>Set the submerged probe ratio (0..1). Normally updated automatically by the component.</description>
+        </method>
+
+        <method name="get_submerged_ratio" qualifiers="const">
+            <return type="float" />
+            <description>Fraction of configured probes that were submerged in the last physics step (0..1).</description>
+        </method>
+    </methods>
+
+    <members>
+        <member name="liquid_area" type="LiquidArea" setter="set_liquid_area" getter="get_liquid_area">
+            Node reference to the LiquidArea to sample surface transforms from. If not set the first LiquidArea in the scene may be used.
+        </member>
+
+        <member name="probes" type="PackedVector3Array" setter="set_probes" getter="get_probes">
+            Local-space probe positions used to sample the liquid surface. If empty a fallback probe is computed from the character model.
+        </member>
+
+        <member name="apply_forces" type="bool" setter="set_apply_forces" getter="get_apply_forces" default="true">
+            When true the computed buoyancy velocity is applied to the parent [CharacterBody3D].
+        </member>
+
+        <member name="mass" type="float" setter="set_mass" getter="get_mass" default="1.0">
+            Mass value used when converting buoyant force into velocity change.
+        </member>
+
+        <member name="buoyancy" type="float" setter="set_buoyancy" getter="get_buoyancy" default="1.0">
+            Multiplier applied to the computed buoyant force per probe.
+        </member>
+
+        <member name="wave_influence" type="float" setter="set_wave_influence" getter="get_wave_influence" default="1.0">
+            Factor blending wave influence when sampling ocean transforms. Present for tuning and compatibility with ocean sampling.
+        </member>
+
+        <member name="submerged_linear_drag" type="float" setter="set_submerged_linear_drag" getter="get_submerged_linear_drag" default="0.5">
+            Linear damping applied to velocity while submerged.
+        </member>
+
+        <member name="gravity" type="Vector3" setter="set_gravity" getter="get_gravity">
+            Gravity vector used for buoyant force direction (default: Vector3(0,-9.81,0)).
+        </member>
+
+        <member name="submerged_ratio" type="float" setter="set_submerged_ratio" getter="get_submerged_ratio" default="0.0">
+            Read/write: fraction of probes submerged. Updated automatically each physics step.
+        </member>
+
+        <member name="submerged" type="bool" getter="get_submerged" default="false">
+            Read-only: true when at least one probe was submerged.
+        </member>
+
+        <member name="buoyancy_time" type="int" getter="get_buoyancy_time">
+            Read-only: microseconds spent computing buoyancy in the last physics step.
+        </member>
+    </members>
+</class>

@@ -155,7 +155,7 @@ void Buoyancy::_notification(int p_what) {
 			}
 			_set_dirty();
 			set_process_internal(true);
-			set_physics_process(true);
+			set_physics_process_internal(true);
 		} break;
 
 		case NOTIFICATION_ENTER_TREE: {
@@ -185,7 +185,7 @@ void Buoyancy::_notification(int p_what) {
 			}
 		} break;
 
-		case NOTIFICATION_PHYSICS_PROCESS: {
+		case NOTIFICATION_INTERNAL_PHYSICS_PROCESS: {
 			if (!Engine::get_singleton()->is_editor_hint() && is_node_ready()) {
 				RigidBody3D *body = Object::cast_to<RigidBody3D>(get_parent());
 				if (body && !body->is_freeze_enabled()) {

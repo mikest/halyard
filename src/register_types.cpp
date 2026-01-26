@@ -12,6 +12,7 @@
 #include "rope_attachment_positions.h"
 #include "rope_attachments_base.h"
 #include "buoyancy.h"
+#include "character_buoyancy.h"
 #include "liquid_area.h"
 
 using namespace godot;
@@ -28,6 +29,7 @@ void initialize_gdextension_types(ModuleInitializationLevel p_level) {
 	GDREGISTER_CLASS(RopeAnchorPositions);
 	GDREGISTER_CLASS(RopeAttachmentPositions);
 	GDREGISTER_CLASS(RopeAppearance);
+	GDREGISTER_CLASS(CharacterBuoyancy);
 	GDREGISTER_CLASS(Buoyancy);
 	GDREGISTER_CLASS(LiquidArea);
 }
