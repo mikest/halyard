@@ -89,7 +89,7 @@ public:
 	~Buoyancy() override;
 
 	// overrides
-	PackedStringArray _get_configuration_warnings() const;
+	PackedStringArray _get_configuration_warnings() const override;
 
 	// Property getters/setters
     void set_liquid_area(LiquidArea *p_area);
