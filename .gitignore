@@ -48,6 +48,7 @@ compile_commands.json
 
 # Other stuff
 *.log
+*.TMP
 
 # VSCode
 .vscode/*
