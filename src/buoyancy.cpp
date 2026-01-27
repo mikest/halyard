@@ -46,20 +46,26 @@ PackedStringArray Buoyancy::_get_configuration_warnings() const {
 		what.append("Buoyancy must be a child of a RigidBody3D for forces to be applied.");
 	}
 	
-	if (!_collider) {
-		what.append("Missing collider.");
-	} else {
-		Ref<Shape3D> shape = _collider->get_shape();
-		if (!shape.is_valid()) {
-			what.append("Missing collider shape.");
-		}else{
-			ConvexPolygonShape3D *convex_shape = Object::cast_to<ConvexPolygonShape3D>(*shape);
-			BoxShape3D *box_shape = Object::cast_to<BoxShape3D>(*shape);
-			SphereShape3D *sphere_shape = Object::cast_to<SphereShape3D>(*shape);
-			CapsuleShape3D *capsule_shape = Object::cast_to<CapsuleShape3D>(*shape);
-			if (!convex_shape && !box_shape && !sphere_shape && !capsule_shape) {
-				what.append("Collider shape must be a ConvexPolygonShape3D, BoxShape3D, SphereShape3D, or CapsuleShape3D. Other shapes are not supported.");
+	if (_buoyancy_mode == BUOYANCY_COLLIDER) {
+		if (!_collider) {
+			what.append("Missing collider.");
+		} else {
+			Ref<Shape3D> shape = _collider->get_shape();
+			if (!shape.is_valid()) {
+				what.append("Missing collider shape.");
+			}else{
+				ConvexPolygonShape3D *convex_shape = Object::cast_to<ConvexPolygonShape3D>(*shape);
+				BoxShape3D *box_shape = Object::cast_to<BoxShape3D>(*shape);
+				SphereShape3D *sphere_shape = Object::cast_to<SphereShape3D>(*shape);
+				CapsuleShape3D *capsule_shape = Object::cast_to<CapsuleShape3D>(*shape);
+				if (!convex_shape && !box_shape && !sphere_shape && !capsule_shape) {
+					what.append("Collider shape must be a ConvexPolygonShape3D, BoxShape3D, SphereShape3D, or CapsuleShape3D. Other shapes are not supported.");
+				}
 			}
+		}
+	} else{
+		if (_buoyancy_probes.size() == 0) {
+			what.append("No buoyancy probes defined for point-based buoyancy.");
 		}
 	}
 
@@ -132,13 +138,16 @@ void Buoyancy::_notification(int p_what) {
 
 					uint64_t time = Time::get_singleton()->get_ticks_usec();
 
-					// recalculate buoyancy volumes and centroids
-					_update_dynamics();
-
 					// optionally apply them
 					if (_apply_forces){
 						float delta = get_physics_process_delta_time();
-						apply_buoyancy_forces(body, delta);
+						if (_buoyancy_mode == BUOYANCY_PROBES) {
+							apply_buoyancy_probe_forces(body, delta);
+						} else {
+							// recalculate buoyancy volumes and centroids
+							_update_dynamics();
+							apply_buoyancy_mesh_forces(body, delta);
+						}
 					}
 
 					uint64_t elapsed = Time::get_singleton()->get_ticks_usec() - time;
@@ -171,6 +180,30 @@ void Buoyancy::set_collider(CollisionShape3D *p_collider) {
 
 CollisionShape3D* Buoyancy::get_collider() const {
 	return _collider;
+}
+
+// Buoyancy mode
+void Buoyancy::set_buoyancy_mode(BuoyancyMode p_mode) {
+	ERR_FAIL_COND_MSG(p_mode != BUOYANCY_COLLIDER && p_mode != BUOYANCY_PROBES, "Invalid buoyancy mode");
+	
+	_buoyancy_mode = p_mode;
+	_set_dirty();
+	_update_configuration_warnings();
+}
+
+BuoyancyMode Buoyancy::get_buoyancy_mode() const {
+	return _buoyancy_mode;
+}
+
+// Buoyancy probes
+void Buoyancy::set_buoyancy_probes(const PackedVector3Array &p_probes) {
+	_buoyancy_probes = p_probes;
+	_set_dirty();
+	_update_configuration_warnings();
+}
+
+PackedVector3Array Buoyancy::get_buoyancy_probes() const {
+	return _buoyancy_probes;
 }
 
 void Buoyancy::set_apply_forces(bool p_apply_forces) {
@@ -214,6 +247,14 @@ void Buoyancy::set_submerged_angular_drag(float p_drag) {
 
 float Buoyancy::get_submerged_angular_drag() const {
 	return _submerged_angular_drag;
+}
+
+void Buoyancy::set_probe_buoyancy(float p_buoyancy) {
+	_probe_buoyancy = p_buoyancy;
+}
+
+float Buoyancy::get_probe_buoyancy() const {
+	return _probe_buoyancy;
 }
 
 void Buoyancy::set_linear_drag_scale(const Vector3 &p_scale) {
@@ -315,7 +356,7 @@ float Buoyancy::_get_buoyancy_time() const {
 #pragma region Mesh Updates
 
 void Buoyancy::_update_statics() {
-	if(!_collider){
+	if(!_collider || _buoyancy_mode != BUOYANCY_COLLIDER) {
 		return;
 	}
 
@@ -399,7 +440,7 @@ void Buoyancy::_update_statics() {
 }
 
 void Buoyancy::_update_dynamics() {
-	if (!_collider) {
+	if (!_collider || _buoyancy_mode != BUOYANCY_COLLIDER) {
 		return;
 	}
 
@@ -637,7 +678,7 @@ Vector4 Buoyancy::_partial_intersection(const Vector3 &a, const Vector3 &b, cons
 
 #pragma region Forces Application
 
-void Buoyancy::apply_buoyancy_forces(RigidBody3D *body, float delta) {
+void Buoyancy::apply_buoyancy_mesh_forces(RigidBody3D *body, float delta) {
 	if (!body) return;
 
 	float liquid_density =  _liquid_area ? _liquid_area->get_density() : 1000.0f;
@@ -687,6 +728,93 @@ void Buoyancy::apply_buoyancy_forces(RigidBody3D *body, float delta) {
 	}
 }
 
+void Buoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) {
+	if (!body || !_liquid_area) return;
+	if (_buoyancy_probes.size() == 0) return;
+
+	float liquid_density = _liquid_area->get_density();
+	const Vector3 gravity = body->get_gravity() / body->get_gravity_scale();
+	bool submerged = false;
+
+	// Get body transform
+	Transform3D body_transform = body->get_global_transform();
+
+	// Resize cache for wave transforms
+	_probe_wave_transforms.resize(_buoyancy_probes.size());
+	_debug_mesh_dirty = true;
+
+	for (int idx = 0; idx < _buoyancy_probes.size(); ++idx) {
+		// Get probe position in global space
+		Vector3 probe = _buoyancy_probes[idx];
+		probe = body_transform.xform(probe);
+
+		// Get liquid position (flat tidal coordinate)
+		Vector3 liquid_pos = probe;
+		liquid_pos.y = _liquid_area->get_global_transform().origin.y;
+
+		// Get wave transform at this position
+		Transform3D wave_xform = Transform3D(Basis(), liquid_pos);
+		if (!_ignore_waves) {
+			wave_xform = _liquid_area->get_liquid_transform(liquid_pos);
+		}
+		Vector3 wave_pos = wave_xform.origin;
+
+		// Cache the wave transform, in body local space
+		_probe_wave_transforms[idx] = body_transform.affine_inverse() * wave_xform;
+
+		// Calculate depths
+		float wave_depth = probe.y - wave_pos.y;
+		float liquid_depth = probe.y - liquid_pos.y;
+
+		// Each probe affects 1/N of the mass
+		float probe_mass = (body->get_mass() / _buoyancy_probes.size()) * _probe_buoyancy;
+
+		Vector3 liquid_force = Vector3();
+		Vector3 wave_force = Vector3();
+
+		// Calculate forces
+		liquid_force = gravity * probe_mass * liquid_depth;
+		wave_force = wave_xform.basis.get_column(1) * gravity * probe_mass * wave_depth;
+
+		// Apply forces if submerged
+		if (wave_depth < 0.0f) {
+			submerged = true;
+			body->apply_force(wave_force, probe - body_transform.origin);
+		}
+
+		if (liquid_depth < 0.0f) {
+			submerged = true;
+			body->apply_force(liquid_force, probe - body_transform.origin);
+		}
+
+		if (submerged) {
+			// Apply current forces
+			Vector3 current_force = _liquid_area->get_current_speed() * probe_mass;
+			if (current_force.length() > 0.0f) {
+				body->apply_force(current_force, probe - body_transform.origin);
+			}
+
+			// Apply submerged drag per probe
+			Basis basis = body_transform.basis.orthonormalized();
+			Vector3 one = Vector3(1, 1, 1);
+			float probe_ratio = 1.0f / _buoyancy_probes.size();
+
+			Vector3 linear_drag = one - _submerged_linear_drag * _linear_drag_scale * delta * probe_ratio;
+			Vector3 linear_velocity = body->get_linear_velocity();
+			Vector3 local_vel = basis.xform_inv(linear_velocity);
+			Vector3 global_vel = basis.xform(local_vel * linear_drag);
+			body->set_linear_velocity(global_vel);
+
+			Vector3 angular_drag = one - _submerged_angular_drag * _angular_drag_scale * delta * probe_ratio;
+			Vector3 angular_velocity = body->get_angular_velocity();
+			Vector3 local_ang = basis.xform_inv(angular_velocity);
+			Vector3 global_ang = basis.xform(local_ang * angular_drag);
+			body->set_angular_velocity(global_ang);
+		}
+	}
+}
+
+
 #pragma region Debugging
 
 void Buoyancy::_create_debug_mesh() {
@@ -713,7 +841,7 @@ void Buoyancy::_create_debug_mesh() {
 
 // This call has trash performace but it recreates these arrays each frame
 void Buoyancy::_update_debug_mesh() {
-	if (_collider && _debug_mesh_instance && _debug_mesh.is_valid()) {
+	if (_debug_mesh_instance && _debug_mesh.is_valid()) {
 		PackedVector3Array vertices;
 		PackedInt32Array indices;
 
@@ -721,40 +849,98 @@ void Buoyancy::_update_debug_mesh() {
 		_debug_mesh->clear_surfaces();
 
 		// Use the submerged verts if available, the original mesh otherwise
-		Color color = _debug_color;
-		PackedVector3Array verts = _submerged_verts;
-		if (verts.size() == 0) {
-			verts = _vertex;
-			color = Color(0.0, 0.2, 1.0, 0.5);
-		}
-
-		int face_count = verts.size() / 3;
-
-		for (int idx = 0; idx < face_count; ++idx) {
-			Vector3 a = verts[idx * 3 + 0];
-			Vector3 b = verts[idx * 3 + 1];
-			Vector3 c = verts[idx * 3 + 2];
-			vertices.append(a);
-			vertices.append(b);
-			vertices.append(c);
-
-			indices.append(idx * 3 + 0);
-			indices.append(idx * 3 + 1);
-
-			indices.append(idx * 3 + 1);
-			indices.append(idx * 3 + 2);
-
-			indices.append(idx * 3 + 2);
-			indices.append(idx * 3 + 0);
-		}
-
-		// no submerged verts, skip
-		if (face_count == 0) return;
-
 		Array arrays;
 		arrays.resize(Mesh::ARRAY_MAX);
-		arrays[Mesh::ARRAY_VERTEX] = vertices;
-		arrays[Mesh::ARRAY_INDEX] = indices;
+		Color color = _debug_color;
+
+		if (_buoyancy_mode == BUOYANCY_COLLIDER) {
+			if (!_collider || !_buoyancy_mesh.is_valid()) {
+				return;
+			}
+
+			PackedVector3Array verts = _submerged_verts;
+			if (verts.size() == 0) {
+				verts = _vertex;
+				color = Color(0.0, 0.2, 1.0, 0.5);
+			}
+
+			int face_count = verts.size() / 3;
+
+			for (int idx = 0; idx < face_count; ++idx) {
+				Vector3 a = verts[idx * 3 + 0];
+				Vector3 b = verts[idx * 3 + 1];
+				Vector3 c = verts[idx * 3 + 2];
+				vertices.append(a);
+				vertices.append(b);
+				vertices.append(c);
+
+				indices.append(idx * 3 + 0);
+				indices.append(idx * 3 + 1);
+
+				indices.append(idx * 3 + 1);
+				indices.append(idx * 3 + 2);
+
+				indices.append(idx * 3 + 2);
+				indices.append(idx * 3 + 0);
+			}
+
+			// no submerged verts, skip
+			if (face_count == 0)
+				return;
+
+			arrays[Mesh::ARRAY_VERTEX] = vertices;
+			arrays[Mesh::ARRAY_INDEX] = indices;
+		} else {
+			// get the parent rigid body
+			RigidBody3D *body = Object::cast_to<RigidBody3D>(get_parent());
+			if (!body) return;
+
+			// no probes, skip
+			int probe_count = _buoyancy_probes.size();
+			if (probe_count == 0)
+				return;
+
+			// Show all probes
+			for (int idx = 0; idx < probe_count; ++idx) {
+				Vector3 probe = _buoyancy_probes[idx];
+				
+				// Draw probe cross-hairs
+				vertices.append(probe + Vector3(-0.1f, 0, 0));
+				vertices.append(probe + Vector3(0.1f, 0, 0));
+
+				vertices.append(probe + Vector3(0, -0.1f, 0));
+				vertices.append(probe + Vector3(0, 0.1f, 0));
+
+				vertices.append(probe + Vector3(0, 0, -0.1f));
+				vertices.append(probe + Vector3(0, 0, 0.1f));
+
+				indices.append(idx * 8 + 0);
+				indices.append(idx * 8 + 1);
+
+				indices.append(idx * 8 + 2);
+				indices.append(idx * 8 + 3);
+
+				indices.append(idx * 8 + 4);
+				indices.append(idx * 8 + 5);
+
+				// Draw wave transform normal (Y-up line)
+				if (idx < _probe_wave_transforms.size()) {
+					Transform3D wave_xform = _probe_wave_transforms[idx];
+					Vector3 wave_origin = wave_xform.origin;
+					Vector3 wave_normal = wave_xform.basis.get_column(1);
+					Vector3 wave_end = wave_origin + wave_normal * 0.5f;
+
+					vertices.append(wave_origin);
+					vertices.append(wave_end);
+
+					indices.append(idx * 8 + 6);
+					indices.append(idx * 8 + 7);
+				}
+			}
+
+			arrays[Mesh::ARRAY_VERTEX] = vertices;
+			arrays[Mesh::ARRAY_INDEX] = indices;
+		}
 
 		int surf_lines = _debug_mesh->get_surface_count();
 		_debug_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINES, arrays);
@@ -800,9 +986,22 @@ void Buoyancy::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_liquid_area"), &Buoyancy::get_liquid_area);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "liquid_area", PROPERTY_HINT_NODE_TYPE, "LiquidArea"), "set_liquid_area", "get_liquid_area");
 
+	// Buoyancy mode
+	ClassDB::bind_method(D_METHOD("set_buoyancy_mode", "buoyancy_mode"), &Buoyancy::set_buoyancy_mode);
+	ClassDB::bind_method(D_METHOD("get_buoyancy_mode"), &Buoyancy::get_buoyancy_mode);
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "buoyancy_mode", PROPERTY_HINT_ENUM, "BUOYANCY_COLLIDER:0,BUOYANCY_PROBES:1"), "set_buoyancy_mode", "get_buoyancy_mode");
+
+	BIND_ENUM_CONSTANT(BUOYANCY_COLLIDER);
+	BIND_ENUM_CONSTANT(BUOYANCY_PROBES);
+
 	ClassDB::bind_method(D_METHOD("set_collider", "collider"), &Buoyancy::set_collider);
 	ClassDB::bind_method(D_METHOD("get_collider"), &Buoyancy::get_collider);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "collider", PROPERTY_HINT_NODE_TYPE, "CollisionShape3D"), "set_collider", "get_collider");
+
+	// Buoyancy probes
+	ClassDB::bind_method(D_METHOD("set_buoyancy_probes", "buoyancy_probes"), &Buoyancy::set_buoyancy_probes);
+	ClassDB::bind_method(D_METHOD("get_buoyancy_probes"), &Buoyancy::get_buoyancy_probes);
+	ADD_PROPERTY(PropertyInfo(Variant::PACKED_VECTOR3_ARRAY, "buoyancy_probes"), "set_buoyancy_probes", "get_buoyancy_probes");
 
 
 	// ---
@@ -811,6 +1010,10 @@ void Buoyancy::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_apply_forces", "ignore_waves"), &Buoyancy::set_apply_forces);
 	ClassDB::bind_method(D_METHOD("get_apply_forces"), &Buoyancy::get_apply_forces);
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "apply_forces"), "set_apply_forces", "get_apply_forces");
+
+	ClassDB::bind_method(D_METHOD("set_probe_buoyancy", "probe_buoyancy"), &Buoyancy::set_probe_buoyancy);
+	ClassDB::bind_method(D_METHOD("get_probe_buoyancy"), &Buoyancy::get_probe_buoyancy);
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "probe_buoyancy"), "set_probe_buoyancy", "get_probe_buoyancy");
 
 	ClassDB::bind_method(D_METHOD("set_submerged_linear_drag", "submerged_linear_drag"), &Buoyancy::set_submerged_linear_drag);
 	ClassDB::bind_method(D_METHOD("get_submerged_linear_drag"), &Buoyancy::get_submerged_linear_drag);
@@ -848,7 +1051,8 @@ void Buoyancy::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_get_buoyancy_time"), &Buoyancy::_get_buoyancy_time);
 
 	// Function calls
-	ClassDB::bind_method(D_METHOD("apply_buoyancy_forces"), &Buoyancy::apply_buoyancy_forces);
+	ClassDB::bind_method(D_METHOD("apply_buoyancy_mesh_forces"), &Buoyancy::apply_buoyancy_mesh_forces);
+	ClassDB::bind_method(D_METHOD("apply_buoyancy_probe_forces"), &Buoyancy::apply_buoyancy_probe_forces);
 
 
 	// ---

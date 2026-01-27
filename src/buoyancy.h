@@ -29,6 +29,12 @@ using namespace godot;
 
 class LiquidArea;
 
+// Buoyancy mode
+enum BuoyancyMode {
+	BUOYANCY_COLLIDER = 0,
+	BUOYANCY_PROBES = 1,
+};
+
 class Buoyancy : public Node {
 	GDCLASS(Buoyancy, Node)
 
@@ -37,6 +43,7 @@ private:
     LiquidArea* _liquid_area = nullptr;
 	CollisionShape3D* _collider = nullptr;
 	Ref<ArrayMesh> _buoyancy_mesh;
+	BuoyancyMode _buoyancy_mode = BUOYANCY_COLLIDER;
     
 	bool _apply_forces = true;
 
@@ -45,6 +52,7 @@ private:
 	Vector3 _linear_drag_scale = Vector3(1.0f, 1.0f, 1.0f);
 	Vector3 _angular_drag_scale = Vector3(1.0f, 1.0f, 1.0f);
 	bool _ignore_waves = false;
+	float _probe_buoyancy = 1.0f;
 
 	bool _calculate_mass_properties = false;
 	float _density = 500.0f;
@@ -71,6 +79,10 @@ private:
 
 	// Triangle data
 	PackedVector3Array _vertex;
+	// Optional explicit probe points for point-based buoyancy
+	PackedVector3Array _buoyancy_probes;
+	// Cached wave transforms for each probe point
+	LocalVector<Transform3D> _probe_wave_transforms;
 	PackedFloat32Array _depths;
 	HashMap<Vector3, Transform3D> _depth_map;
 
@@ -122,6 +134,13 @@ public:
 	void set_debug_color(const Color &p_color);
 	Color get_debug_color() const;
 
+	// Buoyancy probes
+	void set_buoyancy_probes(const PackedVector3Array &p_probes);
+	PackedVector3Array get_buoyancy_probes() const;
+
+	void set_buoyancy_mode(BuoyancyMode p_mode);
+	BuoyancyMode get_buoyancy_mode() const;
+
 
 	// While submerged, apply drag proportional to the submerged volume.
 	void set_submerged_linear_drag(float p_drag);
@@ -135,6 +154,9 @@ public:
 
 	void set_angular_drag_scale(const Vector3 &p_scale);
 	Vector3 get_angular_drag_scale() const;
+
+	void set_probe_buoyancy(float p_buoyancy);
+	float get_probe_buoyancy() const;
 
 
 	// Calculate and apply the intertia and mass for the body when static properties are updated
@@ -162,7 +184,10 @@ public:
 
 	// Called after updating dynamics if apply_forces is true. (submerged_volume, etc.)
 	// Can be manually called from process_physics() if desired.
-	void apply_buoyancy_forces(RigidBody3D *body, float delta);
+	void apply_buoyancy_mesh_forces(RigidBody3D *body, float delta);
+
+	// Apply buoyancy forces using probe points instead of mesh
+	void apply_buoyancy_probe_forces(RigidBody3D *body, float delta);
 
 
 	// Informational getters
@@ -182,3 +207,5 @@ private:
 	Vector4 _partial_intersection(const Vector3 &a, const Vector3 &b, const Vector3 &c, const Vector3 &o,
 			float _a, float _b, float _c, bool keep_below = true) const;
 };
+
+VARIANT_ENUM_CAST(BuoyancyMode);

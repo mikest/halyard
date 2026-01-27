@@ -8,3 +8,4 @@ https://docs.godotengine.org/en/stable/tutorials/scripting/gdscript/gdscript_bas
 
 All GDScript variables should be strongly typed.
 
+Use godot-cpp/test/src/example.cpp and godot-cpp/test/src/example.h for examples of how to construct GDExtension classes.
