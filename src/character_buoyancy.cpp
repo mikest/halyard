@@ -218,9 +218,10 @@ void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
 		ratio = (float)submerged_count / (float)_probes.size();
 	}
 	
-    // notify on change
-    if(_submerged_ratio != ratio){
-        _submerged_ratio = ratio;
+    // notify on change from completely submerged to not submerged and vice versa
+	bool changed = Math::is_zero_approx(_submerged_ratio) != Math::is_zero_approx(ratio);
+	_submerged_ratio = ratio;
+	if (changed){
 		emit_signal("submerged_changed");
 	}
 }

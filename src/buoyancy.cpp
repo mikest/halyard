@@ -150,9 +150,16 @@ void Buoyancy::_notification(int p_what) {
 						}
 					}
 
+					// Check if submerged changed and emit signal. We only track entering/exiting water as the ratio can change on every frame.
+					float current_ratio = get_submerged_ratio();
+					if (Math::is_zero_approx(current_ratio) != Math::is_zero_approx(_last_submerged_ratio)) {
+						emit_signal("submerged_changed");
+					}
+					_last_submerged_ratio = current_ratio;
+
+					// update time taken
 					uint64_t elapsed = Time::get_singleton()->get_ticks_usec() - time;
 					_buoyancy_time = elapsed;
-					// UtilityFunctions::print("Buoyancy physics process time (usec): ", elapsed);
 				}
 			}
 		} break;
@@ -329,6 +336,22 @@ Vector3 Buoyancy::get_submerged_centroid() const {
 
 Vector3 Buoyancy::get_buoyancy_normal() const {
 	return _buoyancy_normal;
+}
+
+float Buoyancy::get_submerged_ratio() const {
+	if (_buoyancy_mode == BUOYANCY_PROBES) {
+		// In probe mode, return proportion of submerged probes
+		if (_buoyancy_probes.size() == 0) {
+			return 0.0f;
+		}
+		return (float)_submerged_probe_count / (float)_buoyancy_probes.size();
+	} else {
+		// In collider mode, return volume ratio
+		if (Math::is_zero_approx(_mesh_volume)) {
+			return 0.0f;
+		}
+		return _submerged_volume / _mesh_volume;
+	}
 }
 
 // Statics
@@ -743,6 +766,9 @@ void Buoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) {
 	const Vector3 gravity = body->get_gravity() / body->get_gravity_scale();
 	bool submerged = false;
 
+	// Reset submerged probe count
+	_submerged_probe_count = 0;
+
 	// Get body transform
 	Transform3D body_transform = body->get_global_transform();
 
@@ -795,6 +821,8 @@ void Buoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) {
 		}
 
 		if (submerged) {
+			// Count this probe as submerged
+			_submerged_probe_count++;
 			// Apply current forces
 			Vector3 current_force = _liquid_area->get_current_speed() * probe_mass;
 			if (current_force.length() > 0.0f) {
@@ -1057,6 +1085,7 @@ void Buoyancy::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_submerged_volume"), &Buoyancy::get_submerged_volume);
 	ClassDB::bind_method(D_METHOD("get_submerged_centroid"), &Buoyancy::get_submerged_centroid);
 	ClassDB::bind_method(D_METHOD("get_buoyancy_normal"), &Buoyancy::get_buoyancy_normal);
+	ClassDB::bind_method(D_METHOD("get_submerged_ratio"), &Buoyancy::get_submerged_ratio);
 
 	ClassDB::bind_method(D_METHOD("get_volume"), &Buoyancy::get_volume);
 	ClassDB::bind_method(D_METHOD("get_centroid"), &Buoyancy::get_centroid);
@@ -1110,6 +1139,9 @@ void Buoyancy::_bind_methods() {
 
 	// Internal methods
 	// ClassDB::bind_method(D_METHOD("_property_changed", "prop"), &Buoyancy::_property_changed);
+
+	// Signals
+	ADD_SIGNAL(MethodInfo("submerged_changed"));
 
 	// virtuals
 	// GDVIRTUAL_BIND(get_configuration_warnings)
