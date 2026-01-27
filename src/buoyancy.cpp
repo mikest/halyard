@@ -47,7 +47,7 @@ PackedStringArray Buoyancy::_get_configuration_warnings() const {
 	}
 	
 	if (_buoyancy_mode == BUOYANCY_COLLIDER) {
-		if (!_collider) {
+		if (_collider == nullptr) {
 			what.append("Missing collider.");
 		} else {
 			Ref<Shape3D> shape = _collider->get_shape();
@@ -165,6 +165,9 @@ void Buoyancy::_notification(int p_what) {
 void Buoyancy::set_liquid_area(LiquidArea *p_area) {
 	_liquid_area = p_area;
 	_update_configuration_warnings();
+
+	_set_dirty();
+	_debug_mesh_dirty = true;
 }
 
 LiquidArea* Buoyancy::get_liquid_area() const {
@@ -172,10 +175,14 @@ LiquidArea* Buoyancy::get_liquid_area() const {
 }
 
 void Buoyancy::set_collider(CollisionShape3D *p_collider) {
-	_collider = p_collider;
+	if (_collider != p_collider) {
+		_collider = p_collider;
+		_set_dirty();
+
+		_update_configuration_warnings();
+	}
+
 	_debug_mesh_dirty = true;
-	_set_dirty();
-	_update_configuration_warnings();
 }
 
 CollisionShape3D* Buoyancy::get_collider() const {
@@ -185,8 +192,8 @@ CollisionShape3D* Buoyancy::get_collider() const {
 // Buoyancy mode
 void Buoyancy::set_buoyancy_mode(BuoyancyMode p_mode) {
 	ERR_FAIL_COND_MSG(p_mode != BUOYANCY_COLLIDER && p_mode != BUOYANCY_PROBES, "Invalid buoyancy mode");
-	
 	_buoyancy_mode = p_mode;
+	_debug_mesh_dirty = true;
 	_set_dirty();
 	_update_configuration_warnings();
 }
@@ -198,6 +205,7 @@ BuoyancyMode Buoyancy::get_buoyancy_mode() const {
 // Buoyancy probes
 void Buoyancy::set_buoyancy_probes(const PackedVector3Array &p_probes) {
 	_buoyancy_probes = p_probes;
+	_debug_mesh_dirty = true;
 	_set_dirty();
 	_update_configuration_warnings();
 }
@@ -356,9 +364,8 @@ float Buoyancy::_get_buoyancy_time() const {
 #pragma region Mesh Updates
 
 void Buoyancy::_update_statics() {
-	if(!_collider || _buoyancy_mode != BUOYANCY_COLLIDER) {
-		return;
-	}
+	if( _collider == nullptr) return;
+	if( _buoyancy_mode != BUOYANCY_COLLIDER) return;
 
 	// if this is already a convex shape, use it directly
 	Ref<ConvexPolygonShape3D> convex_shape = _collider->get_shape();
@@ -440,9 +447,8 @@ void Buoyancy::_update_statics() {
 }
 
 void Buoyancy::_update_dynamics() {
-	if (!_collider || _buoyancy_mode != BUOYANCY_COLLIDER) {
-		return;
-	}
+	if( _collider == nullptr) return;
+	if( _buoyancy_mode != BUOYANCY_COLLIDER) return;
 
 	// clear the _submerged verts for debug
 	_submerged_verts.clear();
@@ -729,7 +735,8 @@ void Buoyancy::apply_buoyancy_mesh_forces(RigidBody3D *body, float delta) {
 }
 
 void Buoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) {
-	if (!body || !_liquid_area) return;
+	if (body == nullptr) return;
+	if (_liquid_area == nullptr) return;
 	if (_buoyancy_probes.size() == 0) return;
 
 	float liquid_density = _liquid_area->get_density();
@@ -819,6 +826,7 @@ void Buoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) {
 
 void Buoyancy::_create_debug_mesh() {
 	Node3D* parent = Object::cast_to<Node3D>(get_parent());
+
 	if (parent == nullptr) return;
 	if (is_inside_tree() == false) return;
 	
@@ -841,6 +849,10 @@ void Buoyancy::_create_debug_mesh() {
 
 // This call has trash performace but it recreates these arrays each frame
 void Buoyancy::_update_debug_mesh() {
+
+	if( _debug_mesh_instance == nullptr) return;
+	if( _debug_mesh.is_valid() == false) return;
+
 	if (_debug_mesh_instance && _debug_mesh.is_valid()) {
 		PackedVector3Array vertices;
 		PackedInt32Array indices;
@@ -852,11 +864,14 @@ void Buoyancy::_update_debug_mesh() {
 		Array arrays;
 		arrays.resize(Mesh::ARRAY_MAX);
 		Color color = _debug_color;
+		Transform3D xform = Transform3D();
 
 		if (_buoyancy_mode == BUOYANCY_COLLIDER) {
 			if (!_collider || !_buoyancy_mesh.is_valid()) {
 				return;
 			}
+
+			xform = _collider->get_global_transform();
 
 			PackedVector3Array verts = _submerged_verts;
 			if (verts.size() == 0) {
@@ -895,6 +910,8 @@ void Buoyancy::_update_debug_mesh() {
 			RigidBody3D *body = Object::cast_to<RigidBody3D>(get_parent());
 			if (!body) return;
 
+			xform = body->get_global_transform();
+
 			// no probes, skip
 			int probe_count = _buoyancy_probes.size();
 			if (probe_count == 0)
@@ -914,28 +931,29 @@ void Buoyancy::_update_debug_mesh() {
 				vertices.append(probe + Vector3(0, 0, -0.1f));
 				vertices.append(probe + Vector3(0, 0, 0.1f));
 
-				indices.append(idx * 8 + 0);
-				indices.append(idx * 8 + 1);
+				indices.append(idx * 6 + 0);
+				indices.append(idx * 6 + 1);
 
-				indices.append(idx * 8 + 2);
-				indices.append(idx * 8 + 3);
+				indices.append(idx * 6 + 2);
+				indices.append(idx * 6 + 3);
 
-				indices.append(idx * 8 + 4);
-				indices.append(idx * 8 + 5);
+				indices.append(idx * 6 + 4);
+				indices.append(idx * 6 + 5);
+			}
 
-				// Draw wave transform normal (Y-up line)
-				if (idx < _probe_wave_transforms.size()) {
-					Transform3D wave_xform = _probe_wave_transforms[idx];
-					Vector3 wave_origin = wave_xform.origin;
-					Vector3 wave_normal = wave_xform.basis.get_column(1);
-					Vector3 wave_end = wave_origin + wave_normal * 0.5f;
+			// Show wave normals
+			for(int idx =0; idx < _probe_wave_transforms.size(); ++idx) {
+				Transform3D wave_xform = _probe_wave_transforms[idx];
 
-					vertices.append(wave_origin);
-					vertices.append(wave_end);
+				// Draw wave normal at probe
+				Vector3 origin = wave_xform.origin;
+				Vector3 normal_end = origin + wave_xform.basis.get_column(1) * 0.5f;
 
-					indices.append(idx * 8 + 6);
-					indices.append(idx * 8 + 7);
-				}
+				vertices.append(origin);
+				vertices.append(normal_end);
+
+				indices.append(probe_count * 6 + idx * 2 + 0);
+				indices.append(probe_count * 6 + idx * 2 + 1);
 			}
 
 			arrays[Mesh::ARRAY_VERTEX] = vertices;
@@ -960,7 +978,7 @@ void Buoyancy::_update_debug_mesh() {
 		_debug_mesh->surface_set_material(surf_lines, mat);
 
 		// move debug mesh
-		_debug_mesh_instance->set_global_transform(_collider->get_global_transform());
+		_debug_mesh_instance->set_global_transform(xform);
 	}
 }
 
