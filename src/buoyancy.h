@@ -23,6 +23,7 @@ This objects manages the physics interactions between itself and a single Liquid
 #include <godot_cpp/variant/typed_array.hpp>
 #include <godot_cpp/variant/variant.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
+#include <godot_cpp/classes/mesh_instance3d.hpp>
 
 using namespace godot;
 
@@ -74,7 +75,15 @@ private:
 	HashMap<Vector3, Transform3D> _depth_map;
 
 	// Debugging
-	bool _show_debug = true;
+	bool _show_debug = false;
+	Color _debug_color = Color(0.0f, 0.8f, 1.0f, 0.2f);
+	Ref<ArrayMesh> _debug_mesh;
+	bool _debug_mesh_dirty = true;
+	MeshInstance3D* _debug_mesh_instance = nullptr;
+	PackedVector3Array _submerged_verts;
+	void _create_debug_mesh();
+	void _update_debug_mesh();
+	void _destroy_debug_mesh();
 
 protected:
 	static void _bind_methods();
@@ -105,6 +114,13 @@ public:
 	// Just use a flat plane for the liquid. Considerably faster.
 	void set_ignore_waves(bool p_ignore);
 	bool get_ignore_waves() const;
+
+	// Debug
+	void set_show_debug(bool p_show);
+	bool get_show_debug() const;
+
+	void set_debug_color(const Color &p_color);
+	Color get_debug_color() const;
 
 
 	// While submerged, apply drag proportional to the submerged volume.

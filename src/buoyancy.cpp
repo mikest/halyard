@@ -5,12 +5,19 @@
 #include <godot_cpp/classes/rigid_body3d.hpp>
 #include <godot_cpp/classes/shape3d.hpp>
 #include <godot_cpp/classes/convex_polygon_shape3d.hpp>
+#include <godot_cpp/classes/sphere_shape3d.hpp>
+#include <godot_cpp/classes/box_shape3d.hpp>
+#include <godot_cpp/classes/capsule_shape3d.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 #include <godot_cpp/classes/time.hpp>
 #include <godot_cpp/classes/performance.hpp>
 #include <godot_cpp/classes/rendering_server.hpp>
+#include <godot_cpp/classes/standard_material3d.hpp>
+#include <godot_cpp/classes/mesh_instance3d.hpp>
+
+using namespace godot;
 
 Buoyancy::Buoyancy() {
 }
@@ -20,97 +27,9 @@ Buoyancy::~Buoyancy() {
 	if (_buoyancy_mesh.is_valid()) {
 		_buoyancy_mesh.unref();
 	}
+
+	_destroy_debug_mesh();
 }
-
-
-void Buoyancy::_bind_methods() {
-	// Property bindings
-	ClassDB::bind_method(D_METHOD("set_liquid_area", "liquid_area"), &Buoyancy::set_liquid_area);
-	ClassDB::bind_method(D_METHOD("get_liquid_area"), &Buoyancy::get_liquid_area);
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "liquid_area", PROPERTY_HINT_NODE_TYPE, "LiquidArea"), "set_liquid_area", "get_liquid_area");
-
-	ClassDB::bind_method(D_METHOD("set_collider", "collider"), &Buoyancy::set_collider);
-	ClassDB::bind_method(D_METHOD("get_collider"), &Buoyancy::get_collider);
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "collider", PROPERTY_HINT_NODE_TYPE, "CollisionShape3D"), "set_collider", "get_collider");
-
-
-	// ---
-	ADD_GROUP("Physics", "");
-
-	ClassDB::bind_method(D_METHOD("set_apply_forces", "ignore_waves"), &Buoyancy::set_apply_forces);
-	ClassDB::bind_method(D_METHOD("get_apply_forces"), &Buoyancy::get_apply_forces);
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "apply_forces"), "set_apply_forces", "get_apply_forces");
-
-	ClassDB::bind_method(D_METHOD("set_submerged_linear_drag", "submerged_linear_drag"), &Buoyancy::set_submerged_linear_drag);
-	ClassDB::bind_method(D_METHOD("get_submerged_linear_drag"), &Buoyancy::get_submerged_linear_drag);
-	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "submerged_linear_drag"), "set_submerged_linear_drag", "get_submerged_linear_drag");
-
-	ClassDB::bind_method(D_METHOD("set_submerged_angular_drag", "submerged_angular_drag"), &Buoyancy::set_submerged_angular_drag);
-	ClassDB::bind_method(D_METHOD("get_submerged_angular_drag"), &Buoyancy::get_submerged_angular_drag);
-	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "submerged_angular_drag"), "set_submerged_angular_drag", "get_submerged_angular_drag");
-
-	ClassDB::bind_method(D_METHOD("set_linear_drag_scale", "linear_drag_scale"), &Buoyancy::set_linear_drag_scale);
-	ClassDB::bind_method(D_METHOD("get_linear_drag_scale"), &Buoyancy::get_linear_drag_scale);
-	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "linear_drag_scale"), "set_linear_drag_scale", "get_linear_drag_scale");
-
-	ClassDB::bind_method(D_METHOD("set_angular_drag_scale", "angular_drag_scale"), &Buoyancy::set_angular_drag_scale);
-	ClassDB::bind_method(D_METHOD("get_angular_drag_scale"), &Buoyancy::get_angular_drag_scale);
-	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "angular_drag_scale"), "set_angular_drag_scale", "get_angular_drag_scale");
-
-	ClassDB::bind_method(D_METHOD("set_ignore_waves", "ignore_waves"), &Buoyancy::set_ignore_waves);
-	ClassDB::bind_method(D_METHOD("get_ignore_waves"), &Buoyancy::get_ignore_waves);
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "ignore_waves"), "set_ignore_waves", "get_ignore_waves");
-
-	// Read only
-	ClassDB::bind_method(D_METHOD("get_submerged_volume"), &Buoyancy::get_submerged_volume);
-	ClassDB::bind_method(D_METHOD("get_submerged_centroid"), &Buoyancy::get_submerged_centroid);
-	ClassDB::bind_method(D_METHOD("get_buoyancy_normal"), &Buoyancy::get_buoyancy_normal);
-
-	ClassDB::bind_method(D_METHOD("get_volume"), &Buoyancy::get_volume);
-	ClassDB::bind_method(D_METHOD("get_centroid"), &Buoyancy::get_centroid);
-
-	// Info properties (read-only)
-	ClassDB::bind_method(D_METHOD("get_mass"), &Buoyancy::get_mass);
-	ClassDB::bind_method(D_METHOD("get_center_of_mass"), &Buoyancy::get_center_of_mass);
-	ClassDB::bind_method(D_METHOD("get_inertia"), &Buoyancy::get_inertia);
-
-	ClassDB::bind_method(D_METHOD("_get_buoyancy_time"), &Buoyancy::_get_buoyancy_time);
-
-	// Function calls
-	ClassDB::bind_method(D_METHOD("apply_buoyancy_forces"), &Buoyancy::apply_buoyancy_forces);
-
-
-	// ---
-	ADD_GROUP("Mass Properties", "");
-
-	ClassDB::bind_method(D_METHOD("set_calculate_mass_properties", "calculate_mass_properties"), &Buoyancy::set_calculate_mass_properties);
-	ClassDB::bind_method(D_METHOD("get_calculate_mass_properties"), &Buoyancy::get_calculate_mass_properties);
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "calculate_mass_properties"), "set_calculate_mass_properties", "get_calculate_mass_properties");
-
-	ClassDB::bind_method(D_METHOD("set_density", "density"), &Buoyancy::set_density);
-	ClassDB::bind_method(D_METHOD("get_density"), &Buoyancy::get_density);
-	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "density", PROPERTY_HINT_RANGE, "1,10000,1,suffix:kg*m^3"), "set_density", "get_density");
-
-	ClassDB::bind_method(D_METHOD("set_com_offset", "com_offset"), &Buoyancy::set_com_offset);
-	ClassDB::bind_method(D_METHOD("get_com_offset"), &Buoyancy::get_com_offset);
-	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "com_offset"), "set_com_offset", "get_com_offset");
-
-
-	// ---
-	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "volume", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY | PROPERTY_USAGE_NO_INSTANCE_STATE | PROPERTY_USAGE_EDITOR), "", "get_volume");
-	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "centroid", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY | PROPERTY_USAGE_NO_INSTANCE_STATE | PROPERTY_USAGE_EDITOR), "", "get_centroid");
-
-	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "body_mass", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY | PROPERTY_USAGE_NO_INSTANCE_STATE | PROPERTY_USAGE_EDITOR), "", "get_mass");
-	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "body_center_of_mass", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY | PROPERTY_USAGE_NO_INSTANCE_STATE | PROPERTY_USAGE_EDITOR), "", "get_center_of_mass");
-	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "body_inertia", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY | PROPERTY_USAGE_NO_INSTANCE_STATE | PROPERTY_USAGE_EDITOR), "", "get_inertia");
-
-	// Internal methods
-	// ClassDB::bind_method(D_METHOD("_property_changed", "prop"), &Buoyancy::_property_changed);
-
-	// virtuals
-	// GDVIRTUAL_BIND(get_configuration_warnings)
-}
-
 
 void Buoyancy::_update_configuration_warnings() {
 	if (Engine::get_singleton()->is_editor_hint()){
@@ -133,8 +52,14 @@ PackedStringArray Buoyancy::_get_configuration_warnings() const {
 		Ref<Shape3D> shape = _collider->get_shape();
 		if (!shape.is_valid()) {
 			what.append("Missing collider shape.");
-		}else if (Object::cast_to<ConvexPolygonShape3D>(*shape) == nullptr) {
-			what.append("Collider shape must be a ConvexPolygonShape3D.");
+		}else{
+			ConvexPolygonShape3D *convex_shape = Object::cast_to<ConvexPolygonShape3D>(*shape);
+			BoxShape3D *box_shape = Object::cast_to<BoxShape3D>(*shape);
+			SphereShape3D *sphere_shape = Object::cast_to<SphereShape3D>(*shape);
+			CapsuleShape3D *capsule_shape = Object::cast_to<CapsuleShape3D>(*shape);
+			if (!convex_shape && !box_shape && !sphere_shape && !capsule_shape) {
+				what.append("Collider shape must be a ConvexPolygonShape3D, BoxShape3D, SphereShape3D, or CapsuleShape3D. Other shapes are not supported.");
+			}
 		}
 	}
 
@@ -154,6 +79,7 @@ void Buoyancy::_notification(int p_what) {
 				// Note: This might need adjustment based on Godot's API
 			}
 			_set_dirty();
+
 			set_process_internal(true);
 			set_physics_process_internal(true);
 		} break;
@@ -183,6 +109,20 @@ void Buoyancy::_notification(int p_what) {
 			if (_dirty && is_node_ready()) {
 				_update_statics();
 			}
+
+			// lazy add/remove the debug meshes
+			if (_show_debug) {
+				if (!_debug_mesh_instance) {
+					_create_debug_mesh();
+				}
+				if (_debug_mesh_dirty) {
+					_update_debug_mesh();
+					_debug_mesh_dirty = false;
+				}
+			
+			} else if (_debug_mesh_instance) {
+				_destroy_debug_mesh();
+			}
 		} break;
 
 		case NOTIFICATION_INTERNAL_PHYSICS_PROCESS: {
@@ -210,6 +150,8 @@ void Buoyancy::_notification(int p_what) {
 	}
 }
 
+#pragma region Properties
+
 // Property getters/setters
 void Buoyancy::set_liquid_area(LiquidArea *p_area) {
 	_liquid_area = p_area;
@@ -222,6 +164,7 @@ LiquidArea* Buoyancy::get_liquid_area() const {
 
 void Buoyancy::set_collider(CollisionShape3D *p_collider) {
 	_collider = p_collider;
+	_debug_mesh_dirty = true;
 	_set_dirty();
 	_update_configuration_warnings();
 }
@@ -306,6 +249,24 @@ bool Buoyancy::get_ignore_waves() const {
 	return _ignore_waves;
 }
 
+// Debug
+void Buoyancy::set_show_debug(bool p_show) {
+	_show_debug = p_show;
+	_debug_mesh_dirty = true;
+}
+
+bool Buoyancy::get_show_debug() const {
+	return _show_debug;
+}
+
+void Buoyancy::set_debug_color(const Color &p_color) {
+	_debug_color = p_color;
+}
+
+Color Buoyancy::get_debug_color() const {
+	return _debug_color;
+}
+
 
 // Read only
 
@@ -351,15 +312,30 @@ float Buoyancy::_get_buoyancy_time() const {
 	return _buoyancy_time;
 }
 
+#pragma region Mesh Updates
 
 void Buoyancy::_update_statics() {
 	if(!_collider){
 		return;
 	}
 
-	Ref<Shape3D> shape = _collider->get_shape();
-	if (shape.is_valid()) {
-		_buoyancy_mesh = shape->get_debug_mesh();
+	// if this is already a convex shape, use it directly
+	Ref<ConvexPolygonShape3D> convex_shape = _collider->get_shape();
+	if (convex_shape.is_valid()) {
+		_buoyancy_mesh = convex_shape->get_debug_mesh();
+
+	// otherwise, try to create a simplified convex shape from the existing shape's debug mesh
+	} else {
+		Ref<Shape3D> shape = _collider->get_shape();
+		if (shape.is_valid()) {
+			Ref<Mesh> mesh = shape->get_debug_mesh();
+
+			// Use simplified convex shape for buoyancy calculations
+			Ref<Shape3D> new_shape = mesh->create_convex_shape(true, true);
+			if (new_shape.is_valid()) {
+				_buoyancy_mesh = Object::cast_to<ConvexPolygonShape3D>(*new_shape)->get_debug_mesh();
+			}
+		}
 	}
 
 	if (_buoyancy_mesh.is_valid() && _buoyancy_mesh->get_surface_count()) {
@@ -426,6 +402,10 @@ void Buoyancy::_update_dynamics() {
 	if (!_collider) {
 		return;
 	}
+
+	// clear the _submerged verts for debug
+	_submerged_verts.clear();
+	_debug_mesh_dirty = true;
 
 	// Get the transformed mesh points and their depths
 	_depth_map.clear();
@@ -504,6 +484,10 @@ void Buoyancy::_update_dynamics() {
 	}
 }
 
+
+#pragma region Triangle Calculations
+
+
 Vector4 Buoyancy::_tri_contribution(const Vector3 &a, const Vector3 &b, const Vector3 &c, const Vector3 &o) const {
 	float V = _sign * (a - o).cross(b - o).dot(c - o) / 6.0f;
 	Vector3 C = V * (a + b + c + o) / 4.0f;
@@ -518,6 +502,13 @@ Vector3 Buoyancy::_intersect(const Vector3 &v1, const Vector3 &v2, float d1, flo
 	return v1.lerp(v2, t);
 }
 
+
+// This funection calculates the submerged volume and centroid contribution of a triangle
+// given the depths of its vertices. It handles partial submersion by clipping the triangle
+// against the liquid plane.
+//
+// It also adds the submerged vertices to the debug array if enabled so they can be visualized.
+//
 Vector4 Buoyancy::_partial_intersection(const Vector3 &a, const Vector3 &b, const Vector3 &c, const Vector3 &o,
 		float _a, float _b, float _c, bool keep_below) const {
 	Vector3 C = Vector3(0, 0, 0);
@@ -536,6 +527,12 @@ Vector4 Buoyancy::_partial_intersection(const Vector3 &a, const Vector3 &b, cons
 	// Trivial cases
 	if (count == 3) {
 		// below
+		if (_show_debug) {
+			const_cast<PackedVector3Array&>(_submerged_verts).append(a);
+			const_cast<PackedVector3Array&>(_submerged_verts).append(b);
+			const_cast<PackedVector3Array&>(_submerged_verts).append(c);
+		}
+
 		return _tri_contribution(a, b, c, o);
 	} else if (count == 0) {
 		// above
@@ -547,14 +544,31 @@ Vector4 Buoyancy::_partial_intersection(const Vector3 &a, const Vector3 &b, cons
 		if (below_a) {
 			Vector3 p1 = _intersect(a, b, _a, _b);
 			Vector3 p2 = _intersect(a, c, _a, _c);
+
+			if (_show_debug) {
+				const_cast<PackedVector3Array&>(_submerged_verts).append(a);
+				const_cast<PackedVector3Array&>(_submerged_verts).append(p1);
+				const_cast<PackedVector3Array&>(_submerged_verts).append(p2);
+			}
+
 			return _tri_contribution(a, p1, p2, o);
 		} else if (below_b) {
 			Vector3 p1 = _intersect(b, c, _b, _c);
 			Vector3 p2 = _intersect(b, a, _b, _a);
+			if (_show_debug) {
+				const_cast<PackedVector3Array&>(_submerged_verts).append(b);
+				const_cast<PackedVector3Array&>(_submerged_verts).append(p1);
+				const_cast<PackedVector3Array&>(_submerged_verts).append(p2);
+			}
 			return _tri_contribution(b, p1, p2, o);
 		} else {
 			Vector3 p1 = _intersect(c, a, _c, _a);
 			Vector3 p2 = _intersect(c, b, _c, _b);
+			if (_show_debug) {
+				const_cast<PackedVector3Array&>(_submerged_verts).append(c);
+				const_cast<PackedVector3Array&>(_submerged_verts).append(p1);
+				const_cast<PackedVector3Array&>(_submerged_verts).append(p2);
+			}
 			return _tri_contribution(c, p1, p2, o);
 		}
 	}
@@ -565,6 +579,14 @@ Vector4 Buoyancy::_partial_intersection(const Vector3 &a, const Vector3 &b, cons
 			// b and c below, a above
 			Vector3 p1 = _intersect(b, a, _b, _a);
 			Vector3 p2 = _intersect(c, a, _c, _a);
+			if (_show_debug) {
+				const_cast<PackedVector3Array&>(_submerged_verts).append(b);
+				const_cast<PackedVector3Array&>(_submerged_verts).append(c);
+				const_cast<PackedVector3Array&>(_submerged_verts).append(p2);
+				const_cast<PackedVector3Array&>(_submerged_verts).append(b);
+				const_cast<PackedVector3Array&>(_submerged_verts).append(p2);
+				const_cast<PackedVector3Array&>(_submerged_verts).append(p1);
+			}
 			Vector4 tri1 = _tri_contribution(b, c, p2, o);
 			Vector4 tri2 = _tri_contribution(b, p2, p1, o);
 			C += Vector3(tri1.x, tri1.y, tri1.z);
@@ -575,6 +597,14 @@ Vector4 Buoyancy::_partial_intersection(const Vector3 &a, const Vector3 &b, cons
 			// c and a below, b above
 			Vector3 p1 = _intersect(c, b, _c, _b);
 			Vector3 p2 = _intersect(a, b, _a, _b);
+			if (_show_debug) {
+				const_cast<PackedVector3Array&>(_submerged_verts).append(c);
+				const_cast<PackedVector3Array&>(_submerged_verts).append(a);
+				const_cast<PackedVector3Array&>(_submerged_verts).append(p2);
+				const_cast<PackedVector3Array&>(_submerged_verts).append(c);
+				const_cast<PackedVector3Array&>(_submerged_verts).append(p2);
+				const_cast<PackedVector3Array&>(_submerged_verts).append(p1);
+			}
 			Vector4 tri1 = _tri_contribution(c, a, p2, o);
 			Vector4 tri2 = _tri_contribution(c, p2, p1, o);
 			C += Vector3(tri1.x, tri1.y, tri1.z);
@@ -585,6 +615,14 @@ Vector4 Buoyancy::_partial_intersection(const Vector3 &a, const Vector3 &b, cons
 			// a and b below, c above
 			Vector3 p1 = _intersect(a, c, _a, _c);
 			Vector3 p2 = _intersect(b, c, _b, _c);
+			if (_show_debug) {
+				const_cast<PackedVector3Array&>(_submerged_verts).append(a);
+				const_cast<PackedVector3Array&>(_submerged_verts).append(b);
+				const_cast<PackedVector3Array&>(_submerged_verts).append(p2);
+				const_cast<PackedVector3Array&>(_submerged_verts).append(a);
+				const_cast<PackedVector3Array&>(_submerged_verts).append(p2);
+				const_cast<PackedVector3Array&>(_submerged_verts).append(p1);
+			}
 			Vector4 tri1 = _tri_contribution(a, b, p2, o);
 			Vector4 tri2 = _tri_contribution(a, p2, p1, o);
 			C += Vector3(tri1.x, tri1.y, tri1.z);
@@ -596,6 +634,8 @@ Vector4 Buoyancy::_partial_intersection(const Vector3 &a, const Vector3 &b, cons
 		return Vector4(C.x, C.y, C.z, V);
 	}
 }
+
+#pragma region Forces Application
 
 void Buoyancy::apply_buoyancy_forces(RigidBody3D *body, float delta) {
 	if (!body) return;
@@ -645,4 +685,210 @@ void Buoyancy::apply_buoyancy_forces(RigidBody3D *body, float delta) {
 		//PhysicsServer3D::get_singleton()->body_set_state(body->get_rid(), PhysicsServer3D::BODY_STATE_ANGULAR_VELOCITY, global_ang);
 		body->set_angular_velocity(global_ang);
 	}
+}
+
+#pragma region Debugging
+
+void Buoyancy::_create_debug_mesh() {
+	Node3D* parent = Object::cast_to<Node3D>(get_parent());
+	if (parent == nullptr) return;
+	if (is_inside_tree() == false) return;
+	
+
+	if (!_debug_mesh_instance) {
+		_debug_mesh_instance = memnew(MeshInstance3D);
+		_debug_mesh_instance->set_name(get_name() + String("_DebugMesh"));
+		
+		// add the child to the parent so it gets the same transform
+		parent->add_child(_debug_mesh_instance, true, INTERNAL_MODE_BACK);
+
+		// attach mesh
+		if (!_debug_mesh.is_valid()) {
+			_debug_mesh.instantiate();
+		}
+		_debug_mesh_instance->set_mesh(_debug_mesh);
+		_debug_mesh_dirty = true;
+	}
+}
+
+// This call has trash performace but it recreates these arrays each frame
+void Buoyancy::_update_debug_mesh() {
+	if (_collider && _debug_mesh_instance && _debug_mesh.is_valid()) {
+		PackedVector3Array vertices;
+		PackedInt32Array indices;
+
+		// clear previous surfaces
+		_debug_mesh->clear_surfaces();
+
+		// Use the submerged verts if available, the original mesh otherwise
+		Color color = _debug_color;
+		PackedVector3Array verts = _submerged_verts;
+		if (verts.size() == 0) {
+			verts = _vertex;
+			color = Color(0.0, 0.2, 1.0, 0.5);
+		}
+
+		int face_count = verts.size() / 3;
+
+		for (int idx = 0; idx < face_count; ++idx) {
+			Vector3 a = verts[idx * 3 + 0];
+			Vector3 b = verts[idx * 3 + 1];
+			Vector3 c = verts[idx * 3 + 2];
+			vertices.append(a);
+			vertices.append(b);
+			vertices.append(c);
+
+			indices.append(idx * 3 + 0);
+			indices.append(idx * 3 + 1);
+
+			indices.append(idx * 3 + 1);
+			indices.append(idx * 3 + 2);
+
+			indices.append(idx * 3 + 2);
+			indices.append(idx * 3 + 0);
+		}
+
+		// no submerged verts, skip
+		if (face_count == 0) return;
+
+		Array arrays;
+		arrays.resize(Mesh::ARRAY_MAX);
+		arrays[Mesh::ARRAY_VERTEX] = vertices;
+		arrays[Mesh::ARRAY_INDEX] = indices;
+
+		int surf_lines = _debug_mesh->get_surface_count();
+		_debug_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINES, arrays);
+
+		Ref<StandardMaterial3D> mat;
+		mat.instantiate();
+		mat->set_shading_mode(StandardMaterial3D::SHADING_MODE_UNSHADED);
+		mat->set_depth_draw_mode(StandardMaterial3D::DEPTH_DRAW_DISABLED);
+		mat->set_transparency(StandardMaterial3D::TRANSPARENCY_ALPHA);
+		mat->set_albedo(color);
+
+		// disable depth test in game so we can see the mesh
+		if (!Engine::get_singleton()->is_editor_hint()) {
+			mat->set_flag(StandardMaterial3D::FLAG_DISABLE_DEPTH_TEST, true);
+		}
+		
+		_debug_mesh->surface_set_material(surf_lines, mat);
+
+		// move debug mesh
+		_debug_mesh_instance->set_global_transform(_collider->get_global_transform());
+	}
+}
+
+void Buoyancy::_destroy_debug_mesh() {
+	if (_debug_mesh_instance) {
+		_debug_mesh_instance->queue_free();
+		_debug_mesh_instance = nullptr;
+	}
+
+	if (_debug_mesh.is_valid()) {
+		_debug_mesh.unref();
+	}
+
+	_submerged_verts.clear();
+}
+
+
+#pragma region Bindings
+
+void Buoyancy::_bind_methods() {
+	// Property bindings
+	ClassDB::bind_method(D_METHOD("set_liquid_area", "liquid_area"), &Buoyancy::set_liquid_area);
+	ClassDB::bind_method(D_METHOD("get_liquid_area"), &Buoyancy::get_liquid_area);
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "liquid_area", PROPERTY_HINT_NODE_TYPE, "LiquidArea"), "set_liquid_area", "get_liquid_area");
+
+	ClassDB::bind_method(D_METHOD("set_collider", "collider"), &Buoyancy::set_collider);
+	ClassDB::bind_method(D_METHOD("get_collider"), &Buoyancy::get_collider);
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "collider", PROPERTY_HINT_NODE_TYPE, "CollisionShape3D"), "set_collider", "get_collider");
+
+
+	// ---
+	ADD_GROUP("Physics", "");
+
+	ClassDB::bind_method(D_METHOD("set_apply_forces", "ignore_waves"), &Buoyancy::set_apply_forces);
+	ClassDB::bind_method(D_METHOD("get_apply_forces"), &Buoyancy::get_apply_forces);
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "apply_forces"), "set_apply_forces", "get_apply_forces");
+
+	ClassDB::bind_method(D_METHOD("set_submerged_linear_drag", "submerged_linear_drag"), &Buoyancy::set_submerged_linear_drag);
+	ClassDB::bind_method(D_METHOD("get_submerged_linear_drag"), &Buoyancy::get_submerged_linear_drag);
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "submerged_linear_drag"), "set_submerged_linear_drag", "get_submerged_linear_drag");
+
+	ClassDB::bind_method(D_METHOD("set_submerged_angular_drag", "submerged_angular_drag"), &Buoyancy::set_submerged_angular_drag);
+	ClassDB::bind_method(D_METHOD("get_submerged_angular_drag"), &Buoyancy::get_submerged_angular_drag);
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "submerged_angular_drag"), "set_submerged_angular_drag", "get_submerged_angular_drag");
+
+	ClassDB::bind_method(D_METHOD("set_linear_drag_scale", "linear_drag_scale"), &Buoyancy::set_linear_drag_scale);
+	ClassDB::bind_method(D_METHOD("get_linear_drag_scale"), &Buoyancy::get_linear_drag_scale);
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "linear_drag_scale"), "set_linear_drag_scale", "get_linear_drag_scale");
+
+	ClassDB::bind_method(D_METHOD("set_angular_drag_scale", "angular_drag_scale"), &Buoyancy::set_angular_drag_scale);
+	ClassDB::bind_method(D_METHOD("get_angular_drag_scale"), &Buoyancy::get_angular_drag_scale);
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "angular_drag_scale"), "set_angular_drag_scale", "get_angular_drag_scale");
+
+	ClassDB::bind_method(D_METHOD("set_ignore_waves", "ignore_waves"), &Buoyancy::set_ignore_waves);
+	ClassDB::bind_method(D_METHOD("get_ignore_waves"), &Buoyancy::get_ignore_waves);
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "ignore_waves"), "set_ignore_waves", "get_ignore_waves");
+
+	// Read only
+	ClassDB::bind_method(D_METHOD("get_submerged_volume"), &Buoyancy::get_submerged_volume);
+	ClassDB::bind_method(D_METHOD("get_submerged_centroid"), &Buoyancy::get_submerged_centroid);
+	ClassDB::bind_method(D_METHOD("get_buoyancy_normal"), &Buoyancy::get_buoyancy_normal);
+
+	ClassDB::bind_method(D_METHOD("get_volume"), &Buoyancy::get_volume);
+	ClassDB::bind_method(D_METHOD("get_centroid"), &Buoyancy::get_centroid);
+
+	// Info properties (read-only)
+	ClassDB::bind_method(D_METHOD("get_mass"), &Buoyancy::get_mass);
+	ClassDB::bind_method(D_METHOD("get_center_of_mass"), &Buoyancy::get_center_of_mass);
+	ClassDB::bind_method(D_METHOD("get_inertia"), &Buoyancy::get_inertia);
+
+	ClassDB::bind_method(D_METHOD("_get_buoyancy_time"), &Buoyancy::_get_buoyancy_time);
+
+	// Function calls
+	ClassDB::bind_method(D_METHOD("apply_buoyancy_forces"), &Buoyancy::apply_buoyancy_forces);
+
+
+	// ---
+	ADD_GROUP("Mass Properties", "");
+
+	ClassDB::bind_method(D_METHOD("set_calculate_mass_properties", "calculate_mass_properties"), &Buoyancy::set_calculate_mass_properties);
+	ClassDB::bind_method(D_METHOD("get_calculate_mass_properties"), &Buoyancy::get_calculate_mass_properties);
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "calculate_mass_properties"), "set_calculate_mass_properties", "get_calculate_mass_properties");
+
+	ClassDB::bind_method(D_METHOD("set_density", "density"), &Buoyancy::set_density);
+	ClassDB::bind_method(D_METHOD("get_density"), &Buoyancy::get_density);
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "density", PROPERTY_HINT_RANGE, "1,10000,1,suffix:kg*m^3"), "set_density", "get_density");
+
+	ClassDB::bind_method(D_METHOD("set_com_offset", "com_offset"), &Buoyancy::set_com_offset);
+	ClassDB::bind_method(D_METHOD("get_com_offset"), &Buoyancy::get_com_offset);
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "com_offset"), "set_com_offset", "get_com_offset");
+
+
+	// ---
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "volume", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY | PROPERTY_USAGE_NO_INSTANCE_STATE | PROPERTY_USAGE_EDITOR), "", "get_volume");
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "centroid", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY | PROPERTY_USAGE_NO_INSTANCE_STATE | PROPERTY_USAGE_EDITOR), "", "get_centroid");
+
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "body_mass", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY | PROPERTY_USAGE_NO_INSTANCE_STATE | PROPERTY_USAGE_EDITOR), "", "get_mass");
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "body_center_of_mass", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY | PROPERTY_USAGE_NO_INSTANCE_STATE | PROPERTY_USAGE_EDITOR), "", "get_center_of_mass");
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "body_inertia", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY | PROPERTY_USAGE_NO_INSTANCE_STATE | PROPERTY_USAGE_EDITOR), "", "get_inertia");
+
+
+	// Debug
+	ADD_GROUP("Debug", "");
+	ClassDB::bind_method(D_METHOD("set_show_debug", "show_debug"), &Buoyancy::set_show_debug);
+	ClassDB::bind_method(D_METHOD("get_show_debug"), &Buoyancy::get_show_debug);
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "show_debug"), "set_show_debug", "get_show_debug");
+
+	ClassDB::bind_method(D_METHOD("set_debug_color", "debug_color"), &Buoyancy::set_debug_color);
+	ClassDB::bind_method(D_METHOD("get_debug_color"), &Buoyancy::get_debug_color);
+	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "debug_color"), "set_debug_color", "get_debug_color");
+
+	// Internal methods
+	// ClassDB::bind_method(D_METHOD("_property_changed", "prop"), &Buoyancy::_property_changed);
+
+	// virtuals
+	// GDVIRTUAL_BIND(get_configuration_warnings)
 }
