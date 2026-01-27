@@ -69,10 +69,12 @@ private:
 	
 	Vector3 _submerged_centroid = Vector3(0, 0, 0);
 	float _submerged_volume = 0.0f;
+	int _submerged_probe_count = 0;
 	Vector3 _mesh_centroid = Vector3(0, 0, 0);
 	float _mesh_volume = 0.0f;
 	float _sign = -1.0f;
 	float _buoyancy_time = 0.0;
+	float _last_submerged_ratio = 0.0f;
 
 	// statics need updating
 	bool _dirty = true;
@@ -176,10 +178,13 @@ public:
 	float get_volume() const;
 	Vector3 get_centroid() const;
 
-	// Dynamic properties. Always updated while processing is enabled.
+	// Dynamic properties. Always updated while processing is enabled in BUOYANCY_COLLIDER mode.
 	float get_submerged_volume() const;
 	Vector3 get_submerged_centroid() const;
 	Vector3 get_buoyancy_normal() const;
+
+	// Returns the proportion of submerged probes in BUOYANCY_PROBES mode, and the ratio of submerged_volume/volume in BUOYANCY_COLLIDER mode.
+	float get_submerged_ratio() const;
 
 
 	// Called after updating dynamics if apply_forces is true. (submerged_volume, etc.)
