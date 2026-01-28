@@ -64,7 +64,7 @@ func update_transforms_for_points(global_points: PackedVector3Array, transforms:
 	
 	# sample the normal and height map to get the ocean surface
 	var img_width = _normal.get_width()
-	var img_height = _height.get_height()
+	var img_height = _normal.get_height()
 	for idx in global_points.size():
 		
 		var pos = global_points[idx]

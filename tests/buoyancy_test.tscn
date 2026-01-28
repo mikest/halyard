@@ -140,7 +140,7 @@ appearance = SubResource("RopeAppearance_swncg")
 apply_buoyancy = true
 buoyancy_scale = 1.5
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.7146287, 1.0919201, -0.053874493)
-custom_aabb = AABB(-0.125, -1.5654465, -0.125, 3.531139, 1.6904465, 0.43105936)
+custom_aabb = AABB(-0.125, -1.5654519, -0.125, 3.531139, 1.6904519, 0.43105936)
 
 [node name="Marker3D" type="Marker3D" parent="FloatingRope" unique_id=1498230338]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.281139, 0, 0.18105936)
