@@ -16,7 +16,7 @@ noise = SubResource("FastNoiseLite_3a1xc")
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_5mbyi"]
 render_priority = 0
 shader = ExtResource("2_swncg")
-shader_parameter/phase = 0.9736864980412581
+shader_parameter/phase = 0.9292662746966607
 shader_parameter/Height = SubResource("NoiseTexture2D_3a1xc")
 shader_parameter/Normal = SubResource("NoiseTexture2D_swncg")
 
@@ -43,6 +43,10 @@ points = PackedVector3Array(-0.12450362, -0.94250137, -0.44845212, 0.022484561, 
 
 [sub_resource type="CapsuleMesh" id="CapsuleMesh_obnff"]
 
+[sub_resource type="RopeAppearance" id="RopeAppearance_swncg"]
+rope_lod = 3
+particles_per_meter = 8.0
+
 [node name="BuoyancyTest" type="Node3D" unique_id=442531547]
 
 [node name="Camera3D" type="Camera3D" parent="." unique_id=471177411]
@@ -62,21 +66,13 @@ Try switching between BUOYANCY_PROBE,
 and BUOYANCY_COLLIDER modes."
 horizontal_alignment = 0
 
-[node name="Label3D2" type="Label3D" parent="." unique_id=668776881]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.972606, 3, 0)
-text = "Adding a CharacterBuoyancy node to a
-CharacterBody3D will make it float.
-
-Don't forget to apply gravity in your code!"
-horizontal_alignment = 0
-
 [node name="LiquidArea" type="LiquidArea" parent="." unique_id=1943216933]
 script = ExtResource("1_3a1xc")
 normal = SubResource("NoiseTexture2D_swncg")
 height = SubResource("NoiseTexture2D_3a1xc")
 shader = SubResource("ShaderMaterial_5mbyi")
 mesh = SubResource("PlaneMesh_obnff")
-phase = 0.21340839999999994
+phase = 0.18977980000000008
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="LiquidArea" unique_id=2131639635]
 material_override = SubResource("ShaderMaterial_5mbyi")
@@ -113,6 +109,14 @@ mesh = SubResource("ArrayMesh_2337w")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Collider" unique_id=254394105]
 shape = SubResource("ConvexPolygonShape3D_obnff")
 
+[node name="Label3D2" type="Label3D" parent="." unique_id=668776881]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.972606, 3, 0)
+text = "Adding a CharacterBuoyancy node to a
+CharacterBody3D will make it float.
+
+Don't forget to apply gravity in your code!"
+horizontal_alignment = 0
+
 [node name="CharacterBody3D" type="CharacterBody3D" parent="." unique_id=2130198864]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 3, 0)
 script = ExtResource("1_obnff")
@@ -125,3 +129,19 @@ shape = SubResource("CapsuleShape3D_2337w")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="CharacterBody3D" unique_id=946872105]
 mesh = SubResource("CapsuleMesh_obnff")
+
+[node name="Label3D3" type="Label3D" parent="." unique_id=660185175]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.9483757, 3, 0)
+text = "Rope can be made to float as well."
+horizontal_alignment = 0
+
+[node name="FloatingRope" type="Rope" parent="." unique_id=695550667]
+end_anchor = NodePath("Marker3D")
+appearance = SubResource("RopeAppearance_swncg")
+apply_buoyancy = true
+buoyancy_scale = 1.5
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.7146287, 1.0919201, -0.053874493)
+custom_aabb = AABB(-0.125, -1.565454, -0.125, 3.531139, 1.690454, 0.43105936)
+
+[node name="Marker3D" type="Marker3D" parent="FloatingRope" unique_id=1498230338]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.281139, 0, 0.18105936)
