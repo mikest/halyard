@@ -1,0 +1,81 @@
+[gd_resource type="VisualShader" format=3 uid="uid://b1h3l671sx73v"]
+
+[sub_resource type="VisualShaderNodeFloatConstant" id="VisualShaderNodeFloatConstant_0gw55"]
+constant = 0.2
+
+[sub_resource type="VisualShaderNodeColorConstant" id="VisualShaderNodeColorConstant_0gw55"]
+constant = Color(0.1882353, 0.45882353, 0.78039217, 1)
+
+[sub_resource type="VisualShaderNodeInput" id="VisualShaderNodeInput_0gw55"]
+input_name = "normal"
+
+[sub_resource type="VisualShaderNodeInput" id="VisualShaderNodeInput_fbgpo"]
+input_name = "uv"
+
+[sub_resource type="VisualShaderNodeFloatParameter" id="VisualShaderNodeFloatParameter_0gw55"]
+parameter_name = "phase"
+
+[sub_resource type="VisualShaderNodeExpression" id="VisualShaderNodeExpression_0gw55"]
+size = Vector2(480, 339.99997)
+expression = "output0 = height * phase;"
+
+[sub_resource type="VisualShaderNodeTexture" id="VisualShaderNodeTexture_0gw55"]
+source = 5
+texture_type = 2
+
+[sub_resource type="VisualShaderNodeTexture2DParameter" id="VisualShaderNodeTexture2DParameter_3s8i6"]
+parameter_name = "Normal"
+texture_type = 2
+
+[sub_resource type="VisualShaderNodeTexture2DParameter" id="VisualShaderNodeTexture2DParameter_kr5k5"]
+parameter_name = "Height"
+
+[sub_resource type="VisualShaderNodeTexture" id="VisualShaderNodeTexture_3s8i6"]
+source = 5
+
+[sub_resource type="VisualShaderNodeVectorDecompose" id="VisualShaderNodeVectorDecompose_kr5k5"]
+
+[sub_resource type="VisualShaderNodeInput" id="VisualShaderNodeInput_b6ir4"]
+input_name = "vertex"
+
+[sub_resource type="VisualShaderNodeVectorDecompose" id="VisualShaderNodeVectorDecompose_fbgpo"]
+
+[sub_resource type="VisualShaderNodeVectorCompose" id="VisualShaderNodeVectorCompose_msdbi"]
+
+[resource]
+flags/depth_prepass_alpha = true
+nodes/vertex/0/position = Vector2(1120, 160)
+nodes/vertex/2/node = SubResource("VisualShaderNodeTexture_0gw55")
+nodes/vertex/2/position = Vector2(-320, 200)
+nodes/vertex/3/node = SubResource("VisualShaderNodeTexture2DParameter_3s8i6")
+nodes/vertex/3/position = Vector2(-880, 160)
+nodes/vertex/4/node = SubResource("VisualShaderNodeTexture2DParameter_kr5k5")
+nodes/vertex/4/position = Vector2(-860, 520)
+nodes/vertex/5/node = SubResource("VisualShaderNodeTexture_3s8i6")
+nodes/vertex/5/position = Vector2(-240, 540)
+nodes/vertex/6/node = SubResource("VisualShaderNodeVectorDecompose_kr5k5")
+nodes/vertex/6/position = Vector2(80, 620)
+nodes/vertex/7/node = SubResource("VisualShaderNodeInput_b6ir4")
+nodes/vertex/7/position = Vector2(20, 420)
+nodes/vertex/8/node = SubResource("VisualShaderNodeVectorDecompose_fbgpo")
+nodes/vertex/8/position = Vector2(460, 400)
+nodes/vertex/9/node = SubResource("VisualShaderNodeVectorCompose_msdbi")
+nodes/vertex/9/position = Vector2(880, 520)
+nodes/vertex/10/node = SubResource("VisualShaderNodeInput_0gw55")
+nodes/vertex/10/position = Vector2(1400, 280)
+nodes/vertex/12/node = SubResource("VisualShaderNodeInput_fbgpo")
+nodes/vertex/12/position = Vector2(-1240, 600)
+nodes/vertex/13/node = SubResource("VisualShaderNodeFloatParameter_0gw55")
+nodes/vertex/13/position = Vector2(-260, 960)
+nodes/vertex/17/node = SubResource("VisualShaderNodeExpression_0gw55")
+nodes/vertex/17/position = Vector2(420, 800)
+nodes/vertex/17/size = Vector2(480, 339.99997)
+nodes/vertex/17/input_ports = "0,0,phase;1,0,height;"
+nodes/vertex/17/output_ports = "0,0,output0;"
+nodes/vertex/17/expression = "output0 = height * phase;"
+nodes/vertex/connections = PackedInt32Array(4, 0, 5, 2, 5, 0, 6, 0, 7, 0, 8, 0, 8, 0, 9, 0, 8, 2, 9, 2, 9, 0, 0, 0, 12, 0, 5, 0, 12, 0, 2, 0, 3, 0, 2, 2, 2, 0, 0, 1, 6, 1, 17, 1, 13, 0, 17, 0, 17, 0, 9, 1)
+nodes/fragment/2/node = SubResource("VisualShaderNodeFloatConstant_0gw55")
+nodes/fragment/2/position = Vector2(-160, 420)
+nodes/fragment/3/node = SubResource("VisualShaderNodeColorConstant_0gw55")
+nodes/fragment/3/position = Vector2(-180, 260)
+nodes/fragment/connections = PackedInt32Array(2, 0, 0, 1, 3, 0, 0, 0)

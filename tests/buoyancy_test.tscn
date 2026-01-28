@@ -1,0 +1,127 @@
+[gd_scene format=4 uid="uid://dv0aa2uvu6iwa"]
+
+[ext_resource type="Script" uid="uid://4y54xevv6djs" path="res://addons/halyard/tests/custom_liquid_area.gd" id="1_3a1xc"]
+[ext_resource type="Script" uid="uid://djdaptl7h0yd8" path="res://addons/halyard/tests/character_buoyancy_controller.gd" id="1_obnff"]
+[ext_resource type="Shader" uid="uid://b1h3l671sx73v" path="res://addons/halyard/tests/buoyancy_test.tres" id="2_swncg"]
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_3a1xc"]
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_swncg"]
+noise = SubResource("FastNoiseLite_3a1xc")
+as_normal_map = true
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_3a1xc"]
+noise = SubResource("FastNoiseLite_3a1xc")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_5mbyi"]
+render_priority = 0
+shader = ExtResource("2_swncg")
+shader_parameter/phase = 0.9736864980412581
+shader_parameter/Height = SubResource("NoiseTexture2D_3a1xc")
+shader_parameter/Normal = SubResource("NoiseTexture2D_swncg")
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_obnff"]
+size = Vector2(64, 64)
+subdivide_width = 512
+subdivide_depth = 512
+
+[sub_resource type="ArrayMesh" id="ArrayMesh_2337w"]
+_surfaces = [{
+"aabb": AABB(-0.5, -1, -0.5, 1, 2, 1),
+"attribute_data": PackedByteArray("GPYVPgAAAAAAAAAAAAAAAAAAAD8AAAA/AAAAPwAAAAAAACA/AAAAAAAAID8AAIA/AAAAPwAAAAAY9hU+AAAAAAAAAD8AAAA/AAAgPwAAAAAAAEA/AAAAAAAAQD8AAIA/AAAAAAAAAAAa9hU+AAAAAAAAAD8AAAA/AADAPgAAAAAAAAA/AAAAAAAAAD8AAIA/GvYVPgAAAAD///8+AAAAAAAAAD8AAAA/AACAPgAAAAAAAMA+AAAAAAAAwD4AAIA/AAAgPwAAgD8AAAA/AACAPwAAAD8AAAAAGPYVPgAAAAAAAAAAAAAAAAAAAD8AAAA/AABAPwAAgD8AACA/AACAPwAAID8AAAAAAAAAPwAAAAAY9hU+AAAAAAAAAD8AAAA/AAAAPwAAgD8AAMA+AACAPwAAwD4AAAAAAAAAAAAAAAAa9hU+AAAAAAAAAD8AAAA/AADAPgAAgD8AAIA+AACAPwAAgD4AAAAAGvYVPgAAAAD///8+AAAAAAAAAD8AAAA/eIJaPwAAAAAAAAA/AAAAAAAAAD8AAAA/AABAPwAAAAAAAGA/AAAAAAAAYD8AAIA/AACAPwAAAAB4glo/AAAAAAAAAD8AAAA/AABgPwAAAAAAAAAAAAAAAAAAAAAAAIA/////PgAAAAB6glo/AAAAAAAAAD8AAAA/AAAAPgAAAAAAAIA+AAAAAAAAgD4AAIA/eoJaPwAAAAAAAIA/AAAAAAAAAD8AAAA/AAAAAAAAAAAAAAA+AAAAAAAAAD4AAIA/AABgPwAAgD8AAEA/AACAPwAAQD8AAAAAeIJaPwAAAAAAAAA/AAAAAAAAAD8AAAA/AAAAAAAAgD8AAGA/AACAPwAAYD8AAAAAAACAPwAAAAB4glo/AAAAAAAAAD8AAAA/AACAPgAAgD8AAAA+AACAPwAAAD4AAAAA////PgAAAAB6glo/AAAAAAAAAD8AAAA/AAAAPgAAgD8AAAAAAACAPwAAAAAAAAAAeoJaPwAAAAAAAIA/AAAAAAAAAD8AAAA/"),
+"format": 34359738391,
+"primitive": 3,
+"uv_scale": Vector4(0, 0, 0, 0),
+"vertex_count": 96,
+"vertex_data": PackedByteArray("9AS1vgAAgL/yBLW+AAAAvwAAgL8uvTuzAAAAAAAAgL8AAAAAAAAAvwAAgL8uvTuz9AS1vgAAgL/yBLW+9AS1vgAAgD/yBLW+Lt7MMQAAgL8AAAC/9AS1vgAAgL/yBLW+AAAAAAAAgL8AAAAA9AS1vgAAgL/yBLW+Lt7MMQAAgL8AAAC/Lt7MMQAAgD8AAAC/AAAAvwAAgL8uvTuz8wS1vgAAgL/zBLU+AAAAAAAAgL8AAAAA8wS1vgAAgL/zBLU+AAAAvwAAgL8uvTuzAAAAvwAAgD8uvTuz8wS1vgAAgL/zBLU+Lr27sgAAgL8AAAA/AAAAAAAAgL8AAAAALr27sgAAgL8AAAA/8wS1vgAAgL/zBLU+8wS1vgAAgD/zBLU+9AS1vgAAgD/yBLW+AAAAvwAAgD8uvTuzAAAAvwAAgL8uvTuzAAAAvwAAgD8uvTuz9AS1vgAAgD/yBLW+AAAAAAAAgD8AAAAALt7MMQAAgD8AAAC/9AS1vgAAgD/yBLW+9AS1vgAAgL/yBLW+9AS1vgAAgD/yBLW+Lt7MMQAAgD8AAAC/AAAAAAAAgD8AAAAAAAAAvwAAgD8uvTuz8wS1vgAAgD/zBLU+8wS1vgAAgL/zBLU+8wS1vgAAgD/zBLU+AAAAvwAAgD8uvTuzAAAAAAAAgD8AAAAA8wS1vgAAgD/zBLU+Lr27sgAAgD8AAAA/Lr27sgAAgL8AAAA/Lr27sgAAgD8AAAA/8wS1vgAAgD/zBLU+AAAAAAAAgD8AAAAA8QS1PgAAgL/1BLW+Lt7MMQAAgL8AAAC/AAAAAAAAgL8AAAAALt7MMQAAgL8AAAC/8QS1PgAAgL/1BLW+8QS1PgAAgD/1BLW+AAAAPwAAgL8AAAAA8QS1PgAAgL/1BLW+AAAAAAAAgL8AAAAA8QS1PgAAgL/1BLW+AAAAPwAAgL8AAAAAAAAAPwAAgD8AAAAALr27sgAAgL8AAAA/8wS1PgAAgL/zBLU+AAAAAAAAgL8AAAAA8wS1PgAAgL/zBLU+Lr27sgAAgL8AAAA/Lr27sgAAgD8AAAA/8wS1PgAAgL/zBLU+AAAAPwAAgL8AAAAAAAAAAAAAgL8AAAAAAAAAPwAAgL8AAAAA8wS1PgAAgL/zBLU+8wS1PgAAgD/zBLU+8QS1PgAAgD/1BLW+Lt7MMQAAgD8AAAC/Lt7MMQAAgL8AAAC/Lt7MMQAAgD8AAAC/8QS1PgAAgD/1BLW+AAAAAAAAgD8AAAAAAAAAPwAAgD8AAAAA8QS1PgAAgD/1BLW+8QS1PgAAgL/1BLW+8QS1PgAAgD/1BLW+AAAAPwAAgD8AAAAAAAAAAAAAgD8AAAAALr27sgAAgD8AAAA/8wS1PgAAgD/zBLU+8wS1PgAAgL/zBLU+8wS1PgAAgD/zBLU+Lr27sgAAgD8AAAA/AAAAAAAAgD8AAAAA8wS1PgAAgD/zBLU+AAAAPwAAgD8AAAAAAAAAPwAAgL8AAAAAAAAAPwAAgD8AAAAA8wS1PgAAgD/zBLU+AAAAAAAAgD8AAAAA/38AAP///x//fwAA//++Ev9/AAD///8/AACGj///O/gAANXI//+U2wAAKbf//2rk/38AAP///z//fwAA////H/9/AAD///8/AADVyP//lNv//3fwd/D/vwAAd/D//8LH/38AAHyl/7//fwAA/7//v/9/AAD///+/KTf/fwAAauQAAIaP//87+IcP/38AADv4/38AAP+//7//fwAA////v/9/AAD///+/eHD/fwAAwscpN/9/AABq5NVI/38AAJTbAAApt///auSHD/9/AAA7+AAAho///zv4/3///4Ja/z//f///glr/P/9///+CWv8/AAB38P//wscAACm3//9q5AAA1cj//5Tb/3///30l/z//f///fSX/P/9///99Jf8/hw//fwAAO/jVSP9/AACU2yk3/38AAGrk/3///wAAQO3/f///AABA7f9///8AAEDt1Uj/fwAAlNuGj/9/hw//v3hw/38AAMLH/3///wAAvdL/f///AAC90v9///8AAL3S/38AAP+//z//fwAA////P/9/AAD///8///938Hfw/7///ym3Kbf/v///1cjVyP+//38AAHyl/z//fwAA/7//P/9/AAD///8///8ptwAAlBt38P9////DB///ho8AAMMH/38AAP///7//fwAA////3/9/AAD///+/Kbf/fyk3/794cP9/AADCx4aP/3+HD/+//38AAP///9//fwAA//9A7f9/AAD///+/d/D/f3hw/78pt/9/KTf/v9XI/3/VSP+////VyNXI/78AAHfw///Cx///d/B38P+//3///wAAQS3/f///AABBLf9///8AAEEt//+GjwAAwwf//9XIAABqJP//KbcAAJQb/3///wAAvhL/f///AAC+Ev9///8AAL4Sho//f4cP/7/VyP9/1Uj/vym3/38pN/+//3///30l/7//f///fSX/v/9///99Jf+/1cj/f9VI/7///4aPho//v3fw/394cP+//3///4Ja/7//f///glr/v/9///+CWv+/")
+}]
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_obnff"]
+points = PackedVector3Array(-0.12450362, -0.94250137, -0.44845212, 0.022484561, 0.93625075, 0.49069077, 0.16813584, 0.9324813, 0.4303872, -0.03682414, 0.9555206, -0.48475382, 0.49717885, -0.94885695, -0.0068139476, -0.3574724, -0.9358524, 0.34424698, -0.48479456, 0.9555989, -0.03672568, 0.34417242, 0.9359362, -0.35750327, 0.35352403, -0.9619666, 0.35363144, 0.49717885, 0.94885695, -0.0068139476, -0.36225963, -0.9481132, -0.3326844, 0.34417242, -0.9359362, -0.35750327, -0.3574724, 0.9358524, 0.34424698, -0.0069141295, -0.94875324, 0.49713737, -0.47842246, -0.9432407, 0.05211626, -0.33268717, 0.9481149, -0.36225846, 0.35352403, 0.9619666, 0.35363144, 0.05201805, -0.94332045, -0.4784631, -0.48479456, -0.9555989, -0.03672568, -0.03682414, -0.9555206, -0.48475382, -0.0069141295, 0.94875324, 0.49713737, 0.05201805, 0.94332045, -0.4784631, -0.47842246, 0.9432407, 0.05211626, -0.36225963, 0.9481132, -0.3326844, 0.3754909, 0.9411359, -0.3007269, -0.3007222, 0.9411138, 0.37549284, 0.49068803, 0.9362685, 0.022491211, -0.33268717, -0.9481149, -0.36225846, 0.3754909, -0.9411359, -0.3007269, -0.3007222, -0.9411138, 0.37549284, 0.022484561, -0.93625075, 0.49069077, 0.49068803, -0.9362685, 0.022491211)
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_2337w"]
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_obnff"]
+
+[node name="BuoyancyTest" type="Node3D" unique_id=442531547]
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=471177411]
+transform = Transform3D(1, 0, 0, 0, 0.8364679, 0.5480159, 0, -0.5480159, 0.8364679, 0, 3.7720942, 6.955881)
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1999271333]
+transform = Transform3D(0.8881044, -0.16795912, -0.42785558, 0.45964187, 0.32452488, 0.826688, 0, -0.9308455, 0.36541304, 0, 6.7965274, 6.4533286)
+
+[node name="Label3D" type="Label3D" parent="." unique_id=1003481240]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.85526, 3, 0)
+text = "Adding a Buoyancy node to a rigid body
+in a scene with a LiquidArea will make it float.
+Make sure you pay attention to the Mass, Center of Mass,
+and other physics properties.
+
+Try switching between BUOYANCY_PROBE,
+and BUOYANCY_COLLIDER modes."
+horizontal_alignment = 0
+
+[node name="Label3D2" type="Label3D" parent="." unique_id=668776881]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.972606, 3, 0)
+text = "Adding a CharacterBuoyancy node to a
+CharacterBody3D will make it float.
+
+Don't forget to apply gravity in your code!"
+horizontal_alignment = 0
+
+[node name="LiquidArea" type="LiquidArea" parent="." unique_id=1943216933]
+script = ExtResource("1_3a1xc")
+normal = SubResource("NoiseTexture2D_swncg")
+height = SubResource("NoiseTexture2D_3a1xc")
+shader = SubResource("ShaderMaterial_5mbyi")
+mesh = SubResource("PlaneMesh_obnff")
+phase = 0.21340839999999994
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="LiquidArea" unique_id=2131639635]
+material_override = SubResource("ShaderMaterial_5mbyi")
+mesh = SubResource("PlaneMesh_obnff")
+
+[node name="Probe" type="RigidBody3D" parent="." unique_id=1838467176]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 0)
+mass = 500.0
+
+[node name="Buoyancy" type="Buoyancy" parent="Probe" unique_id=1269008922 node_paths=PackedStringArray("collider")]
+buoyancy_mode = 1
+collider = NodePath("../CollisionShape3D")
+buoyancy_probes = PackedVector3Array(1, 1, 0, 0, 1, 1, -1, 1, 0, 0, 1, -1)
+show_debug = true
+
+[node name="CSGBakedMeshInstance3D" type="MeshInstance3D" parent="Probe" unique_id=1700310248]
+mesh = SubResource("ArrayMesh_2337w")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Probe" unique_id=2030769128]
+shape = SubResource("ConvexPolygonShape3D_obnff")
+
+[node name="Collider" type="RigidBody3D" parent="." unique_id=2110375422]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.220772, 0, 0)
+mass = 500.0
+
+[node name="Buoyancy" type="Buoyancy" parent="Collider" unique_id=1170455693 node_paths=PackedStringArray("collider")]
+collider = NodePath("../CollisionShape3D")
+buoyancy_probes = PackedVector3Array(1, 1, 0, 0, 1, 1, -1, 1, 0, 0, 1, -1)
+show_debug = true
+
+[node name="CSGBakedMeshInstance3D" type="MeshInstance3D" parent="Collider" unique_id=1686922488]
+mesh = SubResource("ArrayMesh_2337w")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Collider" unique_id=254394105]
+shape = SubResource("ConvexPolygonShape3D_obnff")
+
+[node name="CharacterBody3D" type="CharacterBody3D" parent="." unique_id=2130198864]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 3, 0)
+script = ExtResource("1_obnff")
+
+[node name="CharacterBuoyancy" type="CharacterBuoyancy" parent="CharacterBody3D" unique_id=734354923]
+probes = PackedVector3Array(1, 0.5, 0, 0, 0.5, 1, -1, 0.5, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CharacterBody3D" unique_id=1095881935]
+shape = SubResource("CapsuleShape3D_2337w")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="CharacterBody3D" unique_id=946872105]
+mesh = SubResource("CapsuleMesh_obnff")
