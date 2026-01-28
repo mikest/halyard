@@ -10,6 +10,8 @@
 using namespace godot;
 
 CharacterBuoyancy::CharacterBuoyancy() {
+	// default color
+	_debug_color = Color(0.0f, 0.8f, 1.0f, 0.2f);
 }
 
 CharacterBuoyancy::~CharacterBuoyancy() {
@@ -31,12 +33,22 @@ PackedStringArray CharacterBuoyancy::_get_configuration_warnings() const {
 }
 
 void CharacterBuoyancy::_notification(int p_what) {
+    // manage debugging
+    NodeDebug::_debug_notification(p_what);
+
 	switch (p_what) {
 		case NOTIFICATION_READY: {
-			if (Engine::get_singleton()->is_editor_hint()) {
-			}
 			set_process_internal(true);
 			set_physics_process_internal(true);
+		} break;
+
+		case NOTIFICATION_PARENTED: {
+			Node3D* parent = Object::cast_to<Node3D>(get_parent());
+			_set_debug_owner_node(parent);
+		} break;
+
+		case NOTIFICATION_UNPARENTED: {
+			_set_debug_owner_node(nullptr);
 		} break;
 
 		case NOTIFICATION_ENTER_TREE: {
@@ -153,6 +165,81 @@ float CharacterBuoyancy::get_submerged_ratio() const {
 	return _submerged_ratio;
 }
 
+// Debug
+void CharacterBuoyancy::set_show_debug(bool show) {
+    _show_debug = show;
+    set_debug_mesh_dirty();
+}
+
+bool CharacterBuoyancy::get_show_debug() const {
+    return _show_debug;
+}
+
+void CharacterBuoyancy::set_debug_color(const Color &color) {
+    _debug_color = color;
+    set_debug_mesh_dirty();
+}
+
+Color CharacterBuoyancy::get_debug_color() const {
+    return _debug_color;
+}
+
+void CharacterBuoyancy::_update_debug_mesh() {
+    if (_debug_mesh_instance == nullptr) return;
+    if (_debug_mesh.is_valid() == false) return;
+
+    PackedVector3Array vertices;
+    PackedInt32Array indices;
+
+    // clear previous surfaces
+    _debug_mesh->clear_surfaces();
+
+    // Draw probe positions
+	const float size = 0.1f;
+    if (_probes.size() > 0) {
+        if (_node) {
+            Transform3D xform;
+            
+            for (int idx = 0; idx < _probes.size(); idx++) {
+                Vector3 point = _probes[idx];
+                
+                // X axis line
+				vertices.append(point + Vector3(-size, 0, 0));
+				vertices.append(point + Vector3(size, 0, 0));
+
+				// Y axis line
+				vertices.append(point + Vector3(0, -size, 0));
+				vertices.append(point + Vector3(0, size, 0));
+
+				// Z axis line
+				vertices.append(point + Vector3(0, 0, -size));
+				vertices.append(point + Vector3(0, 0, size));
+
+				// Indices for the 3 lines (6 vertices per point)
+				int base = idx * 6;
+				indices.append(base + 0);
+				indices.append(base + 1);
+
+				indices.append(base + 2);
+				indices.append(base + 3);
+
+				indices.append(base + 4);
+				indices.append(base + 5);
+            }
+        }
+    }
+
+    if (vertices.size() > 0) {
+        Array arrays;
+        arrays.resize(Mesh::ARRAY_MAX);
+        arrays[Mesh::ARRAY_VERTEX] = vertices;
+        arrays[Mesh::ARRAY_INDEX] = indices;
+
+        _debug_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINES, arrays);
+        _debug_mesh->surface_set_material(0, _debug_material);
+    }
+}
+
 void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
     CharacterBody3D *body = Object::cast_to<CharacterBody3D>(get_parent());
     
@@ -250,6 +337,16 @@ void CharacterBuoyancy::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "wave_influence", PROPERTY_HINT_RANGE, "0,1,0.1"), "set_wave_influence", "get_wave_influence");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "submerged_linear_drag", PROPERTY_HINT_RANGE, "0,10,0.1"), "set_submerged_linear_drag", "get_submerged_linear_drag");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "gravity"), "set_gravity", "get_gravity");
+
+    // Debug
+    ADD_GROUP("Debug", "");
+    ClassDB::bind_method(D_METHOD("set_show_debug", "show"), &CharacterBuoyancy::set_show_debug);
+    ClassDB::bind_method(D_METHOD("get_show_debug"), &CharacterBuoyancy::get_show_debug);
+    ADD_PROPERTY(PropertyInfo(Variant::BOOL, "show_debug"), "set_show_debug", "get_show_debug");
+
+    ClassDB::bind_method(D_METHOD("set_debug_color", "color"), &CharacterBuoyancy::set_debug_color);
+    ClassDB::bind_method(D_METHOD("get_debug_color"), &CharacterBuoyancy::get_debug_color);
+    ADD_PROPERTY(PropertyInfo(Variant::COLOR, "debug_color"), "set_debug_color", "get_debug_color");
 
     ADD_SIGNAL(MethodInfo("submerged_changed"));
 }

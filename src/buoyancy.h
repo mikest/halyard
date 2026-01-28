@@ -25,6 +25,9 @@ This objects manages the physics interactions between itself and a single Liquid
 #include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/classes/mesh_instance3d.hpp>
 
+#include "property_utils.h"
+#include "node_debug.h"
+
 using namespace godot;
 
 class LiquidArea;
@@ -35,7 +38,7 @@ enum BuoyancyMode {
 	BUOYANCY_PROBES = 1,
 };
 
-class Buoyancy : public Node {
+class Buoyancy : public Node, protected NodeDebug {
 	GDCLASS(Buoyancy, Node)
 
 private:
@@ -83,21 +86,14 @@ private:
 	PackedVector3Array _vertex;
 	// Optional explicit probe points for point-based buoyancy
 	PackedVector3Array _buoyancy_probes;
-	// Cached wave transforms for each probe point
-	LocalVector<Transform3D> _probe_wave_transforms;
 	PackedFloat32Array _depths;
 	HashMap<Vector3, Transform3D> _depth_map;
 
 	// Debugging
-	bool _show_debug = false;
-	Color _debug_color = Color(0.0f, 0.8f, 1.0f, 0.2f);
-	Ref<ArrayMesh> _debug_mesh;
-	bool _debug_mesh_dirty = true;
-	MeshInstance3D* _debug_mesh_instance = nullptr;
 	PackedVector3Array _submerged_verts;
-	void _create_debug_mesh();
-	void _update_debug_mesh();
-	void _destroy_debug_mesh();
+	void _create_debug_mesh() override;
+	void _update_debug_mesh() override;
+	void _destroy_debug_mesh() override;
 
 protected:
 	static void _bind_methods();

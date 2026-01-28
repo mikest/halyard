@@ -20,6 +20,8 @@
 using namespace godot;
 
 Buoyancy::Buoyancy() {
+	// default color
+	_debug_color = Color(0.0f, 0.8f, 1.0f, 0.2f);
 }
 
 
@@ -78,16 +80,23 @@ PackedStringArray Buoyancy::_get_configuration_warnings() const {
 
 
 void Buoyancy::_notification(int p_what) {
+	// manage debugging
+	NodeDebug::_debug_notification(p_what);
+
 	switch (p_what) {
 		case NOTIFICATION_READY: {
-			if (Engine::get_singleton()->is_editor_hint()) {
-				// Connect to inspector property edited signal if in editor
-				// Note: This might need adjustment based on Godot's API
-			}
 			_set_dirty();
-
 			set_process_internal(true);
 			set_physics_process_internal(true);
+		} break;
+
+		case NOTIFICATION_PARENTED: {
+			Node3D* parent = Object::cast_to<Node3D>(get_parent());
+			_set_debug_owner_node(parent);
+		} break;
+
+		case NOTIFICATION_UNPARENTED: {
+			_set_debug_owner_node(nullptr);
 		} break;
 
 		case NOTIFICATION_ENTER_TREE: {
@@ -106,20 +115,6 @@ void Buoyancy::_notification(int p_what) {
 		case NOTIFICATION_INTERNAL_PROCESS:{
 			if (_dirty && is_node_ready()) {
 				_update_statics();
-			}
-
-			// lazy add/remove the debug meshes
-			if (_show_debug) {
-				if (!_debug_mesh_instance) {
-					_create_debug_mesh();
-				}
-				if (_debug_mesh_dirty) {
-					_update_debug_mesh();
-					_debug_mesh_dirty = false;
-				}
-			
-			} else if (_debug_mesh_instance) {
-				_destroy_debug_mesh();
 			}
 		} break;
 
@@ -166,7 +161,7 @@ void Buoyancy::set_liquid_area(LiquidArea *p_area) {
 	_update_configuration_warnings();
 
 	_set_dirty();
-	_debug_mesh_dirty = true;
+	set_debug_mesh_dirty();
 }
 
 LiquidArea* Buoyancy::get_liquid_area() const {
@@ -181,7 +176,7 @@ void Buoyancy::set_collider(CollisionShape3D *p_collider) {
 		_update_configuration_warnings();
 	}
 
-	_debug_mesh_dirty = true;
+	set_debug_mesh_dirty();
 }
 
 CollisionShape3D* Buoyancy::get_collider() const {
@@ -192,7 +187,7 @@ CollisionShape3D* Buoyancy::get_collider() const {
 void Buoyancy::set_buoyancy_mode(BuoyancyMode p_mode) {
 	ERR_FAIL_COND_MSG(p_mode != BUOYANCY_COLLIDER && p_mode != BUOYANCY_PROBES, "Invalid buoyancy mode");
 	_buoyancy_mode = p_mode;
-	_debug_mesh_dirty = true;
+	set_debug_mesh_dirty();
 	_set_dirty();
 	_update_configuration_warnings();
 }
@@ -204,7 +199,7 @@ BuoyancyMode Buoyancy::get_buoyancy_mode() const {
 // Buoyancy probes
 void Buoyancy::set_buoyancy_probes(const PackedVector3Array &p_probes) {
 	_buoyancy_probes = p_probes;
-	_debug_mesh_dirty = true;
+	set_debug_mesh_dirty();
 	_set_dirty();
 	_update_configuration_warnings();
 }
@@ -300,7 +295,7 @@ bool Buoyancy::get_ignore_waves() const {
 // Debug
 void Buoyancy::set_show_debug(bool p_show) {
 	_show_debug = p_show;
-	_debug_mesh_dirty = true;
+	set_debug_mesh_dirty();
 }
 
 bool Buoyancy::get_show_debug() const {
@@ -467,7 +462,7 @@ void Buoyancy::_update_dynamics() {
 
 	// clear the _submerged verts for debug
 	_submerged_verts.clear();
-	_debug_mesh_dirty = true;
+	set_debug_mesh_dirty();
 
 	// Get the transformed mesh points and their depths
 	_depth_map.clear();
@@ -765,8 +760,7 @@ void Buoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) {
 	Transform3D body_transform = body->get_global_transform();
 
 	// Resize cache for wave transforms
-	_probe_wave_transforms.resize(_buoyancy_probes.size());
-	_debug_mesh_dirty = true;
+	set_debug_mesh_dirty();
 
 	for (int idx = 0; idx < _buoyancy_probes.size(); ++idx) {
 		// Get probe position in global space
@@ -783,9 +777,6 @@ void Buoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) {
 			wave_xform = _liquid_area->get_liquid_transform(liquid_pos);
 		}
 		Vector3 wave_pos = wave_xform.origin;
-
-		// Cache the wave transform, in body local space
-		_probe_wave_transforms[idx] = body_transform.affine_inverse() * wave_xform;
 
 		// Calculate depths
 		float wave_depth = probe.y - wave_pos.y;
@@ -845,26 +836,6 @@ void Buoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) {
 #pragma region Debugging
 
 void Buoyancy::_create_debug_mesh() {
-	Node3D* parent = Object::cast_to<Node3D>(get_parent());
-
-	if (parent == nullptr) return;
-	if (is_inside_tree() == false) return;
-	
-
-	if (!_debug_mesh_instance) {
-		_debug_mesh_instance = memnew(MeshInstance3D);
-		_debug_mesh_instance->set_name(get_name() + String("_DebugMesh"));
-		
-		// add the child to the parent so it gets the same transform
-		parent->add_child(_debug_mesh_instance, true, INTERNAL_MODE_BACK);
-
-		// attach mesh
-		if (!_debug_mesh.is_valid()) {
-			_debug_mesh.instantiate();
-		}
-		_debug_mesh_instance->set_mesh(_debug_mesh);
-		_debug_mesh_dirty = true;
-	}
 }
 
 // This call has trash performace but it recreates these arrays each frame
@@ -896,7 +867,7 @@ void Buoyancy::_update_debug_mesh() {
 			PackedVector3Array verts = _submerged_verts;
 			if (verts.size() == 0) {
 				verts = _vertex;
-				color = Color(0.0, 0.2, 1.0, 0.5);
+				color = _debug_color.inverted();
 			}
 
 			int face_count = verts.size() / 3;
@@ -961,21 +932,6 @@ void Buoyancy::_update_debug_mesh() {
 				indices.append(idx * 6 + 5);
 			}
 
-			// Show wave normals
-			for(int idx =0; idx < _probe_wave_transforms.size(); ++idx) {
-				Transform3D wave_xform = _probe_wave_transforms[idx];
-
-				// Draw wave normal at probe
-				Vector3 origin = wave_xform.origin;
-				Vector3 normal_end = origin + wave_xform.basis.get_column(1) * 0.5f;
-
-				vertices.append(origin);
-				vertices.append(normal_end);
-
-				indices.append(probe_count * 6 + idx * 2 + 0);
-				indices.append(probe_count * 6 + idx * 2 + 1);
-			}
-
 			arrays[Mesh::ARRAY_VERTEX] = vertices;
 			arrays[Mesh::ARRAY_INDEX] = indices;
 		}
@@ -983,35 +939,18 @@ void Buoyancy::_update_debug_mesh() {
 		int surf_lines = _debug_mesh->get_surface_count();
 		_debug_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINES, arrays);
 
-		Ref<StandardMaterial3D> mat;
-		mat.instantiate();
-		mat->set_shading_mode(StandardMaterial3D::SHADING_MODE_UNSHADED);
-		mat->set_depth_draw_mode(StandardMaterial3D::DEPTH_DRAW_DISABLED);
-		mat->set_transparency(StandardMaterial3D::TRANSPARENCY_ALPHA);
-		mat->set_albedo(color);
-
+		
 		// disable depth test in game so we can see the mesh
+		_debug_material->set_albedo(color);
 		if (!Engine::get_singleton()->is_editor_hint()) {
-			mat->set_flag(StandardMaterial3D::FLAG_DISABLE_DEPTH_TEST, true);
+			_debug_material->set_flag(StandardMaterial3D::FLAG_DISABLE_DEPTH_TEST, true);
 		}
 		
-		_debug_mesh->surface_set_material(surf_lines, mat);
-
-		// move debug mesh
-		_debug_mesh_instance->set_global_transform(xform);
+		_debug_mesh->surface_set_material(surf_lines, _debug_material);
 	}
 }
 
 void Buoyancy::_destroy_debug_mesh() {
-	if (_debug_mesh_instance) {
-		_debug_mesh_instance->queue_free();
-		_debug_mesh_instance = nullptr;
-	}
-
-	if (_debug_mesh.is_valid()) {
-		_debug_mesh.unref();
-	}
-
 	_submerged_verts.clear();
 }
 
