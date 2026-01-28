@@ -14,7 +14,9 @@ class_name CustomLiquidArea
 
 ## This is the mesh in the mesh instance
 @export var mesh: PlaneMesh = null
-@export var phase: float = 1.0
+
+@export_custom(PROPERTY_HINT_NONE, "", PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_NO_INSTANCE_STATE) \
+var phase: float = 1.0
 
 # cached image of the normal map
 var _normal: Image
@@ -26,6 +28,11 @@ func _ready() -> void:
 	
 
 func _process(delta: float) -> void:
+	if Engine.is_editor_hint():
+		if shader:
+			shader.set_shader_parameter("phase",  0)
+		return
+	
 	# fetch once on first draw
 	if normal and not _normal:
 		_normal = normal.get_image()
@@ -55,7 +62,7 @@ func update_transforms_for_points(global_points: PackedVector3Array, transforms:
 	if not _normal or not _height:
 		return Transform3D.IDENTITY
 	
-	# sample three points from the normal map and use them to create a basis
+	# sample the normal and height map to get the ocean surface
 	var img_width = _normal.get_width()
 	var img_height = _height.get_height()
 	for idx in global_points.size():

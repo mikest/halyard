@@ -16,7 +16,7 @@ noise = SubResource("FastNoiseLite_3a1xc")
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_5mbyi"]
 render_priority = 0
 shader = ExtResource("2_swncg")
-shader_parameter/phase = 0.9292662746966607
+shader_parameter/phase = 0.0
 shader_parameter/Height = SubResource("NoiseTexture2D_3a1xc")
 shader_parameter/Normal = SubResource("NoiseTexture2D_swncg")
 
@@ -72,7 +72,6 @@ normal = SubResource("NoiseTexture2D_swncg")
 height = SubResource("NoiseTexture2D_3a1xc")
 shader = SubResource("ShaderMaterial_5mbyi")
 mesh = SubResource("PlaneMesh_obnff")
-phase = 0.18977980000000008
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="LiquidArea" unique_id=2131639635]
 material_override = SubResource("ShaderMaterial_5mbyi")
@@ -141,7 +140,7 @@ appearance = SubResource("RopeAppearance_swncg")
 apply_buoyancy = true
 buoyancy_scale = 1.5
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.7146287, 1.0919201, -0.053874493)
-custom_aabb = AABB(-0.125, -1.565454, -0.125, 3.531139, 1.690454, 0.43105936)
+custom_aabb = AABB(-0.125, -1.5654465, -0.125, 3.531139, 1.6904465, 0.43105936)
 
 [node name="Marker3D" type="Marker3D" parent="FloatingRope" unique_id=1498230338]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.281139, 0, 0.18105936)
