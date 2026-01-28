@@ -2,6 +2,7 @@
 #include "rope_anchors_base.h"
 #include "rope_appearance.h"
 #include "rope_attachments_base.h"
+#include "liquid_area.h"
 #include <godot_cpp/classes/camera3d.hpp>
 #include <godot_cpp/classes/editor_interface.hpp>
 #include <godot_cpp/classes/engine.hpp>
@@ -15,6 +16,7 @@
 #include <godot_cpp/classes/world3d.hpp>
 #include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
+#include <godot_cpp/classes/scene_tree.hpp>
 
 // dump initial conditions for debugging stretch grow directions.
 #define DEBUG_INITIAL_POS false
@@ -125,6 +127,16 @@ void Rope::_bind_methods() {
 
 	// forces
 	ADD_GROUP("Forces", "");
+
+	// Buoyancy
+	EXPORT_PROPERTY(Variant::BOOL, apply_buoyancy, Rope);
+	EXPORT_PROPERTY(Variant::FLOAT, buoyancy_scale, Rope);
+	EXPORT_PROPERTY(Variant::FLOAT, submerged_drag, Rope);
+	ClassDB::bind_method(D_METHOD("set_liquid_area", "liquid_area"), &Rope::set_liquid_area);
+	ClassDB::bind_method(D_METHOD("get_liquid_area"), &Rope::get_liquid_area);
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "liquid_area", PROPERTY_HINT_NODE_TYPE, "LiquidArea"), "set_liquid_area", "get_liquid_area");
+
+	// Wind
 	EXPORT_PROPERTY(Variant::BOOL, apply_wind, Rope);
 	EXPORT_PROPERTY(Variant::FLOAT, wind_scale, Rope);
 	EXPORT_PROPERTY(Variant::VECTOR3, wind, Rope);
@@ -133,10 +145,12 @@ void Rope::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_wind_noise"), &Rope::get_wind_noise);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "wind_noise", PROPERTY_HINT_RESOURCE_TYPE, "FastNoiseLite"), "set_wind_noise", "get_wind_noise");
 
+	// Gravity
 	EXPORT_PROPERTY(Variant::BOOL, apply_gravity, Rope);
 	EXPORT_PROPERTY(Variant::VECTOR3, gravity, Rope);
 	EXPORT_PROPERTY(Variant::FLOAT, gravity_scale, Rope);
 
+	// Damping
 	EXPORT_PROPERTY(Variant::BOOL, apply_damping, Rope);
 	EXPORT_PROPERTY(Variant::FLOAT, damping_factor, Rope);
 }
@@ -148,6 +162,15 @@ void Rope::_notification(int p_what) {
 	bool visible = is_visible_in_tree();
 
 	switch (p_what) {
+		case NOTIFICATION_ENTER_TREE: {
+			if (Engine::get_singleton()->is_editor_hint() == false) {
+				if (_liquid_area == nullptr) {
+					SceneTree *tree = get_tree();
+					_liquid_area = LiquidArea::get_liquid_area(tree);
+				}
+			}
+		} break;
+
 		case NOTIFICATION_ENTER_WORLD: {
 			Ref<World3D> w3d = get_world_3d();
 			auto ps = PhysicsServer3D::get_singleton();
@@ -212,6 +235,7 @@ void Rope::_notification(int p_what) {
 			break;
 
 		case NOTIFICATION_EXIT_TREE: {
+			_liquid_area = nullptr;
 		} break;
 	}
 }
@@ -482,6 +506,14 @@ uint64_t Rope::get_particle_count() const {
 
 Ref<ArrayMesh> Rope::get_baked_mesh() const {
 	return _generated_mesh->duplicate();
+}
+
+void Rope::set_liquid_area(LiquidArea *liquid_area) {
+	_liquid_area = liquid_area;
+}
+
+LiquidArea* Rope::get_liquid_area() const {
+	return _liquid_area;
 }
 
 float Rope::get_current_rope_length() const {
@@ -1437,23 +1469,86 @@ void Rope::_verlet_process(float delta) {
 }
 
 void Rope::_apply_forces() {
+
+	// cylinder volume
+	float rope_volume = Math_PI * Math::pow(get_rope_width() * 0.5f, 2) * get_rope_length();
+	if (rope_volume <= 0.0f)
+		rope_volume = 1.0f;
+
+	// NOTE: becuase we don't have mass in verlet, we simulate buoyancy with a ratio.
+	// 1.0 == same as water, 0.5 == sink, 1.5 == floaty
+
+	// each point accounts for a portion of the rope volume
+	float probe_volume = 0.0f;
+	if 	(_particles.size() > 0) {
+		probe_volume = rope_volume / _particles.size();
+	}
+
 	for (Particle &p : _particles) {
 		Vector3 total_acceleration = Vector3(0, 0, 0);
 
+		float submerged_ratio = 0.0f;
+
 		// forces act only on unattached
 		if (p.attached == false) {
+			Vector3 velocity = p.pos_cur - p.pos_prev;
+
 			if (_apply_gravity) {
 				total_acceleration += _gravity * _gravity_scale;
 			}
 
-			if (_apply_wind && _wind_noise != nullptr) {
+			// Because gravity is "unit mass" in verlet, we simulate buoyancy here
+			// based on the submerged volume of the rope segment with buoyancy forces as a ratio.
+			if (_apply_buoyancy && _liquid_area) {
+				Vector3 probe = p.pos_cur;
+
+				// Get wave transform at this position
+				Transform3D wave_xform = Transform3D(Basis(), probe);
+				wave_xform = _liquid_area->get_liquid_transform(probe);
+
+				// Calculate depths.
+				float wave_depth = probe.y - wave_xform.origin.y;
+				
+				// calculate the submerged volume for a cylinder section.
+				// when depth == 0, rope is half submerged.
+				float h = Math::clamp(-wave_depth, 0.0f, get_rope_width());
+				float r = get_rope_width() * 0.5f;
+				float submerged_area = r * r * Math::acos((r - h) / r) - (r - h) * Math::sqrt(2 * r * h - h * h);
+				float submerged_volume = submerged_area * (probe_volume / (Math_PI * r * r));
+				submerged_ratio = submerged_volume / probe_volume;
+
+				// If submerged (depth < 0), apply buoyancy force
+				if (submerged_ratio > 0.0f) {
+					// this is how floaty the rope is...
+					float buoyancy_factor = _buoyancy_scale; //liquid_density / _rope_density; ... could also do it this way
+
+					// lerp the wave normal with the up vector based on buoyancy factor
+					// this makes the rope float along the surface when partially submerged
+					// and float straight up when fully submerged.
+					Vector3 wave_normal = wave_xform.basis.get_column(1).normalized();
+					wave_normal = wave_normal.slerp(Vector3(0, 1, 0), Math::clamp(1.0f - buoyancy_factor, 0.0f, 1.0f));
+
+					Vector3 wave_force = wave_normal * _gravity * Math::clamp(wave_depth, -1.0f, 0.0f) * buoyancy_factor * submerged_ratio;
+					Vector3 current_force = _liquid_area->get_current_speed() * submerged_ratio;
+
+					// Apply buoyancy-related forces
+					total_acceleration += wave_force;
+					total_acceleration += current_force;
+
+					// Apply submerged drag as deceleration proportional to velocity
+					total_acceleration += -velocity * _submerged_drag * submerged_ratio;
+				}
+			}
+
+			// Wind does not apply when submerged
+			if (_apply_wind && _wind_noise != nullptr && submerged_ratio == 0.0f) {
 				Vector3 timed_position = p.pos_cur + Vector3(1, 1, 1) * _time;
 				float wind_force = _wind_noise->get_noise_3d(timed_position.x, timed_position.y, timed_position.z);
 				total_acceleration += _wind_scale * _wind * wind_force;
 			}
 
+			// Additional damping
 			if (_apply_damping) {
-				Vector3 velocity = p.pos_cur - p.pos_prev;
 				Vector3 drag = -_damping_factor * velocity.length() * velocity;
 				total_acceleration += drag;
 			}

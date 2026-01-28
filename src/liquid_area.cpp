@@ -21,6 +21,23 @@ LiquidArea::~LiquidArea() {
 }
 
 
+LiquidArea *LiquidArea::get_liquid_area(SceneTree *p_tree) {
+    LiquidArea *liquid_area = nullptr;
+    
+    if (p_tree) {
+        Node* root = p_tree->get_current_scene();
+        if (root) {
+            auto nodes = root->find_children("*", "LiquidArea", true, false);
+            if (nodes.size()) {
+                liquid_area = Object::cast_to<LiquidArea>(nodes.front());
+            }
+        }
+    }
+
+    return liquid_area;
+}
+
+
 bool LiquidArea::is_point_submerged(const Vector3 &global_point) const {
     Transform3D liquid_transform = get_global_transform();
     Vector3 local_point = liquid_transform.affine_inverse().xform(global_point);

@@ -40,18 +40,10 @@ void CharacterBuoyancy::_notification(int p_what) {
 		} break;
 
 		case NOTIFICATION_ENTER_TREE: {
-			if (Engine::get_singleton()->is_editor_hint()==false) {
+			if (Engine::get_singleton()->is_editor_hint() == false) {
 				if (_liquid_area == nullptr) {
 					SceneTree *tree = get_tree();
-					if(tree){
-						Node* root = tree->get_current_scene();
-						if (root){
-							auto nodes = root->find_children("*", "LiquidArea", true, false);
-							if (nodes.size()) {
-								_liquid_area = Object::cast_to<LiquidArea>(nodes.front());
-							}
-						}
-					}
+					_liquid_area = LiquidArea::get_liquid_area(tree);
 				}
 			}
 		} break;
