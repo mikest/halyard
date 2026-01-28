@@ -8,12 +8,13 @@
 #include <godot_cpp/variant/packed_vector3_array.hpp>
 #include <godot_cpp/classes/character_body3d.hpp>
 
+#include "node_debug.h"
 
 using namespace godot;
 
 class LiquidArea;
 
-class CharacterBuoyancy : public Node {
+class CharacterBuoyancy : public Node, protected NodeDebug {
     GDCLASS(CharacterBuoyancy, Node)
 
     LiquidArea* _liquid_area = nullptr;
@@ -29,6 +30,9 @@ class CharacterBuoyancy : public Node {
     uint64_t _buoyancy_time = 0; // us
     Vector3 _gravity = Vector3(0, -9.81, 0);
     float _submerged_ratio = 0.0f;
+
+    // Debug
+    void _update_debug_mesh() override;
 
 protected:
     static void _bind_methods();
@@ -69,4 +73,11 @@ public:
     
     float get_submerged_ratio() const;
     uint64_t get_buoyancy_time() const;
+
+    // Debug
+    void set_show_debug(bool show);
+    bool get_show_debug() const;
+
+    void set_debug_color(const Color &color);
+    Color get_debug_color() const;
 };

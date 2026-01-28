@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch Halyard",
+            "name": "Edit Halyard",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${config:godotTools.editorPath.godot4}",
@@ -13,6 +13,25 @@
             // To run the project instead of editing it, remove the "--editor" argument.
             "args": [
                 "--editor",
+                "--path",
+                "${workspaceFolder}/../.." // assumed to live in addons
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "console": "internalConsole",
+            "visualizerFile": "${workspaceFolder}/platform/windows/godot.natvis",
+            "preLaunchTask": "build"
+        },
+        {
+            "name": "Play Halyard",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${config:godotTools.editorPath.godot4}",
+            // Change the arguments below for the project you want to test with.
+            // To run the project instead of editing it, remove the "--editor" argument.
+            "args": [
+                "--play",
                 "--path",
                 "${workspaceFolder}/../.." // assumed to live in addons
             ],
