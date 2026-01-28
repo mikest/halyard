@@ -17,6 +17,7 @@ A derived class can override get_transforms_for_points to provide a more complex
 #include <godot_cpp/core/binder_common.hpp>
 #include <godot_cpp/core/gdvirtual.gen.inc>
 #include <godot_cpp/variant/typed_array.hpp>
+#include <godot_cpp/classes/scene_tree.hpp>
 
 #include "property_utils.h"
 
@@ -36,6 +37,10 @@ protected:
 public:
 	LiquidArea();
 	~LiquidArea() override;
+
+	// static accessor for finding the liquid area for a given scene tree
+	static LiquidArea* get_liquid_area(SceneTree *p_tree);
+
 
 	// Properties
 	PROPERTY_GET_SET(float, density, {})

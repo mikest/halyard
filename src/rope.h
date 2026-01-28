@@ -24,6 +24,7 @@ using namespace godot;
 class RopeAnchorsBase;
 class RopeAttachmentsBase;
 class RopeAppearance;
+class LiquidArea;
 
 class Rope : public GeometryInstance3D {
 	GDCLASS(Rope, GeometryInstance3D)
@@ -31,6 +32,7 @@ class Rope : public GeometryInstance3D {
 	Ref<ArrayMesh> _generated_mesh;
 	RID _physics_body;
 	LocalVector<RID> _instances;
+	LiquidArea* _liquid_area = nullptr;
 
 	// Rope particle, segments connect between particles.
 	struct Particle {
@@ -94,6 +96,10 @@ class Rope : public GeometryInstance3D {
 
 	bool _apply_damping = true;
 	float _damping_factor = 100.0;
+
+	bool _apply_buoyancy = false;
+	float _buoyancy_scale = 1.0;	// float on surface
+	float _submerged_drag = 100.0;	// crazy high drag when submerged
 
 protected:
 	static void _bind_methods();
@@ -260,6 +266,12 @@ public:
 	void set_collision_mask(int mask);
 
 	// forces
+	PROPERTY_GET_SET(bool, apply_buoyancy, {});
+	PROPERTY_GET_SET(float, buoyancy_scale, {});
+	PROPERTY_GET_SET(float, submerged_drag, {})
+	void set_liquid_area(LiquidArea *liquid_area);
+	LiquidArea* get_liquid_area() const;
+
 	PROPERTY_GET_SET(bool, apply_wind, {})
 	PROPERTY_GET_SET(float, wind_scale, {})
 	PROPERTY_GET_SET(Vector3, wind, {})
