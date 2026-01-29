@@ -44,7 +44,7 @@ func _process(delta: float) -> void:
 	if phase > 1.0:
 		phase = 0.0
 	if shader:
-		shader.set_shader_parameter("phase",  sin(phase*TAU))
+		shader.set_shader_parameter("phase",  phase)
 
 
 func align_with_normal(normal: Vector3) -> Basis:
@@ -83,7 +83,7 @@ func update_transforms_for_points(global_points: PackedVector3Array, transforms:
 		).normalized()
 		
 		var height_color = _height.get_pixel(img_x, img_y)
-		pos.y = height_color.r * 4.0 * sin(phase*TAU)		# boost the hieght a to make "waves" taller
+		pos.y = height_color.r * phase		# boost the hieght a to make "waves" taller
 
 		var wave_basis = align_with_normal(normal)
 		transforms[idx] = Transform3D(wave_basis, pos)

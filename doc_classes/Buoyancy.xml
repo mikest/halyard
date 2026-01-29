@@ -7,19 +7,30 @@
     </brief_description>
     <description>
         Manages buoyancy interactions between a collider ([ConvexPolygonShape3D] recommended) or probe points and a single [LiquidArea] in the scene.
-        
+        Buoyancy is calculated each physics step by sampling the liquid surface and computing submerged volume and centroid. Buoyant forces, drag and water currents are applied to a parent RigidBody3D to simulate floating objects.
+        If you floating body is unstable lowering the center of mass can help. This can be done by adjusting the [member com_offset] or modifying the RigidBody3D's center of mass directly.
+        [img=center,center]res://addons/halyard/doc_images/buoyancy_diagram.svg[/img]
+        [b]NOTE:[/b] Water has a density of approximately 1000 kg/m^3. To achieve realistic buoyancy, ensure that the [member density] of the Buoyancy node and the mass of the RigidBody3D are set appropriately based on the object's volume.
         Supports two modes:
-        [enum BUOYANCY_COLLIDER]: Calculates submerged volume and centroids from collider mesh geometry. More accurate but computationally expensive.
+        [enum BUOYANCY_COLLIDER]: Calculates submerged volume and centroids from collider mesh geometry. More accurate but computationally expensive. Expense increases with mesh complexity.
         [enum BUOYANCY_PROBES]: Uses explicit probe points to sample liquid surface and apply forces. Faster and suitable for simple objects or when precise volume calculations aren't needed.
         Can optionally apply forces to a parent RigidBody3D and update mass properties from collider geometry.
     </description>
     <tutorials>
     </tutorials>
+
     <methods>
         <method name="get_submerged_volume" qualifiers="const">
             <return type="float" />
             <description>
                 Returns the calculated submerged volume of the collider in cubic meters. Only available in [enum BUOYANCY_COLLIDER] mode. Updated each physics step when submerged.
+            </description>
+        </method>
+
+        <method name="get_submerged_ratio" qualifiers="const">
+            <return type="float" />
+            <description>
+                Returns the ratio of submerged volume to total collider volume [0.0 .. 1.0] in [enum BUOYANCY_COLLIDER] mode. In [enum BUOYANCY_PROBES] mode, returns the ratio of probes submerged to total probes.
             </description>
         </method>
 
@@ -37,7 +48,7 @@
             </description>
         </method>
 
-        <method name="apply_buoyancy_forces">
+        <method name="apply_buoyancy_mesh_forces">
             <return type="void" />
             <param index="0" name="body" type="RigidBody3D" />
             <param index="1" name="delta" type="float" />
@@ -130,6 +141,12 @@
         <member name="collider" type="CollisionShape3D" setter="set_collider" getter="get_collider">
             The collider shape to compute submerged volume from ([ConvexPolygonShape3D] recommended). Required for [enum BUOYANCY_COLLIDER] mode.
         </member>
-        
     </members>
+    <signals>
+        <signal name="submerged_changed">
+            <description>
+                Emitted when the character transitions between being completely out of the liquid (submerged_ratio == 0) and having at least one probe submerged (submerged_ratio > 0), or vice versa.
+            </description>
+        </signal>
+    </signals>
 </class>

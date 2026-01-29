@@ -1,52 +1,61 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <class name="LiquidArea" inherits="Node3D"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
-    <brief_description>
-        Represents a planar liquid surface where objects can be submerged.
-    </brief_description>
-    <description>
-        The area's transform represents a plane where the liquid is considered to be in the -Y direction.
-        Any Buoyancy system is considered submerged when below the area's origin on the Y axis.
-        Derive and override [method]update_transforms_for_points[/method] to provide a dynamic surface (e.g. waves).
-    </description>
-    <tutorials>
-    </tutorials>
-    <methods>
-        <method name="is_point_submerged" qualifiers="const">
-            <return type="bool" />
-            <param index="0" name="global_point" type="Vector3" />
-            <description>Returns true if the given global point is considered submerged by the liquid (local Y &lt; 0).</description>
-        </method>
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Represents a planar liquid surface where objects can be submerged.
+	</brief_description>
+	<description>
+		By default, the area's transform represents a plane where the liquid is considered to be in the -Y direction.
+		Any Buoyancy system is considered submerged when at least one sampled point is below the liquid surface.
+		Derive and override [method update_transforms_for_points] or [method get_liquid_transform] to provide a dynamic surface (e.g. waves).
+		Example implementation:
+		[codeblock]
+		func update_transforms_for_points(global_points: PackedVector3Array, transforms: Array[Transform3D]) -> void:
+			# Make sure to resize the output transforms array to match the number of input points
+			transforms.resize(global_points.size())
+			for idx in global_points.size():
+				# this call we will be custom to your wave implementation
+				transforms[idx] = get_wave_transform_at_position(global_points[idx])
+		[/codeblock]
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="is_point_submerged" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="global_point" type="Vector3" />
+			<description>Returns true if the given global point is considered submerged by the liquid (local Y &lt; 0).</description>
+		</method>
 
-        <method name="get_liquid_transform" qualifiers="const">
-            <return type="Transform3D" />
-            <param index="0" name="global_point" type="Vector3" />
-            <description>
-                Returns the transform of the liquid surface at the given global point. If
-                [method]update_transforms_for_points[/method] is overridden, the override will be used.
-            </description>
-        </method>
+		<method name="get_liquid_transform" qualifiers="const">
+			<return type="Transform3D" />
+			<param index="0" name="global_point" type="Vector3" />
+			<description>
+				Returns the transform of the liquid surface at the given global point. If
+				[method]update_transforms_for_points[/method] is overridden, the override will be used.
+			</description>
+		</method>
 
-        <method name="update_transforms_for_points" qualifiers="virtual const">
-             <return type="void" />
-            <param index="0" name="global_points" type="PackedVector3Array" />
-            <param index="1" name="transforms" type="Array[Transform3D]" />
-            <description>
-                Fill the provided transforms array with the liquid surface transform for each global point.
-                Default implementation returns the area's global transform for all points. Override to supply
-                per-point transforms (e.g. waves).
-            </description>
-        </method>
-    </methods>
-    <members>
-        <member name="density" type="float" setter="set_density" getter="get_density"
-            default="1000.0">
-            Liquid density in kg/m^3.
-        </member>
-        <member name="current_speed" type="Vector3" setter="set_current_speed"
-            getter="get_current_speed" default="Vector3(0, 0, 0)">
-            Bulk current velocity of the liquid in m/s.
-        </member>
-    </members>
+		<method name="update_transforms_for_points" qualifiers="virtual const">
+			 <return type="void" />
+			<param index="0" name="global_points" type="PackedVector3Array" />
+			<param index="1" name="transforms" type="Array[Transform3D]" />
+			<description>
+				Fill the provided transforms array with the liquid surface transform for each global point.
+				Default implementation returns the area's global transform for all points. Override to supply
+				per-point transforms (e.g. waves).
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="density" type="float" setter="set_density" getter="get_density"
+			default="1000.0">
+			Liquid density in kg/m^3.
+		</member>
+		<member name="current_speed" type="Vector3" setter="set_current_speed"
+			getter="get_current_speed" default="Vector3(0, 0, 0)">
+			Bulk current velocity of the liquid in m/s.
+		</member>
+	</members>
 </class>
