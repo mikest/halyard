@@ -6,9 +6,11 @@ compatibility_minimum = "4.3"
 Rope = "./icons/Rope.svg"
 RopePositions = "./icons/RopePositions.svg"
 RopeAppearance = "./icons/RopeAppearance.svg"
+RopeAnchorPositions = "./icons/RopePositions.svg"
 
 Buoyancy = "./icons/Buoyancy.svg"
 CharacterBuoyancy = "./icons/CharacterBuoyancy.svg"
+LiquidArea = "./icons/LiquidArea.svg"
 
 
 [libraries]

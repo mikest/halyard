@@ -7,13 +7,11 @@
     </brief_description>
     <description>
         [CharacterBuoyancy] computes simple buoyant forces for a character by sampling a set of probe points (local-space) by querying the [LiquidArea] in the scene. If one is not specified it may auto-assign the first LiquidArea found in the tree.
-
-        It updates the parent [CharacterBody3D] velocity when [member apply_forces] is enabled and exposes properties to tune buoyancy strength, mass, drag and gravity. You can also disable force application and apply them manually with apply_buoyancy_velocity(). While the probes are sampled at their global position against the liquid surface, the resulting buoyant velocity is applied to the character body as a whole, each probe contributing a fraction to the final force only if it is submerged.
-
+        It updates the parent [CharacterBody3D] velocity when [member apply_forces] is enabled and exposes properties to tune buoyancy strength, mass, drag and gravity. You can also disable force application and apply them manually with apply_buoyancy_velocity().
+        While the probes are sampled at their global position against the liquid surface, the resulting buoyant velocity is applied to the character body as a whole, each probe contributing a fraction to the final force only if it is submerged.
         It is recommended to update the probes with points from your character skeleton to balance out the buoyant forces.
-
+        [img=center,center]res://addons/halyard/doc_images/character_buoyancy_diagram.svg[/img]
         Velocity is applied in the internal physics process to ensure they are calculated before the main physics step. If you need to customize the probe positions used to sample the liquid surface before physics processing, disable automatic application of forces and call apply_buoyancy_velocity() manually after updating the probes.
-        
         The component also reports how many probes are submerged as a [member submerged_ratio] and emits a [signal submerged_changed] signal when the submerged state changes.
     </description>
     <tutorials>
@@ -181,4 +179,12 @@
             Read-only: microseconds spent computing buoyancy in the last physics step.
         </member>
     </members>
+
+    <signals>
+        <signal name="submerged_changed">
+            <description>
+                Emitted when the character transitions between being completely out of the liquid (submerged_ratio == 0) and having at least one probe submerged (submerged_ratio > 0), or vice versa.
+            </description>
+        </signal>
+    </signals>
 </class>

@@ -1,7 +1,7 @@
 
 # Halyard: A Fast Verlet Rope and Volume Buoyancy Library
 
-A high-performance, cross-platform rope simulation library using the Verlet integration method. For when you need rope, and you need it quickly.
+A high-performance, cross-platform rope & buoyancy simulation library. For all your nautical game needs.
 
 ![Screenshot](screenshots/screenshot.png)
 
@@ -18,6 +18,8 @@ A high-performance, cross-platform rope simulation library using the Verlet inte
 - Dynamically resize rope length for creating hoists.
 - Render rope as a mesh tube or as individual chain links.
 - Endcap and attachment support for rope details.
+- LOD scaling of generated rope mesh.
+- Smoothing of generated rope curve.
 - TODO:
 	- ~~External RigidBodies can apply forces to ropes~~
 	- ~~Ropes can be infinitely stiff, like in metal chains~~
@@ -29,10 +31,23 @@ The attachment system can used to create complicated rigging arrangements like c
 The anchors can be used to create the illusion of pulleys.
 
 ### Buoyancy
-- Support for custom liquid heightmap sampling
-- Axis-independent drag.
-- Mesh waterline volume estimation.
-- Auto-calculation of mass properties.
+
+![Screenshot](screenshots/boat_hull.png)
+
+- Custom liquid heightmap sampling
+- Axis-independent drag, for simulating boat hulls.
+- Submerged mesh volume estimation.
+- CharacterBody3D & RigidBody3D buoyancy components.
+- Built-in Rope buoyancy.
+- Optional Auto-calculation of mass properties.
+
+### Classes
+- <img src="icons/Buoyancy.svg" width=24/> Buoyancy - A component that makes its parent RigidBody3D float.
+- <img src="icons/CharacterBuoyancy.svg" width=24/> CharacterBuoyancy - A component that makes its parent CharacterBody3D float.
+- <img src="icons/LiquidArea.svg" width=24/> LiquidArea - An abstract representation of a liquid surface. Some assembly required.
+- <img src="icons/Rope.svg" width=24/> Rope - A virtual rope that can react to gravity, wind and waves.
+- <img src="icons/RopeAppearance.svg" width=24/> RopeAppearance - A resource for describing the look of a Rope and its Attachments.
+- <img src="icons/RopePositions.svg" width=24/> RopeAnchorPositions - A resource for describing the location of rope anchors.
 
 ## Installation
 
@@ -49,15 +64,15 @@ The anchors can be used to create the illusion of pulleys.
 	```
 3. Build the library using SCons or CMake:
 	```sh
-	scons compiledb=yes
+	scons
 	```
     or for debug builds...
 	```sh
-	scons dev_build=yes compiledb=yes template_debug=yes
+	scons template_debug=yes
 	```
 4. Reload your project.
 
-## Usage
+## Basic Usage
 
 1. Import the library into your project.
 	- NOTE: On 4.3 you may encounter errors related to SVG images on the first load. It should succeed on the second load.
@@ -72,23 +87,20 @@ The anchors can be used to create the illusion of pulleys.
 
 See `example.tscn` for an example of using this library to generate ship _ratlines_.
 
-![example.tscn](screenshots/ratlines.png)
-
-
 You can also find a variety of tests that demonstrate different capabilities in the `tests folder.
+
+![example.tscn](screenshots/examples.png)
 
 Some examples:
 - `anchor_test.tscn`: Anchor placement.
 - `attachment_test.tscn`: Various attachment behaviors.
+- `buoyancy_test.tscn`: Various buoyancy examples.
 - `chain_test.tscn`: Testing out chain link rendering.
 - `pull_test.tscn`: Test out the `PullRope` class with an offset anchor on a RigidBody
 - `stretch_test.tscn`: Test out stretching behaviors
 - `swing_test.tscn`: Test out a pair of PullRopes pulling on a RigidBody3D.
 - `vine_test.tscn`: Test out chaining ropes together in branching structures.
-![Vine](screenshots/vines.png)
 - `web_test.tscn`: Test out weaving multiple ropes together with shared anchor and attachment resources.
-![Web](screenshots/web.png)
-
 
 ## Documentation
 
