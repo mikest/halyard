@@ -107,8 +107,10 @@ void NodeDebug::_internal_destroy_debug_mesh() {
 
     // clean up
 	if (_debug_mesh_instance) {
-        if(_node)
-            _node->remove_child(_debug_mesh_instance);
+        if(_node && _debug_mesh_instance->get_parent() == _node) {
+            _node->call_deferred("remove_child", _debug_mesh_instance);
+            // _node->remove_child(_debug_mesh_instance);
+        }
 		_debug_mesh_instance->queue_free();
 		_debug_mesh_instance = nullptr;
 	}
