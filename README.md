@@ -107,6 +107,25 @@ Some examples:
 - API reference: See the built in documentation for the classes.
 - Build instructions: See `SConstruct`
 
+## Roadmap
+
+Here's some things I'd like to add to this library in the fullness of time.
+
+### Rope
+- Implement pulleys and force transfer between ends. Remove PullRope.
+- Rope uses real mass properties
+- Full bidirectional collision support
+- Rope twist torque.
+
+### Buoyancy
+- Use compute shader for buoyancy mesh volume integrator.
+- Clean up Ocean wandering clipmap and use compute shader for liquid sampling.
+- Heightmap & current vector map for ocean so we can stick to the rivers and the lakes that we're used to.
+
+## Wind/Sails
+- Softbody sail pattern generator.
+- Wind/Sail force applicator.
+
 ## Contributing
 
 Pull requests and issues are welcome! Please see `CONTRIBUTING.md` for guidelines.

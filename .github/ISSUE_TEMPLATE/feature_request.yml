@@ -1,0 +1,67 @@
+name: Feature request
+description: Suggest a new feature or enhancement for Halyard
+body:
+
+- type: markdown
+  attributes:
+    value: |
+      - Write a descriptive issue title above.
+      - Search [open](https://github.com/mikest/halyard/issues) and [closed](https://github.com/mikest/halyard/issues?q=is%3Aissue+is%3Aclosed) issues to ensure it has not already been requested.
+      - Check the [documentation](https://github.com/mikest/halyard#readme) to confirm the feature doesn't already exist.
+
+- type: textarea
+  attributes:
+    label: Describe the feature / enhancement
+    description: |
+      Describe what you'd like to see added or improved in Halyard. Be as specific as possible about the desired functionality.
+    placeholder: |
+      I would like to see support for...
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: Use case / motivation
+    description: |
+      Explain the problem this feature would solve or the workflow it would improve. Why is this feature important for your project?
+    placeholder: |
+      This would help with...
+      Currently I have to...
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: Proposed solution
+    description: |
+      If you have ideas about how this feature could be implemented, describe them here. This is optional but helpful.
+    placeholder: |
+      One way to implement this could be...
+
+- type: textarea
+  attributes:
+    label: Alternatives considered
+    description: |
+      Have you considered any alternative solutions or workarounds? This helps us understand the full context.
+    placeholder: |
+      I've tried...
+      Another approach could be...
+
+- type: checkboxes
+  attributes:
+    label: Related components
+    description: Which parts of Halyard would this feature affect?
+    options:
+      - label: Rope
+      - label: Buoyancy
+      - label: CharacterBuoyancy
+      - label: LiquidArea
+      - label: RopeAppearance
+      - label: Other (please specify in description)
+
+- type: textarea
+  attributes:
+    label: Additional context
+    description: |
+      Add any other context, screenshots, diagrams, or examples about the feature request here.
+      You can include images or videos with drag and drop, and format code blocks with <code>```</code> tags.
