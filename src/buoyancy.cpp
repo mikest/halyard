@@ -939,7 +939,6 @@ void Buoyancy::_update_debug_mesh() {
 		int surf_lines = _debug_mesh->get_surface_count();
 		_debug_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINES, arrays);
 
-		
 		// disable depth test in game so we can see the mesh
 		_debug_material->set_albedo(color);
 		if (!Engine::get_singleton()->is_editor_hint()) {
@@ -947,6 +946,9 @@ void Buoyancy::_update_debug_mesh() {
 		}
 		
 		_debug_mesh->surface_set_material(surf_lines, _debug_material);
+
+		// position
+		_debug_mesh_instance->set_global_transform(_collider->get_global_transform());
 	}
 }
 
