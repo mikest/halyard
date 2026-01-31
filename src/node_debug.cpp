@@ -22,7 +22,7 @@ void NodeDebug::_debug_notification(int p_what) {
         case Node::NOTIFICATION_INTERNAL_PROCESS: {
             // lazy add/remove the debug meshes
             if (_show_debug) {
-                if (!_debug_mesh_instance) {
+                if (!_debug_mesh_instance && _node) {
                     _internal_create_debug_mesh();
                 }
             } else if (_debug_mesh_instance) {
@@ -91,13 +91,13 @@ void NodeDebug::_internal_update_debug_mesh() {
     // clear previous surfaces
 	_debug_mesh->clear_surfaces();
 
-    // build new surfaces
-    _update_debug_mesh();
-
     // move debug mesh
     if (_node) {
 	    _debug_mesh_instance->set_global_transform(_node->get_global_transform());
     }
+
+    // build new surfaces
+    _update_debug_mesh();
 }
 
 
