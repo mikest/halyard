@@ -947,8 +947,15 @@ void Buoyancy::_update_debug_mesh() {
 		
 		_debug_mesh->surface_set_material(surf_lines, _debug_material);
 
-		// position
-		_debug_mesh_instance->set_global_transform(_collider->get_global_transform());
+		// try the collider first, and then the parent.
+		Node3D *mesh_parent = _collider;
+		if (mesh_parent == nullptr)
+			mesh_parent = Object::cast_to<Node3D>(get_parent());
+
+		if (mesh_parent)
+		{
+			_debug_mesh_instance->set_global_transform(mesh_parent->get_global_transform());
+		}
 	}
 }
 
