@@ -134,6 +134,13 @@
             <return type="float" />
             <description>Fraction of configured probes that were submerged in the last physics step (0..1).</description>
         </method>
+
+        <method name="get_average_depth" qualifiers="const">
+            <return type="float" />
+            <description>Returns the average depth of all probes relative to the liquid surface. Positive value indicates mostly above liquid, negative values indicate mostly are submerged.
+                
+            Uses depths from the most recent physics update.</description>
+        </method>
     </methods>
 
     <members>

@@ -164,6 +164,36 @@ float CharacterBuoyancy::get_submerged_ratio() const {
 	return _submerged_ratio;
 }
 
+float CharacterBuoyancy::get_average_depth() const {
+	CharacterBody3D *body = Object::cast_to<CharacterBody3D>(get_parent());
+	
+	if (!body) {
+		return 0.0f;
+	}
+
+	const int probe_count = _probes.size();
+	if (probe_count == 0 || probe_count != _last_transforms.size()) {
+		return 0.0f;
+	}
+
+	const Transform3D body_transform = body->get_global_transform();
+	float total_depth = 0.0f;
+
+	for (int i = 0; i < probe_count; ++i) {
+		// Get probe position in global space
+		Vector3 probe = body_transform.xform(_probes[i]);
+		
+		// Get cached liquid surface position
+		Vector3 liquid_pos = _last_transforms[i].origin;
+		
+		// Calculate depth (negative when underwater)
+		float depth = probe.y - liquid_pos.y;
+		total_depth += depth;
+	}
+
+	return total_depth / (float)probe_count;
+}
+
 // Debug
 void CharacterBuoyancy::set_show_debug(bool show) {
     _show_debug = show;
@@ -355,6 +385,7 @@ void CharacterBuoyancy::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_probes"), &CharacterBuoyancy::get_probes);
 	ClassDB::bind_method(D_METHOD("get_buoyancy_time"), &CharacterBuoyancy::get_buoyancy_time);
 	ClassDB::bind_method(D_METHOD("get_submerged_ratio"), &CharacterBuoyancy::get_submerged_ratio);
+	ClassDB::bind_method(D_METHOD("get_average_depth"), &CharacterBuoyancy::get_average_depth);
 
     ClassDB::bind_method(D_METHOD("apply_buoyancy_velocity", "delta"), &CharacterBuoyancy::apply_buoyancy_velocity);
 
