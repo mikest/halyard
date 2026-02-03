@@ -72,6 +72,7 @@ void CharacterBuoyancy::_notification(int p_what) {
 					uint64_t time = Time::get_singleton()->get_ticks_usec();
 
 					// optionally apply them
+					_update_last_transforms();
 					if (_apply_forces){
 						float delta = get_physics_process_delta_time();
 						apply_buoyancy_velocity(delta);
@@ -240,6 +241,48 @@ void CharacterBuoyancy::_update_debug_mesh() {
     }
 }
 
+void CharacterBuoyancy::_update_last_transforms() {
+    CharacterBody3D *body = Object::cast_to<CharacterBody3D>(get_parent());
+    
+    if (!body || !_liquid_area) {
+        return;
+    }
+
+    int submerged_count = 0;
+
+    for (int i = 0; i < _probes.size(); ++i) {
+        Vector3 probe = _probes[i];
+
+        // probes are in local space
+        probe = body->get_global_transform().xform(probe);
+
+        // liquid is in world space
+        Transform3D liquid_xform;
+        bool point_submerged = false;
+        if (_liquid_area) {
+            liquid_xform = _liquid_area->get_liquid_transform(probe);
+            point_submerged = liquid_xform.origin.y > probe.y;
+        }
+
+        if (point_submerged) {
+            submerged_count += 1;
+        }
+    }
+
+    // update submerged ratio and notify if changed
+    float ratio = 0.0f;
+    if (_probes.size() > 0) {
+        ratio = (float)submerged_count / (float)_probes.size();
+    }
+    
+    // notify on change from completely submerged to not submerged and vice versa
+    bool changed = Math::is_zero_approx(_submerged_ratio) != Math::is_zero_approx(ratio);
+    _submerged_ratio = ratio;
+    if (changed){
+        emit_signal("submerged_changed");
+    }
+}
+
 void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
     CharacterBody3D *body = Object::cast_to<CharacterBody3D>(get_parent());
     
@@ -248,8 +291,6 @@ void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
 
     ERR_FAIL_COND_MSG(delta <= 0.0f, "Delta time must be positive to apply buoyancy.");
     ERR_FAIL_COND_MSG(_mass <= 0.0f, "Mass must be positive to apply buoyancy.");
-
-	int submerged_count = 0;
 
     // retrieve velocity
     Vector3 velocity = body->get_velocity();
@@ -270,9 +311,6 @@ void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
         // add this probes contribution
         float probe_proportion = _buoyancy * 1.0 / (float)_probes.size();
 		if (point_submerged) {
-			// just one is enough to mark the body as submerged
-			submerged_count += 1;
-
             // invert gravity to get buoyancy. depth is negative, so will invert gravity
             float depth = probe.y - liquid_xform.origin.y;
             Vector3 force = liquid_xform.basis.xform(_gravity * _mass * depth); 
@@ -290,19 +328,6 @@ void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
 
     // write back velocity
     body->set_velocity(velocity);
-
-	// update submerged ratio and notify if changed
-	float ratio = 0.0f;
-	if (_probes.size() > 0) {
-		ratio = (float)submerged_count / (float)_probes.size();
-	}
-	
-    // notify on change from completely submerged to not submerged and vice versa
-	bool changed = Math::is_zero_approx(_submerged_ratio) != Math::is_zero_approx(ratio);
-	_submerged_ratio = ratio;
-	if (changed){
-		emit_signal("submerged_changed");
-	}
 }
 
 

@@ -27,9 +27,12 @@ class CharacterBuoyancy : public Node, protected NodeDebug {
     float _submerged_drag_linear = 3.0f;    // drag when submerged should be high
 
     PackedVector3Array _probes;
+    Vector<Transform3D> _last_transforms;
     uint64_t _buoyancy_time = 0; // us
     Vector3 _gravity = Vector3(0, -9.81, 0);
     float _submerged_ratio = 0.0f;
+
+    void _update_last_transforms();
 
     // Debug
     void _update_debug_mesh() override;
