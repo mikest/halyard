@@ -54,8 +54,7 @@
 
         <method name="get_apply_forces" qualifiers="const">
             <return type="bool" />
-            <description>Returns whether forces are applied to the parent body.
-            Note that the submerged_ratio state will still be updated as long [code]set_process_internal(true)[/code] is enabled. To completely disable LiquidArea probing disable internal physics for this node.</description>
+            <description>Returns whether forces are applied to the parent body.</description>
         </method>
             </description>
         </method>
@@ -148,6 +147,7 @@
 
         <member name="apply_forces" type="bool" setter="set_apply_forces" getter="get_apply_forces" default="true">
             When true the computed buoyancy velocity is applied to the parent [CharacterBody3D].
+            Note that the submerged_ratio state will still be updated as long [code]set_process_internal(true)[/code] is enabled. To completely disable LiquidArea probing disable internal physics for this node.
         </member>
 
         <member name="mass" type="float" setter="set_mass" getter="get_mass" default="1.0">
@@ -187,6 +187,7 @@
         <signal name="submerged_changed">
             <description>
                 Emitted when the character transitions between being completely out of the liquid (submerged_ratio == 0) and having at least one probe submerged (submerged_ratio > 0), or vice versa.
+                Note that this signal will still be emitted even if [member apply_forces] is false, as long as internal physics processing is enabled.
             </description>
         </signal>
     </signals>
