@@ -54,7 +54,10 @@
 
         <method name="get_apply_forces" qualifiers="const">
             <return type="bool" />
-            <description>Returns whether forces are applied to the parent body.</description>
+            <description>Returns whether forces are applied to the parent body.
+            Note that the submerged_ratio state will still be updated as long [code]set_process_internal(true)[/code] is enabled. To completely disable LiquidArea probing disable internal physics for this node.</description>
+        </method>
+            </description>
         </method>
 
         <method name="set_buoyancy">

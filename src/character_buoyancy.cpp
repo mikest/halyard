@@ -250,6 +250,9 @@ void CharacterBuoyancy::_update_last_transforms() {
 
     int submerged_count = 0;
 
+    // resize cache to match probe count
+    _last_transforms.resize(_probes.size());
+
     for (int i = 0; i < _probes.size(); ++i) {
         Vector3 probe = _probes[i];
 
@@ -263,6 +266,9 @@ void CharacterBuoyancy::_update_last_transforms() {
             liquid_xform = _liquid_area->get_liquid_transform(probe);
             point_submerged = liquid_xform.origin.y > probe.y;
         }
+
+        // cache the transform for use in apply_buoyancy_velocity
+        _last_transforms.write[i] = liquid_xform;
 
         if (point_submerged) {
             submerged_count += 1;
@@ -291,22 +297,19 @@ void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
 
     ERR_FAIL_COND_MSG(delta <= 0.0f, "Delta time must be positive to apply buoyancy.");
     ERR_FAIL_COND_MSG(_mass <= 0.0f, "Mass must be positive to apply buoyancy.");
+    ERR_FAIL_COND_MSG(_probes.size() != _last_transforms.size(), "Probe count and cached transform count mismatch.");
 
     // retrieve velocity
     Vector3 velocity = body->get_velocity();
     for (int i = 0; i < _probes.size(); ++i) {
+		
+		// probes are in local space
         Vector3 probe = _probes[i];
-
-        // probes are in local space
         probe = body->get_global_transform().xform(probe);
 
-        // liquid is in world space
-        Transform3D liquid_xform;
-        bool point_submerged = false;
-        if (_liquid_area) {
-            liquid_xform = _liquid_area->get_liquid_transform(probe);
-            point_submerged = liquid_xform.origin.y > probe.y;
-        }
+        // use cached liquid transform from _update_last_transforms
+        Transform3D liquid_xform = _last_transforms[i];
+        bool point_submerged = liquid_xform.origin.y > probe.y;
 
         // add this probes contribution
         float probe_proportion = _buoyancy * 1.0 / (float)_probes.size();
