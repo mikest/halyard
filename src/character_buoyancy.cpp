@@ -25,10 +25,7 @@ PackedStringArray CharacterBuoyancy::_get_configuration_warnings() const {
 		what.append("Buoyancy must be a child of a CharacterBody3D for forces to be applied.");
 	}
 
-	// if (!_liquid_area) {
-	// 	what.append("Missing LiquidArea. First LiquidArea in the scene tree will be used,\n or liquid level will be Vector3.ZERO");
-	// }
-
+	// NOTE: there are legitimate reasons to not have a liquid area, so don't nag about that.
 	return what;
 }
 
@@ -244,28 +241,26 @@ void CharacterBuoyancy::_update_debug_mesh() {
 void CharacterBuoyancy::_update_last_transforms() {
     CharacterBody3D *body = Object::cast_to<CharacterBody3D>(get_parent());
     
-    if (!body || !_liquid_area) {
-        return;
-    }
+	ERR_FAIL_NULL_MSG(body, "CharacterBuoyancy must be a child of a CharacterBody3D to update submerged state.");
 
-    int submerged_count = 0;
+	// NOTE: there are legitimate reasons to not have a liquid area or probes, so just return
+    const int probe_count = _probes.size();
+    if (probe_count == 0) return;
+	if (_liquid_area == nullptr) return;
+
+	int submerged_count = 0;
 
     // resize cache to match probe count
-    _last_transforms.resize(_probes.size());
+    _last_transforms.resize(probe_count);
+    const Transform3D body_transform = body->get_global_transform();
 
-    for (int i = 0; i < _probes.size(); ++i) {
-        Vector3 probe = _probes[i];
+    for (int i = 0; i < probe_count; ++i) {
+        // probes are in local space, transform to global
+        Vector3 probe = body_transform.xform(_probes[i]);
 
-        // probes are in local space
-        probe = body->get_global_transform().xform(probe);
-
-        // liquid is in world space
-        Transform3D liquid_xform;
-        bool point_submerged = false;
-        if (_liquid_area) {
-            liquid_xform = _liquid_area->get_liquid_transform(probe);
-            point_submerged = liquid_xform.origin.y > probe.y;
-        }
+        // get liquid transform at this point
+        Transform3D liquid_xform = _liquid_area->get_liquid_transform(probe);
+        bool point_submerged = liquid_xform.origin.y > probe.y;
 
         // cache the transform for use in apply_buoyancy_velocity
         _last_transforms.write[i] = liquid_xform;
@@ -276,10 +271,7 @@ void CharacterBuoyancy::_update_last_transforms() {
     }
 
     // update submerged ratio and notify if changed
-    float ratio = 0.0f;
-    if (_probes.size() > 0) {
-        ratio = (float)submerged_count / (float)_probes.size();
-    }
+    float ratio = (float)submerged_count / (float)probe_count;
     
     // notify on change from completely submerged to not submerged and vice versa
     bool changed = Math::is_zero_approx(_submerged_ratio) != Math::is_zero_approx(ratio);
@@ -299,30 +291,40 @@ void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
     ERR_FAIL_COND_MSG(_mass <= 0.0f, "Mass must be positive to apply buoyancy.");
     ERR_FAIL_COND_MSG(_probes.size() != _last_transforms.size(), "Probe count and cached transform count mismatch.");
 
+    const int probe_count = _probes.size();
+    if (probe_count == 0) {
+        return;
+    }
+
+    // constants
+    const float probe_proportion = _buoyancy / (float)probe_count;
+    const float inv_mass = 1.0f / _mass;
+    const Vector3 gravity_mass = _gravity * _mass;
+    const Transform3D body_transform = body->get_global_transform();
+
     // retrieve velocity
     Vector3 velocity = body->get_velocity();
-    for (int i = 0; i < _probes.size(); ++i) {
+
+	// apply buoyancy for each submerged probe
+    for (int i = 0; i < probe_count; ++i) {
 		
-		// probes are in local space
-        Vector3 probe = _probes[i];
-        probe = body->get_global_transform().xform(probe);
+		// probes are in local space, transform to global
+        Vector3 probe = body_transform.xform(_probes[i]);
 
         // use cached liquid transform from _update_last_transforms
         Transform3D liquid_xform = _last_transforms[i];
         bool point_submerged = liquid_xform.origin.y > probe.y;
 
-        // add this probes contribution
-        float probe_proportion = _buoyancy * 1.0 / (float)_probes.size();
 		if (point_submerged) {
             // invert gravity to get buoyancy. depth is negative, so will invert gravity
             float depth = probe.y - liquid_xform.origin.y;
-            Vector3 force = liquid_xform.basis.xform(_gravity * _mass * depth); 
+            Vector3 force = liquid_xform.basis.xform(gravity_mass * depth); 
 
             // apply to velocity
-            velocity += (force / _mass) * delta * probe_proportion;
+            velocity += force * inv_mass * delta * probe_proportion;
 
             // apply linear submerged drag
-            float damping = 1.0 - (_submerged_drag_linear * probe_proportion * delta);
+            float damping = 1.0f - (_submerged_drag_linear * probe_proportion * delta);
             damping = Math::max(damping, 0.0f);
 
             velocity *= damping;
