@@ -35,6 +35,8 @@ protected:
 	Ref<ArrayMesh> _debug_mesh;
 	MeshInstance3D* _debug_mesh_instance = nullptr;
     Ref<StandardMaterial3D> _debug_material;
+    Ref<StandardMaterial3D> _marker_material;
+    Ref<StandardMaterial3D> _inverted_material;
 
     // sets both node and node3d pointers
     void _set_debug_owner_node(Node3D* p_node) { _node = p_node; }   
@@ -53,6 +55,8 @@ protected:
     void _internal_create_debug_mesh();
     void _internal_update_debug_mesh();
 	void _internal_destroy_debug_mesh();
+
+    void _add_marker_surface(Vector3 p_position, bool inverted);
 
 public:
     NodeDebug();
