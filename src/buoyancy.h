@@ -86,6 +86,8 @@ private:
 	PackedVector3Array _vertex;
 	// Optional explicit probe points for point-based buoyancy
 	PackedVector3Array _buoyancy_probes;
+	Vector<Transform3D> _last_probe_transforms;
+	
 	PackedFloat32Array _depths;
 	HashMap<Vector3, Transform3D> _depth_map;
 
@@ -94,6 +96,8 @@ private:
 	void _create_debug_mesh() override;
 	void _update_debug_mesh() override;
 	void _destroy_debug_mesh() override;
+
+	void _update_last_probe_transforms();
 
 protected:
 	static void _bind_methods();

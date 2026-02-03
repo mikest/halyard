@@ -71,10 +71,7 @@ PackedStringArray Buoyancy::_get_configuration_warnings() const {
 		}
 	}
 
-	// if (!_liquid_area) {
-	// 	what.append("Missing LiquidArea. First LiquidArea in the scene tree will be used,\n or liquid level will be Vector3.ZERO");
-	// }
-
+	// NOTE: There are legitimate reasons to not have a liquid area assigned
 	return what;
 }
 
@@ -129,6 +126,7 @@ void Buoyancy::_notification(int p_what) {
 					if (_apply_forces){
 						float delta = get_physics_process_delta_time();
 						if (_buoyancy_mode == BUOYANCY_PROBES) {
+							_update_last_probe_transforms();
 							apply_buoyancy_probe_forces(body, delta);
 						} else {
 							// recalculate buoyancy volumes and centroids
@@ -199,6 +197,8 @@ BuoyancyMode Buoyancy::get_buoyancy_mode() const {
 // Buoyancy probes
 void Buoyancy::set_buoyancy_probes(const PackedVector3Array &p_probes) {
 	_buoyancy_probes = p_probes;
+	_last_probe_transforms.resize(_buoyancy_probes.size());
+
 	set_debug_mesh_dirty();
 	_set_dirty();
 	_update_configuration_warnings();
@@ -744,38 +744,89 @@ void Buoyancy::apply_buoyancy_mesh_forces(RigidBody3D *body, float delta) {
 	}
 }
 
-void Buoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) {
-	if (body == nullptr) return;
-	if (_liquid_area == nullptr) return;
-	if (_buoyancy_probes.size() == 0) return;
+void Buoyancy::_update_last_probe_transforms() {
+	RigidBody3D *body = Object::cast_to<RigidBody3D>(get_parent());
+	
+	if (!body || !_liquid_area) {
+		return;
+	}
 
-	float liquid_density = _liquid_area->get_density();
-	const Vector3 gravity = body->get_gravity() / body->get_gravity_scale();
-	bool submerged = false;
+	const int probe_count = _buoyancy_probes.size();
+	if (probe_count == 0) {
+		return;
+	}
+
+	// Resize cache to match probe count
+	_last_probe_transforms.resize(probe_count);
+
+	// Cache body transform to avoid repeated calls
+	const Transform3D body_transform = body->get_global_transform();
+	const float liquid_y = _liquid_area->get_global_transform().origin.y;
 
 	// Reset submerged probe count
 	_submerged_probe_count = 0;
 
-	// Get body transform
-	Transform3D body_transform = body->get_global_transform();
-
-	// Resize cache for wave transforms
-	set_debug_mesh_dirty();
-
-	for (int idx = 0; idx < _buoyancy_probes.size(); ++idx) {
+	for (int idx = 0; idx < probe_count; ++idx) {
 		// Get probe position in global space
-		Vector3 probe = _buoyancy_probes[idx];
-		probe = body_transform.xform(probe);
+		Vector3 probe = body_transform.xform(_buoyancy_probes[idx]);
 
 		// Get liquid position (flat tidal coordinate)
 		Vector3 liquid_pos = probe;
-		liquid_pos.y = _liquid_area->get_global_transform().origin.y;
+		liquid_pos.y = liquid_y;
 
 		// Get wave transform at this position
 		Transform3D wave_xform = Transform3D(Basis(), liquid_pos);
 		if (!_ignore_waves) {
 			wave_xform = _liquid_area->get_liquid_transform(liquid_pos);
 		}
+
+		// Cache the transform for use in apply_buoyancy_probe_forces
+		_last_probe_transforms.write[idx] = wave_xform;
+
+		// Calculate depths for submerged count
+		float wave_depth = probe.y - wave_xform.origin.y;
+		float liquid_depth = probe.y - liquid_pos.y;
+
+		// Count if submerged
+		if (wave_depth < 0.0f || liquid_depth < 0.0f) {
+			_submerged_probe_count++;
+		}
+	}
+
+	set_debug_mesh_dirty();
+}
+
+void Buoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) {
+	if (body == nullptr) return;
+	if (_liquid_area == nullptr) return;
+
+	const int probe_count = _buoyancy_probes.size();
+	if (probe_count == 0) return;
+
+	// Validate cached transforms match probe count
+	if (probe_count != _last_probe_transforms.size()) {
+		ERR_PRINT("Buoyancy: Probe count and cached transform count mismatch.");
+		return;
+	}
+
+	// Pre-calculate constants
+	const Vector3 gravity = body->get_gravity() / body->get_gravity_scale();
+	const Transform3D body_transform = body->get_global_transform();
+	const float liquid_y = _liquid_area->get_global_transform().origin.y;
+	const float probe_ratio = 1.0f / probe_count;
+	const Basis basis = body_transform.basis.orthonormalized();
+	const Vector3 one = Vector3(1, 1, 1);
+
+	for (int idx = 0; idx < probe_count; ++idx) {
+		// Get probe position in global space
+		Vector3 probe = body_transform.xform(_buoyancy_probes[idx]);
+
+		// Get liquid position (flat tidal coordinate)
+		Vector3 liquid_pos = probe;
+		liquid_pos.y = liquid_y;
+
+		// Use cached wave transform from _update_last_probe_transforms
+		Transform3D wave_xform = _last_probe_transforms[idx];
 		Vector3 wave_pos = wave_xform.origin;
 
 		// Calculate depths
@@ -783,29 +834,26 @@ void Buoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) {
 		float liquid_depth = probe.y - liquid_pos.y;
 
 		// Each probe affects 1/N of the mass
-		float probe_mass = (body->get_mass() / _buoyancy_probes.size()) * _probe_buoyancy;
-
-		Vector3 liquid_force = Vector3();
-		Vector3 wave_force = Vector3();
+		float probe_mass = (body->get_mass() * probe_ratio) * _probe_buoyancy;
 
 		// Calculate forces
-		liquid_force = gravity * probe_mass * liquid_depth;
-		wave_force = wave_xform.basis.get_column(1) * gravity * probe_mass * wave_depth;
+		Vector3 liquid_force = gravity * probe_mass * liquid_depth;
+		Vector3 wave_force = wave_xform.basis.get_column(1) * gravity * probe_mass * wave_depth;
+
+		bool probe_submerged = false;
 
 		// Apply forces if submerged
 		if (wave_depth < 0.0f) {
-			submerged = true;
+			probe_submerged = true;
 			body->apply_force(wave_force, probe - body_transform.origin);
 		}
 
 		if (liquid_depth < 0.0f) {
-			submerged = true;
+			probe_submerged = true;
 			body->apply_force(liquid_force, probe - body_transform.origin);
 		}
 
-		if (submerged) {
-			// Count this probe as submerged
-			_submerged_probe_count++;
+		if (probe_submerged) {
 			// Apply current forces
 			Vector3 current_force = _liquid_area->get_current_speed() * probe_mass;
 			if (current_force.length() > 0.0f) {
@@ -813,10 +861,6 @@ void Buoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) {
 			}
 
 			// Apply submerged drag per probe
-			Basis basis = body_transform.basis.orthonormalized();
-			Vector3 one = Vector3(1, 1, 1);
-			float probe_ratio = 1.0f / _buoyancy_probes.size();
-
 			Vector3 linear_drag = one - _submerged_linear_drag * _linear_drag_scale * delta * probe_ratio;
 			Vector3 linear_velocity = body->get_linear_velocity();
 			Vector3 local_vel = basis.xform_inv(linear_velocity);
@@ -946,6 +990,10 @@ void Buoyancy::_update_debug_mesh() {
 		}
 		
 		_debug_mesh->surface_set_material(surf_lines, _debug_material);
+
+		// origin marker
+		_add_marker_surface(_submerged_centroid, false);
+		_add_marker_surface(_center_of_mass, true);
 
 		// try the collider first, and then the parent.
 		Node3D *mesh_parent = _collider;

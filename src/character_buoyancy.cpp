@@ -100,6 +100,7 @@ LiquidArea* CharacterBuoyancy::get_liquid_area() const {
 
 void CharacterBuoyancy::set_probes(const PackedVector3Array &local_probes) {
     _probes = local_probes;
+	_last_transforms.resize(_probes.size());
 }
 
 PackedVector3Array CharacterBuoyancy::get_probes() const {
@@ -245,13 +246,14 @@ void CharacterBuoyancy::_update_last_transforms() {
 
 	// NOTE: there are legitimate reasons to not have a liquid area or probes, so just return
     const int probe_count = _probes.size();
+	_last_transforms.resize(probe_count);
+
     if (probe_count == 0) return;
 	if (_liquid_area == nullptr) return;
 
 	int submerged_count = 0;
 
     // resize cache to match probe count
-    _last_transforms.resize(probe_count);
     const Transform3D body_transform = body->get_global_transform();
 
     for (int i = 0; i < probe_count; ++i) {
@@ -283,7 +285,7 @@ void CharacterBuoyancy::_update_last_transforms() {
 
 void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
     CharacterBody3D *body = Object::cast_to<CharacterBody3D>(get_parent());
-    
+
     ERR_FAIL_NULL_MSG(body, "CharacterBuoyancy must be a child of a CharacterBody3D to apply buoyancy.");
     ERR_FAIL_NULL_MSG(_liquid_area, "No LiquidArea assigned to CharacterBuoyancy.");
 
@@ -307,7 +309,7 @@ void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
 
 	// apply buoyancy for each submerged probe
     for (int i = 0; i < probe_count; ++i) {
-		
+
 		// probes are in local space, transform to global
         Vector3 probe = body_transform.xform(_probes[i]);
 
