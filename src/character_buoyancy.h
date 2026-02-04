@@ -76,6 +76,7 @@ public:
     
     float get_submerged_ratio() const;
     uint64_t get_buoyancy_time() const;
+    float get_average_depth() const;
 
     // Debug
     void set_show_debug(bool show);
