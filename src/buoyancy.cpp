@@ -1,5 +1,6 @@
 #include "buoyancy.h"
 #include "liquid_area.h"
+#include "halyard_utils.h"
 
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/rigid_body3d.hpp>
@@ -203,6 +204,10 @@ BuoyancyMode Buoyancy::get_buoyancy_mode() const {
 void Buoyancy::set_buoyancy_probes(const PackedVector3Array &p_probes) {
 	_buoyancy_probes = p_probes;
 	_last_probe_transforms.resize(_buoyancy_probes.size());
+
+	// Calculate depth that is considered fully submerged
+	// Used to clamp the buoyancy force calculation when diving
+	_full_submerged_depth = halyard::calculate_full_submerged_depth(_buoyancy_probes);
 
 	set_debug_mesh_dirty();
 	_set_dirty();
@@ -822,18 +827,6 @@ void Buoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) {
 	const Basis basis = body_transform.basis.orthonormalized();
 	const Vector3 one = Vector3(1, 1, 1);
 
-	// calculate the extents of the probe Y values in local space
-	float min_probe_depth = 0.0f;
-	float max_probe_depth = 0.0f;
-	for( auto probe : _buoyancy_probes) {
-		if( probe.y < min_probe_depth ) {
-			min_probe_depth = probe.y;
-		}
-		if( probe.y > max_probe_depth ) {
-			max_probe_depth = probe.y;
-		}
-	}
-	float max_submerged_depth = -abs(max_probe_depth - min_probe_depth);
 
 	for (int idx = 0; idx < probe_count; ++idx) {
 		// Get probe position in global space
@@ -848,8 +841,8 @@ void Buoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) {
 		Vector3 wave_pos = wave_xform.origin;
 
 		// Calculate depths
-		float wave_depth = Math::max(probe.y - wave_pos.y, max_submerged_depth);
-		float liquid_depth = Math::max(probe.y - liquid_pos.y, max_submerged_depth);
+		float wave_depth = Math::max(probe.y - wave_pos.y, _full_submerged_depth);
+		float liquid_depth = Math::max(probe.y - liquid_pos.y, _full_submerged_depth);
 
 		// Each probe affects 1/N of the mass
 		float probe_mass = (body->get_mass() * probe_ratio) * _probe_buoyancy;
