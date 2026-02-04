@@ -62,6 +62,11 @@ void CharacterBuoyancy::_notification(int p_what) {
 		 	_liquid_area = nullptr;
 		} break;
 
+		case NOTIFICATION_INTERNAL_PROCESS: {
+			if (_show_debug)
+				set_debug_mesh_dirty();
+		}
+
         // velocity is applied in the internal physics process so that submerged is updated
         // for derived classes before normal physics process
 		case NOTIFICATION_INTERNAL_PHYSICS_PROCESS: {
@@ -102,10 +107,6 @@ LiquidArea* CharacterBuoyancy::get_liquid_area() const {
 void CharacterBuoyancy::set_probes(const PackedVector3Array &local_probes) {
     _probes = local_probes;
 	_last_transforms.resize(_probes.size());
-
-	// Calculate depth that is considered fully submerged
-	// Used to clamp the buoyancy force calculation when diving
-	_full_submerged_depth = halyard::calculate_full_submerged_depth(_probes);
 }
 
 PackedVector3Array CharacterBuoyancy::get_probes() const {
@@ -345,6 +346,7 @@ void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
     const float probe_proportion = _buoyancy / (float)probe_count;
     const Transform3D body_transform = body->get_global_transform();
 	const Vector3 one(1, 1, 1);
+	const float full_submerged_depth = halyard::calculate_full_submerged_depth(_probes, body_transform);
 
     // retrieve velocity
     Vector3 velocity = body->get_velocity();
@@ -364,13 +366,13 @@ void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
             float depth = probe.y - liquid_xform.origin.y;
 			
 			// clamp to max submerged depth so we don't grow force unbounded
-			depth = Math::max(depth, _full_submerged_depth);
+			depth = Math::max(depth, full_submerged_depth);
 
 			// wave horizontal influence on buoyancy normal is stronger near surface, weaker at depth
 			// ratio: 1.0 at surface (full wave influence), 0.0 at full depth (vertical only)
 			Vector3 wave_normal = Vector3(0, 1, 0);
-			if(_full_submerged_depth != 0.0f) {
-				float ratio = Math::clamp(1.0f - (depth / _full_submerged_depth), 0.0f, 1.0f);
+			if(full_submerged_depth != 0.0f) {
+				float ratio = Math::clamp(1.0f - (depth / full_submerged_depth), 0.0f, 1.0f);
 				wave_normal = wave_normal.lerp(liquid_xform.basis.get_column(1), ratio).normalized();
 			}
 
