@@ -114,6 +114,9 @@ void Buoyancy::_notification(int p_what) {
 			if (_dirty && is_node_ready()) {
 				_update_statics();
 			}
+
+			if (_show_debug)
+				set_debug_mesh_dirty();
 		} break;
 
 		case NOTIFICATION_INTERNAL_PHYSICS_PROCESS: {
@@ -204,10 +207,6 @@ BuoyancyMode Buoyancy::get_buoyancy_mode() const {
 void Buoyancy::set_buoyancy_probes(const PackedVector3Array &p_probes) {
 	_buoyancy_probes = p_probes;
 	_last_probe_transforms.resize(_buoyancy_probes.size());
-
-	// Calculate depth that is considered fully submerged
-	// Used to clamp the buoyancy force calculation when diving
-	_full_submerged_depth = halyard::calculate_full_submerged_depth(_buoyancy_probes);
 
 	set_debug_mesh_dirty();
 	_set_dirty();
@@ -825,6 +824,7 @@ void Buoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) {
 	const float probe_ratio = 1.0f / probe_count;
 	const Basis basis = body_transform.basis.orthonormalized();
 	const Vector3 one = Vector3(1, 1, 1);
+	const float full_submerged_depth = halyard::calculate_full_submerged_depth(_buoyancy_probes, body_transform);
 
 
 	for (int idx = 0; idx < probe_count; ++idx) {
@@ -840,7 +840,7 @@ void Buoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) {
 		Vector3 wave_pos = wave_xform.origin;
 
 		// Calculate depths
-		float wave_depth = Math::max(probe.y - wave_pos.y, _full_submerged_depth);
+		float wave_depth = Math::max(probe.y - wave_pos.y, full_submerged_depth);
 
 		// Each probe affects 1/N of the mass
 		float probe_mass = (body->get_mass() * probe_ratio) * _probe_buoyancy;
@@ -997,8 +997,8 @@ void Buoyancy::_update_debug_mesh() {
 		_debug_mesh->surface_set_material(surf_lines, _debug_material);
 
 		// origin marker
-		_add_marker_surface(_submerged_centroid, false);
-		_add_marker_surface(_center_of_mass, true);
+		_add_marker_surface(get_submerged_centroid(), false);
+		_add_marker_surface(get_center_of_mass(), true);
 
 		// try the collider first, and then the parent.
 		Node3D *mesh_parent = _collider;

@@ -73,7 +73,6 @@ private:
 	Vector3 _submerged_centroid = Vector3(0, 0, 0);
 	float _submerged_volume = 0.0f;
 	int _submerged_probe_count = 0;
-	float _full_submerged_depth = 0.0f;
 	Vector3 _mesh_centroid = Vector3(0, 0, 0);
 	float _mesh_volume = 0.0f;
 	float _sign = -1.0f;

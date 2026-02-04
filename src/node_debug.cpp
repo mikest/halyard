@@ -74,11 +74,7 @@ void NodeDebug::_internal_create_debug_mesh() {
 
         // always render last
         _debug_material->set_render_priority(StandardMaterial3D::RENDER_PRIORITY_MAX);
-
-        // disable depth test in game so we can see the mesh
-        if (!Engine::get_singleton()->is_editor_hint()) {
-            _debug_material->set_flag(StandardMaterial3D::FLAG_DISABLE_DEPTH_TEST, true);
-        }
+        _debug_material->set_flag(StandardMaterial3D::FLAG_DISABLE_DEPTH_TEST, true);
     }
 
     // a material for the markers
@@ -91,14 +87,13 @@ void NodeDebug::_internal_create_debug_mesh() {
         _marker_material->set_shading_mode(StandardMaterial3D::SHADING_MODE_UNSHADED);
         _marker_material->set_depth_draw_mode(StandardMaterial3D::DEPTH_DRAW_DISABLED);
         _marker_material->set_transparency(StandardMaterial3D::TRANSPARENCY_ALPHA);
-        _marker_material->set_flag(StandardMaterial3D::FLAG_ALBEDO_FROM_VERTEX_COLOR, true);
         _marker_material->set_albedo(_debug_color);
 
         // disable depth test in game so we can see the mesh
-        if (!Engine::get_singleton()->is_editor_hint()) {
-            _marker_material->set_flag(StandardMaterial3D::FLAG_DISABLE_DEPTH_TEST, true);
-        }
+        _marker_material->set_render_priority(StandardMaterial3D::RENDER_PRIORITY_MAX);
+        _marker_material->set_flag(StandardMaterial3D::FLAG_DISABLE_DEPTH_TEST, true);
 
+        // same as above, only inverted
         _inverted_material = _marker_material->duplicate();
         _inverted_material->set_albedo(_debug_color.inverted());
     }
