@@ -740,7 +740,6 @@ void Buoyancy::apply_buoyancy_mesh_forces(RigidBody3D *body, float delta) {
 		Vector3 local_vel = basis.xform_inv(linear_velocity);
 		Vector3 global_vel = basis.xform(local_vel * linear_drag);
 
-		//PhysicsServer3D::get_singleton()->body_set_state(body->get_rid(), PhysicsServer3D::BODY_STATE_LINEAR_VELOCITY, global_vel);
 		body->set_linear_velocity(global_vel);
 
 		Vector3 angular_drag = one - _submerged_angular_drag * _angular_drag_scale * delta * ratio;
@@ -749,7 +748,7 @@ void Buoyancy::apply_buoyancy_mesh_forces(RigidBody3D *body, float delta) {
 		Vector3 local_ang = basis.xform_inv(angular_velocity);
 		Vector3 global_ang = basis.xform(local_ang * angular_drag);
 
-		//PhysicsServer3D::get_singleton()->body_set_state(body->get_rid(), PhysicsServer3D::BODY_STATE_ANGULAR_VELOCITY, global_ang);
+
 		body->set_angular_velocity(global_ang);
 	}
 }
@@ -842,14 +841,14 @@ void Buoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) {
 
 		// Calculate depths
 		float wave_depth = Math::max(probe.y - wave_pos.y, _full_submerged_depth);
-		float liquid_depth = Math::max(probe.y - liquid_pos.y, _full_submerged_depth);
 
 		// Each probe affects 1/N of the mass
 		float probe_mass = (body->get_mass() * probe_ratio) * _probe_buoyancy;
 
 		// Calculate forces
-		Vector3 liquid_force = gravity * probe_mass * liquid_depth;
-		Vector3 wave_force = wave_xform.basis.get_column(1) * gravity * probe_mass * wave_depth;
+		Vector3 wave_normal = wave_xform.basis.get_column(1);
+		wave_normal = wave_normal.lerp(Vector3(0, 1, 0), probe_ratio).normalized();
+		Vector3 wave_force = (wave_normal * gravity.y) * probe_mass * wave_depth;
 
 		bool probe_submerged = false;
 
@@ -857,11 +856,6 @@ void Buoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) {
 		if (wave_depth < 0.0f) {
 			probe_submerged = true;
 			body->apply_force(wave_force, probe - body_transform.origin);
-		}
-
-		if (liquid_depth < 0.0f) {
-			probe_submerged = true;
-			body->apply_force(liquid_force, probe - body_transform.origin);
 		}
 
 		if (probe_submerged) {
