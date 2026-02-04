@@ -342,6 +342,19 @@ void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
     // retrieve velocity
     Vector3 velocity = body->get_velocity();
 
+	// calculate the extents of the probe Y values in local space
+	float min_probe_depth = 0.0f;
+	float max_probe_depth = 0.0f;
+	for( auto probe : _probes) {
+		if( probe.y < min_probe_depth ) {
+			min_probe_depth = probe.y;
+		}
+		if( probe.y > max_probe_depth ) {
+			max_probe_depth = probe.y;
+		}
+	}
+	float max_submerged_depth = -abs(max_probe_depth - min_probe_depth);
+
 	// apply buoyancy for each submerged probe
     for (int i = 0; i < probe_count; ++i) {
 
@@ -357,7 +370,7 @@ void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
             float depth = probe.y - liquid_xform.origin.y;
 			
 			// clamp to max submerged depth so we don't grow force unbounded
-			depth = Math::max(depth, _full_submerged_depth);
+			depth = Math::max(depth, max_submerged_depth);
 
             Vector3 force = liquid_xform.basis.xform(gravity_mass * depth); 
 
