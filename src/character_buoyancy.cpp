@@ -1,5 +1,6 @@
 #include "character_buoyancy.h"
 #include "liquid_area.h"
+#include "halyard_utils.h"
 
 #include <godot_cpp/variant/utility_functions.hpp>
 #include <godot_cpp/classes/engine.hpp>
@@ -101,6 +102,10 @@ LiquidArea* CharacterBuoyancy::get_liquid_area() const {
 void CharacterBuoyancy::set_probes(const PackedVector3Array &local_probes) {
     _probes = local_probes;
 	_last_transforms.resize(_probes.size());
+
+	// Calculate depth that is considered fully submerged
+	// Used to clamp the buoyancy force calculation when diving
+	_full_submerged_depth = halyard::calculate_full_submerged_depth(_probes);
 }
 
 PackedVector3Array CharacterBuoyancy::get_probes() const {
@@ -350,6 +355,10 @@ void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
 		if (point_submerged) {
             // invert gravity to get buoyancy. depth is negative, so will invert gravity
             float depth = probe.y - liquid_xform.origin.y;
+			
+			// clamp to max submerged depth so we don't grow force unbounded
+			depth = Math::max(depth, _full_submerged_depth);
+
             Vector3 force = liquid_xform.basis.xform(gravity_mass * depth); 
 
             // apply to velocity

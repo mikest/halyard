@@ -1,5 +1,6 @@
 #include "buoyancy.h"
 #include "liquid_area.h"
+#include "halyard_utils.h"
 
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/rigid_body3d.hpp>
@@ -122,15 +123,20 @@ void Buoyancy::_notification(int p_what) {
 
 					uint64_t time = Time::get_singleton()->get_ticks_usec();
 
+					// always update submerged state
+					if (_buoyancy_mode == BUOYANCY_PROBES) {
+						_update_last_probe_transforms();
+					} else {
+						// recalc dynamics
+						_update_dynamics();
+					}
+
 					// optionally apply them
 					if (_apply_forces){
 						float delta = get_physics_process_delta_time();
 						if (_buoyancy_mode == BUOYANCY_PROBES) {
-							_update_last_probe_transforms();
 							apply_buoyancy_probe_forces(body, delta);
 						} else {
-							// recalculate buoyancy volumes and centroids
-							_update_dynamics();
 							apply_buoyancy_mesh_forces(body, delta);
 						}
 					}
@@ -198,6 +204,10 @@ BuoyancyMode Buoyancy::get_buoyancy_mode() const {
 void Buoyancy::set_buoyancy_probes(const PackedVector3Array &p_probes) {
 	_buoyancy_probes = p_probes;
 	_last_probe_transforms.resize(_buoyancy_probes.size());
+
+	// Calculate depth that is considered fully submerged
+	// Used to clamp the buoyancy force calculation when diving
+	_full_submerged_depth = halyard::calculate_full_submerged_depth(_buoyancy_probes);
 
 	set_debug_mesh_dirty();
 	_set_dirty();
@@ -817,6 +827,7 @@ void Buoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) {
 	const Basis basis = body_transform.basis.orthonormalized();
 	const Vector3 one = Vector3(1, 1, 1);
 
+
 	for (int idx = 0; idx < probe_count; ++idx) {
 		// Get probe position in global space
 		Vector3 probe = body_transform.xform(_buoyancy_probes[idx]);
@@ -830,8 +841,8 @@ void Buoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) {
 		Vector3 wave_pos = wave_xform.origin;
 
 		// Calculate depths
-		float wave_depth = probe.y - wave_pos.y;
-		float liquid_depth = probe.y - liquid_pos.y;
+		float wave_depth = Math::max(probe.y - wave_pos.y, _full_submerged_depth);
+		float liquid_depth = Math::max(probe.y - liquid_pos.y, _full_submerged_depth);
 
 		// Each probe affects 1/N of the mass
 		float probe_mass = (body->get_mass() * probe_ratio) * _probe_buoyancy;
