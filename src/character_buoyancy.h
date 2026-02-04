@@ -24,7 +24,8 @@ class CharacterBuoyancy : public Node, protected NodeDebug {
     float _mass = 150.0f;   // kg
     float _buoyancy = 1.0f; // mass multiplier
     float _wave_influence = 1.0f;
-    float _submerged_drag_linear = 3.0f;    // drag when submerged should be high
+    float _submerged_linear_drag = 3.0f;    // drag when submerged should be high
+    Vector3 _linear_drag_scale = Vector3(1.0f, 1.0f, 1.0f);
 
     PackedVector3Array _probes;
     float _full_submerged_depth = 0.0f;
@@ -71,6 +72,9 @@ public:
 
     void set_submerged_linear_drag(float drag);
     float get_submerged_linear_drag() const;
+
+    void set_linear_drag_scale(const Vector3 &scale);
+    Vector3 get_linear_drag_scale() const;
 
     void set_gravity(const Vector3 &gravity);
     Vector3 get_gravity() const;

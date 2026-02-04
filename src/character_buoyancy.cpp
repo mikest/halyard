@@ -138,11 +138,19 @@ float CharacterBuoyancy::get_wave_influence() const {
 }
 
 void CharacterBuoyancy::set_submerged_linear_drag(float drag) {
-	_submerged_drag_linear = drag;
+	_submerged_linear_drag = drag;
 }
 
 float CharacterBuoyancy::get_submerged_linear_drag() const {
-	return _submerged_drag_linear;
+	return _submerged_linear_drag;
+}
+
+void CharacterBuoyancy::set_linear_drag_scale(const Vector3 &scale) {
+	_linear_drag_scale = scale;
+}
+
+Vector3 CharacterBuoyancy::get_linear_drag_scale() const {
+	return _linear_drag_scale;
 }
 
 void CharacterBuoyancy::set_gravity(const Vector3 &gravity) {
@@ -335,9 +343,8 @@ void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
 
     // constants
     const float probe_proportion = _buoyancy / (float)probe_count;
-    const float inv_mass = 1.0f / _mass;
-    const Vector3 gravity_mass = _gravity * _mass;
     const Transform3D body_transform = body->get_global_transform();
+	const Vector3 one(1, 1, 1);
 
     // retrieve velocity
     Vector3 velocity = body->get_velocity();
@@ -359,16 +366,24 @@ void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
 			// clamp to max submerged depth so we don't grow force unbounded
 			depth = Math::max(depth, _full_submerged_depth);
 
-            Vector3 force = liquid_xform.basis.xform(gravity_mass * depth); 
+			// wave horizontal influence on buoyancy normal is stronger near surface, weaker at depth
+			// ratio: 1.0 at surface (full wave influence), 0.0 at full depth (vertical only)
+			Vector3 wave_normal = Vector3(0, 1, 0);
+			if(_full_submerged_depth != 0.0f) {
+				float ratio = Math::clamp(1.0f - (depth / _full_submerged_depth), 0.0f, 1.0f);
+				wave_normal = wave_normal.lerp(liquid_xform.basis.get_column(1), ratio).normalized();
+			}
+
+            Vector3 force = (wave_normal * _gravity.y) * depth * probe_proportion; 
 
             // apply to velocity
-            velocity += force * inv_mass * delta * probe_proportion;
+            velocity += force * delta;
 
-            // apply linear submerged drag
-            float damping = 1.0f - (_submerged_drag_linear * probe_proportion * delta);
-            damping = Math::max(damping, 0.0f);
-
-            velocity *= damping;
+            // apply linear submerged drag, in local space
+			Vector3 linear_drag = one - _submerged_linear_drag * _linear_drag_scale * delta * probe_proportion;
+			linear_drag = linear_drag.max(Vector3(0, 0, 0)); // prevent drag from going negative
+			Vector3 local_vel = body->get_basis().xform_inv(velocity);
+			velocity = body->get_basis().xform(local_vel * linear_drag);
         }
     }
 
@@ -388,6 +403,8 @@ void CharacterBuoyancy::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_wave_influence"), &CharacterBuoyancy::get_wave_influence);
 	ClassDB::bind_method(D_METHOD("set_submerged_linear_drag", "drag"), &CharacterBuoyancy::set_submerged_linear_drag);
 	ClassDB::bind_method(D_METHOD("get_submerged_linear_drag"), &CharacterBuoyancy::get_submerged_linear_drag);
+	ClassDB::bind_method(D_METHOD("set_linear_drag_scale", "scale"), &CharacterBuoyancy::set_linear_drag_scale);
+	ClassDB::bind_method(D_METHOD("get_linear_drag_scale"), &CharacterBuoyancy::get_linear_drag_scale);
 	ClassDB::bind_method(D_METHOD("set_gravity", "gravity"), &CharacterBuoyancy::set_gravity);
 	ClassDB::bind_method(D_METHOD("get_gravity"), &CharacterBuoyancy::get_gravity);
     ClassDB::bind_method(D_METHOD("set_probes", "probes"), &CharacterBuoyancy::set_probes);
@@ -408,6 +425,7 @@ void CharacterBuoyancy::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "buoyancy", PROPERTY_HINT_RANGE, "0,100,0.1"), "set_buoyancy", "get_buoyancy");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "wave_influence", PROPERTY_HINT_RANGE, "0,1,0.1"), "set_wave_influence", "get_wave_influence");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "submerged_linear_drag", PROPERTY_HINT_RANGE, "0,10,0.1"), "set_submerged_linear_drag", "get_submerged_linear_drag");
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "linear_drag_scale"), "set_linear_drag_scale", "get_linear_drag_scale");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "gravity"), "set_gravity", "get_gravity");
 
     // Debug
