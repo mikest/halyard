@@ -10,7 +10,8 @@
 
 using namespace godot;
 
-CharacterBuoyancy::CharacterBuoyancy() {
+CharacterBuoyancy::CharacterBuoyancy()
+: NodeDebug(Object::cast_to<Node>(this)) {
 	// default color
 	_debug_color = Color(0.0f, 0.8f, 1.0f, 0.2f);
 }
@@ -40,15 +41,6 @@ void CharacterBuoyancy::_notification(int p_what) {
 			set_physics_process_internal(true);
 		} break;
 
-		case NOTIFICATION_PARENTED: {
-			Node3D* parent = Object::cast_to<Node3D>(get_parent());
-			_set_debug_owner_node(parent);
-		} break;
-
-		case NOTIFICATION_UNPARENTED: {
-			_set_debug_owner_node(nullptr);
-		} break;
-
 		case NOTIFICATION_ENTER_TREE: {
 			if (Engine::get_singleton()->is_editor_hint() == false) {
 				if (_liquid_area == nullptr) {
@@ -63,9 +55,12 @@ void CharacterBuoyancy::_notification(int p_what) {
 		} break;
 
 		case NOTIFICATION_INTERNAL_PROCESS: {
-			if (_show_debug)
-				set_debug_mesh_dirty();
-		}
+			// in engine update this continuously so we can get visual feedback
+			if (Engine::get_singleton()->is_editor_hint() == true) {
+				if (_show_debug)
+					set_debug_mesh_dirty();
+			}
+		} break;
 
         // velocity is applied in the internal physics process so that submerged is updated
         // for derived classes before normal physics process

@@ -29,7 +29,8 @@ void LiquidArea::_bind_methods() {
 }
 
 
-LiquidArea::LiquidArea() {
+LiquidArea::LiquidArea()
+: NodeDebug(Object::cast_to<Node>(this))  {
     _set_debug_owner_node(this);
     
     // sea green
@@ -253,6 +254,9 @@ void LiquidArea::_update_debug_mesh() {
 	
     _debug_material->set_albedo(_debug_color);
 	_debug_mesh->surface_set_material(surf_lines, _debug_material);
+
+    // update transform to align with ourself
+    _debug_mesh_instance->set_global_transform(get_global_transform());
 }
 
 #pragma endregion

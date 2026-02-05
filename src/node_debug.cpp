@@ -5,11 +5,13 @@
 
 using namespace godot;
 
-NodeDebug::NodeDebug() {
+NodeDebug::NodeDebug(Node *p_self) {
+    _self = p_self;
 }
 
 NodeDebug::~NodeDebug() {
     _internal_destroy_debug_mesh();
+    _self = nullptr;
 }
 
 void NodeDebug::_debug_notification(int p_what) {
@@ -18,6 +20,20 @@ void NodeDebug::_debug_notification(int p_what) {
             _internal_destroy_debug_mesh();
             _node = nullptr;
         } break;
+
+		case Node::NOTIFICATION_ENTER_TREE: {
+			Node3D* parent = Object::cast_to<Node3D>(_self->get_parent());
+			_set_debug_owner_node(parent);
+        } break;
+
+        case Node::NOTIFICATION_PARENTED: {
+			Node3D* parent = Object::cast_to<Node3D>(_self->get_parent());
+			_set_debug_owner_node(parent);
+		} break;
+
+		case Node::NOTIFICATION_UNPARENTED: {
+			_node = nullptr;
+		} break;
 
         case Node::NOTIFICATION_INTERNAL_PROCESS: {
             // lazy add/remove the debug meshes
@@ -112,6 +128,13 @@ void NodeDebug::_internal_update_debug_mesh() {
     // move debug mesh
     if (_node) {
 	    _debug_mesh_instance->set_global_transform(_node->get_global_transform());
+    }
+
+    // update colors
+    if (_debug_material.is_valid()) {
+        _debug_material->set_albedo(_debug_color);
+        _marker_material->set_albedo(_debug_color);
+        _inverted_material->set_albedo(_debug_color.inverted());
     }
 
     // build new surfaces

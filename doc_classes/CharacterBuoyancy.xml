@@ -39,9 +39,6 @@
             <return type="void" />
             <param index="0" name="local_probes" type="PackedVector3Array" />
             <description>Set local-space probe positions used to sample the liquid surface.
-            The difference between the highest and lowest probe governs the full submerged depth used for determine the maximum buoyancy lift the character will experience.
-            [img=center,center]res://addons/halyard/doc_images/character_submerged_diagram.svg[/img]
-            For this reason, you should choose your buoyancy probe locations carefully to cover the range of depth that best expresses your character's submerged state.
             </description>
         </method>
 
@@ -153,7 +150,10 @@
         </member>
 
         <member name="probes" type="PackedVector3Array" setter="set_probes" getter="get_probes">
-            Local-space probe positions used to sample the liquid surface. If empty a fallback probe is computed from the character model.
+            Local-space probe positions used to sample the liquid surface.
+            The difference between the highest and lowest probe governs the full submerged depth used for determine the maximum buoyancy lift the character will experience.
+            [img=center,center]res://addons/halyard/doc_images/character_submerged_diagram.svg[/img]
+            For this reason, you should choose your buoyancy probe locations carefully to cover the range of depth that best expresses your character's submerged state.
         </member>
 
         <member name="apply_forces" type="bool" setter="set_apply_forces" getter="get_apply_forces" default="true">

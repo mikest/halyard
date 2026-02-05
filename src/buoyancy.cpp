@@ -20,7 +20,9 @@
 
 using namespace godot;
 
-Buoyancy::Buoyancy() {
+Buoyancy::Buoyancy()
+: NodeDebug(Object::cast_to<Node>(this)) {
+
 	// default color
 	_debug_color = Color(0.0f, 0.8f, 1.0f, 0.2f);
 }
@@ -88,15 +90,6 @@ void Buoyancy::_notification(int p_what) {
 			set_physics_process_internal(true);
 		} break;
 
-		case NOTIFICATION_PARENTED: {
-			Node3D* parent = Object::cast_to<Node3D>(get_parent());
-			_set_debug_owner_node(parent);
-		} break;
-
-		case NOTIFICATION_UNPARENTED: {
-			_set_debug_owner_node(nullptr);
-		} break;
-
 		case NOTIFICATION_ENTER_TREE: {
 			if (Engine::get_singleton()->is_editor_hint() == false) {
 				if (_liquid_area == nullptr) {
@@ -115,8 +108,10 @@ void Buoyancy::_notification(int p_what) {
 				_update_statics();
 			}
 
-			if (_show_debug)
-				set_debug_mesh_dirty();
+			if (Engine::get_singleton()->is_editor_hint() == true) {
+				if (_show_debug)
+					set_debug_mesh_dirty();
+			}
 		} break;
 
 		case NOTIFICATION_INTERNAL_PHYSICS_PROCESS: {
@@ -313,6 +308,7 @@ bool Buoyancy::get_show_debug() const {
 
 void Buoyancy::set_debug_color(const Color &p_color) {
 	_debug_color = p_color;
+	set_debug_mesh_dirty();
 }
 
 Color Buoyancy::get_debug_color() const {
