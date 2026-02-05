@@ -26,7 +26,7 @@ A derived class can override get_transforms_for_points to provide a more complex
 
 using namespace godot;
 
-class Buoyancy;
+class RigidBuoyancy;
 
 
 

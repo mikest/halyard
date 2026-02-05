@@ -11,7 +11,8 @@
 #include "rope_appearance.h"
 #include "rope_attachment_positions.h"
 #include "rope_attachments_base.h"
-#include "buoyancy.h"
+#include "rigid_buoyancy.h"
+#include "buoyancy_material.h"
 #include "character_buoyancy.h"
 #include "liquid_area.h"
 
@@ -30,7 +31,8 @@ void initialize_gdextension_types(ModuleInitializationLevel p_level) {
 	GDREGISTER_CLASS(RopeAttachmentPositions);
 	GDREGISTER_CLASS(RopeAppearance);
 	GDREGISTER_CLASS(CharacterBuoyancy);
-	GDREGISTER_CLASS(Buoyancy);
+	GDREGISTER_CLASS(RigidBuoyancy);
+	GDREGISTER_CLASS(BuoyancyMaterial);
 	GDREGISTER_CLASS(LiquidArea);
 }
 

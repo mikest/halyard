@@ -31,6 +31,10 @@ PackedStringArray CharacterBuoyancy::_get_configuration_warnings() const {
 		what.append("Buoyancy must be a child of a CharacterBody3D for forces to be applied.");
 	}
 
+	if (!_buoyancy_material.is_valid()) {
+		what.append("No buoyancy material assigned. Default values will be used.");
+	}
+
 	// NOTE: there are legitimate reasons to not have a liquid area, so don't nag about that.
 	return what;
 }
@@ -43,6 +47,13 @@ void CharacterBuoyancy::_notification(int p_what) {
 		case NOTIFICATION_READY: {
 			set_process_internal(true);
 			set_physics_process_internal(true);
+
+			// if no buoyancy material is assigned a default one
+			if (Engine::get_singleton()->is_editor_hint() == false) {
+				if (!_buoyancy_material.is_valid()) {
+					_buoyancy_material.instantiate();
+				}
+			}
 		} break;
 
 		case NOTIFICATION_ENTER_TREE: {
@@ -109,6 +120,14 @@ LiquidArea* CharacterBuoyancy::get_liquid_area() const {
 	return _probe_buoyancy.get_liquid_area();
 }
 
+void CharacterBuoyancy::set_buoyancy_material(const Ref<BuoyancyMaterial> &p_material) {
+	_buoyancy_material = p_material;
+}
+
+Ref<BuoyancyMaterial> CharacterBuoyancy::get_buoyancy_material() const {
+	return _buoyancy_material;
+}
+
 
 void CharacterBuoyancy::set_probes(const PackedVector3Array &local_probes) {
 	_probe_buoyancy.set_probes(local_probes);
@@ -119,36 +138,12 @@ PackedVector3Array CharacterBuoyancy::get_probes() const {
 }
 
 // accessors
-void CharacterBuoyancy::set_buoyancy(float buoyancy) {
-	_probe_buoyancy.set_buoyancy(buoyancy);
-}
-
-float CharacterBuoyancy::get_buoyancy() const {
-	return _probe_buoyancy.get_buoyancy();
-}
-
 void CharacterBuoyancy::set_mass(float mass) {
 	_probe_buoyancy.set_mass(mass);
 }
 
 float CharacterBuoyancy::get_mass() const {
 	return _probe_buoyancy.get_mass();
-}
-
-void CharacterBuoyancy::set_submerged_linear_drag(float drag) {
-	_submerged_linear_drag = drag;
-}
-
-float CharacterBuoyancy::get_submerged_linear_drag() const {
-	return _submerged_linear_drag;
-}
-
-void CharacterBuoyancy::set_linear_drag_scale(const Vector3 &scale) {
-	_linear_drag_scale = scale;
-}
-
-Vector3 CharacterBuoyancy::get_linear_drag_scale() const {
-	return _linear_drag_scale;
 }
 
 void CharacterBuoyancy::set_gravity(const Vector3 &gravity) {
@@ -165,6 +160,15 @@ void CharacterBuoyancy::set_apply_forces(bool enabled) {
 
 bool CharacterBuoyancy::get_apply_forces() const {
 	return _apply_forces;
+}
+
+void CharacterBuoyancy::set_ignore_waves(bool p_ignore) {
+	_ignore_waves = p_ignore;
+	_probe_buoyancy.set_ignore_waves(p_ignore);
+}
+
+bool CharacterBuoyancy::get_ignore_waves() const {
+	return _ignore_waves;
 }
 
 uint64_t CharacterBuoyancy::get_buoyancy_time() const {
@@ -297,11 +301,13 @@ void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
 
 	ERR_FAIL_NULL_MSG(body, "CharacterBuoyancy must be a child of a CharacterBody3D to apply buoyancy.");
 	ERR_FAIL_COND_MSG(delta <= 0.0f, "Delta time must be positive to apply buoyancy.");
+	ERR_FAIL_COND_MSG(!_buoyancy_material.is_valid(), "Buoyancy material must be valid to apply mesh buoyancy forces.");
 
 	const float mass = _probe_buoyancy.get_mass();
 	ERR_FAIL_COND_MSG(mass <= 0.0f, "Mass must be positive to apply buoyancy.");
 
 	// update forces
+	_probe_buoyancy.set_buoyancy(_buoyancy_material->get_buoyancy());
 	_probe_buoyancy.update_forces(body->get_global_transform(), _gravity);
 
 	const auto probes = _probe_buoyancy.get_probes();
@@ -311,6 +317,10 @@ void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
 	// constants
 	const Vector3 one = Vector3(1, 1, 1);
 	const float probe_ratio = 1.0f / probes.size();
+
+	Vector3 submerged_linear_drag =
+		_buoyancy_material->get_linear_drag() *
+		_buoyancy_material->get_linear_drag_scale();
 
 	// retrieve velocity
     Vector3 velocity = body->get_velocity();
@@ -325,7 +335,7 @@ void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
 			velocity += force / mass * delta;
 
 			// apply linear submerged drag, in local space
-			Vector3 linear_drag = one - _submerged_linear_drag * _linear_drag_scale * delta * probe_ratio;
+			Vector3 linear_drag = one - submerged_linear_drag * delta * probe_ratio;
 			linear_drag = linear_drag.max(Vector3(0, 0, 0)); // prevent drag from going negative
 			Vector3 local_vel = body->get_basis().xform_inv(velocity);
 			velocity = body->get_basis().xform(local_vel * linear_drag);
@@ -338,16 +348,10 @@ void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
 
 
 void CharacterBuoyancy::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("set_buoyancy", "buoyancy"), &CharacterBuoyancy::set_buoyancy);
-	ClassDB::bind_method(D_METHOD("get_buoyancy"), &CharacterBuoyancy::get_buoyancy);
 	ClassDB::bind_method(D_METHOD("set_apply_forces", "enabled"), &CharacterBuoyancy::set_apply_forces);
 	ClassDB::bind_method(D_METHOD("get_apply_forces"), &CharacterBuoyancy::get_apply_forces);
 	ClassDB::bind_method(D_METHOD("set_mass", "mass"), &CharacterBuoyancy::set_mass);
 	ClassDB::bind_method(D_METHOD("get_mass"), &CharacterBuoyancy::get_mass);
-	ClassDB::bind_method(D_METHOD("set_submerged_linear_drag", "drag"), &CharacterBuoyancy::set_submerged_linear_drag);
-	ClassDB::bind_method(D_METHOD("get_submerged_linear_drag"), &CharacterBuoyancy::get_submerged_linear_drag);
-	ClassDB::bind_method(D_METHOD("set_linear_drag_scale", "scale"), &CharacterBuoyancy::set_linear_drag_scale);
-	ClassDB::bind_method(D_METHOD("get_linear_drag_scale"), &CharacterBuoyancy::get_linear_drag_scale);
 	ClassDB::bind_method(D_METHOD("set_gravity", "gravity"), &CharacterBuoyancy::set_gravity);
 	ClassDB::bind_method(D_METHOD("get_gravity"), &CharacterBuoyancy::get_gravity);
     ClassDB::bind_method(D_METHOD("set_probes", "probes"), &CharacterBuoyancy::set_probes);
@@ -361,8 +365,17 @@ void CharacterBuoyancy::_bind_methods() {
     ClassDB::bind_method(D_METHOD("set_liquid_area", "liquid_area"), &CharacterBuoyancy::set_liquid_area);
 	ClassDB::bind_method(D_METHOD("get_liquid_area"), &CharacterBuoyancy::get_liquid_area);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "liquid_area", PROPERTY_HINT_NODE_TYPE, "LiquidArea"), "set_liquid_area", "get_liquid_area");
+
+	ClassDB::bind_method(D_METHOD("set_buoyancy_material", "buoyancy_material"), &CharacterBuoyancy::set_buoyancy_material);
+	ClassDB::bind_method(D_METHOD("get_buoyancy_material"), &CharacterBuoyancy::get_buoyancy_material);
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "buoyancy_material", PROPERTY_HINT_RESOURCE_TYPE, "BuoyancyMaterial"), "set_buoyancy_material", "get_buoyancy_material");
+
     ADD_PROPERTY(PropertyInfo(Variant::PACKED_VECTOR3_ARRAY, "probes"), "set_probes", "get_probes");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "apply_forces"), "set_apply_forces", "get_apply_forces");
+
+	ClassDB::bind_method(D_METHOD("set_ignore_waves", "ignore_waves"), &CharacterBuoyancy::set_ignore_waves);
+	ClassDB::bind_method(D_METHOD("get_ignore_waves"), &CharacterBuoyancy::get_ignore_waves);
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "ignore_waves"), "set_ignore_waves", "get_ignore_waves");
 	
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "mass", PROPERTY_HINT_NONE, "kg"), "set_mass", "get_mass");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "buoyancy", PROPERTY_HINT_RANGE, "0,100,0.1"), "set_buoyancy", "get_buoyancy");

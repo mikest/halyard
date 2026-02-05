@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<class name="RigidBuoyancy" inherits="Node"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+    <brief_description>
+        Adds buoyancy simulation for a single collider or probe points interacting with a [LiquidArea].
+    </brief_description>
+    <description>
+        Manages buoyancy interactions between a collider ([ConvexPolygonShape3D] recommended) or probe points and a single [LiquidArea] in the scene.
+        Buoyancy is calculated each physics step by sampling the liquid surface and computing submerged volume and centroid. Buoyant forces, drag and water currents are applied to a parent RigidBody3D to simulate floating objects.
+        If your floating body is unstable, lowering the center of mass can help. This can be done by adjusting the [member com_offset] or modifying the RigidBody3D's center of mass directly.
+        [img=center,center]res://addons/halyard/doc_images/buoyancy_diagram.svg[/img]
+        [b]NOTE:[/b] Water has a density of approximately 1000 kg/m^3. To achieve realistic buoyancy, ensure that the [member density] of the Buoyancy node and the mass of the RigidBody3D are set appropriately based on the object's volume.
+        Supports two modes:
+        [enum BUOYANCY_COLLIDER]: Calculates submerged volume and centroids from collider mesh geometry. More accurate but computationally expensive. Expense increases with mesh complexity.
+        [enum BUOYANCY_PROBES]: Uses explicit probe points to sample liquid surface and apply forces. Faster and suitable for simple objects or when precise volume calculations aren't needed.
+        Physics properties such as buoyancy strength and drag are configured via a [BuoyancyMaterial] resource.
+        Can optionally apply forces to a parent RigidBody3D and update mass properties from collider geometry.
+    </description>
+    <tutorials>
+    </tutorials>
+
+    <methods>
+        <method name="get_submerged_volume" qualifiers="const">
+            <return type="float" />
+            <description>
+                Returns the calculated submerged volume of the collider in cubic meters. Only available in [enum BUOYANCY_COLLIDER] mode. Updated each physics step when submerged.
+            </description>
+        </method>
+
+        <method name="get_submerged_ratio" qualifiers="const">
+            <return type="float" />
+            <description>
+                Returns the ratio of submerged volume to total collider volume [0.0 .. 1.0] in [enum BUOYANCY_COLLIDER] mode. In [enum BUOYANCY_PROBES] mode, returns the ratio of submerged probes to total probes.
+            </description>
+        </method>
+
+        <method name="get_submerged_centroid" qualifiers="const">
+            <return type="Vector3" />
+            <description>
+                Returns the centroid position of the submerged volume in world space. This is where buoyancy forces are applied. Only available in [enum BUOYANCY_COLLIDER] mode.
+            </description>
+        </method>
+
+        <method name="get_buoyancy_normal" qualifiers="const">
+            <return type="Vector3" />
+            <description>
+                Returns the averaged surface normal from all sampled liquid surface points. This normal is used to orient buoyancy forces with wave motion. Only available in [enum BUOYANCY_COLLIDER] mode.
+            </description>
+        </method>
+
+        <method name="apply_buoyancy_mesh_forces">
+            <return type="void" />
+            <param index="0" name="body" type="RigidBody3D" />
+            <param index="1" name="delta" type="float" />
+            <description>
+                Apply buoyant, drag and current forces to the provided body using collider-based volume calculations. Typically called automatically during physics when [member apply_forces] is enabled and [member buoyancy_mode] is [enum BUOYANCY_COLLIDER].
+            </description>
+        </method>
+
+        <method name="apply_buoyancy_probe_forces">
+            <return type="void" />
+            <param index="0" name="body" type="RigidBody3D" />
+            <param index="1" name="delta" type="float" />
+            <description>
+                Apply buoyant, drag and current forces to the provided body using probe points. Each probe samples the liquid surface independently and applies forces proportional to its depth. Typically called automatically during physics when [member apply_forces] is enabled and [member buoyancy_mode] is [enum BUOYANCY_PROBES].
+            </description>
+        </method>
+
+        <method name="_get_buoyancy_time" qualifiers="const">
+            <return type="float" />
+            <description>
+                Internal: returns the time in microseconds spent computing buoyancy in the most recent physics step.
+            </description>
+        </method>
+    </methods>
+
+    <members>
+        <member name="liquid_area" type="LiquidArea" setter="set_liquid_area" getter="get_liquid_area">
+            Node reference to the [LiquidArea] to sample from.
+        </member>
+
+        <member name="buoyancy_mode" type="int" setter="set_buoyancy_mode" getter="get_buoyancy_mode" default="0">
+            Buoyancy calculation mode. [enum BUOYANCY_COLLIDER] (0) uses mesh-based volume calculations. [enum BUOYANCY_PROBES] (1) uses explicit probe points for faster, simpler buoyancy.
+        </member>
+
+        <member name="collider" type="CollisionShape3D" setter="set_collider" getter="get_collider">
+            The collider shape to compute submerged volume from ([ConvexPolygonShape3D] recommended). Required for [enum BUOYANCY_COLLIDER] mode.
+        </member>
+
+        <member name="buoyancy_material" type="BuoyancyMaterial" setter="set_buoyancy_material" getter="get_buoyancy_material">
+            [BuoyancyMaterial] resource containing physics properties such as buoyancy strength and drag coefficients. If not assigned, a default material is created at runtime.
+        </member>
+
+        <member name="probes" type="PackedVector3Array" setter="set_probes" getter="get_probes">
+            Array of local-space probe points used in [enum BUOYANCY_PROBES] mode. Each probe samples the liquid surface and applies forces independently. When debug visualization is enabled, probes are shown as cross-hairs with lines indicating the wave surface normal.
+        </member>
+
+        <member name="apply_forces" type="bool" setter="set_apply_forces" getter="get_apply_forces" default="true">
+            When true, forces are applied to the parent RigidBody3D automatically during physics processing.
+        </member>
+
+        <member name="ignore_waves" type="bool" setter="set_ignore_waves" getter="get_ignore_waves" default="false">
+            Use a flat liquid plane at the [LiquidArea] origin instead of sampling wave surface transforms. Considerably faster but removes wave interaction.
+        </member>
+
+        <member name="use_buoyancy_scalar" type="bool" setter="set_use_buoyancy_scalar" getter="get_use_buoyancy_scalar" default="true">
+            When enabled, buoyancy force is scaled by the [member BuoyancyMaterial.buoyancy] value from the assigned [BuoyancyMaterial]. This allows the buoyancy scalar to control how much the object floats relative to its mass, where [code]0.0[/code] sinks, [code]1.0[/code] is neutral buoyancy, and values above [code]1.0[/code] float. When disabled, raw Archimedes buoyancy is used based on displaced volume and liquid density.
+        </member>
+
+        <member name="calculate_mass_properties" type="bool" setter="set_calculate_mass_properties" getter="get_calculate_mass_properties" default="false">
+            When enabled, updates mass, center of mass and inertia on the parent body from the collider mesh and [member density].
+        </member>
+
+        <member name="density" type="float" setter="set_density" getter="get_density" default="500.0">
+            Material density used when calculating mass from the computed volume (kg/m^3). Only used when [member calculate_mass_properties] is enabled.
+        </member>
+
+        <member name="com_offset" type="Vector3" setter="set_com_offset" getter="get_com_offset">
+            Center-of-mass offset applied when [member calculate_mass_properties] is enabled.
+        </member>
+
+        <member name="volume" type="float" getter="get_volume" default="0.0">
+            Read-only: the calculated mesh volume in cubic meters.
+        </member>
+
+        <member name="centroid" type="Vector3" getter="get_centroid">
+            Read-only: the mesh centroid in world space.
+        </member>
+
+        <member name="body_mass" type="float" getter="get_mass">
+            Read-only: current mass reported by the parent RigidBody3D.
+        </member>
+
+        <member name="body_center_of_mass" type="Vector3" getter="get_center_of_mass">
+            Read-only: parent RigidBody3D center of mass.
+        </member>
+
+        <member name="body_inertia" type="Vector3" getter="get_inertia">
+            Read-only: parent RigidBody3D inertia.
+        </member>
+    </members>
+
+    <signals>
+        <signal name="submerged_changed">
+            <description>
+                Emitted when the object transitions between being completely out of the liquid (submerged_ratio == 0) and having any part submerged (submerged_ratio > 0), or vice versa.
+            </description>
+        </signal>
+    </signals>
+
+    <constants>
+        <constant name="BUOYANCY_COLLIDER" value="0">
+            Mesh-based buoyancy mode using collider geometry to calculate submerged volume and centroid.
+        </constant>
+        <constant name="BUOYANCY_PROBES" value="1">
+            Probe-based buoyancy mode using explicit sample points. Faster and simpler than collider mode.
+        </constant>
+    </constants>
+</class>

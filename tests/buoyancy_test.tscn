@@ -91,7 +91,7 @@ mesh = SubResource("PlaneMesh_obnff")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 0)
 mass = 500.0
 
-[node name="Buoyancy" type="Buoyancy" parent="Probe" unique_id=1269008922 node_paths=PackedStringArray("collider")]
+[node name="Buoyancy" type="RigidBuoyancy" parent="Probe" unique_id=1269008922 node_paths=PackedStringArray("collider")]
 buoyancy_mode = 1
 collider = NodePath("../CollisionShape3D")
 buoyancy_probes = PackedVector3Array(1, 1, 0, 0, 1, 1, -1, 1, 0, 0, 1, -1)
@@ -107,7 +107,7 @@ shape = SubResource("ConvexPolygonShape3D_obnff")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.220772, 0, 0)
 mass = 500.0
 
-[node name="Buoyancy" type="Buoyancy" parent="Collider" unique_id=1170455693 node_paths=PackedStringArray("collider")]
+[node name="Buoyancy" type="RigidBuoyancy" parent="Collider" unique_id=1170455693 node_paths=PackedStringArray("collider")]
 collider = NodePath("../CollisionShape3D")
 buoyancy_probes = PackedVector3Array(1, 1, 0, 0, 1, 1, -1, 1, 0, 0, 1, -1)
 show_debug = true
@@ -163,7 +163,7 @@ center_of_mass_mode = 1
 center_of_mass = Vector3(-0.0009925304, -0.35432744, -0.35816327)
 inertia = Vector3(1414.7627, 1723.5736, 461.41037)
 
-[node name="Buoyancy" type="Buoyancy" parent="RigidBody3D" unique_id=1734296054 node_paths=PackedStringArray("collider")]
+[node name="Buoyancy" type="RigidBuoyancy" parent="RigidBody3D" unique_id=1734296054 node_paths=PackedStringArray("collider")]
 collider = NodePath("../CollisionShape3D")
 calculate_mass_properties = true
 density = 400.0
