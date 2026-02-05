@@ -101,7 +101,7 @@ LiquidArea* CharacterBuoyancy::get_liquid_area() const {
 
 void CharacterBuoyancy::set_probes(const PackedVector3Array &local_probes) {
     _probes = local_probes;
-	_last_transforms.resize(_probes.size());
+	_last_probe_transforms.resize(_probes.size());
 }
 
 PackedVector3Array CharacterBuoyancy::get_probes() const {
@@ -181,7 +181,7 @@ float CharacterBuoyancy::get_average_depth() const {
 	}
 
 	const int probe_count = _probes.size();
-	if (probe_count == 0 || probe_count != _last_transforms.size()) {
+	if (probe_count == 0 || probe_count != _last_probe_transforms.size()) {
 		return 0.0f;
 	}
 
@@ -193,7 +193,7 @@ float CharacterBuoyancy::get_average_depth() const {
 		Vector3 probe = body_transform.xform(_probes[i]);
 		
 		// Get cached liquid surface position
-		Vector3 liquid_pos = _last_transforms[i].origin;
+		Vector3 liquid_pos = _last_probe_transforms[i].origin;
 		
 		// Calculate depth (negative when underwater)
 		float depth = probe.y - liquid_pos.y;
@@ -285,7 +285,7 @@ void CharacterBuoyancy::_update_last_transforms() {
 
 	// NOTE: there are legitimate reasons to not have a liquid area or probes, so just return
     const int probe_count = _probes.size();
-	_last_transforms.resize(probe_count);
+	_last_probe_transforms.resize(probe_count);
 
     if (probe_count == 0) return;
 	if (_liquid_area == nullptr) return;
@@ -304,7 +304,7 @@ void CharacterBuoyancy::_update_last_transforms() {
         bool point_submerged = liquid_xform.origin.y > probe.y;
 
         // cache the transform for use in apply_buoyancy_velocity
-        _last_transforms.write[i] = liquid_xform;
+        _last_probe_transforms.write[i] = liquid_xform;
 
         if (point_submerged) {
             submerged_count += 1;
@@ -330,7 +330,7 @@ void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
 
     ERR_FAIL_COND_MSG(delta <= 0.0f, "Delta time must be positive to apply buoyancy.");
     ERR_FAIL_COND_MSG(_mass <= 0.0f, "Mass must be positive to apply buoyancy.");
-    ERR_FAIL_COND_MSG(_probes.size() != _last_transforms.size(), "Probe count and cached transform count mismatch.");
+    ERR_FAIL_COND_MSG(_probes.size() != _last_probe_transforms.size(), "Probe count and cached transform count mismatch.");
 
     const int probe_count = _probes.size();
     if (probe_count == 0) {
@@ -365,7 +365,7 @@ void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
         Vector3 probe = body_transform.xform(_probes[i]);
 
         // use cached liquid transform from _update_last_transforms
-        Transform3D wave_xform = _last_transforms[i];
+        Transform3D wave_xform = _last_probe_transforms[i];
 		Vector3 wave_pos = wave_xform.origin;
 
 		// Calculate wave depth as a ratio between not submerged and fully submerged

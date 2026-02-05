@@ -69,7 +69,7 @@ PackedStringArray Buoyancy::_get_configuration_warnings() const {
 			}
 		}
 	} else{
-		if (_buoyancy_probes.size() == 0) {
+		if (_probes.size() == 0) {
 			what.append("No buoyancy probes defined for point-based buoyancy.");
 		}
 	}
@@ -199,17 +199,17 @@ BuoyancyMode Buoyancy::get_buoyancy_mode() const {
 }
 
 // Buoyancy probes
-void Buoyancy::set_buoyancy_probes(const PackedVector3Array &p_probes) {
-	_buoyancy_probes = p_probes;
-	_last_probe_transforms.resize(_buoyancy_probes.size());
+void Buoyancy::set_probes(const PackedVector3Array &p_probes) {
+	_probes = p_probes;
+	_last_probe_transforms.resize(_probes.size());
 
 	set_debug_mesh_dirty();
 	_set_dirty();
 	_update_configuration_warnings();
 }
 
-PackedVector3Array Buoyancy::get_buoyancy_probes() const {
-	return _buoyancy_probes;
+PackedVector3Array Buoyancy::get_probes() const {
+	return _probes;
 }
 
 void Buoyancy::set_apply_forces(bool p_apply_forces) {
@@ -333,10 +333,10 @@ Vector3 Buoyancy::get_buoyancy_normal() const {
 float Buoyancy::get_submerged_ratio() const {
 	if (_buoyancy_mode == BUOYANCY_PROBES) {
 		// In probe mode, return proportion of submerged probes
-		if (_buoyancy_probes.size() == 0) {
+		if (_probes.size() == 0) {
 			return 0.0f;
 		}
-		return (float)_submerged_probe_count / (float)_buoyancy_probes.size();
+		return (float)_submerged_probe_count / (float)_probes.size();
 	} else {
 		// In collider mode, return volume ratio
 		if (Math::is_zero_approx(_mesh_volume)) {
@@ -755,7 +755,7 @@ void Buoyancy::_update_last_probe_transforms() {
 		return;
 	}
 
-	const int probe_count = _buoyancy_probes.size();
+	const int probe_count = _probes.size();
 	if (probe_count == 0) {
 		return;
 	}
@@ -772,7 +772,7 @@ void Buoyancy::_update_last_probe_transforms() {
 
 	for (int idx = 0; idx < probe_count; ++idx) {
 		// Get probe position in global space
-		Vector3 probe = body_transform.xform(_buoyancy_probes[idx]);
+		Vector3 probe = body_transform.xform(_probes[idx]);
 
 		// Get liquid position (flat tidal coordinate)
 		Vector3 liquid_pos = probe;
@@ -804,7 +804,7 @@ void Buoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) {
 	if (body == nullptr) return;
 	if (_liquid_area == nullptr) return;
 
-	const int probe_count = _buoyancy_probes.size();
+	const int probe_count = _probes.size();
 	if (probe_count == 0) return;
 
 	// Validate cached transforms match probe count
@@ -818,7 +818,7 @@ void Buoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) {
 	const Transform3D body_transform = body->get_global_transform();
 	const Basis basis = body_transform.basis.orthonormalized();
 	const Vector3 one = Vector3(1, 1, 1);
-	const float full_submerged_depth = halyard::calculate_full_submerged_depth(_buoyancy_probes, body_transform);
+	const float full_submerged_depth = halyard::calculate_full_submerged_depth(_probes, body_transform);
 
 	// bail early if there is no depth to submerge
 	if (full_submerged_depth==0.0f) {
@@ -833,7 +833,7 @@ void Buoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) {
 	for (int idx = 0; idx < probe_count; ++idx) {
 
 		// Get probe position in global space
-		Vector3 probe = body_transform.xform(_buoyancy_probes[idx]);
+		Vector3 probe = body_transform.xform(_probes[idx]);
 
 		// Use cached wave transform from _update_last_probe_transforms
 		Transform3D wave_xform = _last_probe_transforms[idx];
@@ -951,13 +951,13 @@ void Buoyancy::_update_debug_mesh() {
 			xform = body->get_global_transform();
 
 			// no probes, skip
-			int probe_count = _buoyancy_probes.size();
+			int probe_count = _probes.size();
 			if (probe_count == 0)
 				return;
 
 			// Show all probes
 			for (int idx = 0; idx < probe_count; ++idx) {
-				Vector3 probe = _buoyancy_probes[idx];
+				Vector3 probe = _probes[idx];
 				
 				// Draw probe cross-hairs
 				vertices.append(probe + Vector3(-0.1f, 0, 0));
@@ -1036,9 +1036,14 @@ void Buoyancy::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "collider", PROPERTY_HINT_NODE_TYPE, "CollisionShape3D"), "set_collider", "get_collider");
 
 	// Buoyancy probes
+#ifdef HALYARD_DEPRECATED
 	ClassDB::bind_method(D_METHOD("set_buoyancy_probes", "buoyancy_probes"), &Buoyancy::set_buoyancy_probes);
 	ClassDB::bind_method(D_METHOD("get_buoyancy_probes"), &Buoyancy::get_buoyancy_probes);
 	ADD_PROPERTY(PropertyInfo(Variant::PACKED_VECTOR3_ARRAY, "buoyancy_probes"), "set_buoyancy_probes", "get_buoyancy_probes");
+#endif
+	ClassDB::bind_method(D_METHOD("set_probes", "buoyancy_probes"), &Buoyancy::set_probes);
+	ClassDB::bind_method(D_METHOD("get_probes"), &Buoyancy::get_probes);
+	ADD_PROPERTY(PropertyInfo(Variant::PACKED_VECTOR3_ARRAY, "probes"), "set_probes", "get_probes");
 
 
 	// ---

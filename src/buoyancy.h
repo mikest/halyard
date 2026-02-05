@@ -30,6 +30,8 @@ This objects manages the physics interactions between itself and a single Liquid
 
 using namespace godot;
 
+#define HALYARD_DEPRECATED
+
 class LiquidArea;
 
 // Buoyancy mode
@@ -85,7 +87,7 @@ private:
 	// Triangle data
 	PackedVector3Array _vertex;
 	// Optional explicit probe points for point-based buoyancy
-	PackedVector3Array _buoyancy_probes;
+	PackedVector3Array _probes;
 	Vector<Transform3D> _last_probe_transforms;
 	
 	PackedFloat32Array _depths;
@@ -137,8 +139,19 @@ public:
 	Color get_debug_color() const;
 
 	// Buoyancy probes
-	void set_buoyancy_probes(const PackedVector3Array &p_probes);
-	PackedVector3Array get_buoyancy_probes() const;
+	void set_probes(const PackedVector3Array &p_probes);
+	PackedVector3Array get_probes() const;
+
+#ifdef HALYARD_DEPRECATED
+	void set_buoyancy_probes(const PackedVector3Array &p_probes) {
+		UtilityFunctions::push_warning("'set_buoyancy_probes' is deprecated. Please use 'set_probes' instead.");
+		set_probes(p_probes);
+	}
+	PackedVector3Array get_buoyancy_probes() const {
+		UtilityFunctions::push_warning("'get_buoyancy_probes' is deprecated. Please use 'get_probes' instead.");
+		return get_probes();
+	}
+#endif
 
 	void set_buoyancy_mode(BuoyancyMode p_mode);
 	BuoyancyMode get_buoyancy_mode() const;
