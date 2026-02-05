@@ -20,7 +20,9 @@
 
 using namespace godot;
 
-Buoyancy::Buoyancy() {
+Buoyancy::Buoyancy()
+: NodeDebug(Object::cast_to<Node>(this)) {
+
 	// default color
 	_debug_color = Color(0.0f, 0.8f, 1.0f, 0.2f);
 }
@@ -88,15 +90,6 @@ void Buoyancy::_notification(int p_what) {
 			set_physics_process_internal(true);
 		} break;
 
-		case NOTIFICATION_PARENTED: {
-			Node3D* parent = Object::cast_to<Node3D>(get_parent());
-			_set_debug_owner_node(parent);
-		} break;
-
-		case NOTIFICATION_UNPARENTED: {
-			_set_debug_owner_node(nullptr);
-		} break;
-
 		case NOTIFICATION_ENTER_TREE: {
 			if (Engine::get_singleton()->is_editor_hint() == false) {
 				if (_liquid_area == nullptr) {
@@ -113,6 +106,11 @@ void Buoyancy::_notification(int p_what) {
 		case NOTIFICATION_INTERNAL_PROCESS:{
 			if (_dirty && is_node_ready()) {
 				_update_statics();
+			}
+
+			if (Engine::get_singleton()->is_editor_hint() == true) {
+				if (_show_debug)
+					set_debug_mesh_dirty();
 			}
 		} break;
 
@@ -204,10 +202,6 @@ BuoyancyMode Buoyancy::get_buoyancy_mode() const {
 void Buoyancy::set_buoyancy_probes(const PackedVector3Array &p_probes) {
 	_buoyancy_probes = p_probes;
 	_last_probe_transforms.resize(_buoyancy_probes.size());
-
-	// Calculate depth that is considered fully submerged
-	// Used to clamp the buoyancy force calculation when diving
-	_full_submerged_depth = halyard::calculate_full_submerged_depth(_buoyancy_probes);
 
 	set_debug_mesh_dirty();
 	_set_dirty();
@@ -314,6 +308,7 @@ bool Buoyancy::get_show_debug() const {
 
 void Buoyancy::set_debug_color(const Color &p_color) {
 	_debug_color = p_color;
+	set_debug_mesh_dirty();
 }
 
 Color Buoyancy::get_debug_color() const {
@@ -740,7 +735,6 @@ void Buoyancy::apply_buoyancy_mesh_forces(RigidBody3D *body, float delta) {
 		Vector3 local_vel = basis.xform_inv(linear_velocity);
 		Vector3 global_vel = basis.xform(local_vel * linear_drag);
 
-		//PhysicsServer3D::get_singleton()->body_set_state(body->get_rid(), PhysicsServer3D::BODY_STATE_LINEAR_VELOCITY, global_vel);
 		body->set_linear_velocity(global_vel);
 
 		Vector3 angular_drag = one - _submerged_angular_drag * _angular_drag_scale * delta * ratio;
@@ -749,7 +743,7 @@ void Buoyancy::apply_buoyancy_mesh_forces(RigidBody3D *body, float delta) {
 		Vector3 local_ang = basis.xform_inv(angular_velocity);
 		Vector3 global_ang = basis.xform(local_ang * angular_drag);
 
-		//PhysicsServer3D::get_singleton()->body_set_state(body->get_rid(), PhysicsServer3D::BODY_STATE_ANGULAR_VELOCITY, global_ang);
+
 		body->set_angular_velocity(global_ang);
 	}
 }
@@ -826,6 +820,7 @@ void Buoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) {
 	const float probe_ratio = 1.0f / probe_count;
 	const Basis basis = body_transform.basis.orthonormalized();
 	const Vector3 one = Vector3(1, 1, 1);
+	const float full_submerged_depth = halyard::calculate_full_submerged_depth(_buoyancy_probes, body_transform);
 
 
 	for (int idx = 0; idx < probe_count; ++idx) {
@@ -841,15 +836,15 @@ void Buoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) {
 		Vector3 wave_pos = wave_xform.origin;
 
 		// Calculate depths
-		float wave_depth = Math::max(probe.y - wave_pos.y, _full_submerged_depth);
-		float liquid_depth = Math::max(probe.y - liquid_pos.y, _full_submerged_depth);
+		float wave_depth = Math::max(probe.y - wave_pos.y, full_submerged_depth);
 
 		// Each probe affects 1/N of the mass
 		float probe_mass = (body->get_mass() * probe_ratio) * _probe_buoyancy;
 
 		// Calculate forces
-		Vector3 liquid_force = gravity * probe_mass * liquid_depth;
-		Vector3 wave_force = wave_xform.basis.get_column(1) * gravity * probe_mass * wave_depth;
+		Vector3 wave_normal = wave_xform.basis.get_column(1);
+		wave_normal = wave_normal.lerp(Vector3(0, 1, 0), probe_ratio).normalized();
+		Vector3 wave_force = (wave_normal * gravity.y) * probe_mass * wave_depth;
 
 		bool probe_submerged = false;
 
@@ -857,11 +852,6 @@ void Buoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) {
 		if (wave_depth < 0.0f) {
 			probe_submerged = true;
 			body->apply_force(wave_force, probe - body_transform.origin);
-		}
-
-		if (liquid_depth < 0.0f) {
-			probe_submerged = true;
-			body->apply_force(liquid_force, probe - body_transform.origin);
 		}
 
 		if (probe_submerged) {
@@ -1003,8 +993,8 @@ void Buoyancy::_update_debug_mesh() {
 		_debug_mesh->surface_set_material(surf_lines, _debug_material);
 
 		// origin marker
-		_add_marker_surface(_submerged_centroid, false);
-		_add_marker_surface(_center_of_mass, true);
+		_add_marker_surface(get_submerged_centroid(), false);
+		_add_marker_surface(get_center_of_mass(), true);
 
 		// try the collider first, and then the parent.
 		Node3D *mesh_parent = _collider;

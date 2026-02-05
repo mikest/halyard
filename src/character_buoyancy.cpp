@@ -10,7 +10,8 @@
 
 using namespace godot;
 
-CharacterBuoyancy::CharacterBuoyancy() {
+CharacterBuoyancy::CharacterBuoyancy()
+: NodeDebug(Object::cast_to<Node>(this)) {
 	// default color
 	_debug_color = Color(0.0f, 0.8f, 1.0f, 0.2f);
 }
@@ -40,15 +41,6 @@ void CharacterBuoyancy::_notification(int p_what) {
 			set_physics_process_internal(true);
 		} break;
 
-		case NOTIFICATION_PARENTED: {
-			Node3D* parent = Object::cast_to<Node3D>(get_parent());
-			_set_debug_owner_node(parent);
-		} break;
-
-		case NOTIFICATION_UNPARENTED: {
-			_set_debug_owner_node(nullptr);
-		} break;
-
 		case NOTIFICATION_ENTER_TREE: {
 			if (Engine::get_singleton()->is_editor_hint() == false) {
 				if (_liquid_area == nullptr) {
@@ -60,6 +52,14 @@ void CharacterBuoyancy::_notification(int p_what) {
 
 		case NOTIFICATION_EXIT_TREE: {
 		 	_liquid_area = nullptr;
+		} break;
+
+		case NOTIFICATION_INTERNAL_PROCESS: {
+			// in engine update this continuously so we can get visual feedback
+			if (Engine::get_singleton()->is_editor_hint() == true) {
+				if (_show_debug)
+					set_debug_mesh_dirty();
+			}
 		} break;
 
         // velocity is applied in the internal physics process so that submerged is updated
@@ -102,10 +102,6 @@ LiquidArea* CharacterBuoyancy::get_liquid_area() const {
 void CharacterBuoyancy::set_probes(const PackedVector3Array &local_probes) {
     _probes = local_probes;
 	_last_transforms.resize(_probes.size());
-
-	// Calculate depth that is considered fully submerged
-	// Used to clamp the buoyancy force calculation when diving
-	_full_submerged_depth = halyard::calculate_full_submerged_depth(_probes);
 }
 
 PackedVector3Array CharacterBuoyancy::get_probes() const {
@@ -138,11 +134,19 @@ float CharacterBuoyancy::get_wave_influence() const {
 }
 
 void CharacterBuoyancy::set_submerged_linear_drag(float drag) {
-	_submerged_drag_linear = drag;
+	_submerged_linear_drag = drag;
 }
 
 float CharacterBuoyancy::get_submerged_linear_drag() const {
-	return _submerged_drag_linear;
+	return _submerged_linear_drag;
+}
+
+void CharacterBuoyancy::set_linear_drag_scale(const Vector3 &scale) {
+	_linear_drag_scale = scale;
+}
+
+Vector3 CharacterBuoyancy::get_linear_drag_scale() const {
+	return _linear_drag_scale;
 }
 
 void CharacterBuoyancy::set_gravity(const Vector3 &gravity) {
@@ -335,9 +339,9 @@ void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
 
     // constants
     const float probe_proportion = _buoyancy / (float)probe_count;
-    const float inv_mass = 1.0f / _mass;
-    const Vector3 gravity_mass = _gravity * _mass;
     const Transform3D body_transform = body->get_global_transform();
+	const Vector3 one(1, 1, 1);
+	const float full_submerged_depth = halyard::calculate_full_submerged_depth(_probes, body_transform);
 
     // retrieve velocity
     Vector3 velocity = body->get_velocity();
@@ -357,18 +361,26 @@ void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
             float depth = probe.y - liquid_xform.origin.y;
 			
 			// clamp to max submerged depth so we don't grow force unbounded
-			depth = Math::max(depth, _full_submerged_depth);
+			depth = Math::max(depth, full_submerged_depth);
 
-            Vector3 force = liquid_xform.basis.xform(gravity_mass * depth); 
+			// wave horizontal influence on buoyancy normal is stronger near surface, weaker at depth
+			// ratio: 1.0 at surface (full wave influence), 0.0 at full depth (vertical only)
+			Vector3 wave_normal = Vector3(0, 1, 0);
+			if(full_submerged_depth != 0.0f) {
+				float ratio = Math::clamp(1.0f - (depth / full_submerged_depth), 0.0f, 1.0f);
+				wave_normal = wave_normal.lerp(liquid_xform.basis.get_column(1), ratio).normalized();
+			}
+
+            Vector3 force = (wave_normal * _gravity.y) * depth * probe_proportion; 
 
             // apply to velocity
-            velocity += force * inv_mass * delta * probe_proportion;
+            velocity += force * delta;
 
-            // apply linear submerged drag
-            float damping = 1.0f - (_submerged_drag_linear * probe_proportion * delta);
-            damping = Math::max(damping, 0.0f);
-
-            velocity *= damping;
+            // apply linear submerged drag, in local space
+			Vector3 linear_drag = one - _submerged_linear_drag * _linear_drag_scale * delta * probe_proportion;
+			linear_drag = linear_drag.max(Vector3(0, 0, 0)); // prevent drag from going negative
+			Vector3 local_vel = body->get_basis().xform_inv(velocity);
+			velocity = body->get_basis().xform(local_vel * linear_drag);
         }
     }
 
@@ -388,6 +400,8 @@ void CharacterBuoyancy::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_wave_influence"), &CharacterBuoyancy::get_wave_influence);
 	ClassDB::bind_method(D_METHOD("set_submerged_linear_drag", "drag"), &CharacterBuoyancy::set_submerged_linear_drag);
 	ClassDB::bind_method(D_METHOD("get_submerged_linear_drag"), &CharacterBuoyancy::get_submerged_linear_drag);
+	ClassDB::bind_method(D_METHOD("set_linear_drag_scale", "scale"), &CharacterBuoyancy::set_linear_drag_scale);
+	ClassDB::bind_method(D_METHOD("get_linear_drag_scale"), &CharacterBuoyancy::get_linear_drag_scale);
 	ClassDB::bind_method(D_METHOD("set_gravity", "gravity"), &CharacterBuoyancy::set_gravity);
 	ClassDB::bind_method(D_METHOD("get_gravity"), &CharacterBuoyancy::get_gravity);
     ClassDB::bind_method(D_METHOD("set_probes", "probes"), &CharacterBuoyancy::set_probes);
@@ -408,6 +422,7 @@ void CharacterBuoyancy::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "buoyancy", PROPERTY_HINT_RANGE, "0,100,0.1"), "set_buoyancy", "get_buoyancy");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "wave_influence", PROPERTY_HINT_RANGE, "0,1,0.1"), "set_wave_influence", "get_wave_influence");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "submerged_linear_drag", PROPERTY_HINT_RANGE, "0,10,0.1"), "set_submerged_linear_drag", "get_submerged_linear_drag");
+	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "linear_drag_scale"), "set_linear_drag_scale", "get_linear_drag_scale");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "gravity"), "set_gravity", "get_gravity");
 
     // Debug

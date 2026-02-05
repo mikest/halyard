@@ -25,6 +25,7 @@ using namespace godot;
 
 class NodeDebug {
     bool _debug_mesh_dirty = false;
+    Node *_self = nullptr;
 
 protected:
     // the class the mesh instance will be attached to
@@ -59,7 +60,7 @@ protected:
     void _add_marker_surface(Vector3 p_position, bool inverted);
 
 public:
-    NodeDebug();
+    NodeDebug(Node *p_self);
 	virtual ~NodeDebug();
 
     void set_debug_mesh_dirty(bool dirty=true) { _debug_mesh_dirty = dirty; }
