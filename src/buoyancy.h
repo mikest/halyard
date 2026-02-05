@@ -89,8 +89,8 @@ private:
 	// Triangle data
 	PackedVector3Array _vertex;
 	// Optional explicit probe points for point-based buoyancy
-	PackedVector3Array _probes;
-	Vector<Transform3D> _last_probe_transforms;
+	// PackedVector3Array _probes;
+	// Vector<Transform3D> _last_probe_transforms;
 	
 	PackedFloat32Array _depths;
 	HashMap<Vector3, Transform3D> _depth_map;
@@ -172,8 +172,9 @@ public:
 	void set_angular_drag_scale(const Vector3 &p_scale);
 	Vector3 get_angular_drag_scale() const;
 
-	void set_probe_buoyancy(float p_buoyancy);
-	float get_probe_buoyancy() const;
+	// Buoyancy scalar when using probe-based buoyancy
+	void set_buoyancy(float p_buoyancy);
+	float get_buoyancy() const;
 
 
 	// Calculate and apply the intertia and mass for the body when static properties are updated

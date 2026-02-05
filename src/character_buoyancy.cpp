@@ -80,6 +80,13 @@ void CharacterBuoyancy::_notification(int p_what) {
 						apply_buoyancy_velocity(delta);
 					}
 
+					// Check if submerged changed and emit signal. We only track entering/exiting water as the ratio can change on every frame.
+					float current_ratio = get_submerged_ratio();
+					if (Math::is_zero_approx(current_ratio) != Math::is_zero_approx(_last_submerged_ratio)) {
+						emit_signal("submerged_changed");
+					}
+					_last_submerged_ratio = current_ratio;
+
 					uint64_t elapsed = Time::get_singleton()->get_ticks_usec() - time;
 					_buoyancy_time = elapsed;
 			}
@@ -165,7 +172,7 @@ uint64_t CharacterBuoyancy::get_buoyancy_time() const {
 }
 
 float CharacterBuoyancy::get_submerged_ratio() const {
-	return _submerged_ratio;
+	return _probe_buoyancy.get_submerged_ratio();
 }
 
 float CharacterBuoyancy::get_average_depth() const {
@@ -282,16 +289,6 @@ void CharacterBuoyancy::_update_last_transforms() {
 	ERR_FAIL_NULL_MSG(body, "CharacterBuoyancy must be a child of a CharacterBody3D to update submerged state.");
 
 	_probe_buoyancy.update_transforms(body->get_global_transform());
-
-	// update submerged ratio and notify if changed
-    float ratio = _probe_buoyancy.get_submerged_ratio();
-    
-    // notify on change from completely submerged to not submerged and vice versa
-    bool changed = Math::is_zero_approx(_submerged_ratio) != Math::is_zero_approx(ratio);
-    _submerged_ratio = ratio;
-    if (changed){
-        emit_signal("submerged_changed");
-    }
 }
 
 
