@@ -703,7 +703,7 @@ void Buoyancy::apply_buoyancy_mesh_forces(RigidBody3D *body, float delta) {
 	if (!body) return;
 
 	float liquid_density =  _liquid_area ? _liquid_area->get_density() : 1000.0f;
-	const Vector3 gravity = body->get_gravity() / body->get_gravity_scale();
+	const Vector3 gravity = body->get_gravity() * body->get_gravity_scale();
 
 	// Calculate buoyant force
 	// F_B = rho * V_B * g * (0,1,0)
@@ -814,49 +814,51 @@ void Buoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) {
 	}
 
 	// Pre-calculate constants
-	const Vector3 gravity = body->get_gravity() / body->get_gravity_scale();
+	const Vector3 gravity = body->get_gravity() * body->get_gravity_scale();
 	const Transform3D body_transform = body->get_global_transform();
-	const float liquid_y = _liquid_area->get_global_transform().origin.y;
-	const float probe_ratio = 1.0f / probe_count;
 	const Basis basis = body_transform.basis.orthonormalized();
 	const Vector3 one = Vector3(1, 1, 1);
 	const float full_submerged_depth = halyard::calculate_full_submerged_depth(_buoyancy_probes, body_transform);
 
+	// bail early if there is no depth to submerge
+	if (full_submerged_depth==0.0f) {
+		return;
+	}
 
+	// This represent the portion of mass each probe affects
+	const float probe_ratio = 1.0f / probe_count;
+	const float fluid_density = _liquid_area->get_density();
+
+	// Apply each probes proportional buoyancy force
 	for (int idx = 0; idx < probe_count; ++idx) {
+
 		// Get probe position in global space
 		Vector3 probe = body_transform.xform(_buoyancy_probes[idx]);
-
-		// Get liquid position (flat tidal coordinate)
-		Vector3 liquid_pos = probe;
-		liquid_pos.y = liquid_y;
 
 		// Use cached wave transform from _update_last_probe_transforms
 		Transform3D wave_xform = _last_probe_transforms[idx];
 		Vector3 wave_pos = wave_xform.origin;
 
-		// Calculate depths
-		float wave_depth = Math::max(probe.y - wave_pos.y, full_submerged_depth);
-
-		// Each probe affects 1/N of the mass
-		float probe_mass = (body->get_mass() * probe_ratio) * _probe_buoyancy;
-
-		// Calculate forces
-		Vector3 wave_normal = wave_xform.basis.get_column(1);
-		wave_normal = wave_normal.lerp(Vector3(0, 1, 0), probe_ratio).normalized();
-		Vector3 wave_force = (wave_normal * gravity.y) * probe_mass * wave_depth;
-
-		bool probe_submerged = false;
+		// Calculate wave depth as a ratio between not submerged and fully submerged
+		// this will be used to calculate how much of the probes contribution is submerged
+		float wave_depth = -(probe.y - wave_pos.y);
+		wave_depth = Math::clamp(wave_depth / full_submerged_depth, -1.0f, 0.0f);
 
 		// Apply forces if submerged
 		if (wave_depth < 0.0f) {
-			probe_submerged = true;
-			body->apply_force(wave_force, probe - body_transform.origin);
-		}
+			// Each probe affects 1/N of the volume.
+			//  We can get the total volume from the body's mass and density.
+			float probe_volume = (body->get_mass() / _density) * probe_ratio * -wave_depth;
 
-		if (probe_submerged) {
+			// Calculate forces
+			Vector3 wave_normal = wave_xform.basis.get_column(1);
+			wave_normal = wave_normal.lerp(Vector3(0, 1, 0), probe_ratio).normalized();
+			Vector3 wave_force = (wave_normal * -gravity.y) * fluid_density * probe_volume;
+
+			body->apply_force(wave_force, probe - body_transform.origin);
+		
 			// Apply current forces
-			Vector3 current_force = _liquid_area->get_current_speed() * probe_mass;
+			Vector3 current_force = _liquid_area->get_current_speed() * probe_volume;
 			if (current_force.length() > 0.0f) {
 				body->apply_force(current_force, probe - body_transform.origin);
 			}

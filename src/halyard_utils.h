@@ -14,8 +14,8 @@ inline float calculate_full_submerged_depth(const godot::PackedVector3Array &pro
         return 0.0f;
     }
     
-    float min_probe_depth = 0.0f;
-    float max_probe_depth = 0.0f;
+    float min_probe_depth = INFINITY;
+    float max_probe_depth = -INFINITY;
     
     for (int i = 0; i < probes.size(); i++) {
         const godot::Vector3 &probe = probes[i];
@@ -29,7 +29,12 @@ inline float calculate_full_submerged_depth(const godot::PackedVector3Array &pro
     }
     
     // Return negative value representing depth below surface
-    return -abs(max_probe_depth - min_probe_depth);
+    float depth = -abs(max_probe_depth - min_probe_depth);
+    if (Math::is_zero_approx(depth)) {
+        depth = -0.5f; // Single point? Pretend we're a 1 meter cube
+    }
+
+    return depth;
 }
 
 } // namespace halyard

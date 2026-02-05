@@ -337,11 +337,23 @@ void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
         return;
     }
 
-    // constants
-    const float probe_proportion = _buoyancy / (float)probe_count;
-    const Transform3D body_transform = body->get_global_transform();
-	const Vector3 one(1, 1, 1);
+    // Pre-calculate constants
+	const Vector3 gravity = body->get_gravity();
+	const Transform3D body_transform = body->get_global_transform();
+	const Basis basis = body_transform.basis.orthonormalized();
+	const Vector3 one = Vector3(1, 1, 1);
 	const float full_submerged_depth = halyard::calculate_full_submerged_depth(_probes, body_transform);
+
+	// bail early if there is no depth to submerge
+	if (full_submerged_depth==0.0f) {
+		return;
+	}
+
+	// This represent the portion of mass each probe affects
+	const float probe_ratio = 1.0f / probe_count;
+	const float fluid_density = _liquid_area->get_density();
+
+	const float character_density = fluid_density /get_buoyancy();
 
     // retrieve velocity
     Vector3 velocity = body->get_velocity();
@@ -353,31 +365,29 @@ void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
         Vector3 probe = body_transform.xform(_probes[i]);
 
         // use cached liquid transform from _update_last_transforms
-        Transform3D liquid_xform = _last_transforms[i];
-        bool point_submerged = liquid_xform.origin.y > probe.y;
+        Transform3D wave_xform = _last_transforms[i];
+		Vector3 wave_pos = wave_xform.origin;
 
-		if (point_submerged) {
-            // invert gravity to get buoyancy. depth is negative, so will invert gravity
-            float depth = probe.y - liquid_xform.origin.y;
-			
-			// clamp to max submerged depth so we don't grow force unbounded
-			depth = Math::max(depth, full_submerged_depth);
+		// Calculate wave depth as a ratio between not submerged and fully submerged
+		// this will be used to calculate how much of the probes contribution is submerged
+		float wave_depth = -(probe.y - wave_pos.y);
+		wave_depth = Math::clamp(wave_depth / full_submerged_depth, -1.0f, 0.0f);
 
-			// wave horizontal influence on buoyancy normal is stronger near surface, weaker at depth
-			// ratio: 1.0 at surface (full wave influence), 0.0 at full depth (vertical only)
-			Vector3 wave_normal = Vector3(0, 1, 0);
-			if(full_submerged_depth != 0.0f) {
-				float ratio = Math::clamp(1.0f - (depth / full_submerged_depth), 0.0f, 1.0f);
-				wave_normal = wave_normal.lerp(liquid_xform.basis.get_column(1), ratio).normalized();
-			}
+		if (wave_depth < 0.0f) {
+            // Each probe affects 1/N of the volume.
+			//  We can get the total volume from the body's mass and density.
+			float probe_volume = (get_mass() / character_density) * probe_ratio * -wave_depth;
 
-            Vector3 force = (wave_normal * _gravity.y) * depth * probe_proportion; 
+			// Calculate forces
+			Vector3 wave_normal = wave_xform.basis.get_column(1);
+			wave_normal = wave_normal.lerp(Vector3(0, 1, 0), probe_ratio).normalized();
+			Vector3 wave_force = (wave_normal * -gravity.y) * fluid_density * probe_volume;
 
             // apply to velocity
-            velocity += force * delta;
+            velocity += wave_force / get_mass() * delta;
 
             // apply linear submerged drag, in local space
-			Vector3 linear_drag = one - _submerged_linear_drag * _linear_drag_scale * delta * probe_proportion;
+			Vector3 linear_drag = one - _submerged_linear_drag * _linear_drag_scale * delta * probe_ratio;
 			linear_drag = linear_drag.max(Vector3(0, 0, 0)); // prevent drag from going negative
 			Vector3 local_vel = body->get_basis().xform_inv(velocity);
 			velocity = body->get_basis().xform(local_vel * linear_drag);
