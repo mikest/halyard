@@ -27,8 +27,10 @@ This objects manages the physics interactions between itself and a single Liquid
 
 #include "property_utils.h"
 #include "node_debug.h"
+#include "probe_buoyancy.h"
 
 using namespace godot;
+using namespace halyard;
 
 #define HALYARD_DEPRECATED
 
@@ -51,13 +53,13 @@ private:
 	BuoyancyMode _buoyancy_mode = BUOYANCY_COLLIDER;
     
 	bool _apply_forces = true;
+	ProbeBuoyancy _probe_buoyancy;
 
 	float _submerged_linear_drag = 1.0f;
 	float _submerged_angular_drag = 1.0f;
 	Vector3 _linear_drag_scale = Vector3(1.0f, 1.0f, 1.0f);
 	Vector3 _angular_drag_scale = Vector3(1.0f, 1.0f, 1.0f);
 	bool _ignore_waves = false;
-	float _probe_buoyancy = 1.0f;
 
 	bool _calculate_mass_properties = false;
 	float _density = 500.0f;

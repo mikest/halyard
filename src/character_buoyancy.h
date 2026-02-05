@@ -9,26 +9,23 @@
 #include <godot_cpp/classes/character_body3d.hpp>
 
 #include "node_debug.h"
+#include "probe_buoyancy.h"
 
 using namespace godot;
+using namespace halyard;
 
 class LiquidArea;
 
 class CharacterBuoyancy : public Node, protected NodeDebug {
     GDCLASS(CharacterBuoyancy, Node)
 
-    LiquidArea* _liquid_area = nullptr;
-
     bool _apply_forces = true;
     
-    float _mass = 150.0f;   // kg
-    float _buoyancy = 1.0f; // mass multiplier
-    float _wave_influence = 1.0f;
     float _submerged_linear_drag = 3.0f;    // drag when submerged should be high
     Vector3 _linear_drag_scale = Vector3(1.0f, 1.0f, 1.0f);
 
-    PackedVector3Array _probes;
-    Vector<Transform3D> _last_probe_transforms;
+    ProbeBuoyancy _probe_buoyancy;
+    
     uint64_t _buoyancy_time = 0; // us
     Vector3 _gravity = Vector3(0, -9.81, 0);
     float _submerged_ratio = 0.0f;
@@ -65,9 +62,6 @@ public:
 
     void set_mass(float mass);
     float get_mass() const;
-
-    void set_wave_influence(float influence);
-    float get_wave_influence() const;
 
     void set_submerged_linear_drag(float drag);
     float get_submerged_linear_drag() const;
