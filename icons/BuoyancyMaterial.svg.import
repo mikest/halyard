@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b4gxg0dfpjoiw"
-path="res://.godot/imported/Buoyancy.svg-eee2e6d549532c17b070030c33cc2c4f.ctex"
+uid="uid://cpxr1j22214k"
+path="res://.godot/imported/BuoyancyMaterial.svg-43b60c0eb66b3f8339f42b9c079f2daa.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://addons/halyard/icons/Buoyancy.svg"
-dest_files=["res://.godot/imported/Buoyancy.svg-eee2e6d549532c17b070030c33cc2c4f.ctex"]
+source_file="res://addons/halyard/icons/BuoyancyMaterial.svg"
+dest_files=["res://.godot/imported/BuoyancyMaterial.svg-43b60c0eb66b3f8339f42b9c079f2daa.ctex"]
 
 [params]
 

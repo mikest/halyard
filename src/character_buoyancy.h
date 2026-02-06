@@ -9,29 +9,29 @@
 #include <godot_cpp/classes/character_body3d.hpp>
 
 #include "node_debug.h"
+#include "probe_buoyancy.h"
+#include "buoyancy_material.h"
 
 using namespace godot;
+using namespace halyard;
 
 class LiquidArea;
 
 class CharacterBuoyancy : public Node, protected NodeDebug {
     GDCLASS(CharacterBuoyancy, Node)
 
-    LiquidArea* _liquid_area = nullptr;
-
     bool _apply_forces = true;
+    bool _ignore_waves = false;
     
-    float _mass = 150.0f;   // kg
-    float _buoyancy = 1.0f; // mass multiplier
-    float _wave_influence = 1.0f;
     float _submerged_linear_drag = 3.0f;    // drag when submerged should be high
     Vector3 _linear_drag_scale = Vector3(1.0f, 1.0f, 1.0f);
 
-    PackedVector3Array _probes;
-    Vector<Transform3D> _last_transforms;
+    Ref<BuoyancyMaterial> _buoyancy_material;
+    ProbeBuoyancy _probe_buoyancy;
+    float _last_submerged_ratio = 0.0f;
+    
     uint64_t _buoyancy_time = 0; // us
     Vector3 _gravity = Vector3(0, -9.81, 0);
-    float _submerged_ratio = 0.0f;
 
     void _update_last_transforms();
 
@@ -51,6 +51,9 @@ public:
     void apply_buoyancy_velocity(float delta);
 
     // accessors
+    void set_buoyancy_material(const Ref<BuoyancyMaterial> &p_material);
+    Ref<BuoyancyMaterial> get_buoyancy_material() const;
+
     void set_liquid_area(LiquidArea *liquid_area);
     LiquidArea* get_liquid_area() const;
 
@@ -60,20 +63,12 @@ public:
     void set_apply_forces(bool enabled);
     bool get_apply_forces() const;
 
-    void set_buoyancy(float buoyancy);
-    float get_buoyancy() const;
+    // Just use a flat plane for the liquid. Considerably faster.
+    void set_ignore_waves(bool p_ignore);
+    bool get_ignore_waves() const;
 
     void set_mass(float mass);
     float get_mass() const;
-
-    void set_wave_influence(float influence);
-    float get_wave_influence() const;
-
-    void set_submerged_linear_drag(float drag);
-    float get_submerged_linear_drag() const;
-
-    void set_linear_drag_scale(const Vector3 &scale);
-    Vector3 get_linear_drag_scale() const;
 
     void set_gravity(const Vector3 &gravity);
     Vector3 get_gravity() const;
