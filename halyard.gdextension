@@ -8,7 +8,7 @@ RopePositions = "./icons/RopePositions.svg"
 RopeAppearance = "./icons/RopeAppearance.svg"
 RopeAnchorPositions = "./icons/RopePositions.svg"
 
-Buoyancy = "./icons/Buoyancy.svg"
+RigidBuoyancy = "./icons/RigidBuoyancy.svg"
 CharacterBuoyancy = "./icons/CharacterBuoyancy.svg"
 LiquidArea = "./icons/LiquidArea.svg"
 BuoyancyMaterial = "./icons/BuoyancyMaterial.svg"
