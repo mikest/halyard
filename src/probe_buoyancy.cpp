@@ -139,9 +139,7 @@ void ProbeBuoyancy::update_transforms(const Transform3D& body_transform) {
 
         // count submerged probes
         float wave_depth = probe.y - wave_xform.origin.y;
-        float liquid_depth = probe.y - liquid_y;
-
-        if (wave_depth < 0.0f || liquid_depth < 0.0f) {
+        if (wave_depth < 0.0f) {
             _last_submerged_count++;
         }
 	}
