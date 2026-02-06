@@ -3,6 +3,7 @@
  * A Resource that holds buoyancy-related physics properties for a body.
  *
  * Copyright (c) M. Estee
+ * MIT License.
  */
 
 #include "buoyancy_material.h"

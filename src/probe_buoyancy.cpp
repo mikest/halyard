@@ -1,15 +1,21 @@
-// ProbeBuoyancy
-//
-// A utility class for calculating buoyancy forces on a set of point probes.
-//
-// This class encapsulates the functionality for probe-based buoyancy calculations,
-// including depth calculation, force computation, and transform caching.
+/* ProbeBuoyancy
+ *
+ * A utility class for calculating buoyancy forces on a set of point probes.
+ *
+ * This class encapsulates the functionality for probe-based buoyancy calculations,
+ * including depth calculation, force computation, and transform caching.
+ *
+ * Copyright (c) M. Estee
+ * MIT License.
+ */
 
 #include "probe_buoyancy.h"
 #include "liquid_area.h"
 
 using namespace godot;
 using namespace halyard;
+
+#pragma region Private Helpers
 
 void ProbeBuoyancy::_update_derived_properties() {
 	if (_liquid_area == nullptr) {
@@ -23,22 +29,26 @@ void ProbeBuoyancy::_update_derived_properties() {
 	_character_volume = _mass / _character_density;
 }
 
-void ProbeBuoyancy::set_probes(const PackedVector3Array& p_probes) {
+#pragma endregion
+
+#pragma region Accessors
+
+void ProbeBuoyancy::set_probes(const PackedVector3Array &p_probes) {
 	_probes = p_probes;
 	_forces.resize(_probes.size());
 	_last_probe_transforms.resize(_probes.size());
 }
 
-const PackedVector3Array& ProbeBuoyancy::get_probes() const {
+const PackedVector3Array &ProbeBuoyancy::get_probes() const {
 	return _probes;
 }
 
-void ProbeBuoyancy::set_liquid_area(LiquidArea* p_liquid_area) {
+void ProbeBuoyancy::set_liquid_area(LiquidArea *p_liquid_area) {
 	_liquid_area = p_liquid_area;
 	_update_derived_properties();
 }
 
-LiquidArea* ProbeBuoyancy::get_liquid_area() const {
+LiquidArea *ProbeBuoyancy::get_liquid_area() const {
 	return _liquid_area;
 }
 
@@ -76,30 +86,34 @@ float ProbeBuoyancy::get_volume() const {
 	return _character_volume;
 }
 
-const PackedVector3Array& ProbeBuoyancy::get_forces() const {
+const PackedVector3Array &ProbeBuoyancy::get_forces() const {
 	return _forces;
 }
 
-const Vector<Transform3D>& ProbeBuoyancy::get_last_transforms() const {
+const Vector<Transform3D> &ProbeBuoyancy::get_last_transforms() const {
 	return _last_probe_transforms;
 }
 
 int ProbeBuoyancy::get_last_submerged_count() const {
-    return _last_submerged_count;
+	return _last_submerged_count;
 }
 
 float ProbeBuoyancy::get_submerged_ratio() const {
-    if (_probes.size() == 0) {
-        return 0.0f;
-    }
-    return (float)_last_submerged_count / (float)_probes.size();
-}  
+	if (_probes.size() == 0) {
+		return 0.0f;
+	}
+	return (float)_last_submerged_count / (float)_probes.size();
+}
 
 float ProbeBuoyancy::get_full_submerged_depth() const {
 	return _full_submerged_depth;
 }
 
-void ProbeBuoyancy::update_transforms(const Transform3D& body_transform) {
+#pragma endregion
+
+#pragma region Core Calculations
+
+void ProbeBuoyancy::update_transforms(const Transform3D &body_transform) {
 	if (_liquid_area == nullptr) {
 		return;
 	}
@@ -119,7 +133,7 @@ void ProbeBuoyancy::update_transforms(const Transform3D& body_transform) {
 	_full_submerged_depth = calculate_full_submerged_depth(_probes, body_transform);
 
 	// Update each probe's wave transform
-    _last_submerged_count = 0;
+	_last_submerged_count = 0;
 	for (int idx = 0; idx < probe_count; ++idx) {
 		// Get probe position in global space
 		Vector3 probe = body_transform.xform(_probes[idx]);
@@ -137,15 +151,15 @@ void ProbeBuoyancy::update_transforms(const Transform3D& body_transform) {
 		// Cache the transform
 		_last_probe_transforms.write[idx] = wave_xform;
 
-        // count submerged probes
-        float wave_depth = probe.y - wave_xform.origin.y;
-        if (wave_depth < 0.0f) {
-            _last_submerged_count++;
-        }
+		// count submerged probes
+		float wave_depth = probe.y - wave_xform.origin.y;
+		if (wave_depth < 0.0f) {
+			_last_submerged_count++;
+		}
 	}
 }
 
-void ProbeBuoyancy::update_forces(const Transform3D& body_transform, const Vector3& gravity) {
+void ProbeBuoyancy::update_forces(const Transform3D &body_transform, const Vector3 &gravity) {
 	if (_liquid_area == nullptr) {
 		// Clear forces if no liquid area
 		for (int i = 0; i < _forces.size(); ++i) {
@@ -209,7 +223,7 @@ void ProbeBuoyancy::update_forces(const Transform3D& body_transform, const Vecto
 	}
 }
 
-int ProbeBuoyancy::get_submerged_count(const Transform3D& body_transform) const {
+int ProbeBuoyancy::get_submerged_count(const Transform3D &body_transform) const {
 	if (_liquid_area == nullptr || _probes.size() == 0) {
 		return 0;
 	}
@@ -219,9 +233,9 @@ int ProbeBuoyancy::get_submerged_count(const Transform3D& body_transform) const 
 
 	for (int idx = 0; idx < _probes.size(); ++idx) {
 		Vector3 probe = body_transform.xform(_probes[idx]);
-		
+
 		if (idx < _last_probe_transforms.size()) {
-			const Transform3D& wave_xform = _last_probe_transforms[idx];
+			const Transform3D &wave_xform = _last_probe_transforms[idx];
 			float wave_depth = probe.y - wave_xform.origin.y;
 			float liquid_depth = probe.y - liquid_y;
 
@@ -233,3 +247,5 @@ int ProbeBuoyancy::get_submerged_count(const Transform3D& body_transform) const 
 
 	return count;
 }
+
+#pragma endregion

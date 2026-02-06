@@ -1,9 +1,13 @@
-// MeshBuoyancy
-//
-// A utility class for calculating buoyancy forces from a submerged mesh volume.
-//
-// This class encapsulates mesh-based buoyancy calculations using triangle
-// clipping against a liquid surface to determine submerged volume and centroid.
+/* MeshBuoyancy
+ *
+ * A utility class for calculating buoyancy forces from a submerged mesh volume.
+ *
+ * This class encapsulates mesh-based buoyancy calculations using triangle
+ * clipping against a liquid surface to determine submerged volume and centroid.
+ *
+ * Copyright (c) M. Estee
+ * MIT License.
+ */
 
 #include "mesh_buoyancy.h"
 #include "liquid_area.h"
@@ -11,17 +15,17 @@
 using namespace godot;
 using namespace halyard;
 
-// ========== Configuration Accessors ==========
+#pragma region Accessors
 
-void MeshBuoyancy::set_liquid_area(LiquidArea* p_liquid_area) {
+void MeshBuoyancy::set_liquid_area(LiquidArea *p_liquid_area) {
 	_liquid_area = p_liquid_area;
 }
 
-LiquidArea* MeshBuoyancy::get_liquid_area() const {
+LiquidArea *MeshBuoyancy::get_liquid_area() const {
 	return _liquid_area;
 }
 
-void MeshBuoyancy::set_buoyancy_mesh(const Ref<ArrayMesh>& p_mesh) {
+void MeshBuoyancy::set_buoyancy_mesh(const Ref<ArrayMesh> &p_mesh) {
 	_buoyancy_mesh = p_mesh;
 }
 
@@ -53,8 +57,6 @@ float MeshBuoyancy::get_mass() const {
 	return _mass;
 }
 
-// ========== Static Properties ==========
-
 float MeshBuoyancy::get_mesh_volume() const {
 	return _mesh_volume;
 }
@@ -63,11 +65,9 @@ Vector3 MeshBuoyancy::get_mesh_centroid() const {
 	return _mesh_centroid;
 }
 
-const PackedVector3Array& MeshBuoyancy::get_vertices() const {
+const PackedVector3Array &MeshBuoyancy::get_vertices() const {
 	return _vertex;
 }
-
-// ========== Dynamic Properties ==========
 
 float MeshBuoyancy::get_submerged_volume() const {
 	return _submerged_volume;
@@ -88,8 +88,6 @@ float MeshBuoyancy::get_submerged_ratio() const {
 	return _submerged_volume / _mesh_volume;
 }
 
-// ========== Force Output ==========
-
 Vector3 MeshBuoyancy::get_buoyancy_force() const {
 	return _buoyancy_force;
 }
@@ -98,13 +96,13 @@ Vector3 MeshBuoyancy::get_force_position() const {
 	return _force_position;
 }
 
-// ========== Debug ==========
-
-const PackedVector3Array& MeshBuoyancy::get_submerged_verts() const {
+const PackedVector3Array &MeshBuoyancy::get_submerged_verts() const {
 	return _submerged_verts;
 }
 
-// ========== Triangle Calculations ==========
+#pragma endregion
+
+#pragma region Triangle Calculations
 
 Vector4 MeshBuoyancy::_tri_contribution(const Vector3 &a, const Vector3 &b, const Vector3 &c, const Vector3 &o) const {
 	float V = _sign * (a - o).cross(b - o).dot(c - o) / 6.0f;
@@ -229,9 +227,11 @@ Vector4 MeshBuoyancy::_partial_intersection(const Vector3 &a, const Vector3 &b, 
 	}
 }
 
-// ========== Core Calculation Methods ==========
+#pragma endregion
 
-void MeshBuoyancy::update_statics(const Transform3D& collider_transform) {
+#pragma region Core Calculations
+
+void MeshBuoyancy::update_statics(const Transform3D &collider_transform) {
 	if (!_buoyancy_mesh.is_valid() || _buoyancy_mesh->get_surface_count() == 0) {
 		return;
 	}
@@ -269,21 +269,18 @@ void MeshBuoyancy::update_statics(const Transform3D& collider_transform) {
 	}
 }
 
-void MeshBuoyancy::update_dynamics(const Transform3D& collider_global_transform, const Transform3D& collider_local_transform) {
-	// Clear the submerged verts for debug
+void MeshBuoyancy::update_dynamics(const Transform3D &collider_global_transform, const Transform3D &collider_local_transform) {
 	_submerged_verts.clear();
 
-	// Get the transformed mesh points and their depths
+	// Prepare depth cache
 	_depth_map.clear();
 	_depth_map.reserve(_vertex.size());
 	_depths.resize(_vertex.size());
 
-	// Reset the averaged wave normal
 	_buoyancy_normal = Vector3(0, 0, 0);
 
-	// Dedupe the vertices.
-	// For each unique vertex, calculate its depth once and store the transform.
-	// Reuse the transform for duplicate vertex locations.
+	// Dedupe the vertices and calculate depths.
+	// For each unique vertex, calculate its depth once and cache the transform.
 	// This avoids multiple expensive calls out to LiquidArea per unique vertex.
 	for (int idx = 0; idx < _vertex.size(); ++idx) {
 		Vector3 global_vertex = collider_global_transform.xform(_vertex[idx]);
@@ -315,7 +312,7 @@ void MeshBuoyancy::update_dynamics(const Transform3D& collider_global_transform,
 
 	_buoyancy_normal = _buoyancy_normal.normalized();
 
-	// Calculate the submerged volume for each face
+	// Accumulate submerged volume for each face
 	int face_count = _vertex.size() / 3;
 
 	Vector3 o = Vector3(0, 0, 0);
@@ -338,7 +335,7 @@ void MeshBuoyancy::update_dynamics(const Transform3D& collider_global_transform,
 		_submerged_volume += submerged_tri.w;
 	}
 
-	// Volume calculations done in local space
+	// Transform submerged centroid from local to body space
 	if (!Math::is_zero_approx(_submerged_volume)) {
 		_submerged_centroid /= (_submerged_volume * 4.0f / 3.0f);
 		_submerged_centroid = collider_local_transform.xform(_submerged_centroid);
@@ -347,7 +344,7 @@ void MeshBuoyancy::update_dynamics(const Transform3D& collider_global_transform,
 	}
 }
 
-void MeshBuoyancy::update_forces(const Transform3D& body_transform, const Vector3& gravity) {
+void MeshBuoyancy::update_forces(const Transform3D &body_transform, const Vector3 &gravity) {
 	if (_liquid_area == nullptr || Math::is_zero_approx(_mesh_volume)) {
 		_buoyancy_force = Vector3(0, 0, 0);
 		_force_position = body_transform.origin;
@@ -370,14 +367,16 @@ void MeshBuoyancy::update_forces(const Transform3D& body_transform, const Vector
 		// F_B = buoyancy * rho * V_submerged * g
 		_buoyancy_force = wave_normal * buoyancy_scalar * liquid_density * _submerged_volume * -gravity.y;
 
-		// Add current force (scaled by submerged volume ratio)
+		// Add current force scaled by submerged volume
 		Vector3 current_force = _liquid_area->get_current_speed() * liquid_density * _submerged_volume;
 		_buoyancy_force += current_force;
 
-		// Force application position is the submerged centroid in global space
+		// Apply force at the submerged centroid in global space
 		_force_position = body_transform.xform(_submerged_centroid);
 	} else {
 		_buoyancy_force = Vector3(0, 0, 0);
 		_force_position = body_transform.origin;
 	}
 }
+
+#pragma endregion
