@@ -17,15 +17,15 @@ using namespace halyard;
 
 #pragma region Accessors
 
-void MeshBuoyancy::set_liquid_area(LiquidArea* p_liquid_area) {
+void MeshBuoyancy::set_liquid_area(LiquidArea *p_liquid_area) {
 	_liquid_area = p_liquid_area;
 }
 
-LiquidArea* MeshBuoyancy::get_liquid_area() const {
+LiquidArea *MeshBuoyancy::get_liquid_area() const {
 	return _liquid_area;
 }
 
-void MeshBuoyancy::set_buoyancy_mesh(const Ref<ArrayMesh>& p_mesh) {
+void MeshBuoyancy::set_buoyancy_mesh(const Ref<ArrayMesh> &p_mesh) {
 	_buoyancy_mesh = p_mesh;
 }
 
@@ -65,7 +65,7 @@ Vector3 MeshBuoyancy::get_mesh_centroid() const {
 	return _mesh_centroid;
 }
 
-const PackedVector3Array& MeshBuoyancy::get_vertices() const {
+const PackedVector3Array &MeshBuoyancy::get_vertices() const {
 	return _vertex;
 }
 
@@ -96,7 +96,7 @@ Vector3 MeshBuoyancy::get_force_position() const {
 	return _force_position;
 }
 
-const PackedVector3Array& MeshBuoyancy::get_submerged_verts() const {
+const PackedVector3Array &MeshBuoyancy::get_submerged_verts() const {
 	return _submerged_verts;
 }
 
@@ -231,7 +231,7 @@ Vector4 MeshBuoyancy::_partial_intersection(const Vector3 &a, const Vector3 &b, 
 
 #pragma region Core Calculations
 
-void MeshBuoyancy::update_statics(const Transform3D& collider_transform) {
+void MeshBuoyancy::update_statics(const Transform3D &collider_transform) {
 	if (!_buoyancy_mesh.is_valid() || _buoyancy_mesh->get_surface_count() == 0) {
 		return;
 	}
@@ -269,7 +269,7 @@ void MeshBuoyancy::update_statics(const Transform3D& collider_transform) {
 	}
 }
 
-void MeshBuoyancy::update_dynamics(const Transform3D& collider_global_transform, const Transform3D& collider_local_transform) {
+void MeshBuoyancy::update_dynamics(const Transform3D &collider_global_transform, const Transform3D &collider_local_transform) {
 	_submerged_verts.clear();
 
 	// Prepare depth cache
@@ -344,7 +344,7 @@ void MeshBuoyancy::update_dynamics(const Transform3D& collider_global_transform,
 	}
 }
 
-void MeshBuoyancy::update_forces(const Transform3D& body_transform, const Vector3& gravity) {
+void MeshBuoyancy::update_forces(const Transform3D &body_transform, const Vector3 &gravity) {
 	if (_liquid_area == nullptr || Math::is_zero_approx(_mesh_volume)) {
 		_buoyancy_force = Vector3(0, 0, 0);
 		_force_position = body_transform.origin;

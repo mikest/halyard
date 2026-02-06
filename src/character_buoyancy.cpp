@@ -9,25 +9,25 @@
  */
 
 #include "character_buoyancy.h"
-#include "liquid_area.h"
 #include "halyard_utils.h"
+#include "liquid_area.h"
 
-#include <godot_cpp/variant/utility_functions.hpp>
+#include <cmath>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/time.hpp>
-#include <cmath>
+#include <godot_cpp/variant/utility_functions.hpp>
 
 using namespace godot;
 
 #pragma region Lifecycle
 
-CharacterBuoyancy::CharacterBuoyancy()
-: NodeDebug(Object::cast_to<Node>(this)) {
+CharacterBuoyancy::CharacterBuoyancy() :
+		NodeDebug(Object::cast_to<Node>(this)) {
 	_debug_color = Color(0.0f, 0.8f, 1.0f, 0.2f);
 
 	// defaults for probe_buoyancy behavior
-	_probe_buoyancy.set_buoyancy(1.5f);	// less dense as water
+	_probe_buoyancy.set_buoyancy(1.5f); // less dense as water
 	_probe_buoyancy.set_mass(150.0f); // kg
 }
 
@@ -55,8 +55,8 @@ PackedStringArray CharacterBuoyancy::_get_configuration_warnings() const {
 }
 
 void CharacterBuoyancy::_notification(int p_what) {
-    // manage debugging
-    NodeDebug::_debug_notification(p_what);
+	// manage debugging
+	NodeDebug::_debug_notification(p_what);
 
 	switch (p_what) {
 		case NOTIFICATION_READY: {
@@ -81,7 +81,7 @@ void CharacterBuoyancy::_notification(int p_what) {
 		} break;
 
 		case NOTIFICATION_EXIT_TREE: {
-		 	_probe_buoyancy.set_liquid_area(nullptr);
+			_probe_buoyancy.set_liquid_area(nullptr);
 		} break;
 
 		case NOTIFICATION_INTERNAL_PROCESS: {
@@ -92,29 +92,28 @@ void CharacterBuoyancy::_notification(int p_what) {
 			}
 		} break;
 
-        // velocity is applied in the internal physics process so that submerged is updated
-        // for derived classes before normal physics process
+		// velocity is applied in the internal physics process so that submerged is updated
+		// for derived classes before normal physics process
 		case NOTIFICATION_INTERNAL_PHYSICS_PROCESS: {
 			if (!Engine::get_singleton()->is_editor_hint() && is_node_ready()) {
-				
-					uint64_t time = Time::get_singleton()->get_ticks_usec();
+				uint64_t time = Time::get_singleton()->get_ticks_usec();
 
-					// optionally apply them
-					_update_last_transforms();
-					if (_apply_forces){
-						float delta = get_physics_process_delta_time();
-						apply_buoyancy_velocity(delta);
-					}
+				// optionally apply them
+				_update_last_transforms();
+				if (_apply_forces) {
+					float delta = get_physics_process_delta_time();
+					apply_buoyancy_velocity(delta);
+				}
 
-					// Check if submerged changed and emit signal. We only track entering/exiting water as the ratio can change on every frame.
-					float current_ratio = get_submerged_ratio();
-					if (Math::is_zero_approx(current_ratio) != Math::is_zero_approx(_last_submerged_ratio)) {
-						emit_signal("submerged_changed");
-					}
-					_last_submerged_ratio = current_ratio;
+				// Check if submerged changed and emit signal. We only track entering/exiting water as the ratio can change on every frame.
+				float current_ratio = get_submerged_ratio();
+				if (Math::is_zero_approx(current_ratio) != Math::is_zero_approx(_last_submerged_ratio)) {
+					emit_signal("submerged_changed");
+				}
+				_last_submerged_ratio = current_ratio;
 
-					uint64_t elapsed = Time::get_singleton()->get_ticks_usec() - time;
-					_buoyancy_time = elapsed;
+				uint64_t elapsed = Time::get_singleton()->get_ticks_usec() - time;
+				_buoyancy_time = elapsed;
 			}
 		} break;
 	}
@@ -127,13 +126,13 @@ void CharacterBuoyancy::_notification(int p_what) {
 void CharacterBuoyancy::set_liquid_area(LiquidArea *p_area) {
 	_probe_buoyancy.set_liquid_area(p_area);
 
-    // notify editor of change
-	if (Engine::get_singleton()->is_editor_hint()){
+	// notify editor of change
+	if (Engine::get_singleton()->is_editor_hint()) {
 		update_configuration_warnings();
 	}
 }
 
-LiquidArea* CharacterBuoyancy::get_liquid_area() const {
+LiquidArea *CharacterBuoyancy::get_liquid_area() const {
 	return _probe_buoyancy.get_liquid_area();
 }
 
@@ -150,7 +149,7 @@ void CharacterBuoyancy::set_probes(const PackedVector3Array &local_probes) {
 }
 
 PackedVector3Array CharacterBuoyancy::get_probes() const {
-    return _probe_buoyancy.get_probes();
+	return _probe_buoyancy.get_probes();
 }
 
 void CharacterBuoyancy::set_mass(float mass) {
@@ -196,7 +195,7 @@ float CharacterBuoyancy::get_submerged_ratio() const {
 
 float CharacterBuoyancy::get_average_depth() const {
 	CharacterBody3D *body = Object::cast_to<CharacterBody3D>(get_parent());
-	
+
 	if (!body) {
 		return 0.0f;
 	}
@@ -215,10 +214,10 @@ float CharacterBuoyancy::get_average_depth() const {
 	for (int i = 0; i < probe_count; ++i) {
 		// Get probe position in global space
 		Vector3 probe = body_transform.xform(probes[i]);
-		
+
 		// Get cached liquid surface position
 		Vector3 liquid_pos = last_transforms[i].origin;
-		
+
 		// Calculate depth (negative when underwater)
 		float depth = probe.y - liquid_pos.y;
 		total_depth += depth;
@@ -228,21 +227,21 @@ float CharacterBuoyancy::get_average_depth() const {
 }
 
 void CharacterBuoyancy::set_show_debug(bool show) {
-    _show_debug = show;
-    set_debug_mesh_dirty();
+	_show_debug = show;
+	set_debug_mesh_dirty();
 }
 
 bool CharacterBuoyancy::get_show_debug() const {
-    return _show_debug;
+	return _show_debug;
 }
 
 void CharacterBuoyancy::set_debug_color(const Color &color) {
-    _debug_color = color;
-    set_debug_mesh_dirty();
+	_debug_color = color;
+	set_debug_mesh_dirty();
 }
 
 Color CharacterBuoyancy::get_debug_color() const {
-    return _debug_color;
+	return _debug_color;
 }
 
 #pragma endregion
@@ -250,26 +249,28 @@ Color CharacterBuoyancy::get_debug_color() const {
 #pragma region Debug
 
 void CharacterBuoyancy::_update_debug_mesh() {
-    if (_debug_mesh_instance == nullptr) return;
-    if (_debug_mesh.is_valid() == false) return;
+	if (_debug_mesh_instance == nullptr)
+		return;
+	if (_debug_mesh.is_valid() == false)
+		return;
 
-    PackedVector3Array vertices;
-    PackedInt32Array indices;
+	PackedVector3Array vertices;
+	PackedInt32Array indices;
 
-    // clear previous surfaces
-    _debug_mesh->clear_surfaces();
+	// clear previous surfaces
+	_debug_mesh->clear_surfaces();
 
-    // Draw probe positions
+	// Draw probe positions
 	auto probes = _probe_buoyancy.get_probes();
 	const float size = 0.1f;
-    if (probes.size() > 0) {
-        if (_node) {
-            Transform3D xform;
-            
-            for (int idx = 0; idx < probes.size(); idx++) {
-                Vector3 point = probes[idx];
-                
-                // X axis line
+	if (probes.size() > 0) {
+		if (_node) {
+			Transform3D xform;
+
+			for (int idx = 0; idx < probes.size(); idx++) {
+				Vector3 point = probes[idx];
+
+				// X axis line
 				vertices.append(point + Vector3(-size, 0, 0));
 				vertices.append(point + Vector3(size, 0, 0));
 
@@ -291,19 +292,19 @@ void CharacterBuoyancy::_update_debug_mesh() {
 
 				indices.append(base + 4);
 				indices.append(base + 5);
-            }
-        }
-    }
+			}
+		}
+	}
 
-    if (vertices.size() > 0) {
-        Array arrays;
-        arrays.resize(Mesh::ARRAY_MAX);
-        arrays[Mesh::ARRAY_VERTEX] = vertices;
-        arrays[Mesh::ARRAY_INDEX] = indices;
+	if (vertices.size() > 0) {
+		Array arrays;
+		arrays.resize(Mesh::ARRAY_MAX);
+		arrays[Mesh::ARRAY_VERTEX] = vertices;
+		arrays[Mesh::ARRAY_INDEX] = indices;
 
-        _debug_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINES, arrays);
-        _debug_mesh->surface_set_material(0, _debug_material);
-    }
+		_debug_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINES, arrays);
+		_debug_mesh->surface_set_material(0, _debug_material);
+	}
 }
 
 #pragma endregion
@@ -340,16 +341,15 @@ void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
 	const float probe_ratio = 1.0f / probes.size();
 
 	Vector3 submerged_linear_drag =
-		_buoyancy_material->get_linear_drag() *
-		_buoyancy_material->get_linear_drag_scale();
+			_buoyancy_material->get_linear_drag() *
+			_buoyancy_material->get_linear_drag_scale();
 
 	// retrieve velocity
-    Vector3 velocity = body->get_velocity();
+	Vector3 velocity = body->get_velocity();
 
 	// add velocity changes from forces
 	const int probe_count = probes.size();
 	for (int i = 0; i < probe_count; ++i) {
-
 		// don't apply drag if there is no force
 		const Vector3 force = forces[i];
 		if (force.length()) {
@@ -378,15 +378,15 @@ void CharacterBuoyancy::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_mass"), &CharacterBuoyancy::get_mass);
 	ClassDB::bind_method(D_METHOD("set_gravity", "gravity"), &CharacterBuoyancy::set_gravity);
 	ClassDB::bind_method(D_METHOD("get_gravity"), &CharacterBuoyancy::get_gravity);
-    ClassDB::bind_method(D_METHOD("set_probes", "probes"), &CharacterBuoyancy::set_probes);
-    ClassDB::bind_method(D_METHOD("get_probes"), &CharacterBuoyancy::get_probes);
+	ClassDB::bind_method(D_METHOD("set_probes", "probes"), &CharacterBuoyancy::set_probes);
+	ClassDB::bind_method(D_METHOD("get_probes"), &CharacterBuoyancy::get_probes);
 	ClassDB::bind_method(D_METHOD("get_buoyancy_time"), &CharacterBuoyancy::get_buoyancy_time);
 	ClassDB::bind_method(D_METHOD("get_submerged_ratio"), &CharacterBuoyancy::get_submerged_ratio);
 	ClassDB::bind_method(D_METHOD("get_average_depth"), &CharacterBuoyancy::get_average_depth);
 
-    ClassDB::bind_method(D_METHOD("apply_buoyancy_velocity", "delta"), &CharacterBuoyancy::apply_buoyancy_velocity);
+	ClassDB::bind_method(D_METHOD("apply_buoyancy_velocity", "delta"), &CharacterBuoyancy::apply_buoyancy_velocity);
 
-    ClassDB::bind_method(D_METHOD("set_liquid_area", "liquid_area"), &CharacterBuoyancy::set_liquid_area);
+	ClassDB::bind_method(D_METHOD("set_liquid_area", "liquid_area"), &CharacterBuoyancy::set_liquid_area);
 	ClassDB::bind_method(D_METHOD("get_liquid_area"), &CharacterBuoyancy::get_liquid_area);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "liquid_area", PROPERTY_HINT_NODE_TYPE, "LiquidArea"), "set_liquid_area", "get_liquid_area");
 
@@ -394,30 +394,30 @@ void CharacterBuoyancy::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_buoyancy_material"), &CharacterBuoyancy::get_buoyancy_material);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "buoyancy_material", PROPERTY_HINT_RESOURCE_TYPE, "BuoyancyMaterial"), "set_buoyancy_material", "get_buoyancy_material");
 
-    ADD_PROPERTY(PropertyInfo(Variant::PACKED_VECTOR3_ARRAY, "probes"), "set_probes", "get_probes");
+	ADD_PROPERTY(PropertyInfo(Variant::PACKED_VECTOR3_ARRAY, "probes"), "set_probes", "get_probes");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "apply_forces"), "set_apply_forces", "get_apply_forces");
 
 	ClassDB::bind_method(D_METHOD("set_ignore_waves", "ignore_waves"), &CharacterBuoyancy::set_ignore_waves);
 	ClassDB::bind_method(D_METHOD("get_ignore_waves"), &CharacterBuoyancy::get_ignore_waves);
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "ignore_waves"), "set_ignore_waves", "get_ignore_waves");
-	
-    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "mass", PROPERTY_HINT_NONE, "kg"), "set_mass", "get_mass");
+
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "mass", PROPERTY_HINT_NONE, "kg"), "set_mass", "get_mass");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "buoyancy", PROPERTY_HINT_RANGE, "0,100,0.1"), "set_buoyancy", "get_buoyancy");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "submerged_linear_drag", PROPERTY_HINT_RANGE, "0,10,0.1"), "set_submerged_linear_drag", "get_submerged_linear_drag");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "linear_drag_scale"), "set_linear_drag_scale", "get_linear_drag_scale");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "gravity"), "set_gravity", "get_gravity");
 
-    // Debug
-    ADD_GROUP("Debug", "");
-    ClassDB::bind_method(D_METHOD("set_show_debug", "show"), &CharacterBuoyancy::set_show_debug);
-    ClassDB::bind_method(D_METHOD("get_show_debug"), &CharacterBuoyancy::get_show_debug);
-    ADD_PROPERTY(PropertyInfo(Variant::BOOL, "show_debug"), "set_show_debug", "get_show_debug");
+	// Debug
+	ADD_GROUP("Debug", "");
+	ClassDB::bind_method(D_METHOD("set_show_debug", "show"), &CharacterBuoyancy::set_show_debug);
+	ClassDB::bind_method(D_METHOD("get_show_debug"), &CharacterBuoyancy::get_show_debug);
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "show_debug"), "set_show_debug", "get_show_debug");
 
-    ClassDB::bind_method(D_METHOD("set_debug_color", "color"), &CharacterBuoyancy::set_debug_color);
-    ClassDB::bind_method(D_METHOD("get_debug_color"), &CharacterBuoyancy::get_debug_color);
-    ADD_PROPERTY(PropertyInfo(Variant::COLOR, "debug_color"), "set_debug_color", "get_debug_color");
+	ClassDB::bind_method(D_METHOD("set_debug_color", "color"), &CharacterBuoyancy::set_debug_color);
+	ClassDB::bind_method(D_METHOD("get_debug_color"), &CharacterBuoyancy::get_debug_color);
+	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "debug_color"), "set_debug_color", "get_debug_color");
 
-    ADD_SIGNAL(MethodInfo("submerged_changed"));
+	ADD_SIGNAL(MethodInfo("submerged_changed"));
 }
 
 #pragma endregion
