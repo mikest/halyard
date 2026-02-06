@@ -1,15 +1,21 @@
-// ProbeBuoyancy
-//
-// A utility class for calculating buoyancy forces on a set of point probes.
-//
-// This class encapsulates the functionality for probe-based buoyancy calculations,
-// including depth calculation, force computation, and transform caching.
+/* ProbeBuoyancy
+ *
+ * A utility class for calculating buoyancy forces on a set of point probes.
+ *
+ * This class encapsulates the functionality for probe-based buoyancy calculations,
+ * including depth calculation, force computation, and transform caching.
+ *
+ * Copyright (c) M. Estee
+ * MIT License.
+ */
 
 #include "probe_buoyancy.h"
 #include "liquid_area.h"
 
 using namespace godot;
 using namespace halyard;
+
+#pragma region Private Helpers
 
 void ProbeBuoyancy::_update_derived_properties() {
 	if (_liquid_area == nullptr) {
@@ -22,6 +28,10 @@ void ProbeBuoyancy::_update_derived_properties() {
 	_character_density = fluid_density / _buoyancy;
 	_character_volume = _mass / _character_density;
 }
+
+#pragma endregion
+
+#pragma region Accessors
 
 void ProbeBuoyancy::set_probes(const PackedVector3Array& p_probes) {
 	_probes = p_probes;
@@ -98,6 +108,10 @@ float ProbeBuoyancy::get_submerged_ratio() const {
 float ProbeBuoyancy::get_full_submerged_depth() const {
 	return _full_submerged_depth;
 }
+
+#pragma endregion
+
+#pragma region Core Calculations
 
 void ProbeBuoyancy::update_transforms(const Transform3D& body_transform) {
 	if (_liquid_area == nullptr) {
@@ -233,3 +247,5 @@ int ProbeBuoyancy::get_submerged_count(const Transform3D& body_transform) const 
 
 	return count;
 }
+
+#pragma endregion

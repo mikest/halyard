@@ -1,3 +1,13 @@
+/* CharacterBuoyancy
+ *
+ * A class for adding Buoyancy to a CharacterBody3D.
+ *
+ * This objects manages the physics interactions between itself and a single LiquidArea in the scene.
+ *
+ * Copyright (c) M. Estee
+ * MIT License.
+ */
+
 #include "character_buoyancy.h"
 #include "liquid_area.h"
 #include "halyard_utils.h"
@@ -10,9 +20,10 @@
 
 using namespace godot;
 
+#pragma region Lifecycle
+
 CharacterBuoyancy::CharacterBuoyancy()
 : NodeDebug(Object::cast_to<Node>(this)) {
-	// default color
 	_debug_color = Color(0.0f, 0.8f, 1.0f, 0.2f);
 
 	// defaults for probe_buoyancy behavior
@@ -22,6 +33,10 @@ CharacterBuoyancy::CharacterBuoyancy()
 
 CharacterBuoyancy::~CharacterBuoyancy() {
 }
+
+#pragma endregion
+
+#pragma region Godot Overrides
 
 PackedStringArray CharacterBuoyancy::_get_configuration_warnings() const {
 	PackedStringArray what;
@@ -105,7 +120,10 @@ void CharacterBuoyancy::_notification(int p_what) {
 	}
 }
 
-// Property getters/setters
+#pragma endregion
+
+#pragma region Properties
+
 void CharacterBuoyancy::set_liquid_area(LiquidArea *p_area) {
 	_probe_buoyancy.set_liquid_area(p_area);
 
@@ -114,7 +132,6 @@ void CharacterBuoyancy::set_liquid_area(LiquidArea *p_area) {
 		update_configuration_warnings();
 	}
 }
-
 
 LiquidArea* CharacterBuoyancy::get_liquid_area() const {
 	return _probe_buoyancy.get_liquid_area();
@@ -128,7 +145,6 @@ Ref<BuoyancyMaterial> CharacterBuoyancy::get_buoyancy_material() const {
 	return _buoyancy_material;
 }
 
-
 void CharacterBuoyancy::set_probes(const PackedVector3Array &local_probes) {
 	_probe_buoyancy.set_probes(local_probes);
 }
@@ -137,7 +153,6 @@ PackedVector3Array CharacterBuoyancy::get_probes() const {
     return _probe_buoyancy.get_probes();
 }
 
-// accessors
 void CharacterBuoyancy::set_mass(float mass) {
 	_probe_buoyancy.set_mass(mass);
 }
@@ -212,7 +227,6 @@ float CharacterBuoyancy::get_average_depth() const {
 	return total_depth / (float)probe_count;
 }
 
-// Debug
 void CharacterBuoyancy::set_show_debug(bool show) {
     _show_debug = show;
     set_debug_mesh_dirty();
@@ -230,6 +244,10 @@ void CharacterBuoyancy::set_debug_color(const Color &color) {
 Color CharacterBuoyancy::get_debug_color() const {
     return _debug_color;
 }
+
+#pragma endregion
+
+#pragma region Debug
 
 void CharacterBuoyancy::_update_debug_mesh() {
     if (_debug_mesh_instance == nullptr) return;
@@ -288,13 +306,16 @@ void CharacterBuoyancy::_update_debug_mesh() {
     }
 }
 
+#pragma endregion
+
+#pragma region Force Application
+
 void CharacterBuoyancy::_update_last_transforms() {
 	CharacterBody3D *body = Object::cast_to<CharacterBody3D>(get_parent());
 	ERR_FAIL_NULL_MSG(body, "CharacterBuoyancy must be a child of a CharacterBody3D to update submerged state.");
 
 	_probe_buoyancy.update_transforms(body->get_global_transform());
 }
-
 
 void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
 	CharacterBody3D *body = Object::cast_to<CharacterBody3D>(get_parent());
@@ -346,6 +367,9 @@ void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
 	body->set_velocity(velocity);
 }
 
+#pragma endregion
+
+#pragma region Bindings
 
 void CharacterBuoyancy::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_apply_forces", "enabled"), &CharacterBuoyancy::set_apply_forces);
@@ -395,3 +419,5 @@ void CharacterBuoyancy::_bind_methods() {
 
     ADD_SIGNAL(MethodInfo("submerged_changed"));
 }
+
+#pragma endregion

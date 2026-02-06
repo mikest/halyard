@@ -1,3 +1,13 @@
+/* RigidBuoyancy
+ *
+ * A class for adding Buoyancy to a RigidBody3D.
+ *
+ * This objects manages the physics interactions between itself and a single LiquidArea in the scene.
+ *
+ * Copyright (c) M. Estee
+ * MIT License.
+ */
+
 #include "rigid_buoyancy.h"
 #include "liquid_area.h"
 #include "halyard_utils.h"
@@ -20,24 +30,26 @@
 
 using namespace godot;
 
+#pragma region Lifecycle
+
 RigidBuoyancy::RigidBuoyancy()
 : NodeDebug(Object::cast_to<Node>(this)) {
-
-	// default color
 	_debug_color = Color(0.0f, 0.8f, 1.0f, 0.2f);
 }
-
 
 RigidBuoyancy::~RigidBuoyancy() {
 	_destroy_debug_mesh();
 }
+
+#pragma endregion
+
+#pragma region Godot Overrides
 
 void RigidBuoyancy::_update_configuration_warnings() {
 	if (Engine::get_singleton()->is_editor_hint()){
 		update_configuration_warnings();
 	}
 }
-
 
 PackedStringArray RigidBuoyancy::_get_configuration_warnings() const {
 	PackedStringArray what;
@@ -77,7 +89,6 @@ PackedStringArray RigidBuoyancy::_get_configuration_warnings() const {
 	// NOTE: There are legitimate reasons to not have a liquid area assigned
 	return what;
 }
-
 
 void RigidBuoyancy::_notification(int p_what) {
 	// manage debugging
@@ -166,9 +177,9 @@ void RigidBuoyancy::_notification(int p_what) {
 	}
 }
 
-#pragma region Properties
+#pragma endregion
 
-// Property getters/setters
+#pragma region Properties
 void RigidBuoyancy::set_liquid_area(LiquidArea *p_area) {
 	_liquid_area = p_area;
 	_probe_buoyancy.set_liquid_area(_liquid_area);
@@ -306,9 +317,6 @@ Color RigidBuoyancy::get_debug_color() const {
 	return _debug_color;
 }
 
-
-// Read only
-
 float RigidBuoyancy::get_submerged_volume() const {
 	return _mesh_buoyancy.get_submerged_volume();
 }
@@ -329,7 +337,6 @@ float RigidBuoyancy::get_submerged_ratio() const {
 	}
 }
 
-// Statics
 float RigidBuoyancy::get_volume() const {
 	return _mesh_buoyancy.get_mesh_volume();
 }
@@ -338,8 +345,6 @@ Vector3 RigidBuoyancy::get_centroid() const {
 	return _mesh_buoyancy.get_mesh_centroid();
 }
 
-
-// Info getters
 float RigidBuoyancy::get_mass() const {
 	RigidBody3D *body = Object::cast_to<RigidBody3D>(get_parent());
 	return body ? body->get_mass() : -1.0f;
@@ -358,6 +363,8 @@ Vector3 RigidBuoyancy::get_inertia() const {
 float RigidBuoyancy::_get_buoyancy_time() const {
 	return _buoyancy_time;
 }
+
+#pragma endregion
 
 #pragma region Mesh Updates
 
@@ -410,7 +417,6 @@ void RigidBuoyancy::_update_statics() {
 			body->set_inertia(Vector3(ix, iy, iz));
 		}
 
-		// clear flag
 		_dirty = false;
 	}
 }
@@ -423,8 +429,9 @@ void RigidBuoyancy::_update_dynamics() {
 	set_debug_mesh_dirty();
 }
 
+#pragma endregion
 
-#pragma region Forces Application
+#pragma region Force Application
 
 void RigidBuoyancy::apply_buoyancy_mesh_forces(RigidBody3D *body, float delta) {
 	if (!body) return;
@@ -538,8 +545,9 @@ void RigidBuoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) 
 	}
 }
 
+#pragma endregion
 
-#pragma region Debugging
+#pragma region Debug
 
 void RigidBuoyancy::_create_debug_mesh() {
 }
@@ -673,6 +681,7 @@ void RigidBuoyancy::_update_debug_mesh() {
 void RigidBuoyancy::_destroy_debug_mesh() {
 }
 
+#pragma endregion
 
 #pragma region Bindings
 
@@ -775,12 +784,7 @@ void RigidBuoyancy::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_debug_color"), &RigidBuoyancy::get_debug_color);
 	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "debug_color"), "set_debug_color", "get_debug_color");
 
-	// Internal methods
-	// ClassDB::bind_method(D_METHOD("_property_changed", "prop"), &RigidBuoyancy::_property_changed);
-
-	// Signals
 	ADD_SIGNAL(MethodInfo("submerged_changed"));
-
-	// virtuals
-	// GDVIRTUAL_BIND(get_configuration_warnings)
 }
+
+#pragma endregion
