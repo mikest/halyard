@@ -21,14 +21,14 @@
 		</method>
 		<method name="_get_anchor_position" qualifiers="virtual const">
 			<return type="float" />
-			<param index="0" name="" type="int" />
+			<param index="0" name="idx" type="int" />
 			<description>
 				returns the position [0..1] of the anchor in the range [0.._get_anchor_count()-1].
 			</description>
 		</method>
 		<method name="_get_anchor_transform" qualifiers="virtual const">
 			<return type="Transform3D" />
-			<param index="0" name="" type="int" />
+			<param index="0" name="idx" type="int" />
 			<description>
 				returns the transform for the anchor in the range [0.._get_anchor_count()-1].
 			</description>
@@ -44,27 +44,27 @@
 		</method>
 		<method name="_get_attachment_nodepath" qualifiers="virtual const">
 			<return type="NodePath" />
-			<param index="0" name="" type="int" />
+			<param index="0" name="idx" type="int" />
 			<description>
 				returns the NodePath (relative to rope) for the attachment in the range [0.._get_attachment_count()-1]
 			</description>
 		</method>
 		<method name="_get_attachment_position" qualifiers="virtual const">
 			<return type="float" />
-			<param index="0" name="" type="int" />
+			<param index="0" name="idx" type="int" />
 			<description>
 				returns the rope position [0..1] for the attachment in the range [0.._get_attachment_count()-1]
 			</description>
 		</method>
 		<method name="_get_attachment_transform" qualifiers="virtual const">
 			<return type="Transform3D" />
-			<param index="0" name="" type="int" />
+			<param index="0" name="idx" type="int" />
 			<description>
 				returns the attachment transform for the attachment in the range [0.._get_attachment_count()-1]
 			</description>
 		</method>
 		<method name="get_all_links" qualifiers="const">
-			<return type="Transform3D[]" />
+			<return type="Array[Transform3D]" />
 			<description>
 				Returns a list of all the transforms for links used to render the rope.
 
@@ -75,7 +75,7 @@
 			</description>
 		</method>
 		<method name="get_all_rope_frames" qualifiers="const">
-			<return type="Transform3D[]" />
+			<return type="Array[Transform3D]" />
 			<description>
 				Returns a list of all the transform frames used to render the rope. The frame tangents and normals are aligned along the rope and there will be
 				more frames for higher LODs.

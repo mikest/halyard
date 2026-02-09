@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<class name="OceanDetailer" inherits="SubViewport"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+    <brief_description>
+		A SubViewport-based node that provides high-resolution ocean surface detail rendering.
+	</brief_description>
+    <description>
+		OceanDetailer extends [SubViewport] to capture high-resolution details of the ocean surface. It creates a [Camera3D] child at runtime to capture ocean surface information that can be used for shader effects, foam generation, or other rendering techniques.
+		The detailer automatically follows a target node (typically a camera or player) and repositions itself at a configurable rate to keep the detail texture centered on the area of interest.
+		The rendered output is made available to shaders via global shader parameters, allowing for seamless integration with ocean rendering materials.
+	</description>
+    <tutorials>
+    </tutorials>
+    <methods>
+        <method name="get_camera" qualifiers="const">
+            <return type="Camera3D" />
+            <description>
+				Returns the runtime-created [Camera3D] child that captures the ocean detail. This camera is configured with special cull masks and positioning to capture ocean surface data.
+			</description>
+        </method>
+        <method name="get_detail_viewport_texture_corner_position" qualifiers="const">
+            <return type="Vector3" />
+            <description>
+				Returns the global position of the corner of the detail viewport texture. This is exposed to shaders as a global parameter for texture coordinate calculations.
+			</description>
+        </method>
+        <method name="get_detail_viewport_texture_size" qualifiers="const">
+            <return type="float" />
+            <description>
+				Returns the size of the detail viewport texture in world units. This is exposed to shaders as a global parameter.
+			</description>
+        </method>
+        <method name="get_detail_viewport_vertex_spacing" qualifiers="const">
+            <return type="float" />
+            <description>
+				Returns the vertex spacing used for the detail viewport. This is exposed to shaders as a global parameter.
+			</description>
+        </method>
+        <method name="update_position">
+            <return type="void" />
+            <param index="0" name="global_position" type="Vector3" />
+            <description>
+				Manually updates the detailer's position to the specified global position. The position is snapped to a grid based on [member snap_step] to minimize texture swimming.
+			</description>
+        </method>
+    </methods>
+    <members>
+        <member name="follow_target" type="Node3D" setter="set_follow_target"
+            getter="get_follow_target">
+			The [Node3D] node that the detailer should follow. Typically set to a camera or player node. When set, the detailer automatically repositions itself based on [member reposition_rate].
+		</member>
+        <member name="render_size" type="float" setter="set_render_size" getter="get_render_size"
+            default="1024.0">
+			The size of the detail viewport texture in world units. This determines how much of the ocean surface is captured in the detail texture. Larger values capture more area but with less detail per unit.
+		</member>
+        <member name="reposition_rate" type="float" setter="set_reposition_rate"
+            getter="get_reposition_rate" default="0.1">
+			How often to reposition the detailer to follow the target, in seconds. Lower values provide smoother following but may impact performance. Higher values reduce updates but may cause visible jumps.
+		</member>
+        <member name="snap_step" type="float" setter="set_snap_step" getter="get_snap_step"
+            default="1.0">
+			Grid snapping distance in world units. The detailer's position is snapped to multiples of this value to minimize texture swimming artifacts. Should typically match the vertex spacing of the ocean mesh.
+		</member>
+    </members>
+    <constants>
+        <constant name="WAVE_CULL_MASK" value="262144">
+			The cull mask used for ocean wave rendering. This is bit 19 (1 &lt;&lt; 18). Objects that should be captured in the detail viewport should have their cull mask set to include this bit.
+		</constant>
+    </constants>
+</class>
