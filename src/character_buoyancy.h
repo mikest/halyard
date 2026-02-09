@@ -23,15 +23,9 @@ class CharacterBuoyancy : public Node, protected NodeDebug {
 	bool _apply_forces = true;
 	bool _ignore_waves = false;
 
-	bool _apply_forces = true;
-	bool _ignore_waves = false;
-
 	Ref<BuoyancyMaterial> _buoyancy_material;
 	ProbeBuoyancy _probe_buoyancy;
 	float _last_submerged_ratio = INFINITY;
-
-	uint64_t _buoyancy_time = 0; // us
-	Vector3 _gravity = Vector3(0, -9.81, 0);
 
 	uint64_t _buoyancy_time = 0; // us
 	Vector3 _gravity = Vector3(0, -9.81, 0);
