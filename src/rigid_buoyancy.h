@@ -9,18 +9,18 @@ This objects manages the physics interactions between itself and a single Liquid
 #include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/classes/rigid_body3d.hpp>
 
+#include <godot_cpp/classes/mesh_instance3d.hpp>
 #include <godot_cpp/classes/wrapped.hpp>
 #include <godot_cpp/core/binder_common.hpp>
 #include <godot_cpp/core/gdvirtual.gen.inc>
 #include <godot_cpp/variant/typed_array.hpp>
 #include <godot_cpp/variant/variant.hpp>
-#include <godot_cpp/classes/mesh_instance3d.hpp>
 
-#include "property_utils.h"
+#include "buoyancy_material.h"
+#include "mesh_buoyancy.h"
 #include "node_debug.h"
 #include "probe_buoyancy.h"
-#include "mesh_buoyancy.h"
-#include "buoyancy_material.h"
+#include "property_utils.h"
 
 using namespace godot;
 using namespace halyard;
@@ -38,10 +38,10 @@ class RigidBuoyancy : public Node, protected NodeDebug {
 
 private:
 	// Exported properties
-    LiquidArea* _liquid_area = nullptr;
-	CollisionShape3D* _collider = nullptr;
+	LiquidArea *_liquid_area = nullptr;
+	CollisionShape3D *_collider = nullptr;
 	BuoyancyMode _buoyancy_mode = BUOYANCY_COLLIDER;
-    
+
 	bool _apply_forces = true;
 	Ref<BuoyancyMaterial> _buoyancy_material;
 	ProbeBuoyancy _probe_buoyancy;
@@ -87,11 +87,11 @@ public:
 	PackedStringArray _get_configuration_warnings() const override;
 
 	// Property getters/setters
-    void set_liquid_area(LiquidArea *p_area);
-    LiquidArea* get_liquid_area() const;
+	void set_liquid_area(LiquidArea *p_area);
+	LiquidArea *get_liquid_area() const;
 
 	void set_collider(CollisionShape3D *p_collider);
-	CollisionShape3D* get_collider() const;
+	CollisionShape3D *get_collider() const;
 
 	// Material resource containing buoyancy physics properties
 	void set_buoyancy_material(const Ref<BuoyancyMaterial> &p_material);
@@ -135,7 +135,6 @@ public:
 	void set_com_offset(Vector3 p_com_offset);
 	Vector3 get_com_offset() const;
 
-
 	// Static properties
 	float get_volume() const;
 	Vector3 get_centroid() const;
@@ -148,14 +147,12 @@ public:
 	// Returns the proportion of submerged probes in BUOYANCY_PROBES mode, and the ratio of submerged_volume/volume in BUOYANCY_COLLIDER mode.
 	float get_submerged_ratio() const;
 
-
 	// Called after updating dynamics if apply_forces is true. (submerged_volume, etc.)
 	// Can be manually called from process_physics() if desired.
 	void apply_buoyancy_mesh_forces(RigidBody3D *body, float delta);
 
 	// Apply buoyancy forces using probe points instead of mesh
 	void apply_buoyancy_probe_forces(RigidBody3D *body, float delta);
-
 
 	// Informational getters
 	float get_mass() const;

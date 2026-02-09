@@ -13,18 +13,16 @@ LiquidArea::LiquidArea()
     _debug_color = Color(0.0f, 1.0f, 0.5f, 0.8f);
 }
 
-
 LiquidArea::~LiquidArea() {
 }
 
-
 void LiquidArea::_notification(int p_what) {
-    NodeDebug::_debug_notification(p_what);
+	NodeDebug::_debug_notification(p_what);
 
 	switch (p_what) {
 		case NOTIFICATION_READY: {
-            set_process_internal(true);
-            set_physics_process_internal(true);
+			set_process_internal(true);
+			set_physics_process_internal(true);
 		} break;
 
         case NOTIFICATION_ENTER_TREE: {
@@ -38,49 +36,45 @@ void LiquidArea::_notification(int p_what) {
 		} break;
 
 		case NOTIFICATION_INTERNAL_PHYSICS_PROCESS: {
-            // if we clear the points here nodes which are processed earlier won't
-            // have their sampled points available for this frame
-            if (_show_debug)
-                call_deferred("_clear_sampled_transforms");
+			// if we clear the points here nodes which are processed earlier won't
+			// have their sampled points available for this frame
+			if (_show_debug)
+				call_deferred("_clear_sampled_transforms");
 		} break;
 	}
 }
 
-
 void LiquidArea::_clear_sampled_transforms() {
-    if (is_debug_mesh_dirty()) {
-        _internal_update_debug_mesh();
-        set_debug_mesh_dirty(false);
-    }
-    
-    // mesh is in sync, clear sampled points
-    _sampled_transforms.clear();
-}   
+	if (is_debug_mesh_dirty()) {
+		_internal_update_debug_mesh();
+		set_debug_mesh_dirty(false);
+	}
 
+	// mesh is in sync, clear sampled points
+	_sampled_transforms.clear();
+}
 
 LiquidArea *LiquidArea::get_liquid_area(SceneTree *p_tree) {
-    LiquidArea *liquid_area = nullptr;
-    
-    if (p_tree) {
-        Node* root = p_tree->get_current_scene();
-        if (root) {
-            auto nodes = root->find_children("*", "LiquidArea", true, false);
-            if (nodes.size()) {
-                liquid_area = Object::cast_to<LiquidArea>(nodes.front());
-            }
-        }
-    }
+	LiquidArea *liquid_area = nullptr;
 
-    return liquid_area;
+	if (p_tree) {
+		Node *root = p_tree->get_current_scene();
+		if (root) {
+			auto nodes = root->find_children("*", "LiquidArea", true, false);
+			if (nodes.size()) {
+				liquid_area = Object::cast_to<LiquidArea>(nodes.front());
+			}
+		}
+	}
+
+	return liquid_area;
 }
-
 
 bool LiquidArea::is_point_submerged(const Vector3 &global_point) const {
-    Transform3D liquid_transform = get_global_transform();
-    Vector3 local_point = liquid_transform.affine_inverse().xform(global_point);
-    return local_point.y < 0.0f;
+	Transform3D liquid_transform = get_global_transform();
+	Vector3 local_point = liquid_transform.affine_inverse().xform(global_point);
+	return local_point.y < 0.0f;
 }
-
 
 Transform3D LiquidArea::get_liquid_transform(const Vector3 &global_point) const {
 	TypedArray<Transform3D> ret_val;
@@ -92,11 +86,9 @@ Transform3D LiquidArea::get_liquid_transform(const Vector3 &global_point) const 
     return ret_val.size() > 0 ? ret_val[0] : get_global_transform();
 }
 
-
 void LiquidArea::update_transforms_for_points(const PackedVector3Array &global_points,
-    TypedArray<Transform3D> r_transforms) const {
-    
-    if (GDVIRTUAL_IS_OVERRIDDEN(update_transforms_for_points)) {
+		TypedArray<Transform3D> r_transforms) const {
+	if (GDVIRTUAL_IS_OVERRIDDEN(update_transforms_for_points)) {
 		Transform3D ret_val;
 		GDVIRTUAL_CALL(update_transforms_for_points, global_points, r_transforms);
 		
@@ -143,10 +135,10 @@ void LiquidArea::_internal_update_transforms_for_points(const PackedVector3Array
 
 #pragma region Debug Mesh
 void LiquidArea::set_show_debug(bool p_show) {
-    if (p_show != _show_debug) {
-        _show_debug = p_show;
-        set_debug_mesh_dirty(true);
-    }
+	if (p_show != _show_debug) {
+		_show_debug = p_show;
+		set_debug_mesh_dirty(true);
+	}
 }
 
 bool LiquidArea::get_show_debug() const {
@@ -182,9 +174,9 @@ void LiquidArea::_update_debug_mesh() {
 
 	// Draw 3D cross-hairs at each sampled point
 	for (int idx = 0; idx < point_count; ++idx) {
-        // convert to local space
+		// convert to local space
 		Vector3 point = to_local(_sampled_transforms[idx].origin);
-		
+
 		// X axis line
 		vertices.append(point + Vector3(-size, 0, 0));
 		vertices.append(point + Vector3(size, 0, 0));
@@ -209,33 +201,33 @@ void LiquidArea::_update_debug_mesh() {
 		indices.append(base + 5);
 	}
 
-    // add a normal line for each point that points to Y-up
-    for (int idx = 0; idx < point_count; ++idx) {
-        // convert to local space
-        Transform3D liquid_xform = get_global_transform().affine_inverse() * _sampled_transforms[idx];
-        Vector3 origin = liquid_xform.origin;
+	// add a normal line for each point that points to Y-up
+	for (int idx = 0; idx < point_count; ++idx) {
+		// convert to local space
+		Transform3D liquid_xform = get_global_transform().affine_inverse() * _sampled_transforms[idx];
+		Vector3 origin = liquid_xform.origin;
 
-        Vector3 basis_y = liquid_xform.basis.get_column(1);
-        Vector3 point = origin + basis_y * 0.1f; // offset a bit above the surface
-        Vector3 normal_end = point + basis_y * size * 2.0f;
-        vertices.append(point);
-        vertices.append(normal_end);
-        int base = point_count * 6 + idx * 2;
-        indices.append(base + 0);
-        indices.append(base + 1);
-    }
+		Vector3 basis_y = liquid_xform.basis.get_column(1);
+		Vector3 point = origin + basis_y * 0.1f; // offset a bit above the surface
+		Vector3 normal_end = point + basis_y * size * 2.0f;
+		vertices.append(point);
+		vertices.append(normal_end);
+		int base = point_count * 6 + idx * 2;
+		indices.append(base + 0);
+		indices.append(base + 1);
+	}
 
 	arrays[Mesh::ARRAY_VERTEX] = vertices;
 	arrays[Mesh::ARRAY_INDEX] = indices;
 
 	int surf_lines = _debug_mesh->get_surface_count();
 	_debug_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_LINES, arrays);
-	
-    _debug_material->set_albedo(_debug_color);
+
+	_debug_material->set_albedo(_debug_color);
 	_debug_mesh->surface_set_material(surf_lines, _debug_material);
 
-    // update transform to align with ourself
-    _debug_mesh_instance->set_global_transform(get_global_transform());
+	// update transform to align with ourself
+	_debug_mesh_instance->set_global_transform(get_global_transform());
 }
 
 #pragma endregion

@@ -1,43 +1,55 @@
-#include "rigid_buoyancy.h"
-#include "liquid_area.h"
-#include "halyard_utils.h"
+/* RigidBuoyancy
+ *
+ * A class for adding Buoyancy to a RigidBody3D.
+ *
+ * This objects manages the physics interactions between itself and a single LiquidArea in the scene.
+ *
+ * Copyright (c) M. Estee
+ * MIT License.
+ */
 
-#include <godot_cpp/classes/engine.hpp>
-#include <godot_cpp/classes/rigid_body3d.hpp>
-#include <godot_cpp/classes/shape3d.hpp>
-#include <godot_cpp/classes/convex_polygon_shape3d.hpp>
-#include <godot_cpp/classes/sphere_shape3d.hpp>
+#include "rigid_buoyancy.h"
+#include "halyard_utils.h"
+#include "liquid_area.h"
+
 #include <godot_cpp/classes/box_shape3d.hpp>
 #include <godot_cpp/classes/capsule_shape3d.hpp>
-#include <godot_cpp/classes/scene_tree.hpp>
-#include <godot_cpp/core/math.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
-#include <godot_cpp/classes/time.hpp>
+#include <godot_cpp/classes/convex_polygon_shape3d.hpp>
+#include <godot_cpp/classes/engine.hpp>
+#include <godot_cpp/classes/mesh_instance3d.hpp>
 #include <godot_cpp/classes/performance.hpp>
 #include <godot_cpp/classes/rendering_server.hpp>
+#include <godot_cpp/classes/rigid_body3d.hpp>
+#include <godot_cpp/classes/scene_tree.hpp>
+#include <godot_cpp/classes/shape3d.hpp>
+#include <godot_cpp/classes/sphere_shape3d.hpp>
 #include <godot_cpp/classes/standard_material3d.hpp>
-#include <godot_cpp/classes/mesh_instance3d.hpp>
+#include <godot_cpp/classes/time.hpp>
+#include <godot_cpp/core/math.hpp>
+#include <godot_cpp/variant/utility_functions.hpp>
 
 using namespace godot;
 
-RigidBuoyancy::RigidBuoyancy()
-: NodeDebug(Object::cast_to<Node>(this)) {
+#pragma region Lifecycle
 
-	// default color
+RigidBuoyancy::RigidBuoyancy() :
+		NodeDebug(Object::cast_to<Node>(this)) {
 	_debug_color = Color(0.0f, 0.8f, 1.0f, 0.2f);
 }
-
 
 RigidBuoyancy::~RigidBuoyancy() {
 	_destroy_debug_mesh();
 }
 
+#pragma endregion
+
+#pragma region Godot Overrides
+
 void RigidBuoyancy::_update_configuration_warnings() {
-	if (Engine::get_singleton()->is_editor_hint()){
+	if (Engine::get_singleton()->is_editor_hint()) {
 		update_configuration_warnings();
 	}
 }
-
 
 PackedStringArray RigidBuoyancy::_get_configuration_warnings() const {
 	PackedStringArray what;
@@ -46,7 +58,7 @@ PackedStringArray RigidBuoyancy::_get_configuration_warnings() const {
 	if (!body && _apply_forces) {
 		what.append("Buoyancy must be a child of a RigidBody3D for forces to be applied.");
 	}
-	
+
 	if (_buoyancy_mode == BUOYANCY_COLLIDER) {
 		if (_collider == nullptr) {
 			what.append("Missing collider.");
@@ -54,7 +66,7 @@ PackedStringArray RigidBuoyancy::_get_configuration_warnings() const {
 			Ref<Shape3D> shape = _collider->get_shape();
 			if (!shape.is_valid()) {
 				what.append("Missing collider shape.");
-			}else{
+			} else {
 				ConvexPolygonShape3D *convex_shape = Object::cast_to<ConvexPolygonShape3D>(*shape);
 				BoxShape3D *box_shape = Object::cast_to<BoxShape3D>(*shape);
 				SphereShape3D *sphere_shape = Object::cast_to<SphereShape3D>(*shape);
@@ -64,7 +76,7 @@ PackedStringArray RigidBuoyancy::_get_configuration_warnings() const {
 				}
 			}
 		}
-	} else{
+	} else {
 		if (_probe_buoyancy.get_probes().size() == 0) {
 			what.append("No buoyancy probes defined for point-based buoyancy.");
 		}
@@ -77,7 +89,6 @@ PackedStringArray RigidBuoyancy::_get_configuration_warnings() const {
 	// NOTE: There are legitimate reasons to not have a liquid area assigned
 	return what;
 }
-
 
 void RigidBuoyancy::_notification(int p_what) {
 	// manage debugging
@@ -109,12 +120,12 @@ void RigidBuoyancy::_notification(int p_what) {
 		} break;
 
 		case NOTIFICATION_EXIT_TREE: {
-		 	_liquid_area = nullptr;
+			_liquid_area = nullptr;
 			_probe_buoyancy.set_liquid_area(nullptr);
 			_mesh_buoyancy.set_liquid_area(nullptr);
 		} break;
 
-		case NOTIFICATION_INTERNAL_PROCESS:{
+		case NOTIFICATION_INTERNAL_PROCESS: {
 			if (_dirty && is_node_ready()) {
 				_update_statics();
 			}
@@ -178,9 +189,9 @@ void RigidBuoyancy::_notification(int p_what) {
 	}
 }
 
-#pragma region Properties
+#pragma endregion
 
-// Property getters/setters
+#pragma region Properties
 void RigidBuoyancy::set_liquid_area(LiquidArea *p_area) {
 	_liquid_area = p_area;
 	_probe_buoyancy.set_liquid_area(_liquid_area);
@@ -191,7 +202,7 @@ void RigidBuoyancy::set_liquid_area(LiquidArea *p_area) {
 	set_debug_mesh_dirty();
 }
 
-LiquidArea* RigidBuoyancy::get_liquid_area() const {
+LiquidArea *RigidBuoyancy::get_liquid_area() const {
 	return _liquid_area;
 }
 
@@ -206,7 +217,7 @@ void RigidBuoyancy::set_collider(CollisionShape3D *p_collider) {
 	set_debug_mesh_dirty();
 }
 
-CollisionShape3D* RigidBuoyancy::get_collider() const {
+CollisionShape3D *RigidBuoyancy::get_collider() const {
 	return _collider;
 }
 
@@ -318,9 +329,6 @@ Color RigidBuoyancy::get_debug_color() const {
 	return _debug_color;
 }
 
-
-// Read only
-
 float RigidBuoyancy::get_submerged_volume() const {
 	return _mesh_buoyancy.get_submerged_volume();
 }
@@ -341,7 +349,6 @@ float RigidBuoyancy::get_submerged_ratio() const {
 	}
 }
 
-// Statics
 float RigidBuoyancy::get_volume() const {
 	return _mesh_buoyancy.get_mesh_volume();
 }
@@ -350,8 +357,6 @@ Vector3 RigidBuoyancy::get_centroid() const {
 	return _mesh_buoyancy.get_mesh_centroid();
 }
 
-
-// Info getters
 float RigidBuoyancy::get_mass() const {
 	RigidBody3D *body = Object::cast_to<RigidBody3D>(get_parent());
 	return body ? body->get_mass() : -1.0f;
@@ -371,11 +376,15 @@ float RigidBuoyancy::_get_buoyancy_time() const {
 	return _buoyancy_time;
 }
 
+#pragma endregion
+
 #pragma region Mesh Updates
 
 void RigidBuoyancy::_update_statics() {
-	if( _collider == nullptr) return;
-	if( _buoyancy_mode != BUOYANCY_COLLIDER) return;
+	if (_collider == nullptr)
+		return;
+	if (_buoyancy_mode != BUOYANCY_COLLIDER)
+		return;
 
 	// if this is already a convex shape, use it directly
 	Ref<ArrayMesh> buoyancy_mesh;
@@ -383,7 +392,7 @@ void RigidBuoyancy::_update_statics() {
 	if (convex_shape.is_valid()) {
 		buoyancy_mesh = convex_shape->get_debug_mesh();
 
-	// otherwise, try to create a simplified convex shape from the existing shape's debug mesh
+		// otherwise, try to create a simplified convex shape from the existing shape's debug mesh
 	} else {
 		Ref<Shape3D> shape = _collider->get_shape();
 		if (shape.is_valid()) {
@@ -405,7 +414,6 @@ void RigidBuoyancy::_update_statics() {
 		// Update mass from collider
 		RigidBody3D *body = Object::cast_to<RigidBody3D>(get_parent());
 		if (body && _calculate_mass_properties) {
-
 			float mesh_volume = _mesh_buoyancy.get_mesh_volume();
 			float mass = mesh_volume * _density;
 			body->set_mass(mass);
@@ -422,24 +430,27 @@ void RigidBuoyancy::_update_statics() {
 			body->set_inertia(Vector3(ix, iy, iz));
 		}
 
-		// clear flag
 		_dirty = false;
 	}
 }
 
 void RigidBuoyancy::_update_dynamics() {
-	if( _collider == nullptr) return;
-	if( _buoyancy_mode != BUOYANCY_COLLIDER) return;
+	if (_collider == nullptr)
+		return;
+	if (_buoyancy_mode != BUOYANCY_COLLIDER)
+		return;
 
 	_mesh_buoyancy.update_dynamics(_collider->get_global_transform(), _collider->get_transform());
 	set_debug_mesh_dirty();
 }
 
+#pragma endregion
 
-#pragma region Forces Application
+#pragma region Force Application
 
 void RigidBuoyancy::apply_buoyancy_mesh_forces(RigidBody3D *body, float delta) {
-	if (!body) return;
+	if (!body)
+		return;
 
 	ERR_FAIL_COND_MSG(!_buoyancy_material.is_valid(), "Buoyancy material must be valid to apply mesh buoyancy forces.");
 	ERR_FAIL_COND_EDMSG(delta <= 0.0f, "Delta time must be positive to apply buoyancy.");
@@ -449,7 +460,7 @@ void RigidBuoyancy::apply_buoyancy_mesh_forces(RigidBody3D *body, float delta) {
 
 	// Either use the buoyancy scalar or a volume based buoyancy.
 	_mesh_buoyancy.set_mass(body->get_mass());
-	_mesh_buoyancy.set_buoyancy( _use_buoyancy_scalar ? _buoyancy_material->get_buoyancy() : INFINITY);
+	_mesh_buoyancy.set_buoyancy(_use_buoyancy_scalar ? _buoyancy_material->get_buoyancy() : INFINITY);
 	_mesh_buoyancy.update_forces(body->get_global_transform(), gravity);
 
 	// constants
@@ -467,12 +478,12 @@ void RigidBuoyancy::apply_buoyancy_mesh_forces(RigidBody3D *body, float delta) {
 		// Drag is applied axis aligned with the rigid body
 		float ratio = submerged_volume / mesh_volume;
 		Basis basis = body->get_global_transform().basis.orthonormalized();
-		Vector3 one = Vector3(1,1,1);
+		Vector3 one = Vector3(1, 1, 1);
 
 		// Underwater drag. We must get the current state directly from the Physics server.
 		Vector3 linear_drag = one - submerged_linear_drag * delta * ratio;
 		Vector3 linear_velocity = PhysicsServer3D::get_singleton()->body_get_state(body->get_rid(), PhysicsServer3D::BODY_STATE_LINEAR_VELOCITY);
-		
+
 		Vector3 local_vel = basis.xform_inv(linear_velocity);
 		Vector3 global_vel = basis.xform(local_vel * linear_drag);
 
@@ -513,7 +524,8 @@ void RigidBuoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) 
 	ERR_FAIL_COND_MSG(probes.size() != forces.size(), "Probe and forces count mismatch.");
 
 	// nothing to do
-	if (probes.size() == 0) return;
+	if (probes.size() == 0)
+		return;
 
 	// constants
 	const Vector3 one = Vector3(1, 1, 1);
@@ -527,7 +539,6 @@ void RigidBuoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) 
 	// add velocity changes from forces
 	const int probe_count = probes.size();
 	for (int i = 0; i < probe_count; ++i) {
-
 		// don't apply drag if there is no force
 		const Vector3 force = forces[i];
 		if (force.length()) {
@@ -550,17 +561,19 @@ void RigidBuoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) 
 	}
 }
 
+#pragma endregion
 
-#pragma region Debugging
+#pragma region Debug
 
 void RigidBuoyancy::_create_debug_mesh() {
 }
 
 // This call has trash performace but it recreates these arrays each frame
 void RigidBuoyancy::_update_debug_mesh() {
-
-	if( _debug_mesh_instance == nullptr) return;
-	if( _debug_mesh.is_valid() == false) return;
+	if (_debug_mesh_instance == nullptr)
+		return;
+	if (_debug_mesh.is_valid() == false)
+		return;
 
 	if (_debug_mesh_instance && _debug_mesh.is_valid()) {
 		PackedVector3Array vertices;
@@ -617,7 +630,8 @@ void RigidBuoyancy::_update_debug_mesh() {
 		} else {
 			// get the parent rigid body
 			RigidBody3D *body = Object::cast_to<RigidBody3D>(get_parent());
-			if (!body) return;
+			if (!body)
+				return;
 
 			xform = body->get_global_transform();
 
@@ -630,7 +644,7 @@ void RigidBuoyancy::_update_debug_mesh() {
 			// Show all probes
 			for (int idx = 0; idx < probe_count; ++idx) {
 				Vector3 probe = probes[idx];
-				
+
 				// Draw probe cross-hairs
 				vertices.append(probe + Vector3(-0.1f, 0, 0));
 				vertices.append(probe + Vector3(0.1f, 0, 0));
@@ -663,7 +677,7 @@ void RigidBuoyancy::_update_debug_mesh() {
 		if (!Engine::get_singleton()->is_editor_hint()) {
 			_debug_material->set_flag(StandardMaterial3D::FLAG_DISABLE_DEPTH_TEST, true);
 		}
-		
+
 		_debug_mesh->surface_set_material(surf_lines, _debug_material);
 
 		// origin marker
@@ -675,8 +689,7 @@ void RigidBuoyancy::_update_debug_mesh() {
 		if (mesh_parent == nullptr)
 			mesh_parent = Object::cast_to<Node3D>(get_parent());
 
-		if (mesh_parent)
-		{
+		if (mesh_parent) {
 			_debug_mesh_instance->set_global_transform(mesh_parent->get_global_transform());
 		}
 	}
@@ -685,6 +698,7 @@ void RigidBuoyancy::_update_debug_mesh() {
 void RigidBuoyancy::_destroy_debug_mesh() {
 }
 
+#pragma endregion
 
 #pragma region Bindings
 
@@ -714,7 +728,6 @@ void RigidBuoyancy::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_probes", "buoyancy_probes"), &RigidBuoyancy::set_probes);
 	ClassDB::bind_method(D_METHOD("get_probes"), &RigidBuoyancy::get_probes);
 	ADD_PROPERTY(PropertyInfo(Variant::PACKED_VECTOR3_ARRAY, "probes"), "set_probes", "get_probes");
-
 
 	// ---
 	ADD_GROUP("Physics", "");
@@ -751,7 +764,6 @@ void RigidBuoyancy::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("apply_buoyancy_mesh_forces"), &RigidBuoyancy::apply_buoyancy_mesh_forces);
 	ClassDB::bind_method(D_METHOD("apply_buoyancy_probe_forces"), &RigidBuoyancy::apply_buoyancy_probe_forces);
 
-
 	// ---
 	ADD_GROUP("Mass Properties", "");
 
@@ -767,7 +779,6 @@ void RigidBuoyancy::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_com_offset"), &RigidBuoyancy::get_com_offset);
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "com_offset"), "set_com_offset", "get_com_offset");
 
-
 	// ---
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "volume", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY | PROPERTY_USAGE_NO_INSTANCE_STATE | PROPERTY_USAGE_EDITOR), "", "get_volume");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "centroid", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY | PROPERTY_USAGE_NO_INSTANCE_STATE | PROPERTY_USAGE_EDITOR), "", "get_centroid");
@@ -775,7 +786,6 @@ void RigidBuoyancy::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "body_mass", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY | PROPERTY_USAGE_NO_INSTANCE_STATE | PROPERTY_USAGE_EDITOR), "", "get_mass");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "body_center_of_mass", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY | PROPERTY_USAGE_NO_INSTANCE_STATE | PROPERTY_USAGE_EDITOR), "", "get_center_of_mass");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "body_inertia", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY | PROPERTY_USAGE_NO_INSTANCE_STATE | PROPERTY_USAGE_EDITOR), "", "get_inertia");
-
 
 	// Debug
 	ADD_GROUP("Debug", "");
@@ -787,12 +797,7 @@ void RigidBuoyancy::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_debug_color"), &RigidBuoyancy::get_debug_color);
 	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "debug_color"), "set_debug_color", "get_debug_color");
 
-	// Internal methods
-	// ClassDB::bind_method(D_METHOD("_property_changed", "prop"), &RigidBuoyancy::_property_changed);
-
-	// Signals
 	ADD_SIGNAL(MethodInfo("submerged_changed"));
-
-	// virtuals
-	// GDVIRTUAL_BIND(get_configuration_warnings)
 }
+
+#pragma endregion

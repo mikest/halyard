@@ -14,31 +14,29 @@ A derived class can override get_transforms_for_points to provide a more complex
 #include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/classes/physics_server3d.hpp>
 
+#include <godot_cpp/classes/array_mesh.hpp>
+#include <godot_cpp/classes/mesh_instance3d.hpp>
+#include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/wrapped.hpp>
 #include <godot_cpp/core/binder_common.hpp>
 #include <godot_cpp/core/gdvirtual.gen.inc>
 #include <godot_cpp/variant/typed_array.hpp>
-#include <godot_cpp/classes/scene_tree.hpp>
-#include <godot_cpp/classes/array_mesh.hpp>
-#include <godot_cpp/classes/mesh_instance3d.hpp>
 
-#include "property_utils.h"
 #include "node_debug.h"
+#include "property_utils.h"
 
 using namespace godot;
 
 class RigidBuoyancy;
 
-
-
 class LiquidArea : public Node3D, protected NodeDebug {
 	GDCLASS(LiquidArea, Node3D)
 
 	float _density = 1000.0f; // kg/m^3
-	Vector3 _current_speed = Vector3(0,0,0);  // ms
+	Vector3 _current_speed = Vector3(0, 0, 0); // ms
 
 	// Debug visualization
-	
+
 	Vector<Transform3D> _sampled_transforms;
 
 protected:
@@ -55,8 +53,7 @@ public:
 	~LiquidArea() override;
 
 	// static accessor for finding the liquid area for a given scene tree
-	static LiquidArea* get_liquid_area(SceneTree *p_tree);
-
+	static LiquidArea *get_liquid_area(SceneTree *p_tree);
 
 	// Properties
 	PROPERTY_GET_SET(float, density, {})
@@ -68,7 +65,6 @@ public:
 
 	void set_debug_color(const Color &p_color);
 	Color get_debug_color() const;
-	
 
 	// Returns true if the given global point is considered to be submerged in the liquid.
 	bool is_point_submerged(const Vector3 &global_point) const;

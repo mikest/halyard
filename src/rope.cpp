@@ -1,8 +1,8 @@
 #include "rope.h"
+#include "liquid_area.h"
 #include "rope_anchors_base.h"
 #include "rope_appearance.h"
 #include "rope_attachments_base.h"
-#include "liquid_area.h"
 #include <godot_cpp/classes/camera3d.hpp>
 #include <godot_cpp/classes/editor_interface.hpp>
 #include <godot_cpp/classes/engine.hpp>
@@ -10,13 +10,13 @@
 #include <godot_cpp/classes/physics_ray_query_parameters3d.hpp>
 #include <godot_cpp/classes/physics_server3d.hpp>
 #include <godot_cpp/classes/rendering_server.hpp>
+#include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/sphere_shape3d.hpp>
 #include <godot_cpp/classes/sub_viewport.hpp>
 #include <godot_cpp/classes/viewport.hpp>
 #include <godot_cpp/classes/world3d.hpp>
 #include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
-#include <godot_cpp/classes/scene_tree.hpp>
 
 // dump initial conditions for debugging stretch grow directions.
 #define DEBUG_INITIAL_POS false
@@ -512,7 +512,7 @@ void Rope::set_liquid_area(LiquidArea *liquid_area) {
 	_liquid_area = liquid_area;
 }
 
-LiquidArea* Rope::get_liquid_area() const {
+LiquidArea *Rope::get_liquid_area() const {
 	return _liquid_area;
 }
 
@@ -1469,7 +1469,6 @@ void Rope::_verlet_process(float delta) {
 }
 
 void Rope::_apply_forces() {
-
 	// cylinder volume
 	float rope_volume = Math_PI * Math::pow(get_rope_width() * 0.5f, 2) * get_rope_length();
 	if (rope_volume <= 0.0f)
@@ -1480,7 +1479,7 @@ void Rope::_apply_forces() {
 
 	// each point accounts for a portion of the rope volume
 	float probe_volume = 0.0f;
-	if 	(_particles.size() > 0) {
+	if (_particles.size() > 0) {
 		probe_volume = rope_volume / _particles.size();
 	}
 
@@ -1508,7 +1507,7 @@ void Rope::_apply_forces() {
 
 				// Calculate depths.
 				float wave_depth = probe.y - wave_xform.origin.y;
-				
+
 				// calculate the submerged volume for a cylinder section.
 				// when depth == 0, rope is half submerged.
 				float h = Math::clamp(-wave_depth, 0.0f, get_rope_width());

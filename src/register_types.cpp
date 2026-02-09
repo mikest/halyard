@@ -5,6 +5,10 @@
 #include <godot_cpp/core/defs.hpp>
 #include <godot_cpp/godot.hpp>
 
+#include "buoyancy_material.h"
+#include "character_buoyancy.h"
+#include "liquid_area.h"
+#include "rigid_buoyancy.h"
 #include "rope.h"
 #include "rope_anchor_positions.h"
 #include "rope_anchors_base.h"

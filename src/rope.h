@@ -32,7 +32,7 @@ class Rope : public GeometryInstance3D {
 	Ref<ArrayMesh> _generated_mesh;
 	RID _physics_body;
 	LocalVector<RID> _instances;
-	LiquidArea* _liquid_area = nullptr;
+	LiquidArea *_liquid_area = nullptr;
 
 	// Rope particle, segments connect between particles.
 	struct Particle {
@@ -98,8 +98,8 @@ class Rope : public GeometryInstance3D {
 	float _damping_factor = 100.0;
 
 	bool _apply_buoyancy = false;
-	float _buoyancy_scale = 1.0;	// float on surface
-	float _submerged_drag = 100.0;	// crazy high drag when submerged
+	float _buoyancy_scale = 1.0; // float on surface
+	float _submerged_drag = 100.0; // crazy high drag when submerged
 
 protected:
 	static void _bind_methods();
@@ -270,7 +270,7 @@ public:
 	PROPERTY_GET_SET(float, buoyancy_scale, {});
 	PROPERTY_GET_SET(float, submerged_drag, {})
 	void set_liquid_area(LiquidArea *liquid_area);
-	LiquidArea* get_liquid_area() const;
+	LiquidArea *get_liquid_area() const;
 
 	PROPERTY_GET_SET(bool, apply_wind, {})
 	PROPERTY_GET_SET(float, wind_scale, {})

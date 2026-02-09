@@ -7,13 +7,13 @@
 
 #pragma once
 
-#include <godot_cpp/variant/transform3d.hpp>
-#include <godot_cpp/variant/packed_vector3_array.hpp>
-#include <godot_cpp/variant/packed_float32_array.hpp>
-#include <godot_cpp/variant/vector3.hpp>
-#include <godot_cpp/variant/vector4.hpp>
 #include <godot_cpp/classes/array_mesh.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
+#include <godot_cpp/variant/packed_float32_array.hpp>
+#include <godot_cpp/variant/packed_vector3_array.hpp>
+#include <godot_cpp/variant/transform3d.hpp>
+#include <godot_cpp/variant/vector3.hpp>
+#include <godot_cpp/variant/vector4.hpp>
 
 using namespace godot;
 
@@ -34,7 +34,7 @@ namespace halyard {
 class MeshBuoyancy {
 private:
 	// Configuration
-	LiquidArea* _liquid_area = nullptr;
+	LiquidArea *_liquid_area = nullptr;
 	Ref<ArrayMesh> _buoyancy_mesh;
 	bool _ignore_waves = false;
 	float _buoyancy = 1.0f;
@@ -73,17 +73,17 @@ public:
 
 	// Configuration Accessors
 
-	void set_liquid_area(LiquidArea* p_liquid_area);
-	LiquidArea* get_liquid_area() const;
+	void set_liquid_area(LiquidArea *p_liquid_area);
+	LiquidArea *get_liquid_area() const;
 
-	void set_buoyancy_mesh(const Ref<ArrayMesh>& p_mesh);
+	void set_buoyancy_mesh(const Ref<ArrayMesh> &p_mesh);
 	Ref<ArrayMesh> get_buoyancy_mesh() const;
 
 	void set_ignore_waves(bool p_ignore);
 	bool get_ignore_waves() const;
 
 	// Buoyancy is a scalar. A value of 1.0 means neutral buoyancy (displaces its own weight in fluid).
-    // if Buoyancy is INFINITY, then the buoyancy force is calculated solely from the submerged volume and liquid density, ignoring the buoyancy scalar.
+	// if Buoyancy is INFINITY, then the buoyancy force is calculated solely from the submerged volume and liquid density, ignoring the buoyancy scalar.
 	void set_buoyancy(float p_buoyancy);
 	float get_buoyancy() const;
 
@@ -94,7 +94,7 @@ public:
 	// Static Properties (Read-only)
 	float get_mesh_volume() const;
 	Vector3 get_mesh_centroid() const;
-	const PackedVector3Array& get_vertices() const;
+	const PackedVector3Array &get_vertices() const;
 
 	// Dynamic Properties (Read-only)
 	float get_submerged_volume() const;
@@ -113,21 +113,21 @@ public:
 	//Debug
 
 	// Submerged triangle vertices for debug visualization.
-	const PackedVector3Array& get_submerged_verts() const;
+	const PackedVector3Array &get_submerged_verts() const;
 
 	// Core Calculation Methods
 
 	// Calculate static mesh properties (volume, centroid, vertices).
 	// Call once after setting the buoyancy mesh, or whenever the mesh changes.
-	void update_statics(const Transform3D& collider_transform);
+	void update_statics(const Transform3D &collider_transform);
 
 	// Calculate dynamic submerged properties each frame.
 	// Clips the mesh against the liquid surface to determine submerged volume and centroid.
-	void update_dynamics(const Transform3D& collider_global_transform, const Transform3D& collider_local_transform);
+	void update_dynamics(const Transform3D &collider_global_transform, const Transform3D &collider_local_transform);
 
 	// Calculate buoyancy force from current submerged state.
 	// Call update_dynamics() first to ensure submerged data is current.
-	void update_forces(const Transform3D& body_transform, const Vector3& gravity);
+	void update_forces(const Transform3D &body_transform, const Vector3 &gravity);
 };
 
 } // namespace halyard
