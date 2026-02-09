@@ -107,9 +107,11 @@ void CharacterBuoyancy::_notification(int p_what) {
 					apply_buoyancy_velocity(delta);
 				}
 
-				// Check if submerged changed and emit signal. We only track entering/exiting water as the ratio can change on every frame.
+				// Check if submerged changed and emit signal. We track crossing the threshold in either direction.
 				float current_ratio = get_submerged_ratio();
-				if (Math::is_zero_approx(current_ratio) != Math::is_zero_approx(_last_submerged_ratio)) {
+				bool was_submerged = _last_submerged_ratio > _submerged_threshold;
+				bool is_submerged = current_ratio > _submerged_threshold;
+				if (was_submerged != is_submerged) {
 					emit_signal("submerged_changed");
 				}
 				_last_submerged_ratio = current_ratio;
@@ -227,6 +229,14 @@ float CharacterBuoyancy::get_average_depth() const {
 	}
 
 	return total_depth / (float)probe_count;
+}
+
+void CharacterBuoyancy::set_submerged_threshold(float threshold) {
+	_submerged_threshold = threshold;
+}
+
+float CharacterBuoyancy::get_submerged_threshold() const {
+	return _submerged_threshold;
 }
 
 void CharacterBuoyancy::set_show_debug(bool show) {
@@ -406,6 +416,10 @@ void CharacterBuoyancy::_bind_methods() {
 
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "mass", PROPERTY_HINT_NONE, "kg"), "set_mass", "get_mass");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "gravity"), "set_gravity", "get_gravity");
+
+	ClassDB::bind_method(D_METHOD("set_submerged_threshold", "threshold"), &CharacterBuoyancy::set_submerged_threshold);
+	ClassDB::bind_method(D_METHOD("get_submerged_threshold"), &CharacterBuoyancy::get_submerged_threshold);
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "submerged_threshold", PROPERTY_HINT_RANGE, "0.0,1.0,0.01"), "set_submerged_threshold", "get_submerged_threshold");
 
 	// Debug
 	ADD_GROUP("Debug", "");

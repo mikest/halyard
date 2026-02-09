@@ -71,11 +71,14 @@
 		</member>
 		<member name="show_debug" type="bool" setter="set_show_debug" getter="get_show_debug" default="false">
 		</member>
+		<member name="submerged_threshold" type="float" setter="set_submerged_threshold" getter="get_submerged_threshold" default="0.0">
+			The submerged ratio threshold used to trigger the [signal submerged_changed] signal. When the [member submerged_ratio] crosses this value in either direction, the signal is emitted. A value of [code]0.0[/code] means the signal triggers as soon as any probe enters or exits the liquid. Higher values require more probes to be submerged before triggering.
+		</member>
 	</members>
 	<signals>
 		<signal name="submerged_changed">
 			<description>
-				Emitted when the character transitions between being completely out of the liquid (submerged_ratio == 0) and having at least one probe submerged (submerged_ratio &gt; 0), or vice versa.
+				Emitted when the [member submerged_ratio] crosses the [member submerged_threshold] in either direction. By default ([member submerged_threshold] = 0.0), this triggers when transitioning between being completely out of the liquid and having at least one probe submerged.
                 Note that this signal will still be emitted even if [member apply_forces] is false, as long as internal physics processing is enabled.
 			</description>
 		</signal>

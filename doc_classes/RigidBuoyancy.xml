@@ -106,6 +106,9 @@
 		</member>
 		<member name="show_debug" type="bool" setter="set_show_debug" getter="get_show_debug" default="false">
 		</member>
+		<member name="submerged_threshold" type="float" setter="set_submerged_threshold" getter="get_submerged_threshold" default="0.0">
+			The submerged ratio threshold used to trigger the [signal submerged_changed] signal. When the [member submerged_ratio] crosses this value in either direction, the signal is emitted. A value of [code]0.0[/code] means the signal triggers as soon as any part of the object enters or exits the liquid. Higher values require more of the object to be submerged before triggering.
+		</member>
 		<member name="use_buoyancy_scalar" type="bool" setter="set_use_buoyancy_scalar" getter="get_use_buoyancy_scalar" default="true">
 			When enabled, buoyancy force is scaled by the [member BuoyancyMaterial.buoyancy] value from the assigned [BuoyancyMaterial]. This allows the buoyancy scalar to control how much the object floats relative to its mass, where [code]0.0[/code] sinks, [code]1.0[/code] is neutral buoyancy, and values above [code]1.0[/code] float. When disabled, raw Archimedes buoyancy is used based on displaced volume and liquid density.
 		</member>
@@ -116,7 +119,7 @@
 	<signals>
 		<signal name="submerged_changed">
 			<description>
-				Emitted when the object transitions between being completely out of the liquid (submerged_ratio == 0) and having any part submerged (submerged_ratio &gt; 0), or vice versa.
+				Emitted when the [member submerged_ratio] crosses the [member submerged_threshold] in either direction. By default ([member submerged_threshold] = 0.0), this triggers when transitioning between being completely out of the liquid and having any part submerged.
 			</description>
 		</signal>
 	</signals>

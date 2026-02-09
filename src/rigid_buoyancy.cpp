@@ -171,9 +171,11 @@ void RigidBuoyancy::_notification(int p_what) {
 							}
 						}
 
-						// Check if submerged changed and emit signal. We only track entering/exiting water as the ratio can change on every frame.
+						// Check if submerged changed and emit signal. We track crossing the threshold in either direction.
 						float current_ratio = get_submerged_ratio();
-						if (Math::is_zero_approx(current_ratio) != Math::is_zero_approx(_last_submerged_ratio)) {
+						bool was_submerged = _last_submerged_ratio > _submerged_threshold;
+						bool is_submerged = current_ratio > _submerged_threshold;
+						if (was_submerged != is_submerged) {
 							emit_signal("submerged_changed");
 						}
 						_last_submerged_ratio = current_ratio;
@@ -307,6 +309,14 @@ void RigidBuoyancy::set_use_buoyancy_scalar(bool p_use) {
 
 bool RigidBuoyancy::get_use_buoyancy_scalar() const {
 	return _use_buoyancy_scalar;
+}
+
+void RigidBuoyancy::set_submerged_threshold(float threshold) {
+	_submerged_threshold = threshold;
+}
+
+float RigidBuoyancy::get_submerged_threshold() const {
+	return _submerged_threshold;
 }
 
 // Debug
@@ -742,6 +752,10 @@ void RigidBuoyancy::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_use_buoyancy_scalar", "use_buoyancy_scalar"), &RigidBuoyancy::set_use_buoyancy_scalar);
 	ClassDB::bind_method(D_METHOD("get_use_buoyancy_scalar"), &RigidBuoyancy::get_use_buoyancy_scalar);
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "use_buoyancy_scalar"), "set_use_buoyancy_scalar", "get_use_buoyancy_scalar");
+
+	ClassDB::bind_method(D_METHOD("set_submerged_threshold", "threshold"), &RigidBuoyancy::set_submerged_threshold);
+	ClassDB::bind_method(D_METHOD("get_submerged_threshold"), &RigidBuoyancy::get_submerged_threshold);
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "submerged_threshold", PROPERTY_HINT_RANGE, "0.0,1.0,0.01"), "set_submerged_threshold", "get_submerged_threshold");
 
 	// Read only
 	ClassDB::bind_method(D_METHOD("get_submerged_volume"), &RigidBuoyancy::get_submerged_volume);
