@@ -80,7 +80,9 @@ void CharacterBuoyancy::_notification(int p_what) {
         // velocity is applied in the internal physics process so that submerged is updated
         // for derived classes before normal physics process
 		case NOTIFICATION_INTERNAL_PHYSICS_PROCESS: {
-			if (!Engine::get_singleton()->is_editor_hint() && is_node_ready()) {
+			if (!Engine::get_singleton()->is_editor_hint() && \
+				is_node_ready() && \
+				_probe_buoyancy.get_liquid_area() != nullptr) {
 				
 					uint64_t time = Time::get_singleton()->get_ticks_usec();
 
@@ -131,6 +133,7 @@ Ref<BuoyancyMaterial> CharacterBuoyancy::get_buoyancy_material() const {
 
 void CharacterBuoyancy::set_probes(const PackedVector3Array &local_probes) {
 	_probe_buoyancy.set_probes(local_probes);
+	set_debug_mesh_dirty();
 }
 
 PackedVector3Array CharacterBuoyancy::get_probes() const {
@@ -378,9 +381,6 @@ void CharacterBuoyancy::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "ignore_waves"), "set_ignore_waves", "get_ignore_waves");
 	
     ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "mass", PROPERTY_HINT_NONE, "kg"), "set_mass", "get_mass");
-	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "buoyancy", PROPERTY_HINT_RANGE, "0,100,0.1"), "set_buoyancy", "get_buoyancy");
-	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "submerged_linear_drag", PROPERTY_HINT_RANGE, "0,10,0.1"), "set_submerged_linear_drag", "get_submerged_linear_drag");
-	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "linear_drag_scale"), "set_linear_drag_scale", "get_linear_drag_scale");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "gravity"), "set_gravity", "get_gravity");
 
     // Debug

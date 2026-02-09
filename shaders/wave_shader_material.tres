@@ -1,0 +1,78 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://cruwbpf2bajdx"]
+
+[ext_resource type="Shader" uid="uid://bbgeoj3ttvcvb" path="res://addons/halyard/shaders/ocean_shader.gdshader" id="1_buxsf"]
+
+[sub_resource type="Gradient" id="Gradient_lld1h"]
+offsets = PackedFloat32Array(0, 0.72, 1)
+colors = PackedColorArray(0, 0, 0, 1, 0.571429, 0.571429, 0.571429, 1, 1, 1, 1, 1)
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_c42y2"]
+frequency = 0.0071
+fractal_type = 2
+fractal_octaves = 4
+fractal_lacunarity = 1.955
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_qi52w"]
+noise = SubResource("FastNoiseLite_c42y2")
+color_ramp = SubResource("Gradient_lld1h")
+seamless = true
+
+[sub_resource type="Gradient" id="Gradient_1pboi"]
+offsets = PackedFloat32Array(0, 0.3078261, 0.49565217, 0.76)
+colors = PackedColorArray(0.104309, 0.154072, 0.276319, 1, 0.9920161, 0.9922906, 0.99283785, 1, 0.17291877, 0.20135997, 0.25805402, 1, 1, 1, 1, 1)
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_s0b8w"]
+noise_type = 2
+fractal_type = 2
+domain_warp_enabled = true
+domain_warp_frequency = -0.005
+domain_warp_fractal_octaves = 2
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_rlh0t"]
+noise = SubResource("FastNoiseLite_s0b8w")
+color_ramp = SubResource("Gradient_1pboi")
+seamless = true
+seamless_blend_skirt = 0.3
+
+[sub_resource type="Gradient" id="Gradient_h7f5h"]
+colors = PackedColorArray(0.0403976, 0.205589, 0.316002, 1, 0.164121, 0.363703, 0.392237, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_i1to4"]
+gradient = SubResource("Gradient_h7f5h")
+
+[resource]
+render_priority = -1
+shader = ExtResource("1_buxsf")
+shader_parameter/FadeEffectAtEdges = true
+shader_parameter/EdgeFadeSmoothness = 10.0
+shader_parameter/NormalSampleRange = 1.0
+shader_parameter/GenerateNormals = false
+shader_parameter/WaveCount = 3.0
+shader_parameter/MaxWaveHeight = 0.2
+shader_parameter/BaseWavesMixSharpness = 0.25
+shader_parameter/BaseWavesHeightMap = SubResource("NoiseTexture2D_qi52w")
+shader_parameter/BaseWavesHeight = 1.5
+shader_parameter/BaseWavesScale = 0.01
+shader_parameter/BaseWavesSpeed = 0.02
+shader_parameter/BaseWavesDirection = Vector2(0.5, 1)
+shader_parameter/BaseWavesNormalSampleRange = 0.25
+shader_parameter/BaseWavesNormalSoftness = 0.950000045125
+shader_parameter/SurfaceColor = SubResource("GradientTexture1D_i1to4")
+shader_parameter/Roughness = 0.2410000114475
+shader_parameter/BaseOpacity = 1.0
+shader_parameter/EdgeAlphaFade = 4.0
+shader_parameter/EdgeAlphaFadeMinimum = 0.2
+shader_parameter/FoamTexture = SubResource("NoiseTexture2D_rlh0t")
+shader_parameter/FoamScale = 0.065
+shader_parameter/FoamSpeed = 0.05
+shader_parameter/FoamWeight = 0.25
+shader_parameter/FoamShorelineFade = 1.0000000149012
+shader_parameter/FoamWavesPower = 2.2000001045
+shader_parameter/ReflectionTravel = 100.0
+shader_parameter/MaxDifference = 10.0
+shader_parameter/ReflectionStepDistance = 1.0
+shader_parameter/ReflectionBottomEdgeFade = 0.157
+shader_parameter/ReflectionTint = Color(0.28, 0.33, 0.34, 1)
+shader_parameter/SkyColor = Color(0.13, 0.16, 0.19, 1)
+shader_parameter/VertexScaling = 0.25
+shader_parameter/WaveTime = 7085.616

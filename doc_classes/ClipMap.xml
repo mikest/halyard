@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="ClipMap" inherits="Resource" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		A resource that generates and caches LOD clipmap meshes for terrain/ocean rendering.
+	</brief_description>
+	<description>
+		ClipMap generates flat mesh chunks with proper seam handling for LOD transitions. It creates a cache of meshes at different LOD levels with various seam configurations to prevent cracks between LOD boundaries.
+		This is based on the clipmap algorithm from Zylann's heightmap plugin, adapted for use with ocean/terrain rendering systems.
+		Use [method configure] to set up the mesh cache, then [method get_chunk] to retrieve meshes.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="configure">
+			<return type="void" />
+			<param index="0" name="chunk_size_x" type="int" />
+			<param index="1" name="chunk_size_y" type="int" />
+			<param index="2" name="lod_count" type="int" />
+			<description>
+				Configures the clipmap with the specified chunk dimensions and LOD count. This generates and caches all mesh variants needed for the clipmap system.
+				Chunk sizes should be even numbers for proper seam generation.
+			</description>
+		</method>
+		<method name="flags_for_position" qualifiers="static">
+			<return type="int" />
+			<param index="0" name="pos" type="Vector2" />
+			<description>
+				Returns the seam flags for a tile at the given position relative to the clipmap center. Used to determine which edges of a tile need seam vertices.
+			</description>
+		</method>
+		<method name="get_chunk" qualifiers="const">
+			<return type="ArrayMesh" />
+			<param index="0" name="lod" type="int" />
+			<param index="1" name="seams" type="int" />
+			<description>
+				Returns the cached mesh for the specified LOD level and seam configuration. The seam parameter should be a combination of [constant SEAM_LEFT], [constant SEAM_RIGHT], [constant SEAM_BOTTOM], [constant SEAM_TOP].
+			</description>
+		</method>
+		<method name="get_chunk_size_x" qualifiers="const">
+			<return type="int" />
+			<description>
+				Returns the configured chunk width in quads.
+			</description>
+		</method>
+		<method name="get_chunk_size_y" qualifiers="const">
+			<return type="int" />
+			<description>
+				Returns the configured chunk height in quads.
+			</description>
+		</method>
+		<method name="get_lod_count" qualifiers="const">
+			<return type="int" />
+			<description>
+				Returns the configured number of LOD levels.
+			</description>
+		</method>
+		<method name="get_mesh_size" qualifiers="static">
+			<return type="Dictionary" />
+			<param index="0" name="width" type="int" />
+			<param index="1" name="height" type="int" />
+			<description>
+				Returns a dictionary with "vertices" and "triangles" counts for a mesh of the given dimensions.
+			</description>
+		</method>
+	</methods>
+	<constants>
+		<constant name="SEAM_NONE" value="0" enum="SeamFlags">
+			No seams - internal chunk.
+		</constant>
+		<constant name="SEAM_LEFT" value="1" enum="SeamFlags">
+			Left edge needs seam vertices.
+		</constant>
+		<constant name="SEAM_RIGHT" value="2" enum="SeamFlags">
+			Right edge needs seam vertices.
+		</constant>
+		<constant name="SEAM_BOTTOM" value="4" enum="SeamFlags">
+			Bottom edge needs seam vertices.
+		</constant>
+		<constant name="SEAM_TOP" value="8" enum="SeamFlags">
+			Top edge needs seam vertices.
+		</constant>
+		<constant name="SEAM_CONFIG_COUNT" value="16" enum="SeamFlags">
+			Total number of seam configurations.
+		</constant>
+	</constants>
+</class>
