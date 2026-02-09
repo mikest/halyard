@@ -1,6 +1,5 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<class name="OceanArea" inherits="LiquidArea" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="OceanArea" inherits="LiquidArea" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
 		A LiquidArea that simulates ocean waves using shader-based height displacement.
 	</brief_description>
@@ -12,12 +11,6 @@
 	<tutorials>
 	</tutorials>
 	<methods>
-		<method name="get_clipmap_instance" qualifiers="const">
-			<return type="ClipMapInstance" />
-			<description>
-				Returns the [ClipMapInstance] child node that handles the visual rendering of the ocean surface. Use this to configure tile size, LOD levels, vertex scaling, and the rendering material.
-			</description>
-		</method>
 		<method name="get_ocean_area" qualifiers="static">
 			<return type="OceanArea" />
 			<description>
@@ -30,12 +23,6 @@
 				[/codeblock]
 			</description>
 		</method>
-		<method name="get_ocean_detailer" qualifiers="const">
-			<return type="OceanDetailer" />
-			<description>
-				Returns the [OceanDetailer] child node that provides high-resolution detail rendering for the ocean surface. Returns [code]null[/code] if no detailer has been set.
-			</description>
-		</method>
 		<method name="get_tide_height" qualifiers="const">
 			<return type="float" />
 			<description>
@@ -44,37 +31,31 @@
 		</method>
 	</methods>
 	<members>
-		<member name="high_tide" type="float" setter="set_high_tide" getter="get_high_tide"
-			default="5.0">
+		<member name="clipmap_instance" type="ClipMapInstance" setter="set_clipmap_instance" getter="get_clipmap_instance">
+		</member>
+		<member name="high_tide" type="float" setter="set_high_tide" getter="get_high_tide" default="5.0">
 			The maximum water level offset at high tide, in meters. This value is added to the OceanArea's base position when [member tide_phase] is 1.0.
 		</member>
-		<member name="low_tide" type="float" setter="set_low_tide" getter="get_low_tide"
-			default="-5.0">
+		<member name="low_tide" type="float" setter="set_low_tide" getter="get_low_tide" default="-5.0">
 			The minimum water level offset at low tide, in meters. This value is added to the OceanArea's base position when [member tide_phase] is 0.0.
 		</member>
-		<member name="ocean_detailer" type="OceanDetailer" setter="set_ocean_detailer"
-			getter="get_ocean_detailer">
+		<member name="ocean_detailer" type="OceanDetailer" setter="set_ocean_detailer" getter="get_ocean_detailer">
 			The [OceanDetailer] node that provides high-resolution detail rendering for the ocean surface. This SubViewport-based node captures ocean surface details that can be used for shader effects.
 		</member>
-		<member name="ocean_update" type="int" setter="set_ocean_update" getter="get_ocean_update"
-			enum="OceanArea.OceanUpdate" default="1">
+		<member name="ocean_update" type="int" setter="set_ocean_update" getter="get_ocean_update" enum="OceanArea.OceanUpdate" default="1">
 			Controls how the clipmap follows a target position. When set to [constant CAMERA], the clipmap automatically follows the viewport's camera.
 		</member>
-		<member name="tidal_override" type="float" setter="set_tidal_override"
-			getter="get_tidal_override" default="-1.0">
-			Manual override for tide phase. When set to a value >= 0, this overrides the [member tide_phase] property for water level calculations.
+		<member name="tidal_override" type="float" setter="set_tidal_override" getter="get_tidal_override" default="-1.0">
+			Manual override for tide phase. When set to a value &gt;= 0, this overrides the [member tide_phase] property for water level calculations.
 			Set to -1 (or any negative value) to use [member tide_phase] instead.
 		</member>
-		<member name="tide_phase" type="float" setter="set_tide_phase" getter="get_tide_phase"
-			default="0.5">
+		<member name="tide_phase" type="float" setter="set_tide_phase" getter="get_tide_phase" default="0.5">
 			The current tide phase, ranging from 0.0 (low tide) to 1.0 (high tide). The water level is interpolated between [member low_tide] and [member high_tide] based on this value.
 		</member>
-		<member name="vertex_scaling" type="float" setter="set_vertex_scaling"
-			getter="get_vertex_scaling" default="1.0">
+		<member name="vertex_scaling" type="float" setter="set_vertex_scaling" getter="get_vertex_scaling" default="1.0">
 			Scaling factor for the clipmap vertices. This controls the spacing between vertices in the ocean mesh. Higher values create larger triangles and better performance but less detail.
 		</member>
-		<member name="wave_sampler" type="WaveSampler" setter="set_wave_sampler"
-			getter="get_wave_sampler">
+		<member name="wave_sampler" type="WaveSampler" setter="set_wave_sampler" getter="get_wave_sampler">
 			The [WaveSampler] resource used for wave calculations. Configure the sampler with wave parameters that match your ocean shader for consistent physics behavior.
 		</member>
 	</members>

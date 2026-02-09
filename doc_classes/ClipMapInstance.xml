@@ -30,9 +30,6 @@
 		<member name="lod_levels" type="int" setter="set_lod_levels" getter="get_lod_levels" default="3">
 			The number of LOD rings to generate around the center. More levels extend the visible range but increase mesh count.
 		</member>
-		<member name="material" type="Material" setter="set_material" getter="get_material">
-			The material applied to all tile meshes. For ocean rendering, this would typically be a water shader material.
-		</member>
 		<member name="tile_size" type="int" setter="set_tile_size" getter="get_tile_size" default="32">
 			The size of each tile in quads. Must be an even number for proper LOD seam generation. Larger tiles mean fewer draw calls but coarser detail.
 		</member>

@@ -1,85 +1,83 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<class name="CharacterBuoyancy" inherits="Node"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
-    <brief_description>
-        Provides lightweight buoyancy support for characters using probe points and a [LiquidArea].
-    </brief_description>
-    <description>
-        [CharacterBuoyancy] computes simple buoyant forces for a character by sampling a set of probe points (local-space) against the [LiquidArea] in the scene. If a [LiquidArea] is not specified it will auto-assign the first one found in the tree.
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="CharacterBuoyancy" inherits="Node" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Provides lightweight buoyancy support for characters using probe points and a [LiquidArea].
+	</brief_description>
+	<description>
+		[CharacterBuoyancy] computes simple buoyant forces for a character by sampling a set of probe points (local-space) against the [LiquidArea] in the scene. If a [LiquidArea] is not specified it will auto-assign the first one found in the tree.
         It updates the parent [CharacterBody3D] velocity when [member apply_forces] is enabled and exposes properties to tune buoyancy strength, mass, drag and gravity via a [BuoyancyMaterial] resource. You can also disable force application and apply them manually with [method apply_buoyancy_velocity].
         While the probes are sampled at their global position against the liquid surface, the resulting buoyant velocity is applied to the character body as a whole, each probe contributing a fraction to the final force only if it is submerged.
         It is recommended to update the probes with points from your character skeleton to balance out the buoyant forces.
         [img=center,center]res://addons/halyard/doc_images/character_buoyancy_diagram.svg[/img]
         Velocity is applied in the internal physics process to ensure they are calculated before the main physics step. If you need to customize the probe positions used to sample the liquid surface before physics processing, disable automatic application of forces and call [method apply_buoyancy_velocity] manually after updating the probes.
         The component also reports how many probes are submerged as a [member submerged_ratio] and emits a [signal submerged_changed] signal when the submerged state changes.
-    </description>
-    <tutorials>
-    </tutorials>
-
-    <methods>
-        <method name="apply_buoyancy_velocity">
-            <return type="void" />
-            <param index="0" name="delta" type="float" />
-            <description>Apply buoyancy velocity updates to the parent [CharacterBody3D] for the given physics [code]delta[/code]. Typically called automatically when [member apply_forces] is enabled.</description>
-        </method>
-
-        <method name="get_submerged_ratio" qualifiers="const">
-            <return type="float" />
-            <description>Fraction of configured probes that were submerged in the last physics step (0.0 .. 1.0).</description>
-        </method>
-
-        <method name="get_buoyancy_time" qualifiers="const">
-            <return type="int" />
-            <description>Microseconds spent computing buoyancy in the most recent physics step.</description>
-        </method>
-
-        <method name="get_average_depth" qualifiers="const">
-            <return type="float" />
-            <description>Returns the average depth of all probes relative to the liquid surface. Positive values indicate mostly above liquid, negative values indicate mostly submerged. Uses depths from the most recent physics update.</description>
-        </method>
-    </methods>
-
-    <members>
-        <member name="liquid_area" type="LiquidArea" setter="set_liquid_area" getter="get_liquid_area">
-            Node reference to the [LiquidArea] to sample surface transforms from. If not set the first [LiquidArea] in the scene will be used.
-        </member>
-
-        <member name="buoyancy_material" type="BuoyancyMaterial" setter="set_buoyancy_material" getter="get_buoyancy_material">
-            [BuoyancyMaterial] resource containing physics properties such as buoyancy strength and drag. If not assigned, a default material is created at runtime.
-        </member>
-
-        <member name="probes" type="PackedVector3Array" setter="set_probes" getter="get_probes">
-            Local-space probe positions used to sample the liquid surface.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="apply_buoyancy_velocity">
+			<return type="void" />
+			<param index="0" name="delta" type="float" />
+			<description>
+				Apply buoyancy velocity updates to the parent [CharacterBody3D] for the given physics [code]delta[/code]. Typically called automatically when [member apply_forces] is enabled.
+			</description>
+		</method>
+		<method name="get_average_depth" qualifiers="const">
+			<return type="float" />
+			<description>
+				Returns the average depth of all probes relative to the liquid surface. Positive values indicate mostly above liquid, negative values indicate mostly submerged. Uses depths from the most recent physics update.
+			</description>
+		</method>
+		<method name="get_buoyancy_time" qualifiers="const">
+			<return type="int" />
+			<description>
+				Microseconds spent computing buoyancy in the most recent physics step.
+			</description>
+		</method>
+		<method name="get_submerged_ratio" qualifiers="const">
+			<return type="float" />
+			<description>
+				Fraction of configured probes that were submerged in the last physics step (0.0 .. 1.0).
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="apply_forces" type="bool" setter="set_apply_forces" getter="get_apply_forces" default="true">
+			When true the computed buoyancy velocity is applied to the parent [CharacterBody3D].
+            Note that the submerged_ratio state will still be updated as long [code]set_process_internal(true)[/code] is enabled. To completely disable [LiquidArea] probing, disable internal physics for this node.
+		</member>
+		<member name="buoyancy_material" type="BuoyancyMaterial" setter="set_buoyancy_material" getter="get_buoyancy_material">
+			[BuoyancyMaterial] resource containing physics properties such as buoyancy strength and drag. If not assigned, a default material is created at runtime.
+		</member>
+		<member name="debug_color" type="Color" setter="set_debug_color" getter="get_debug_color" default="Color(0, 0.8, 1, 0.2)">
+		</member>
+		<member name="gravity" type="Vector3" setter="set_gravity" getter="get_gravity" default="Vector3(0, -9.81, 0)">
+			Gravity vector used for buoyant force direction and magnitude.
+		</member>
+		<member name="ignore_waves" type="bool" setter="set_ignore_waves" getter="get_ignore_waves" default="false">
+			Use a flat liquid plane at the [LiquidArea] origin instead of sampling wave surface transforms. Considerably faster but removes wave interaction.
+		</member>
+		<member name="liquid_area" type="LiquidArea" setter="set_liquid_area" getter="get_liquid_area">
+			Node reference to the [LiquidArea] to sample surface transforms from. If not set the first [LiquidArea] in the scene will be used.
+		</member>
+		<member name="mass" type="float" setter="set_mass" getter="get_mass" default="150.0">
+			Mass value in kg used when converting buoyant force into velocity change.
+		</member>
+		<member name="probes" type="PackedVector3Array" setter="set_probes" getter="get_probes" default="PackedVector3Array()">
+			Local-space probe positions used to sample the liquid surface.
             The difference between the highest and lowest probe governs the full submerged depth used to determine the maximum buoyancy lift the character will experience.
             [img=center,center]res://addons/halyard/doc_images/character_submerged_diagram.svg[/img]
             For this reason, you should choose your buoyancy probe locations carefully to cover the range of depth that best expresses your character's submerged state.
-        </member>
-
-        <member name="apply_forces" type="bool" setter="set_apply_forces" getter="get_apply_forces" default="true">
-            When true the computed buoyancy velocity is applied to the parent [CharacterBody3D].
-            Note that the submerged_ratio state will still be updated as long [code]set_process_internal(true)[/code] is enabled. To completely disable [LiquidArea] probing, disable internal physics for this node.
-        </member>
-
-        <member name="ignore_waves" type="bool" setter="set_ignore_waves" getter="get_ignore_waves" default="false">
-            Use a flat liquid plane at the [LiquidArea] origin instead of sampling wave surface transforms. Considerably faster but removes wave interaction.
-        </member>
-
-        <member name="mass" type="float" setter="set_mass" getter="get_mass" default="150.0">
-            Mass value in kg used when converting buoyant force into velocity change.
-        </member>
-
-        <member name="gravity" type="Vector3" setter="set_gravity" getter="get_gravity" default="Vector3(0, -9.81, 0)">
-            Gravity vector used for buoyant force direction and magnitude.
-        </member>
-    </members>
-
-    <signals>
-        <signal name="submerged_changed">
-            <description>
-                Emitted when the character transitions between being completely out of the liquid (submerged_ratio == 0) and having at least one probe submerged (submerged_ratio > 0), or vice versa.
+		</member>
+		<member name="show_debug" type="bool" setter="set_show_debug" getter="get_show_debug" default="false">
+		</member>
+	</members>
+	<signals>
+		<signal name="submerged_changed">
+			<description>
+				Emitted when the character transitions between being completely out of the liquid (submerged_ratio == 0) and having at least one probe submerged (submerged_ratio &gt; 0), or vice versa.
                 Note that this signal will still be emitted even if [member apply_forces] is false, as long as internal physics processing is enabled.
-            </description>
-        </signal>
-    </signals>
+			</description>
+		</signal>
+	</signals>
 </class>

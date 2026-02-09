@@ -11,6 +11,16 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="get_detail_map_image" qualifiers="const">
+			<return type="Image" />
+			<description>
+			</description>
+		</method>
+		<method name="get_height_map_image" qualifiers="const">
+			<return type="Image" />
+			<description>
+			</description>
+		</method>
 		<method name="get_wave_height_xz" qualifiers="const">
 			<return type="float" />
 			<param index="0" name="world_xz" type="Vector2" />
@@ -31,7 +41,7 @@
 			<return type="Transform3D" />
 			<param index="0" name="world_pos" type="Vector3" />
 			<param index="1" name="base_y" type="float" />
-			<param index="2" name="time" type="float" />
+			<param index="2" name="ocean_global_transform" type="Transform3D" />
 			<description>
 				Returns a full transform representing the wave surface at the given world position. The transform's origin Y is set to [param base_y] plus the wave height, and its basis is oriented to match the surface normal.
 			</description>
@@ -48,8 +58,32 @@
 				Re-fetches all wave parameters from the assigned [member material]. Call this if the material's shader parameters have changed at runtime.
 			</description>
 		</method>
+		<method name="set_detail_map">
+			<return type="void" />
+			<param index="0" name="texture" type="Texture2D" />
+			<description>
+			</description>
+		</method>
+		<method name="set_height_map">
+			<return type="void" />
+			<param index="0" name="texture" type="Texture2D" />
+			<description>
+			</description>
+		</method>
+		<method name="set_wave_time">
+			<return type="void" />
+			<param index="0" name="time" type="float" />
+			<description>
+			</description>
+		</method>
 	</methods>
 	<members>
+		<member name="details_corner_position" type="Vector3" setter="set_details_corner_position" getter="get_details_corner_position" default="Vector3(0, 0, 0)">
+		</member>
+		<member name="details_texture_size" type="float" setter="set_details_texture_size" getter="get_details_texture_size" default="128.0">
+		</member>
+		<member name="details_vertex_spacing" type="float" setter="set_details_vertex_spacing" getter="get_details_vertex_spacing" default="1.0">
+		</member>
 		<member name="direction" type="Vector2" setter="set_direction" getter="get_direction" default="Vector2(1, 0)">
 			The direction of wave travel. This affects how the wave pattern animates over time.
 		</member>
@@ -77,6 +111,8 @@
 		</member>
 		<member name="speed" type="float" setter="set_speed" getter="get_speed" default="1.0">
 			The speed of wave animation. Higher values make waves move faster.
+		</member>
+		<member name="vertex_scaling" type="float" setter="set_vertex_scaling" getter="get_vertex_scaling" default="1.0">
 		</member>
 	</members>
 </class>

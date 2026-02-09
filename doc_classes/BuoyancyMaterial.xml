@@ -1,7 +1,5 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<class name="BuoyancyMaterial" inherits="Resource"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="BuoyancyMaterial" inherits="Resource" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
 		Resource containing buoyancy physics properties for a body interacting with a [LiquidArea].
 	</brief_description>
@@ -13,20 +11,20 @@
 	<tutorials>
 	</tutorials>
 	<members>
+		<member name="angular_drag" type="float" setter="set_angular_drag" getter="get_angular_drag" default="1.0">
+			Angular velocity drag coefficient applied while the body is submerged. Higher values cause more rapid rotational damping in water. Multiplied by [member angular_drag_scale] to produce per-axis drag.
+		</member>
+		<member name="angular_drag_scale" type="Vector3" setter="set_angular_drag_scale" getter="get_angular_drag_scale" default="Vector3(1, 1, 1)">
+			Per-axis scaling for angular drag in body-local space. Multiplied with [member angular_drag] to control rotational damping independently on each axis.
+		</member>
 		<member name="buoyancy" type="float" setter="set_buoyancy" getter="get_buoyancy" default="2.0">
 			Buoyancy scalar controlling how much the object floats. A value of [code]0.0[/code] disables buoyant force (object sinks), [code]1.0[/code] is neutral buoyancy, and values greater than [code]1.0[/code] cause the object to float. Only used when [member Buoyancy.use_buoyancy_scalar] is enabled on the parent [Buoyancy] node.
 		</member>
 		<member name="linear_drag" type="float" setter="set_linear_drag" getter="get_linear_drag" default="3.0">
 			Linear velocity drag coefficient applied while the body is submerged. Higher values cause more rapid deceleration in water. Multiplied by [member linear_drag_scale] to produce per-axis drag.
 		</member>
-		<member name="angular_drag" type="float" setter="set_angular_drag" getter="get_angular_drag" default="1.0">
-			Angular velocity drag coefficient applied while the body is submerged. Higher values cause more rapid rotational damping in water. Multiplied by [member angular_drag_scale] to produce per-axis drag.
-		</member>
 		<member name="linear_drag_scale" type="Vector3" setter="set_linear_drag_scale" getter="get_linear_drag_scale" default="Vector3(1, 1, 1)">
 			Per-axis scaling for linear drag in body-local space. Multiplied with [member linear_drag] to control drag independently on each axis. For example, setting Z higher increases drag when moving forward/backward.
-		</member>
-		<member name="angular_drag_scale" type="Vector3" setter="set_angular_drag_scale" getter="get_angular_drag_scale" default="Vector3(1, 1, 1)">
-			Per-axis scaling for angular drag in body-local space. Multiplied with [member angular_drag] to control rotational damping independently on each axis.
 		</member>
 	</members>
 </class>

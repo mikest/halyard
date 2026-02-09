@@ -7,12 +7,6 @@
 	<tutorials>
 	</tutorials>
 	<methods>
-		<method name="get_count" qualifiers="virtual const">
-			<return type="int" />
-			<param index="0" name="" type="Rope" />
-			<description>
-			</description>
-		</method>
 		<method name="get_count" qualifiers="const">
 			<return type="int" />
 			<param index="0" name="rope" type="Rope" />
@@ -26,24 +20,10 @@
 			<description>
 			</description>
 		</method>
-		<method name="get_position" qualifiers="virtual const">
-			<return type="float" />
-			<param index="0" name="" type="int" />
-			<param index="1" name="" type="Rope" />
-			<description>
-			</description>
-		</method>
 		<method name="get_position" qualifiers="const">
 			<return type="float" />
 			<param index="0" name="index" type="int" />
 			<param index="1" name="rope" type="Rope" />
-			<description>
-			</description>
-		</method>
-		<method name="get_transform" qualifiers="virtual const">
-			<return type="Transform3D" />
-			<param index="0" name="" type="int" />
-			<param index="1" name="" type="Rope" />
 			<description>
 			</description>
 		</method>

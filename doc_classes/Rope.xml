@@ -1,7 +1,5 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<class name="Rope" inherits="GeometryInstance3D"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="Rope" inherits="GeometryInstance3D" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
 		A fast verlet rope class.
 	</brief_description>
@@ -64,7 +62,7 @@
 			</description>
 		</method>
 		<method name="get_all_links" qualifiers="const">
-			<return type="Array[Transform3D]" />
+			<return type="Transform3D[]" />
 			<description>
 				Returns a list of all the transforms for links used to render the rope.
 
@@ -75,7 +73,7 @@
 			</description>
 		</method>
 		<method name="get_all_rope_frames" qualifiers="const">
-			<return type="Array[Transform3D]" />
+			<return type="Transform3D[]" />
 			<description>
 				Returns a list of all the transform frames used to render the rope. The frame tangents and normals are aligned along the rope and there will be
 				more frames for higher LODs.
@@ -155,7 +153,7 @@
 		<method name="get_rope_lod" qualifiers="const">
 			<return type="int" />
 			<description>
-				returns the number of catmul spline points per rope simulation particle to generate along the rope. 
+				returns the number of catmul spline points per rope simulation particle to generate along the rope.
 			</description>
 		</method>
 		<method name="get_rope_sides" qualifiers="const">
@@ -189,87 +187,75 @@
 		<member name="anchors" type="RopeAnchorsBase" setter="set_anchors" getter="get_anchors">
 			A RopeAnchorsBase resource containing additional anchors to attach the rope to. All anchors will be aligned to the nearest frame, and so the positions are dependent on the number of particles in the rope and the LOD.
 		</member>
-		<member name="appearance" type="RopeAppearance" setter="set_appearance"
-			getter="get_appearance">
+		<member name="appearance" type="RopeAppearance" setter="set_appearance" getter="get_appearance">
 			A RopeAppearance resource containing properties that control how the rope is rendered.
 		</member>
-		<member name="apply_damping" type="bool" setter="set_apply_damping"
-			getter="get_apply_damping" default="true">
+		<member name="apply_buoyancy" type="bool" setter="set_apply_buoyancy" getter="get_apply_buoyancy" default="false">
 		</member>
-		<member name="apply_gravity" type="bool" setter="set_apply_gravity"
-			getter="get_apply_gravity" default="true">
+		<member name="apply_damping" type="bool" setter="set_apply_damping" getter="get_apply_damping" default="true">
 		</member>
-		<member name="apply_wind" type="bool" setter="set_apply_wind" getter="get_apply_wind"
-			default="false">
+		<member name="apply_gravity" type="bool" setter="set_apply_gravity" getter="get_apply_gravity" default="true">
 		</member>
-		<member name="collision_layer" type="int" setter="set_collision_layer"
-			getter="get_collision_layer" default="1">
+		<member name="apply_wind" type="bool" setter="set_apply_wind" getter="get_apply_wind" default="false">
 		</member>
-		<member name="collision_mask" type="int" setter="set_collision_mask"
-			getter="get_collision_mask" default="1">
+		<member name="buoyancy_scale" type="float" setter="set_buoyancy_scale" getter="get_buoyancy_scale" default="1.0">
 		</member>
-		<member name="damping_factor" type="float" setter="set_damping_factor"
-			getter="get_damping_factor" default="100.0">
+		<member name="collision_layer" type="int" setter="set_collision_layer" getter="get_collision_layer" default="1">
 		</member>
-		<member name="end_anchor" type="NodePath" setter="set_end_anchor" getter="get_end_anchor"
-			default="NodePath(&quot;&quot;)">
+		<member name="collision_mask" type="int" setter="set_collision_mask" getter="get_collision_mask" default="1">
+		</member>
+		<member name="damping_factor" type="float" setter="set_damping_factor" getter="get_damping_factor" default="100.0">
+		</member>
+		<member name="end_anchor" type="NodePath" setter="set_end_anchor" getter="get_end_anchor" default="NodePath(&quot;&quot;)">
 			NodePath to a node to anchor the end of the rope to. The end of the rope will follow this node.
 		</member>
-		<member name="friction" type="float" setter="set_friction" getter="get_friction"
-			default="0.5">
+		<member name="friction" type="float" setter="set_friction" getter="get_friction" default="0.5">
 			At 0.0 the rope will slide off surfaces. At 1.0 the rope will stick to surfaces.
 		</member>
-		<member name="gravity" type="Vector3" setter="set_gravity" getter="get_gravity"
-			default="Vector3(0, -9.8, 0)">
+		<member name="gravity" type="Vector3" setter="set_gravity" getter="get_gravity" default="Vector3(0, -9.8, 0)">
 			Gravity vector to apply to the rope simulation. Default is (0, -9.8, 0).
 		</member>
-		<member name="gravity_scale" type="float" setter="set_gravity_scale"
-			getter="get_gravity_scale" default="1.0">
+		<member name="gravity_scale" type="float" setter="set_gravity_scale" getter="get_gravity_scale" default="1.0">
 		</member>
-		<member name="grow_from" type="int" setter="set_grow_from" getter="get_grow_from"
-			default="0">
+		<member name="grow_from" type="int" setter="set_grow_from" getter="get_grow_from" default="0">
 		</member>
-		<member name="preprocess_time" type="float" setter="set_preprocess_time"
-			getter="get_preprocess_time" default="1.0">
+		<member name="jitter_initial_position" type="bool" setter="set_jitter_initial_position" getter="get_jitter_initial_position" default="true">
+		</member>
+		<member name="liquid_area" type="LiquidArea" setter="set_liquid_area" getter="get_liquid_area">
+		</member>
+		<member name="preprocess_time" type="float" setter="set_preprocess_time" getter="get_preprocess_time" default="1.0">
 			Virtual time to calculate into the future before first render.
 			This will run [code]preprocess_time * simulation_rate[/code] frames as fast as possible.
 		</member>
-		<member name="rope_length" type="float" setter="set_rope_length" getter="get_rope_length"
-			default="4.0">
+		<member name="rope_length" type="float" setter="set_rope_length" getter="get_rope_length" default="4.0">
 			Length of the rope. Segments will be `rope_length / rope_particles` long.
 		</member>
-		<member name="simulate" type="bool" setter="set_simulate" getter="get_simulate"
-			default="true">
+		<member name="simulate" type="bool" setter="set_simulate" getter="get_simulate" default="true">
 		</member>
-		<member name="simulation_rate" type="float" setter="set_simulation_rate"
-			getter="get_simulation_rate" default="60.0">
+		<member name="simulation_rate" type="float" setter="set_simulation_rate" getter="get_simulation_rate" default="60.0">
 			Framerate to run the simulation at in FPS.
 		</member>
-		<member name="start_anchor" type="NodePath" setter="set_start_anchor"
-			getter="get_start_anchor" default="NodePath(&quot;.&quot;)">
+		<member name="start_anchor" type="NodePath" setter="set_start_anchor" getter="get_start_anchor" default="NodePath(&quot;.&quot;)">
 			NodePath to a node to anchor the start of the rope to. The origin of the rope will follow this node. Can point to self.
 		</member>
-		<member name="stiffness" type="float" setter="set_stiffness" getter="get_stiffness"
-			default="0.9">
+		<member name="stiffness" type="float" setter="set_stiffness" getter="get_stiffness" default="0.9">
 			Stiffness factor. Controls stretchyness of rope.
 			Should be around [0.8 - 1.2] for a realistic rope.
 			Higher values may lead to instability in the simulation. Increasing stiffness_iterations may restabilize.
 		</member>
-		<member name="stiffness_iterations" type="int" setter="set_stiffness_iterations"
-			getter="get_stiffness_iterations" default="2">
+		<member name="stiffness_iterations" type="int" setter="set_stiffness_iterations" getter="get_stiffness_iterations" default="2">
 			When performing stiffness calculations, the number of passes through the rope to run per frame.
 			Higher values will improve stiffness stability.
 		</member>
-		<member name="wind" type="Vector3" setter="set_wind" getter="get_wind"
-			default="Vector3(1, 0, 0)">
+		<member name="submerged_drag" type="float" setter="set_submerged_drag" getter="get_submerged_drag" default="100.0">
+		</member>
+		<member name="wind" type="Vector3" setter="set_wind" getter="get_wind" default="Vector3(1, 0, 0)">
 			Wind direction.
 		</member>
-		<member name="wind_noise" type="FastNoiseLite" setter="set_wind_noise"
-			getter="get_wind_noise">
+		<member name="wind_noise" type="FastNoiseLite" setter="set_wind_noise" getter="get_wind_noise">
 			Wind noise.
 		</member>
-		<member name="wind_scale" type="float" setter="set_wind_scale" getter="get_wind_scale"
-			default="20.0">
+		<member name="wind_scale" type="float" setter="set_wind_scale" getter="get_wind_scale" default="20.0">
 			Scale factor to apply to the wind vector when applying it to the rope simulation.
 		</member>
 	</members>
