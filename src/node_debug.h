@@ -39,8 +39,8 @@ protected:
 	Ref<StandardMaterial3D> _marker_material;
 	Ref<StandardMaterial3D> _inverted_material;
 
-    // sets both node and node3d pointers
-    void _set_debug_owner_node(Node3D* p_node) { _node = p_node; }
+	// sets both node and node3d pointers
+	void _set_debug_owner_node(Node3D *p_node) { _node = p_node; }
 
 	// optional creation/destruction hooks for subclasses
 	virtual void _create_debug_mesh() {}

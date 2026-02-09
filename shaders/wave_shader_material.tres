@@ -75,4 +75,4 @@ shader_parameter/ReflectionBottomEdgeFade = 0.157
 shader_parameter/ReflectionTint = Color(0.28, 0.33, 0.34, 1)
 shader_parameter/SkyColor = Color(0.13, 0.16, 0.19, 1)
 shader_parameter/VertexScaling = 0.25
-shader_parameter/WaveTime = 7085.616
+shader_parameter/WaveTime = 55.316

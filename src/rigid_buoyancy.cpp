@@ -110,12 +110,12 @@ void RigidBuoyancy::_notification(int p_what) {
 
 		case NOTIFICATION_ENTER_TREE: {
 			// if (Engine::get_singleton()->is_editor_hint() == false) {
-				if (_liquid_area == nullptr) {
-					SceneTree *tree = get_tree();
-					_liquid_area = LiquidArea::get_liquid_area(tree);
-					_probe_buoyancy.set_liquid_area(_liquid_area);
-					_mesh_buoyancy.set_liquid_area(_liquid_area);
-				}
+			if (_liquid_area == nullptr) {
+				SceneTree *tree = get_tree();
+				_liquid_area = LiquidArea::get_liquid_area(tree);
+				_probe_buoyancy.set_liquid_area(_liquid_area);
+				_mesh_buoyancy.set_liquid_area(_liquid_area);
+			}
 			// }
 		} break;
 
@@ -138,7 +138,7 @@ void RigidBuoyancy::_notification(int p_what) {
 
 		case NOTIFICATION_INTERNAL_PHYSICS_PROCESS: {
 			if (is_node_ready()) {
-				if (Engine::get_singleton()->is_editor_hint()){
+				if (Engine::get_singleton()->is_editor_hint()) {
 					// update the probe transforms so we can see the sampled locations in the editor
 					if (_buoyancy_mode == BUOYANCY_PROBES) {
 						_update_last_probe_transforms();
@@ -146,12 +146,11 @@ void RigidBuoyancy::_notification(int p_what) {
 						// recalc dynamics
 						_update_dynamics();
 					}
-				
+
 				} else {
 					// in game
 					RigidBody3D *body = Object::cast_to<RigidBody3D>(get_parent());
 					if (body && !body->is_freeze_enabled()) {
-
 						uint64_t time = Time::get_singleton()->get_ticks_usec();
 
 						// always update submerged state
@@ -163,7 +162,7 @@ void RigidBuoyancy::_notification(int p_what) {
 						}
 
 						// optionally apply them
-						if (_apply_forces){
+						if (_apply_forces) {
 							float delta = get_physics_process_delta_time();
 							if (_buoyancy_mode == BUOYANCY_PROBES) {
 								apply_buoyancy_probe_forces(body, delta);

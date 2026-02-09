@@ -95,28 +95,27 @@ void CharacterBuoyancy::_notification(int p_what) {
 		// velocity is applied in the internal physics process so that submerged is updated
 		// for derived classes before normal physics process
 		case NOTIFICATION_INTERNAL_PHYSICS_PROCESS: {
-			if (!Engine::get_singleton()->is_editor_hint() && \
-				is_node_ready() && \
-				_probe_buoyancy.get_liquid_area() != nullptr) {
-				
-					uint64_t time = Time::get_singleton()->get_ticks_usec();
+			if (!Engine::get_singleton()->is_editor_hint() &&
+					is_node_ready() &&
+					_probe_buoyancy.get_liquid_area() != nullptr) {
+				uint64_t time = Time::get_singleton()->get_ticks_usec();
 
-					// optionally apply them
-					_update_last_transforms();
-					if (_apply_forces){
-						float delta = get_physics_process_delta_time();
-						apply_buoyancy_velocity(delta);
-					}
+				// optionally apply them
+				_update_last_transforms();
+				if (_apply_forces) {
+					float delta = get_physics_process_delta_time();
+					apply_buoyancy_velocity(delta);
+				}
 
-					// Check if submerged changed and emit signal. We only track entering/exiting water as the ratio can change on every frame.
-					float current_ratio = get_submerged_ratio();
-					if (Math::is_zero_approx(current_ratio) != Math::is_zero_approx(_last_submerged_ratio)) {
-						emit_signal("submerged_changed");
-					}
-					_last_submerged_ratio = current_ratio;
+				// Check if submerged changed and emit signal. We only track entering/exiting water as the ratio can change on every frame.
+				float current_ratio = get_submerged_ratio();
+				if (Math::is_zero_approx(current_ratio) != Math::is_zero_approx(_last_submerged_ratio)) {
+					emit_signal("submerged_changed");
+				}
+				_last_submerged_ratio = current_ratio;
 
-					uint64_t elapsed = Time::get_singleton()->get_ticks_usec() - time;
-					_buoyancy_time = elapsed;
+				uint64_t elapsed = Time::get_singleton()->get_ticks_usec() - time;
+				_buoyancy_time = elapsed;
 			}
 		} break;
 	}
@@ -404,8 +403,8 @@ void CharacterBuoyancy::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_ignore_waves", "ignore_waves"), &CharacterBuoyancy::set_ignore_waves);
 	ClassDB::bind_method(D_METHOD("get_ignore_waves"), &CharacterBuoyancy::get_ignore_waves);
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "ignore_waves"), "set_ignore_waves", "get_ignore_waves");
-	
-    ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "mass", PROPERTY_HINT_NONE, "kg"), "set_mass", "get_mass");
+
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "mass", PROPERTY_HINT_NONE, "kg"), "set_mass", "get_mass");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "gravity"), "set_gravity", "get_gravity");
 
 	// Debug

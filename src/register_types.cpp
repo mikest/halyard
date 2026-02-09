@@ -7,7 +7,10 @@
 
 #include "buoyancy_material.h"
 #include "character_buoyancy.h"
+#include "clip_map.h"
 #include "liquid_area.h"
+#include "ocean_area.h"
+#include "ocean_detailer.h"
 #include "rigid_buoyancy.h"
 #include "rope.h"
 #include "rope_anchor_positions.h"
@@ -15,25 +18,18 @@
 #include "rope_appearance.h"
 #include "rope_attachment_positions.h"
 #include "rope_attachments_base.h"
-#include "rigid_buoyancy.h"
-#include "buoyancy_material.h"
-#include "character_buoyancy.h"
-#include "liquid_area.h"
 #include "wave_sampler.h"
-#include "clip_map.h"
-#include "ocean_area.h"
-#include "ocean_detailer.h"
 
 using namespace godot;
 
 void initialize_gdextension_types(ModuleInitializationLevel p_level) {
-	switch(p_level) {
+	switch (p_level) {
 		case MODULE_INITIALIZATION_LEVEL_CORE: {
 		} break;
 
 		case MODULE_INITIALIZATION_LEVEL_SERVERS: {
 		} break;
-		
+
 		case MODULE_INITIALIZATION_LEVEL_SCENE: {
 			ClassDB::register_class<Rope>();
 			ClassDB::register_class<RopeAnchorsBase>();
