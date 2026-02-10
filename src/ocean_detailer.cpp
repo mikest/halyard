@@ -29,7 +29,6 @@ OceanDetailer::~OceanDetailer() {
 void OceanDetailer::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_ENTER_TREE: {
-			_global_shader_init();
 		} break;
 
 		case NOTIFICATION_READY: {
@@ -205,6 +204,10 @@ float OceanDetailer::get_detail_viewport_vertex_spacing() const {
 #pragma endregion
 
 void OceanDetailer::_global_shader_init() {
+	// Disabling this for now as it creates a situation where it looks like the shader parameters
+	// have been added, but then they aren't present at game run time because we can't modify
+	// the global list from game code.
+#if 0
 	// Only initialize global shader parameters in the editor
 	if (Engine::get_singleton()->is_editor_hint()) {
 		// create global shader parameters in engine if they don't exist yet
@@ -226,6 +229,7 @@ void OceanDetailer::_global_shader_init() {
 			}
 		}
 	}
+#endif
 }
 
 void OceanDetailer::_bind_methods() {
@@ -260,7 +264,6 @@ void OceanDetailer::_bind_methods() {
 
 	// Position update
 	ClassDB::bind_method(D_METHOD("update_position", "global_position"), &OceanDetailer::update_position);
-	ClassDB::bind_method(D_METHOD("get_snapped_position"), &OceanDetailer::get_snapped_position);
 
 	// Constants
 	BIND_CONSTANT(WAVE_CULL_MASK);

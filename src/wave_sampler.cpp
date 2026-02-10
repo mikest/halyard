@@ -17,6 +17,12 @@ A Resource class that samples wave height and normal from a shader material's pa
 #include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/callable.hpp>
 
+// if Physics is running on a separate thread I think this mutex might be required.
+// I was see about a 10fps frame drop from these locks without a separate thread though so they're probably messed up.
+#define DETAIL_MAP_LOCK \
+	{}
+//#define DETAIL_MAP_LOCK std::lock_guard<std::mutex> lock(_detail_map_mutex)
+
 using namespace godot;
 
 WaveSampler::WaveSampler() {
@@ -125,7 +131,7 @@ Ref<Image> WaveSampler::get_height_map_image() const {
 
 void WaveSampler::set_detail_map(const Ref<Texture2D> &p_texture) {
 	{
-		std::lock_guard<std::mutex> lock(_detail_map_mutex);
+		DETAIL_MAP_LOCK;
 		if (p_texture.is_valid()) {
 			_detail_map = p_texture->get_image();
 			_detail_map_texture = p_texture;
@@ -255,14 +261,11 @@ float WaveSampler::get_vertex_scaling() const {
 void WaveSampler::_notification(int p_what) {
 	switch (p_what) {
 		case Node::NOTIFICATION_ENTER_TREE:
+			// refetch. this mostly comes up when switching scene tabs in the editor
 			_fetch_shader_parameters();
 			break;
+
 		case Node::NOTIFICATION_EXIT_TREE:
-			// Clear cached data when exiting the tree to free memory
-			_height_map.unref();
-			_detail_map.unref();
-			_height_map_texture.unref();
-			_detail_map_texture.unref();
 			break;
 
 		case Node::NOTIFICATION_READY:
@@ -288,20 +291,6 @@ void WaveSampler::refresh_from_material() {
 void WaveSampler::_fetch_shader_parameters() {
 	if (_material.is_null()) {
 		return;
-	}
-
-	// Update the global shader parameter for detail map sampling callback
-	RenderingServer *rs = RenderingServer::get_singleton();
-	ERR_FAIL_NULL(rs);
-
-	if (Engine::get_singleton()->is_editor_hint()) {
-		// fetch synchronously in editor. async callback has synchronization problems and sometimes crashes out driver.
-		if (_detail_map.is_valid() == false) {
-			_detail_map = _detail_map_texture.is_valid() ? _detail_map_texture->get_image() : Ref<Image>();
-		}
-	} else {
-		// Fetch async in game for speed
-		_fetch_detailmap_async();
 	}
 
 	// Fetch shader uniform values
@@ -365,6 +354,17 @@ void WaveSampler::_fetch_shader_parameters() {
 	if (_height_map_texture.is_valid() && _height_map.is_null()) {
 		_fetch_heightmap();
 	}
+
+	// this is fetched at the end of every frame
+	if (Engine::get_singleton()->is_editor_hint()) {
+		// fetch synchronously in editor. async callback has synchronization problems and sometimes crashes out driver.
+		if (_detail_map.is_valid() == false) {
+			_detail_map = _detail_map_texture.is_valid() ? _detail_map_texture->get_image() : Ref<Image>();
+		}
+	} else {
+		// Fetch async in game for speed
+		_fetch_detailmap_async();
+	}
 }
 
 void WaveSampler::_fetch_heightmap() {
@@ -379,37 +379,33 @@ void WaveSampler::_fetch_heightmap() {
 		return;
 	}
 
+	// fetched once as the noise texture doesn't change so we can do this synchronously
 	Ref<Texture2D> tex = Object::cast_to<Texture2D>(static_cast<Object *>(tex_variant));
 	if (tex.is_valid()) {
-		// Synchronous fetch for now
-		// TODO: When texture_get_data_async becomes available in godot-cpp, use it with _texture_data_callback
 		_height_map = tex->get_image();
 	} else {
 		_height_map.unref();
 	}
 }
 
+// To be called once at the end of the rendering cycle, the detail map will be one frame behind
+// but for water physics this is a problem.
 void WaveSampler::_fetch_detailmap_async() {
-	// This is a bit hacky - we rely on the material to have a reference to the detail viewport texture, and we trigger an async read of it here. When the read completes, it will call back to _fetch_detailmap_callback where we canupdate our cached detail map image.
 	if (_material.is_null()) {
 		_detail_map.unref();
 		return;
 	}
 
 	RenderingServer *rs = RenderingServer::get_singleton();
-	ERR_FAIL_NULL(rs);
-
 	RenderingDevice *rd = rs->get_rendering_device();
-	ERR_FAIL_NULL(rd);
-
-	if (_detail_map_texture.is_valid()) {
+	if (rs && rd && _detail_map_texture.is_valid()) {
 		RID texture_rid = _detail_map_texture->get_rid();
 		if (!texture_rid.is_valid()) {
 			_detail_map.unref();
 			return;
 		}
 
-		// Get the RenderingDevice texture RID
+		// Get the RenderingDevice texture RID from the RenderingServer texture RID
 		RID rd_texture_rid = rs->texture_get_rd_texture(texture_rid);
 		if (!rd_texture_rid.is_valid()) {
 			_detail_map.unref();
@@ -448,7 +444,7 @@ void WaveSampler::_fetch_detailmap_callback(const PackedByteArray &p_data) {
 		image->set_data(_detail_map_texture->get_width(), _detail_map_texture->get_height(), false, format, p_data);
 
 		// Thread-safe assignment
-		std::lock_guard<std::mutex> lock(_detail_map_mutex);
+		DETAIL_MAP_LOCK;
 		_detail_map = image;
 	}
 }
@@ -497,7 +493,7 @@ Color WaveSampler::_sample_texture(const Vector2 &uv) const {
 }
 
 Color WaveSampler::_sample_detail_texture(const Vector2 &uv) const {
-	std::lock_guard<std::mutex> lock(_detail_map_mutex);
+	DETAIL_MAP_LOCK;
 	return _sample_detail_texture_unlocked(uv);
 }
 
@@ -507,7 +503,7 @@ Color WaveSampler::_sample_detail_texture_unlocked(const Vector2 &uv) const {
 }
 
 Color WaveSampler::_sample_detail_effects_layer(const Vector3 &world_position) const {
-	std::lock_guard<std::mutex> lock(_detail_map_mutex);
+	DETAIL_MAP_LOCK;
 
 	if (_detail_map.is_null()) {
 		return Color(0.0f, 0.0f, 0.0f, 1.0f);
@@ -628,7 +624,7 @@ Transform3D WaveSampler::get_wave_transform(const Vector3 &world_pos, float base
 	// print this once to avoid spamming console.
 	bool detail_map_is_null = false;
 	{
-		std::lock_guard<std::mutex> lock(_detail_map_mutex);
+		DETAIL_MAP_LOCK;
 		detail_map_is_null = _detail_map.is_null();
 	}
 
