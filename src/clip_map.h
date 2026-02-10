@@ -88,6 +88,7 @@ private:
 	int _tile_size = 32;
 	int _lod_levels = 3;
 	float _vertex_scaling = 1.0f;
+	uint32_t _layers = 0xFFFFFFFF; // Default to all layers
 
 	// Container for tiles
 	Node3D *_tiles_container = nullptr;
@@ -121,6 +122,9 @@ public:
 
 	void set_vertex_scaling(float p_scale);
 	float get_vertex_scaling() const { return _vertex_scaling; }
+
+	void set_layers(uint32_t p_layers);
+	uint32_t get_layers() const { return _layers; }
 
 	// Update the clipmap center position (call each frame with camera/target position)
 	void update_position(const Vector3 &target_position);

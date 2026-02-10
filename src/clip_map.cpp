@@ -379,6 +379,10 @@ void ClipMapInstance::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_vertex_scaling"), &ClipMapInstance::get_vertex_scaling);
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "vertex_scaling", PROPERTY_HINT_RANGE, "0.03125,32,0.03125"), "set_vertex_scaling", "get_vertex_scaling");
 
+	ClassDB::bind_method(D_METHOD("set_layers", "layers"), &ClipMapInstance::set_layers);
+	ClassDB::bind_method(D_METHOD("get_layers"), &ClipMapInstance::get_layers);
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "layers", PROPERTY_HINT_LAYERS_3D_RENDER), "set_layers", "get_layers");
+
 	ClassDB::bind_method(D_METHOD("update_position", "target_position"), &ClipMapInstance::update_position);
 	ClassDB::bind_method(D_METHOD("rebuild"), &ClipMapInstance::rebuild);
 }
@@ -422,6 +426,22 @@ void ClipMapInstance::set_vertex_scaling(float p_scale) {
 	_vertex_scaling = p_scale;
 	if (_tiles_container) {
 		_tiles_container->set_scale(Vector3(_vertex_scaling, _vertex_scaling, _vertex_scaling));
+	}
+}
+
+void ClipMapInstance::set_layers(uint32_t p_layers) {
+	if (_layers != p_layers) {
+		_layers = p_layers;
+		
+		// Update all child mesh instances if tiles container exists
+		if (_tiles_container) {
+			for (int idx = 0; idx < _tiles_container->get_child_count(); idx++) {
+				MeshInstance3D *mesh_instance = Object::cast_to<MeshInstance3D>(_tiles_container->get_child(idx));
+				if (mesh_instance) {
+					mesh_instance->set_layer_mask(_layers);
+				}
+			}
+		}
 	}
 }
 
@@ -481,6 +501,7 @@ MeshInstance3D *ClipMapInstance::_create_instance(const Ref<Mesh> &mesh, const V
 	instance->set_extra_cull_margin(static_cast<float>(level + 1));
 	instance->set_mesh(mesh);
 	instance->set_surface_override_material(0, _get_ocean_material());
+	instance->set_layer_mask(_layers);
 
 	instance->set_position(Vector3(pos.x, 0.0f, pos.y));
 
