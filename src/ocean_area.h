@@ -27,6 +27,7 @@ public:
 	enum OceanUpdate {
 		DISABLED = 0, // Don't follow
 		CAMERA = 1, // Follow camera position
+		DETAILER_TARGET = 2, // Follow ocean detailer target
 	};
 
 private:

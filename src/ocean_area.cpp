@@ -223,6 +223,10 @@ void OceanArea::_update_clipmap_position() {
 		world_pos = camera ? camera->get_global_position() : get_global_position();
 	}
 
+	if (_ocean_update == DETAILER_TARGET && _ocean_detailer) {
+		world_pos = _ocean_detailer->get_snapped_position();
+	}
+
 	if (_clipmap_instance) {
 		// tidal height is controlled by the clipmap global position.
 		world_pos.y = get_tide_height();
@@ -279,7 +283,7 @@ void OceanArea::_bind_methods() {
 	// Ocean update mode
 	ClassDB::bind_method(D_METHOD("set_ocean_update", "mode"), &OceanArea::set_ocean_update);
 	ClassDB::bind_method(D_METHOD("get_ocean_update"), &OceanArea::get_ocean_update);
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "ocean_update", PROPERTY_HINT_ENUM, "Disabled,Camera"), "set_ocean_update", "get_ocean_update");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "ocean_update", PROPERTY_HINT_ENUM, "Disabled,Camera,Detailer Target"), "set_ocean_update", "get_ocean_update");
 
 	ClassDB::bind_method(D_METHOD("set_vertex_scaling", "scale"), &OceanArea::set_vertex_scaling);
 	ClassDB::bind_method(D_METHOD("get_vertex_scaling"), &OceanArea::get_vertex_scaling);
@@ -323,4 +327,5 @@ void OceanArea::_bind_methods() {
 	// Enum
 	BIND_ENUM_CONSTANT(DISABLED);
 	BIND_ENUM_CONSTANT(CAMERA);
+	BIND_ENUM_CONSTANT(DETAILER_TARGET);
 }

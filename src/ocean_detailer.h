@@ -64,6 +64,7 @@ public:
 
 	// Position update
 	void update_position(const Vector3 &p_global_position);
+	Vector3 get_snapped_position() const;
 
 	// Readonly getters for shader parameters (for inspector visibility)
 	float get_detail_viewport_texture_size() const;

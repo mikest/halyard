@@ -159,6 +159,15 @@ void OceanDetailer::update_position(const Vector3 &p_global_position) {
 	_camera->set_global_position(snapped_pos);
 }
 
+Vector3 OceanDetailer::get_snapped_position() const {
+	if (_camera == nullptr) {
+		return Vector3();
+	}
+
+	Vector3 pos = _camera->get_global_position();
+	return pos;
+}
+
 void OceanDetailer::_global_shader_update() {
 	RenderingServer *rs = RenderingServer::get_singleton();
 	ERR_FAIL_COND_MSG(rs == nullptr, "RenderingServer singleton not found. Cannot initialize global shader parameters for OceanDetailer.");
@@ -251,6 +260,7 @@ void OceanDetailer::_bind_methods() {
 
 	// Position update
 	ClassDB::bind_method(D_METHOD("update_position", "global_position"), &OceanDetailer::update_position);
+	ClassDB::bind_method(D_METHOD("get_snapped_position"), &OceanDetailer::get_snapped_position);
 
 	// Constants
 	BIND_CONSTANT(WAVE_CULL_MASK);
