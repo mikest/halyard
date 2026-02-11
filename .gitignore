@@ -8,7 +8,7 @@
 *.gdextension.uid
 #*.import
 bin/windows/*.ilk
-~*.dll
+~*.dll*
 
 # Ignore the built libraries
 bin/**/*dll
