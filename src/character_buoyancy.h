@@ -74,6 +74,8 @@ public:
 	void set_submerged_threshold(float threshold);
 	float get_submerged_threshold() const;
 
+	bool get_is_submerged() const;
+
 	float get_submerged_ratio() const;
 	uint64_t get_buoyancy_time() const;
 	float get_average_depth() const;

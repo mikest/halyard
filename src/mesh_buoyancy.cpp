@@ -11,6 +11,7 @@
 
 #include <godot_cpp/core/error_macros.hpp>
 
+#include "halyard_utils.h"
 #include "liquid_area.h"
 #include "mesh_buoyancy.h"
 
@@ -272,6 +273,8 @@ void MeshBuoyancy::update_statics(const Transform3D &collider_transform) {
 }
 
 void MeshBuoyancy::update_dynamics(const Transform3D &collider_global_transform, const Transform3D &collider_local_transform) {
+	// SCOPED_TIMER(MeshBuoyancy_UpdateDynamics);
+
 	_submerged_verts.clear();
 
 	// Prepare depth cache
