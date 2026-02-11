@@ -27,7 +27,6 @@ CharacterBuoyancy::CharacterBuoyancy() :
 	_debug_color = Color(0.0f, 0.8f, 1.0f, 0.2f);
 
 	// defaults for probe_buoyancy behavior
-	_probe_buoyancy.set_buoyancy(1.5f); // less dense as water
 	_probe_buoyancy.set_mass(150.0f); // kg
 }
 
@@ -142,6 +141,7 @@ LiquidArea *CharacterBuoyancy::get_liquid_area() const {
 
 void CharacterBuoyancy::set_buoyancy_material(const Ref<BuoyancyMaterial> &p_material) {
 	_buoyancy_material = p_material;
+	_probe_buoyancy.set_buoyancy_material(p_material);
 }
 
 Ref<BuoyancyMaterial> CharacterBuoyancy::get_buoyancy_material() const {
@@ -350,7 +350,6 @@ void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
 	ERR_FAIL_COND_MSG(mass <= 0.0f, "Mass must be positive to apply buoyancy.");
 
 	// update forces
-	_probe_buoyancy.set_buoyancy(_buoyancy_material->get_buoyancy());
 	_probe_buoyancy.update_forces(body->get_global_transform(), _gravity);
 
 	const auto probes = _probe_buoyancy.get_probes();

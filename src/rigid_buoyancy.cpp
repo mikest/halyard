@@ -226,6 +226,8 @@ CollisionShape3D *RigidBuoyancy::get_collider() const {
 
 void RigidBuoyancy::set_buoyancy_material(const Ref<BuoyancyMaterial> &p_material) {
 	_buoyancy_material = p_material;
+	_probe_buoyancy.set_buoyancy_material(p_material);
+	_mesh_buoyancy.set_buoyancy_material(p_material);
 	_set_dirty();
 }
 
@@ -307,6 +309,7 @@ bool RigidBuoyancy::get_ignore_waves() const {
 
 void RigidBuoyancy::set_use_buoyancy_scalar(bool p_use) {
 	_use_buoyancy_scalar = p_use;
+	_mesh_buoyancy.set_use_buoyancy_scalar(p_use);
 }
 
 bool RigidBuoyancy::get_use_buoyancy_scalar() const {
@@ -475,9 +478,8 @@ void RigidBuoyancy::apply_buoyancy_mesh_forces(RigidBody3D *body, float delta) {
 
 	const Vector3 gravity = body->get_gravity() * body->get_gravity_scale();
 
-	// Either use the buoyancy scalar or a volume based buoyancy.
+	// Set mass for buoyancy calculations
 	_mesh_buoyancy.set_mass(body->get_mass());
-	_mesh_buoyancy.set_buoyancy(_use_buoyancy_scalar ? _buoyancy_material->get_buoyancy() : INFINITY);
 	_mesh_buoyancy.update_forces(body->get_global_transform(), gravity);
 
 	// constants
@@ -534,7 +536,6 @@ void RigidBuoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) 
 
 	// update forces
 	const Vector3 gravity = body->get_gravity() * body->get_gravity_scale();
-	_probe_buoyancy.set_buoyancy(_buoyancy_material->get_buoyancy());
 	_probe_buoyancy.update_forces(body->get_global_transform(), gravity);
 
 	const auto probes = _probe_buoyancy.get_probes();

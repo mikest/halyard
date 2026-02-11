@@ -15,6 +15,8 @@
 #include <godot_cpp/variant/vector3.hpp>
 #include <godot_cpp/variant/vector4.hpp>
 
+#include "buoyancy_material.h"
+
 using namespace godot;
 
 class LiquidArea;
@@ -36,8 +38,9 @@ private:
 	// Configuration
 	LiquidArea *_liquid_area = nullptr;
 	Ref<ArrayMesh> _buoyancy_mesh;
+	Ref<BuoyancyMaterial> _buoyancy_material;
 	bool _ignore_waves = false;
-	float _buoyancy = 1.0f;
+	bool _use_buoyancy_scalar = true;
 	float _mass = 0.0f;
 
 	// Static mesh properties (calculated once by update_statics)
@@ -79,13 +82,14 @@ public:
 	void set_buoyancy_mesh(const Ref<ArrayMesh> &p_mesh);
 	Ref<ArrayMesh> get_buoyancy_mesh() const;
 
+	void set_buoyancy_material(const Ref<BuoyancyMaterial> &p_material);
+	Ref<BuoyancyMaterial> get_buoyancy_material() const;
+
 	void set_ignore_waves(bool p_ignore);
 	bool get_ignore_waves() const;
 
-	// Buoyancy is a scalar. A value of 1.0 means neutral buoyancy (displaces its own weight in fluid).
-	// if Buoyancy is INFINITY, then the buoyancy force is calculated solely from the submerged volume and liquid density, ignoring the buoyancy scalar.
-	void set_buoyancy(float p_buoyancy);
-	float get_buoyancy() const;
+	void set_use_buoyancy_scalar(bool p_use);
+	bool get_use_buoyancy_scalar() const;
 
 	// Mass in kg of the object. Used with buoyancy scalar to compute force.
 	void set_mass(float p_mass);

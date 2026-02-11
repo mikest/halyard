@@ -36,6 +36,14 @@ Ref<ArrayMesh> MeshBuoyancy::get_buoyancy_mesh() const {
 	return _buoyancy_mesh;
 }
 
+void MeshBuoyancy::set_buoyancy_material(const Ref<BuoyancyMaterial> &p_material) {
+	_buoyancy_material = p_material;
+}
+
+Ref<BuoyancyMaterial> MeshBuoyancy::get_buoyancy_material() const {
+	return _buoyancy_material;
+}
+
 void MeshBuoyancy::set_ignore_waves(bool p_ignore) {
 	_ignore_waves = p_ignore;
 }
@@ -44,12 +52,12 @@ bool MeshBuoyancy::get_ignore_waves() const {
 	return _ignore_waves;
 }
 
-void MeshBuoyancy::set_buoyancy(float p_buoyancy) {
-	_buoyancy = p_buoyancy;
+void MeshBuoyancy::set_use_buoyancy_scalar(bool p_use) {
+	_use_buoyancy_scalar = p_use;
 }
 
-float MeshBuoyancy::get_buoyancy() const {
-	return _buoyancy;
+bool MeshBuoyancy::get_use_buoyancy_scalar() const {
+	return _use_buoyancy_scalar;
 }
 
 void MeshBuoyancy::set_mass(float p_mass) {
@@ -363,10 +371,13 @@ void MeshBuoyancy::update_forces(const Transform3D &body_transform, const Vector
 		// Blend wave normal toward vertical based on submersion ratio
 		Vector3 wave_normal = _buoyancy_normal.lerp(Vector3(0, 1, 0), ratio);
 
-		// Scale force so that _buoyancy=1 is neutral, _buoyancy=0 sinks
+		// Scale force so that buoyancy=1 is neutral, buoyancy=0 sinks
 		float buoyancy_scalar = 1.0f;
-		if (_buoyancy != INFINITY && _mass > 0.0f && !Math::is_zero_approx(_mesh_volume)) {
-			buoyancy_scalar = _buoyancy * _mass / (liquid_density * _mesh_volume);
+		if (_use_buoyancy_scalar && _buoyancy_material.is_valid()) {
+			float buoyancy = _buoyancy_material->get_buoyancy();
+			if (buoyancy != INFINITY && _mass > 0.0f && !Math::is_zero_approx(_mesh_volume)) {
+				buoyancy_scalar = buoyancy * _mass / (liquid_density * _mesh_volume);
+			}
 		}
 
 		// F_B = buoyancy * rho * V_submerged * g
