@@ -8,6 +8,7 @@
 #include <godot_cpp/classes/fast_noise_lite.hpp>
 #include <godot_cpp/classes/material.hpp>
 #include <godot_cpp/classes/node3d.hpp>
+#include <godot_cpp/classes/physics_ray_query_parameters3d.hpp>
 #include <godot_cpp/classes/physics_server3d.hpp>
 #include <godot_cpp/classes/wrapped.hpp>
 #include <godot_cpp/core/binder_common.hpp>
@@ -59,6 +60,15 @@ class Rope : public GeometryInstance3D {
 	bool _dirty = true;
 	double _time = 0.0;
 	double _simulation_delta = 0.0;
+
+	// To avoid repeated heap allocations
+	// We store these as class members are reuse each physics frame
+	Ref<PhysicsRayQueryParameters3D> _ray_cast;
+	TypedArray<RID> _exclusion_list;
+	PackedVector3Array _verts;
+	PackedVector3Array _norms;
+	PackedVector2Array _uv1s;
+	LocalVector<float> _cum_lengths;
 
 	// rope geometry
 	float _rope_length = 4.0;
