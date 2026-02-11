@@ -5,28 +5,6 @@
 
 using namespace godot;
 
-void LiquidArea::_bind_methods() {
-	EXPORT_PROPERTY_RANGED(Variant::FLOAT, density, LiquidArea, "1,10000,1,hide_slider,suffix:kg/m^3");
-	EXPORT_PROPERTY(Variant::VECTOR3, current_speed, LiquidArea);
-
-	ClassDB::bind_method(D_METHOD("is_point_submerged", "global_point"), &LiquidArea::is_point_submerged);
-	ClassDB::bind_method(D_METHOD("get_liquid_transform", "global_point"), &LiquidArea::get_liquid_transform);
-
-	// Debug properties
-	ClassDB::bind_method(D_METHOD("set_show_debug", "show"), &LiquidArea::set_show_debug);
-	ClassDB::bind_method(D_METHOD("get_show_debug"), &LiquidArea::get_show_debug);
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "show_debug"), "set_show_debug", "get_show_debug");
-
-	ClassDB::bind_method(D_METHOD("set_debug_color", "color"), &LiquidArea::set_debug_color);
-	ClassDB::bind_method(D_METHOD("get_debug_color"), &LiquidArea::get_debug_color);
-	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "debug_color"), "set_debug_color", "get_debug_color");
-
-	ClassDB::bind_method(D_METHOD("_clear_sampled_transforms"), &LiquidArea::_clear_sampled_transforms);
-
-	// virtuals
-	GDVIRTUAL_BIND(update_transforms_for_points, "global_points", "transforms")
-}
-
 LiquidArea::LiquidArea() :
 		NodeDebug(Object::cast_to<Node>(this)) {
 	_set_debug_owner_node(this);
@@ -45,6 +23,10 @@ void LiquidArea::_notification(int p_what) {
 		case NOTIFICATION_READY: {
 			set_process_internal(true);
 			set_physics_process_internal(true);
+		} break;
+
+		case NOTIFICATION_ENTER_TREE: {
+			_set_debug_owner_node(this);
 		} break;
 
 		case NOTIFICATION_EXIT_TREE: {
@@ -89,30 +71,23 @@ LiquidArea *LiquidArea::get_liquid_area(SceneTree *p_tree) {
 }
 
 bool LiquidArea::is_point_submerged(const Vector3 &global_point) const {
+	ERR_FAIL_COND_V_MSG(!is_inside_tree(), false, "is_point_submerged() called from outside scene tree.");
+
 	Transform3D liquid_transform = get_global_transform();
 	Vector3 local_point = liquid_transform.affine_inverse().xform(global_point);
 	return local_point.y < 0.0f;
 }
 
 Transform3D LiquidArea::get_liquid_transform(const Vector3 &global_point) const {
-	if (GDVIRTUAL_IS_OVERRIDDEN(update_transforms_for_points)) {
-		TypedArray<Transform3D> ret_val;
-		PackedVector3Array points;
-		points.append(global_point);
+	ERR_FAIL_COND_V_MSG(!is_inside_tree(), Transform3D(), "get_liquid_transform() called from outside scene tree.");
 
-		GDVIRTUAL_CALL(update_transforms_for_points, points, ret_val);
+	TypedArray<Transform3D> ret_val;
+	PackedVector3Array points;
+	points.append(global_point);
 
-		// accumulate sampled transform
-		if (_show_debug) {
-			const_cast<LiquidArea *>(this)->_sampled_transforms.append(ret_val[0]);
-			const_cast<LiquidArea *>(this)->set_debug_mesh_dirty();
-		}
+	update_transforms_for_points(points, ret_val);
 
-		return ret_val[0];
-	} else {
-		// Fast return if not overridden: just return the area's global transform.
-		return get_global_transform();
-	}
+	return ret_val.size() > 0 ? ret_val[0] : get_global_transform();
 }
 
 void LiquidArea::update_transforms_for_points(const PackedVector3Array &global_points,
@@ -131,19 +106,33 @@ void LiquidArea::update_transforms_for_points(const PackedVector3Array &global_p
 			const_cast<LiquidArea *>(this)->set_debug_mesh_dirty();
 		}
 	} else {
-		// Default implementation: fill all transforms with the area's global transform.
-		int point_count = global_points.size();
-		r_transforms.resize(point_count);
-		Transform3D area_transform = get_global_transform();
-		for (int i = 0; i < point_count; i++) {
-			r_transforms[i] = area_transform;
-		}
+		_internal_update_transforms_for_points(global_points, r_transforms);
 
 		// accumulate one, as they are all the same
 		if (_show_debug) {
-			const_cast<LiquidArea *>(this)->_sampled_transforms.append(area_transform);
+			int point_count = global_points.size();
+			for (int i = 0; i < point_count; i++) {
+				Transform3D area_transform = r_transforms[i];
+				const_cast<LiquidArea *>(this)->_sampled_transforms.append(area_transform);
+			}
 			const_cast<LiquidArea *>(this)->set_debug_mesh_dirty();
 		}
+	}
+}
+
+void LiquidArea::_internal_update_transforms_for_points(const PackedVector3Array &global_points, TypedArray<Transform3D> r_transforms) const {
+	// Default implementation: fill all transforms with the area's global transform.
+	int point_count = global_points.size();
+	r_transforms.resize(point_count);
+	Transform3D area_transform = get_global_transform();
+	for (int i = 0; i < point_count; i++) {
+		r_transforms[i] = area_transform;
+	}
+
+	// accumulate one, as they are all the same
+	if (_show_debug) {
+		const_cast<LiquidArea *>(this)->_sampled_transforms.append(area_transform);
+		const_cast<LiquidArea *>(this)->set_debug_mesh_dirty();
 	}
 }
 
@@ -245,3 +234,25 @@ void LiquidArea::_update_debug_mesh() {
 }
 
 #pragma endregion
+
+void LiquidArea::_bind_methods() {
+	EXPORT_PROPERTY_RANGED(Variant::FLOAT, density, LiquidArea, "1,10000,1,hide_slider,suffix:kg/m^3");
+	EXPORT_PROPERTY(Variant::VECTOR3, current_speed, LiquidArea);
+
+	ClassDB::bind_method(D_METHOD("is_point_submerged", "global_point"), &LiquidArea::is_point_submerged);
+	ClassDB::bind_method(D_METHOD("get_liquid_transform", "global_point"), &LiquidArea::get_liquid_transform);
+
+	// Debug properties
+	ClassDB::bind_method(D_METHOD("set_show_debug", "show"), &LiquidArea::set_show_debug);
+	ClassDB::bind_method(D_METHOD("get_show_debug"), &LiquidArea::get_show_debug);
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "show_debug"), "set_show_debug", "get_show_debug");
+
+	ClassDB::bind_method(D_METHOD("set_debug_color", "color"), &LiquidArea::set_debug_color);
+	ClassDB::bind_method(D_METHOD("get_debug_color"), &LiquidArea::get_debug_color);
+	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "debug_color"), "set_debug_color", "get_debug_color");
+
+	ClassDB::bind_method(D_METHOD("_clear_sampled_transforms"), &LiquidArea::_clear_sampled_transforms);
+
+	// virtuals
+	GDVIRTUAL_BIND(update_transforms_for_points, "global_points", "transforms")
+}

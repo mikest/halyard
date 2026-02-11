@@ -12,6 +12,8 @@ RigidBuoyancy = "./icons/RigidBuoyancy.svg"
 CharacterBuoyancy = "./icons/CharacterBuoyancy.svg"
 LiquidArea = "./icons/LiquidArea.svg"
 BuoyancyMaterial = "./icons/BuoyancyMaterial.svg"
+ClipMapInstance = "./icons/ClipMapInstance.svg"
+OceanDetailer = "./icons/OceanDetailer.svg"
 
 
 [libraries]

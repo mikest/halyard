@@ -23,12 +23,10 @@ class CharacterBuoyancy : public Node, protected NodeDebug {
 	bool _apply_forces = true;
 	bool _ignore_waves = false;
 
-	float _submerged_linear_drag = 3.0f; // drag when submerged should be high
-	Vector3 _linear_drag_scale = Vector3(1.0f, 1.0f, 1.0f);
-
 	Ref<BuoyancyMaterial> _buoyancy_material;
 	ProbeBuoyancy _probe_buoyancy;
-	float _last_submerged_ratio = 0.0f;
+	float _last_submerged_ratio = INFINITY;
+	float _submerged_threshold = 0.0f;
 
 	uint64_t _buoyancy_time = 0; // us
 	Vector3 _gravity = Vector3(0, -9.81, 0);
@@ -72,6 +70,9 @@ public:
 
 	void set_gravity(const Vector3 &gravity);
 	Vector3 get_gravity() const;
+
+	void set_submerged_threshold(float threshold);
+	float get_submerged_threshold() const;
 
 	float get_submerged_ratio() const;
 	uint64_t get_buoyancy_time() const;

@@ -71,6 +71,7 @@ float RopeAnchorPositions::get_position(uint64_t idx, const Rope *rope) const {
 Transform3D RopeAnchorPositions::get_transform(uint64_t idx, const Rope *rope) const {
 	Transform3D ret_val;
 	ERR_FAIL_NULL_V_MSG(rope, ret_val, "Missing rope");
+	ERR_FAIL_COND_V_MSG(!rope->is_inside_tree(), ret_val, "Rope must be inside the scene tree to get anchor transforms.");
 
 	if (GDVIRTUAL_IS_OVERRIDDEN(get_transform)) {
 		GDVIRTUAL_CALL(get_transform, idx, rope, ret_val);

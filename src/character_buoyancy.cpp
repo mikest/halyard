@@ -95,7 +95,9 @@ void CharacterBuoyancy::_notification(int p_what) {
 		// velocity is applied in the internal physics process so that submerged is updated
 		// for derived classes before normal physics process
 		case NOTIFICATION_INTERNAL_PHYSICS_PROCESS: {
-			if (!Engine::get_singleton()->is_editor_hint() && is_node_ready()) {
+			if (!Engine::get_singleton()->is_editor_hint() &&
+					is_node_ready() &&
+					_probe_buoyancy.get_liquid_area() != nullptr) {
 				uint64_t time = Time::get_singleton()->get_ticks_usec();
 
 				// optionally apply them
@@ -105,9 +107,11 @@ void CharacterBuoyancy::_notification(int p_what) {
 					apply_buoyancy_velocity(delta);
 				}
 
-				// Check if submerged changed and emit signal. We only track entering/exiting water as the ratio can change on every frame.
+				// Check if submerged changed and emit signal. We track crossing the threshold in either direction.
 				float current_ratio = get_submerged_ratio();
-				if (Math::is_zero_approx(current_ratio) != Math::is_zero_approx(_last_submerged_ratio)) {
+				bool was_submerged = _last_submerged_ratio > _submerged_threshold;
+				bool is_submerged = current_ratio > _submerged_threshold;
+				if (was_submerged != is_submerged) {
 					emit_signal("submerged_changed");
 				}
 				_last_submerged_ratio = current_ratio;
@@ -146,6 +150,7 @@ Ref<BuoyancyMaterial> CharacterBuoyancy::get_buoyancy_material() const {
 
 void CharacterBuoyancy::set_probes(const PackedVector3Array &local_probes) {
 	_probe_buoyancy.set_probes(local_probes);
+	set_debug_mesh_dirty();
 }
 
 PackedVector3Array CharacterBuoyancy::get_probes() const {
@@ -195,6 +200,7 @@ float CharacterBuoyancy::get_submerged_ratio() const {
 
 float CharacterBuoyancy::get_average_depth() const {
 	CharacterBody3D *body = Object::cast_to<CharacterBody3D>(get_parent());
+	ERR_FAIL_COND_V_MSG(!is_inside_tree(), 0.0f, "get_average_depth() called from outside scene tree.");
 
 	if (!body) {
 		return 0.0f;
@@ -224,6 +230,14 @@ float CharacterBuoyancy::get_average_depth() const {
 	}
 
 	return total_depth / (float)probe_count;
+}
+
+void CharacterBuoyancy::set_submerged_threshold(float threshold) {
+	_submerged_threshold = threshold;
+}
+
+float CharacterBuoyancy::get_submerged_threshold() const {
+	return _submerged_threshold;
 }
 
 void CharacterBuoyancy::set_show_debug(bool show) {
@@ -321,6 +335,7 @@ void CharacterBuoyancy::_update_last_transforms() {
 void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
 	CharacterBody3D *body = Object::cast_to<CharacterBody3D>(get_parent());
 
+	ERR_FAIL_COND_MSG(!is_inside_tree(), "apply_buoyancy_velocity() called from outside scene tree.");
 	ERR_FAIL_NULL_MSG(body, "CharacterBuoyancy must be a child of a CharacterBody3D to apply buoyancy.");
 	ERR_FAIL_COND_MSG(delta <= 0.0f, "Delta time must be positive to apply buoyancy.");
 	ERR_FAIL_COND_MSG(!_buoyancy_material.is_valid(), "Buoyancy material must be valid to apply mesh buoyancy forces.");
@@ -402,10 +417,11 @@ void CharacterBuoyancy::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "ignore_waves"), "set_ignore_waves", "get_ignore_waves");
 
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "mass", PROPERTY_HINT_NONE, "kg"), "set_mass", "get_mass");
-	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "buoyancy", PROPERTY_HINT_RANGE, "0,100,0.1"), "set_buoyancy", "get_buoyancy");
-	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "submerged_linear_drag", PROPERTY_HINT_RANGE, "0,10,0.1"), "set_submerged_linear_drag", "get_submerged_linear_drag");
-	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "linear_drag_scale"), "set_linear_drag_scale", "get_linear_drag_scale");
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "gravity"), "set_gravity", "get_gravity");
+
+	ClassDB::bind_method(D_METHOD("set_submerged_threshold", "threshold"), &CharacterBuoyancy::set_submerged_threshold);
+	ClassDB::bind_method(D_METHOD("get_submerged_threshold"), &CharacterBuoyancy::get_submerged_threshold);
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "submerged_threshold", PROPERTY_HINT_RANGE, "0.0,1.0,0.01"), "set_submerged_threshold", "get_submerged_threshold");
 
 	// Debug
 	ADD_GROUP("Debug", "");

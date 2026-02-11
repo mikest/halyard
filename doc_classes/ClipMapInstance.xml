@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="ClipMapInstance" inherits="Node3D" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		A Node3D that manages the visual representation of a wandering clipmap.
+	</brief_description>
+	<description>
+		ClipMapInstance creates and manages a set of mesh tiles arranged in a clipmap pattern. It automatically generates LOD rings around a center point, with proper seam handling between LOD levels.
+		The clipmap can be repositioned each frame to follow a target (like a camera), creating the illusion of an infinite surface.
+		Configure the [member tile_size], [member lod_levels], [member vertex_scaling], and [member material] properties, then call [method update_position] each frame.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="rebuild">
+			<return type="void" />
+			<description>
+				Forces a complete rebuild of all tile meshes. Call this after changing [member tile_size] or [member lod_levels].
+			</description>
+		</method>
+		<method name="update_position">
+			<return type="void" />
+			<param index="0" name="target_position" type="Vector3" />
+			<description>
+				Updates the clipmap center to follow the given world position. Only the X and Z components are used; the Y position is preserved from the ClipMapInstance's own position.
+				Call this each frame with the camera or player position.
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="lod_levels" type="int" setter="set_lod_levels" getter="get_lod_levels" default="3">
+			The number of LOD rings to generate around the center. More levels extend the visible range but increase mesh count.
+		</member>
+		<member name="tile_size" type="int" setter="set_tile_size" getter="get_tile_size" default="32">
+			The size of each tile in quads. Must be an even number for proper LOD seam generation. Larger tiles mean fewer draw calls but coarser detail.
+		</member>
+		<member name="vertex_scaling" type="float" setter="set_vertex_scaling" getter="get_vertex_scaling" default="1.0">
+			Scale factor applied to all tiles. Affects the world-space size of each vertex step. Use this to control the overall density of the mesh.
+		</member>
+	</members>
+</class>

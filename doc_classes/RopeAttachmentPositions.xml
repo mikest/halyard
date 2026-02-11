@@ -1,7 +1,5 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<class name="RopeAttachmentPositions" inherits="RopeAttachmentsBase"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="RopeAttachmentPositions" inherits="RopeAttachmentsBase" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
 	</brief_description>
 	<description>
@@ -47,11 +45,9 @@
 		</method>
 	</methods>
 	<members>
-		<member name="position_count" type="int" setter="set_position_count"
-			getter="get_position_count" default="0">
+		<member name="position_count" type="int" setter="set_position_count" getter="get_position_count" default="0">
 		</member>
-		<member name="spacing" type="int" setter="set_spacing" getter="get_spacing"
-			enum="RopePositions.Spacing" default="0">
+		<member name="spacing" type="int" setter="set_spacing" getter="get_spacing" enum="RopePositions.Spacing" default="0">
 		</member>
 	</members>
 	<constants>

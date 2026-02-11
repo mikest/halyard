@@ -33,6 +33,13 @@ Rope::Rope() {
 	auto ps = PhysicsServer3D::get_singleton();
 	_physics_body = ps->body_create();
 	ps->body_set_mode(_physics_body, PhysicsServer3D::BODY_MODE_STATIC);
+
+	// Initialize cached objects for reuse
+	_ray_cast.instantiate();
+	_exclusion_list.append(_physics_body); // exclude self
+	_ray_cast->set_exclude(_exclusion_list);
+	_ray_cast->set_collide_with_areas(false);
+	_ray_cast->set_collide_with_bodies(true);
 }
 
 Rope::Rope(const Rope &other) {
@@ -385,6 +392,8 @@ void Rope::_rebuild_rope() {
 
 	// grow
 	auto segment_length = _rope_length / (particle_count - 1);
+	float jitter_offset = segment_length / 10.0;
+	Vector3 direction_segment = direction * segment_length;
 	int insert_idx = 0;
 	while (_particles.size() < particle_count) {
 		Particle particle;
@@ -393,15 +402,15 @@ void Rope::_rebuild_rope() {
 		// in a direction perfectly aligned with the gravity vector.
 		//
 		// If the row grows too slowly "stacking" can still occur as the stiffness will stablize it.
-		Vector3 jitter_prev = (_jitter_initial_position ? _small_offset(segment_length / 10.0) : Vector3());
-		Vector3 jitter_cur = (_jitter_initial_position ? _small_offset(segment_length / 10.0) : Vector3());
+		Vector3 jitter_prev = (_jitter_initial_position ? _small_offset(jitter_offset) : Vector3());
+		Vector3 jitter_cur = (_jitter_initial_position ? _small_offset(jitter_offset) : Vector3());
 		particle.pos_prev = current_pos + jitter_prev;
 		particle.pos_cur = current_pos + jitter_cur;
 		particle.attached = false;
 
 		// for next particle
 		auto jitter_dir = (direction + (_jitter_initial_position ? _small_offset(0.1) : Vector3())).normalized();
-		current_pos = current_pos + (direction * segment_length);
+		current_pos = current_pos + direction_segment;
 
 		if (_grow_from == Start)
 			_particles.insert(insert_idx++, particle);
@@ -1034,17 +1043,20 @@ void Rope::_calculate_links_for_particles(LocalVector<Transform3D> &links) const
 void Rope::_emit_tube(LocalVector<Transform3D> &frames, int start, int end, int sides, float radius, PackedVector3Array &V, PackedVector3Array &N, PackedVector2Array &UV1) {
 	// build cumulative length along the sampled positions so we can map V smoothly.
 	// rope can be stretchy so we can't just use rope_length here
-	LocalVector<float> cum_lengths;
-	cum_lengths.push_back(0.0);
+	// Reuse cached vector to avoid allocation
+	_cum_lengths.clear();
+	_cum_lengths.push_back(0.0);
 	for (int k = 1; k < frames.size(); k++)
-		cum_lengths.push_back(cum_lengths[k - 1] + frames[k - 1].origin.distance_to(frames[k].origin));
+		_cum_lengths.push_back(_cum_lengths[k - 1] + frames[k - 1].origin.distance_to(frames[k].origin));
 
-	float total_length = cum_lengths[cum_lengths.size() - 1];
+	float total_length = _cum_lengths[_cum_lengths.size() - 1];
 	if (total_length <= 0.0)
 		total_length = 1.0;
 
 	// number of V repeats along the rope is based on rope width and twist factor
 	const float repeats = get_rope_length() / get_rope_width() * get_rope_twist();
+	float inv_total_length = 1.0f / total_length;
+	float inv_sides = 1.0f / float(sides);
 
 	// NOTE: run to the second to the last frame as we emit 2 frames at a time.
 	for (int i = 0; i < frames.size() - 1; i++) {
@@ -1056,14 +1068,14 @@ void Rope::_emit_tube(LocalVector<Transform3D> &frames, int start, int end, int 
 		const auto &next_norm = frames[i + 1].basis.get_column(X);
 		const auto &next_binorm = frames[i + 1].basis.get_column(Z);
 
-		const auto v = (cum_lengths[i] / total_length) * repeats;
-		const auto next_v = (cum_lengths[i + 1] / total_length) * repeats;
+		const auto v = (_cum_lengths[i] * inv_total_length) * repeats;
+		const auto next_v = (_cum_lengths[i + 1] * inv_total_length) * repeats;
 
 		// loop one extra to close the seam (repeat first vertex)
 		// for the first and the last row.
 		for (int j = sides; j >= 0; j--) {
 			const auto wrap_j = j % sides;
-			const auto angle = Math_TAU * float(wrap_j) / float(sides);
+			const auto angle = Math_TAU * float(wrap_j) * inv_sides;
 			const auto ca = cos(angle);
 			const auto sa = sin(angle);
 
@@ -1074,7 +1086,7 @@ void Rope::_emit_tube(LocalVector<Transform3D> &frames, int start, int end, int 
 			const auto next_normal = next_offset.normalized();
 
 			// U goes 0..1 around the tube; use j so the final seam vertex reaches 1.0;
-			const auto u = float(j) / float(sides);
+			const auto u = float(j) * inv_sides;
 
 			V.push_back(pos + offset);
 			N.push_back(normal);
@@ -1265,31 +1277,32 @@ void Rope::_draw_rope() {
 
 			// N-1 chain links per particles
 			auto count = _links.size();
+			Vector3 scale_vec(diameter, diameter, diameter);
 			for (int idx = 0; idx < count; idx++) {
 				RID instance = _instances[idx];
 				Transform3D xform = _links[idx];
 
-				xform.scale_basis(Vector3(diameter, diameter, diameter));
+				xform.scale_basis(scale_vec);
 				rs->instance_set_transform(instance, xform);
 			}
 
 			// render gen mesh
 		} else {
-			PackedVector3Array verts, norms;
-			PackedVector2Array uv1s;
+			// clear previous set
+			_verts.clear();
+			_norms.clear();
+			_uv1s.clear();
 
-			_emit_endcap(true, _frames[0], sides, radius, verts, norms, uv1s);
-			_emit_tube(_frames, 0, last_frame, sides, radius, verts, norms, uv1s);
-			_emit_endcap(false, _frames[last_frame], sides, radius, verts, norms, uv1s);
+			_emit_endcap(true, _frames[0], sides, radius, _verts, _norms, _uv1s);
+			_emit_tube(_frames, 0, last_frame, sides, radius, _verts, _norms, _uv1s);
+			_emit_endcap(false, _frames[last_frame], sides, radius, _verts, _norms, _uv1s);
 
-			// generate the catmull interpolation for the segments.
-			Array arrays;
-			arrays.resize(Mesh::ARRAY_MAX);
-			arrays.fill(Variant());
-			arrays[Mesh::ARRAY_VERTEX] = verts;
-			arrays[Mesh::ARRAY_NORMAL] = norms;
-			arrays[Mesh::ARRAY_TEX_UV] = uv1s;
-			_generated_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLE_STRIP, arrays);
+			Array mesh_arrays;
+			mesh_arrays.resize(Mesh::ARRAY_MAX);
+			mesh_arrays[Mesh::ARRAY_VERTEX] = _verts;
+			mesh_arrays[Mesh::ARRAY_NORMAL] = _norms;
+			mesh_arrays[Mesh::ARRAY_TEX_UV] = _uv1s;
+			_generated_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLE_STRIP, mesh_arrays);
 			_generated_mesh->surface_set_material(0, get_material());
 		}
 
@@ -1483,6 +1496,12 @@ void Rope::_apply_forces() {
 		probe_volume = rope_volume / _particles.size();
 	}
 
+	// Pre-calculate constants used in the loop
+	float rope_width = get_rope_width();
+	float rope_radius = rope_width * 0.5f;
+	Vector3 gravity_scaled = _gravity * _gravity_scale;
+	float pi_r_squared = Math_PI * rope_radius * rope_radius;
+
 	for (Particle &p : _particles) {
 		Vector3 total_acceleration = Vector3(0, 0, 0);
 
@@ -1572,15 +1591,8 @@ void Rope::_apply_constraints() {
 
 	// set up the raycast parameters
 	if (_collision_mask) {
-		Ref<PhysicsRayQueryParameters3D> rq;
-		rq.instantiate();
-
-		TypedArray<RID> exclude;
-		exclude.append(_physics_body);
-		rq->set_exclude(exclude);
-		rq->set_collision_mask(_collision_mask);
-		rq->set_collide_with_areas(false);
-		rq->set_collide_with_bodies(true);
+		// Reuse member ray query to avoid allocation every frame
+		_ray_cast->set_collision_mask(_collision_mask);
 
 		float friction = (1.0 - Math::clamp(get_friction(), 0.0f, 1.0f));
 		float radius = get_rope_width() * 0.5f;
@@ -1596,10 +1608,10 @@ void Rope::_apply_constraints() {
 			if (length < CMP_EPSILON)
 				continue;
 
-			rq->set_from(from);
-			rq->set_to(to);
+			_ray_cast->set_from(from);
+			_ray_cast->set_to(to);
 
-			Dictionary result = dss->intersect_ray(rq);
+			Dictionary result = dss->intersect_ray(_ray_cast);
 			if (!result.is_empty()) {
 				// move the particle to the hit position
 				Vector3 position = result["position"];
@@ -1628,6 +1640,7 @@ void Rope::_update_collision_shapes() {
 
 	for (int idx = 0; idx < count; idx++) {
 		// update the shape transform to match the link position
+		// NOTE: This is *expensive* to update
 		ps->body_set_shape_transform(_physics_body, idx, _links[idx]);
 	}
 }

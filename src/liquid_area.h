@@ -7,6 +7,7 @@ Any Buoyancy system is considered to be submerged if it is below the origin in t
 
 A derived class can override get_transforms_for_points to provide a more complex liquid surface, such as waves.
 */
+#pragma once
 
 #include <godot_cpp/classes/area3d.hpp>
 
@@ -45,6 +46,8 @@ protected:
 	void _destroy_debug_mesh() override;
 	void _update_debug_mesh() override;
 
+	virtual void _internal_update_transforms_for_points(const PackedVector3Array &global_points, TypedArray<Transform3D> r_transforms) const;
+
 public:
 	LiquidArea();
 	~LiquidArea() override;
@@ -73,7 +76,7 @@ public:
 	// By default, this just fills in the area transform for all points.
 	// Returns true on success.
 	GDVIRTUAL2C(update_transforms_for_points, const PackedVector3Array &, TypedArray<Transform3D>);
-	virtual void update_transforms_for_points(const PackedVector3Array &global_points, TypedArray<Transform3D> r_transforms) const;
+	void update_transforms_for_points(const PackedVector3Array &global_points, TypedArray<Transform3D> r_transforms) const;
 
 	// called at the end of the frame to clear the previous frames sampled transforms
 	void _clear_sampled_transforms();

@@ -109,14 +109,14 @@ void RigidBuoyancy::_notification(int p_what) {
 		} break;
 
 		case NOTIFICATION_ENTER_TREE: {
-			if (Engine::get_singleton()->is_editor_hint() == false) {
-				if (_liquid_area == nullptr) {
-					SceneTree *tree = get_tree();
-					_liquid_area = LiquidArea::get_liquid_area(tree);
-					_probe_buoyancy.set_liquid_area(_liquid_area);
-					_mesh_buoyancy.set_liquid_area(_liquid_area);
-				}
+			// if (Engine::get_singleton()->is_editor_hint() == false) {
+			if (_liquid_area == nullptr) {
+				SceneTree *tree = get_tree();
+				_liquid_area = LiquidArea::get_liquid_area(tree);
+				_probe_buoyancy.set_liquid_area(_liquid_area);
+				_mesh_buoyancy.set_liquid_area(_liquid_area);
 			}
+			// }
 		} break;
 
 		case NOTIFICATION_EXIT_TREE: {
@@ -137,12 +137,9 @@ void RigidBuoyancy::_notification(int p_what) {
 		} break;
 
 		case NOTIFICATION_INTERNAL_PHYSICS_PROCESS: {
-			if (!Engine::get_singleton()->is_editor_hint() && is_node_ready()) {
-				RigidBody3D *body = Object::cast_to<RigidBody3D>(get_parent());
-				if (body && !body->is_freeze_enabled()) {
-					uint64_t time = Time::get_singleton()->get_ticks_usec();
-
-					// always update submerged state
+			if (is_node_ready()) {
+				if (Engine::get_singleton()->is_editor_hint()) {
+					// update the probe transforms so we can see the sampled locations in the editor
 					if (_buoyancy_mode == BUOYANCY_PROBES) {
 						_update_last_probe_transforms();
 					} else {
@@ -150,26 +147,43 @@ void RigidBuoyancy::_notification(int p_what) {
 						_update_dynamics();
 					}
 
-					// optionally apply them
-					if (_apply_forces) {
-						float delta = get_physics_process_delta_time();
+				} else {
+					// in game
+					RigidBody3D *body = Object::cast_to<RigidBody3D>(get_parent());
+					if (body && !body->is_freeze_enabled()) {
+						uint64_t time = Time::get_singleton()->get_ticks_usec();
+
+						// always update submerged state
 						if (_buoyancy_mode == BUOYANCY_PROBES) {
-							apply_buoyancy_probe_forces(body, delta);
+							_update_last_probe_transforms();
 						} else {
-							apply_buoyancy_mesh_forces(body, delta);
+							// recalc dynamics
+							_update_dynamics();
 						}
-					}
 
-					// Check if submerged changed and emit signal. We only track entering/exiting water as the ratio can change on every frame.
-					float current_ratio = get_submerged_ratio();
-					if (Math::is_zero_approx(current_ratio) != Math::is_zero_approx(_last_submerged_ratio)) {
-						emit_signal("submerged_changed");
-					}
-					_last_submerged_ratio = current_ratio;
+						// optionally apply them
+						if (_apply_forces) {
+							float delta = get_physics_process_delta_time();
+							if (_buoyancy_mode == BUOYANCY_PROBES) {
+								apply_buoyancy_probe_forces(body, delta);
+							} else {
+								apply_buoyancy_mesh_forces(body, delta);
+							}
+						}
 
-					// update time taken
-					uint64_t elapsed = Time::get_singleton()->get_ticks_usec() - time;
-					_buoyancy_time = elapsed;
+						// Check if submerged changed and emit signal. We track crossing the threshold in either direction.
+						float current_ratio = get_submerged_ratio();
+						bool was_submerged = _last_submerged_ratio > _submerged_threshold;
+						bool is_submerged = current_ratio > _submerged_threshold;
+						if (was_submerged != is_submerged) {
+							emit_signal("submerged_changed");
+						}
+						_last_submerged_ratio = current_ratio;
+
+						// update time taken
+						uint64_t elapsed = Time::get_singleton()->get_ticks_usec() - time;
+						_buoyancy_time = elapsed;
+					}
 				}
 			}
 		} break;
@@ -295,6 +309,14 @@ void RigidBuoyancy::set_use_buoyancy_scalar(bool p_use) {
 
 bool RigidBuoyancy::get_use_buoyancy_scalar() const {
 	return _use_buoyancy_scalar;
+}
+
+void RigidBuoyancy::set_submerged_threshold(float threshold) {
+	_submerged_threshold = threshold;
+}
+
+float RigidBuoyancy::get_submerged_threshold() const {
+	return _submerged_threshold;
 }
 
 // Debug
@@ -439,6 +461,7 @@ void RigidBuoyancy::apply_buoyancy_mesh_forces(RigidBody3D *body, float delta) {
 	if (!body)
 		return;
 
+	ERR_FAIL_COND_MSG(!is_inside_tree(), "apply_buoyancy_mesh_forces() called from outside scene tree.");
 	ERR_FAIL_COND_MSG(!_buoyancy_material.is_valid(), "Buoyancy material must be valid to apply mesh buoyancy forces.");
 	ERR_FAIL_COND_EDMSG(delta <= 0.0f, "Delta time must be positive to apply buoyancy.");
 	ERR_FAIL_COND_MSG(_buoyancy_mode != BUOYANCY_COLLIDER, "Buoyancy mode must be set to BUOYANCY_COLLIDER to apply mesh buoyancy forces.");
@@ -494,6 +517,7 @@ void RigidBuoyancy::_update_last_probe_transforms() {
 }
 
 void RigidBuoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) {
+	ERR_FAIL_COND_MSG(!is_inside_tree(), "apply_buoyancy_probe_forces() called from outside scene tree.");
 	ERR_FAIL_NULL_MSG(body, "CharacterBuoyancy must be a child of a CharacterBody3D to apply buoyancy.");
 	ERR_FAIL_COND_MSG(delta <= 0.0f, "Delta time must be positive to apply buoyancy.");
 
@@ -730,6 +754,10 @@ void RigidBuoyancy::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_use_buoyancy_scalar", "use_buoyancy_scalar"), &RigidBuoyancy::set_use_buoyancy_scalar);
 	ClassDB::bind_method(D_METHOD("get_use_buoyancy_scalar"), &RigidBuoyancy::get_use_buoyancy_scalar);
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "use_buoyancy_scalar"), "set_use_buoyancy_scalar", "get_use_buoyancy_scalar");
+
+	ClassDB::bind_method(D_METHOD("set_submerged_threshold", "threshold"), &RigidBuoyancy::set_submerged_threshold);
+	ClassDB::bind_method(D_METHOD("get_submerged_threshold"), &RigidBuoyancy::get_submerged_threshold);
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "submerged_threshold", PROPERTY_HINT_RANGE, "0.0,1.0,0.01"), "set_submerged_threshold", "get_submerged_threshold");
 
 	// Read only
 	ClassDB::bind_method(D_METHOD("get_submerged_volume"), &RigidBuoyancy::get_submerged_volume);

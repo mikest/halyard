@@ -9,8 +9,10 @@
  * MIT License.
  */
 
-#include "mesh_buoyancy.h"
+#include <godot_cpp/core/error_macros.hpp>
+
 #include "liquid_area.h"
+#include "mesh_buoyancy.h"
 
 using namespace godot;
 using namespace halyard;

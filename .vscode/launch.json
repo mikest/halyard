@@ -21,6 +21,7 @@
             "environment": [],
             "console": "internalConsole",
             "visualizerFile": "${workspaceFolder}/platform/windows/godot.natvis",
+            "symbolSearchPath": "${workspaceFolder}/../../../godot/bin",
             "preLaunchTask": "build"
         },
         {
@@ -32,7 +33,8 @@
             // To run the project instead of editing it, remove the "--editor" argument.
             "args": [
                 "--play",
-                "--remote-debug", "tcp://127.0.0.1:6007",
+                "--remote-debug",
+                "tcp://127.0.0.1:6007",
                 "--path",
                 "${workspaceFolder}/../.." // assumed to live in addons
             ],
@@ -41,6 +43,7 @@
             "environment": [],
             "console": "internalConsole",
             "visualizerFile": "${workspaceFolder}/platform/windows/godot.natvis",
+            "symbolSearchPath": "${workspaceFolder}/../../../godot/bin",
             "preLaunchTask": "build"
         }
     ]

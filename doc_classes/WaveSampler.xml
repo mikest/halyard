@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="WaveSampler" inherits="Resource" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		A Resource that samples wave height and normal from shader material parameters.
+	</brief_description>
+	<description>
+		WaveSampler provides wave sampling functionality that emulates shader-based wave calculations for physics purposes. It can read wave parameters from a [ShaderMaterial] or have them set manually.
+		This allows consistent wave behavior between visual rendering and physics simulation. The sampler uses a height map texture with dual-layer mixing to produce natural-looking wave patterns.
+		WaveSampler is used by [Ocean] but can also be used independently for other wave-based systems.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="get_detail_map_image" qualifiers="const">
+			<return type="Image" />
+			<description>
+			</description>
+		</method>
+		<method name="get_height_map_image" qualifiers="const">
+			<return type="Image" />
+			<description>
+			</description>
+		</method>
+		<method name="get_wave_height_xz" qualifiers="const">
+			<return type="float" />
+			<param index="0" name="world_xz" type="Vector2" />
+			<param index="1" name="time" type="float" />
+			<description>
+				Returns the wave height displacement at the given world XZ position for the specified time. The returned value is the vertical offset from the base water level.
+			</description>
+		</method>
+		<method name="get_wave_normal_xz" qualifiers="const">
+			<return type="Vector3" />
+			<param index="0" name="world_xz" type="Vector2" />
+			<param index="1" name="time" type="float" />
+			<description>
+				Returns the surface normal at the given world XZ position for the specified time. The normal is calculated using finite differences and may be softened based on [member normal_softness].
+			</description>
+		</method>
+		<method name="get_wave_transform" qualifiers="const">
+			<return type="Transform3D" />
+			<param index="0" name="world_pos" type="Vector3" />
+			<param index="1" name="base_y" type="float" />
+			<param index="2" name="ocean_global_transform" type="Transform3D" />
+			<description>
+				Returns a full transform representing the wave surface at the given world position. The transform's origin Y is set to [param base_y] plus the wave height, and its basis is oriented to match the surface normal.
+			</description>
+		</method>
+		<method name="is_valid" qualifiers="const">
+			<return type="bool" />
+			<description>
+				Returns [code]true[/code] if the sampler has a valid height map loaded and is ready for sampling.
+			</description>
+		</method>
+		<method name="refresh_from_material">
+			<return type="void" />
+			<description>
+				Re-fetches all wave parameters from the assigned [member material]. Call this if the material's shader parameters have changed at runtime.
+			</description>
+		</method>
+		<method name="set_detail_map">
+			<return type="void" />
+			<param index="0" name="texture" type="Texture2D" />
+			<description>
+			</description>
+		</method>
+		<method name="set_height_map">
+			<return type="void" />
+			<param index="0" name="texture" type="Texture2D" />
+			<description>
+			</description>
+		</method>
+		<method name="set_wave_time">
+			<return type="void" />
+			<param index="0" name="time" type="float" />
+			<description>
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="details_corner_position" type="Vector3" setter="set_details_corner_position" getter="get_details_corner_position" default="Vector3(0, 0, 0)">
+		</member>
+		<member name="details_texture_size" type="float" setter="set_details_texture_size" getter="get_details_texture_size" default="128.0">
+		</member>
+		<member name="details_vertex_spacing" type="float" setter="set_details_vertex_spacing" getter="get_details_vertex_spacing" default="1.0">
+		</member>
+		<member name="direction" type="Vector2" setter="set_direction" getter="get_direction" default="Vector2(1, 0)">
+			The direction of wave travel. This affects how the wave pattern animates over time.
+		</member>
+		<member name="height" type="float" setter="set_height" getter="get_height" default="1.0">
+			The amplitude of the waves in meters. Higher values produce taller waves.
+		</member>
+		<member name="material" type="ShaderMaterial" setter="set_material" getter="get_material">
+			The shader material to read wave parameters from. When set, parameters are automatically fetched from the material's shader uniforms.
+			Expected uniform names: [code]base_waves_height_map[/code], [code]base_waves_height[/code], [code]base_waves_scale[/code], [code]base_waves_speed[/code], [code]base_waves_direction[/code], [code]base_waves_mix_sharpness[/code], [code]base_waves_normal_sample_range[/code], [code]base_waves_normal_softness[/code], [code]max_wave_height[/code].
+		</member>
+		<member name="max_height" type="float" setter="set_max_height" getter="get_max_height" default="1.0">
+			The maximum wave displacement in either direction. Wave heights are clamped to this range.
+		</member>
+		<member name="mix_sharpness" type="float" setter="set_mix_sharpness" getter="get_mix_sharpness" default="0.5">
+			Controls how sharply the two wave layers blend together. Higher values create more distinct wave patterns.
+		</member>
+		<member name="normal_sample_range" type="float" setter="set_normal_sample_range" getter="get_normal_sample_range" default="0.1">
+			The distance used for finite difference normal calculation. Larger values produce smoother normals.
+		</member>
+		<member name="normal_softness" type="float" setter="set_normal_softness" getter="get_normal_softness" default="0.5">
+			How much to blend the calculated normal toward straight up (0,1,0). A value of 1.0 produces flat normals, 0.0 uses the raw calculated normal.
+		</member>
+		<member name="scale" type="float" setter="set_scale" getter="get_scale" default="0.1">
+			The UV scale for wave texture sampling. Smaller values produce larger wave patterns.
+		</member>
+		<member name="speed" type="float" setter="set_speed" getter="get_speed" default="1.0">
+			The speed of wave animation. Higher values make waves move faster.
+		</member>
+		<member name="vertex_scaling" type="float" setter="set_vertex_scaling" getter="get_vertex_scaling" default="1.0">
+		</member>
+	</members>
+</class>

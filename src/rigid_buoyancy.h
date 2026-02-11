@@ -62,6 +62,7 @@ private:
 
 	float _buoyancy_time = 0.0;
 	float _last_submerged_ratio = 0.0f;
+	float _submerged_threshold = 0.0f;
 
 	// statics need updating
 	bool _dirty = true;
@@ -146,6 +147,9 @@ public:
 
 	// Returns the proportion of submerged probes in BUOYANCY_PROBES mode, and the ratio of submerged_volume/volume in BUOYANCY_COLLIDER mode.
 	float get_submerged_ratio() const;
+
+	void set_submerged_threshold(float threshold);
+	float get_submerged_threshold() const;
 
 	// Called after updating dynamics if apply_forces is true. (submerged_volume, etc.)
 	// Can be manually called from process_physics() if desired.
