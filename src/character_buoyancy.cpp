@@ -234,12 +234,18 @@ float CharacterBuoyancy::get_average_depth() const {
 
 void CharacterBuoyancy::set_submerged_threshold(float threshold) {
 	_submerged_threshold = threshold;
+	notify_property_list_changed();
 }
 
 float CharacterBuoyancy::get_submerged_threshold() const {
 	return _submerged_threshold;
 }
 
+bool CharacterBuoyancy::get_is_submerged() const {
+	return get_submerged_ratio() > _submerged_threshold;
+}
+
+// Debug
 void CharacterBuoyancy::set_show_debug(bool show) {
 	_show_debug = show;
 	set_debug_mesh_dirty();
@@ -422,6 +428,9 @@ void CharacterBuoyancy::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_submerged_threshold", "threshold"), &CharacterBuoyancy::set_submerged_threshold);
 	ClassDB::bind_method(D_METHOD("get_submerged_threshold"), &CharacterBuoyancy::get_submerged_threshold);
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "submerged_threshold", PROPERTY_HINT_RANGE, "0.0,1.0,0.01"), "set_submerged_threshold", "get_submerged_threshold");
+
+	ClassDB::bind_method(D_METHOD("get_is_submerged"), &CharacterBuoyancy::get_is_submerged);
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "is_submerged", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY | PROPERTY_USAGE_NO_INSTANCE_STATE | PROPERTY_USAGE_EDITOR), "", "get_is_submerged");
 
 	// Debug
 	ADD_GROUP("Debug", "");

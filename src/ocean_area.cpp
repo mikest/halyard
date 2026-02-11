@@ -90,7 +90,11 @@ void OceanArea::_notification(int p_what) {
 				Ref<ShaderMaterial> material = _wave_sampler->get_material();
 				if (material.is_valid()) {
 					material->set_shader_parameter("VertexScaling", _vertex_scaling);
-					_wave_sampler->set_wave_time(static_cast<float>(Time::get_singleton()->get_ticks_msec()) / 1000.0f);
+
+					// Only update at game time.
+					if (Engine::get_singleton()->is_editor_hint() == false) {
+						_wave_sampler->set_wave_time(static_cast<float>(Time::get_singleton()->get_ticks_msec()) / 1000.0f);
+					}
 
 					// ferry the detailer properties over to the sampler
 					_wave_sampler->set_details_texture_size(_ocean_detailer ? _ocean_detailer->get_detail_viewport_texture_size() : 128.0f);

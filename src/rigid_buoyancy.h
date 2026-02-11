@@ -151,6 +151,8 @@ public:
 	void set_submerged_threshold(float threshold);
 	float get_submerged_threshold() const;
 
+	bool get_is_submerged() const;
+
 	// Called after updating dynamics if apply_forces is true. (submerged_volume, etc.)
 	// Can be manually called from process_physics() if desired.
 	void apply_buoyancy_mesh_forces(RigidBody3D *body, float delta);
