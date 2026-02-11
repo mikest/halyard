@@ -461,6 +461,7 @@ void RigidBuoyancy::apply_buoyancy_mesh_forces(RigidBody3D *body, float delta) {
 	if (!body)
 		return;
 
+	ERR_FAIL_COND_MSG(!is_inside_tree(), "apply_buoyancy_mesh_forces() called from outside scene tree.");
 	ERR_FAIL_COND_MSG(!_buoyancy_material.is_valid(), "Buoyancy material must be valid to apply mesh buoyancy forces.");
 	ERR_FAIL_COND_EDMSG(delta <= 0.0f, "Delta time must be positive to apply buoyancy.");
 	ERR_FAIL_COND_MSG(_buoyancy_mode != BUOYANCY_COLLIDER, "Buoyancy mode must be set to BUOYANCY_COLLIDER to apply mesh buoyancy forces.");
@@ -516,6 +517,7 @@ void RigidBuoyancy::_update_last_probe_transforms() {
 }
 
 void RigidBuoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) {
+	ERR_FAIL_COND_MSG(!is_inside_tree(), "apply_buoyancy_probe_forces() called from outside scene tree.");
 	ERR_FAIL_NULL_MSG(body, "CharacterBuoyancy must be a child of a CharacterBody3D to apply buoyancy.");
 	ERR_FAIL_COND_MSG(delta <= 0.0f, "Delta time must be positive to apply buoyancy.");
 

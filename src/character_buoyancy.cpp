@@ -200,6 +200,7 @@ float CharacterBuoyancy::get_submerged_ratio() const {
 
 float CharacterBuoyancy::get_average_depth() const {
 	CharacterBody3D *body = Object::cast_to<CharacterBody3D>(get_parent());
+	ERR_FAIL_COND_V_MSG(!is_inside_tree(), 0.0f, "get_average_depth() called from outside scene tree.");
 
 	if (!body) {
 		return 0.0f;
@@ -334,6 +335,7 @@ void CharacterBuoyancy::_update_last_transforms() {
 void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
 	CharacterBody3D *body = Object::cast_to<CharacterBody3D>(get_parent());
 
+	ERR_FAIL_COND_MSG(!is_inside_tree(), "apply_buoyancy_velocity() called from outside scene tree.");
 	ERR_FAIL_NULL_MSG(body, "CharacterBuoyancy must be a child of a CharacterBody3D to apply buoyancy.");
 	ERR_FAIL_COND_MSG(delta <= 0.0f, "Delta time must be positive to apply buoyancy.");
 	ERR_FAIL_COND_MSG(!_buoyancy_material.is_valid(), "Buoyancy material must be valid to apply mesh buoyancy forces.");

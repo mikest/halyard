@@ -71,12 +71,16 @@ LiquidArea *LiquidArea::get_liquid_area(SceneTree *p_tree) {
 }
 
 bool LiquidArea::is_point_submerged(const Vector3 &global_point) const {
+	ERR_FAIL_COND_V_MSG(!is_inside_tree(), false, "is_point_submerged() called from outside scene tree.");
+
 	Transform3D liquid_transform = get_global_transform();
 	Vector3 local_point = liquid_transform.affine_inverse().xform(global_point);
 	return local_point.y < 0.0f;
 }
 
 Transform3D LiquidArea::get_liquid_transform(const Vector3 &global_point) const {
+	ERR_FAIL_COND_V_MSG(!is_inside_tree(), Transform3D(), "get_liquid_transform() called from outside scene tree.");
+
 	TypedArray<Transform3D> ret_val;
 	PackedVector3Array points;
 	points.append(global_point);

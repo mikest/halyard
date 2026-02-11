@@ -130,7 +130,11 @@ float OceanDetailer::get_snap_step() const {
 void OceanDetailer::set_follow_target(Node3D *p_target) {
 	_follow_target = p_target;
 	if (_follow_target != nullptr) {
-		_last_follow_position = _follow_target->get_global_position();
+		if (is_inside_tree()) {
+			_last_follow_position = _follow_target->get_global_position();
+		} else {
+			_last_follow_position = Vector3(0, 0, 0);
+		}
 	}
 }
 
@@ -159,7 +163,7 @@ void OceanDetailer::update_position(const Vector3 &p_global_position) {
 }
 
 Vector3 OceanDetailer::get_snapped_position() const {
-	if (_camera == nullptr) {
+	if (_camera == nullptr || !is_inside_tree()) {
 		return Vector3();
 	}
 
@@ -185,13 +189,11 @@ float OceanDetailer::get_detail_viewport_texture_size() const {
 }
 
 Vector3 OceanDetailer::get_detail_viewport_texture_corner_position() const {
-	Vector3 offset = Vector3(0, 0, 0);
-
-	if (_camera) {
-		offset = _camera->get_global_position() - Vector3(_render_size / 2.0f, 0, _render_size / 2.0f);
+	if (_camera == nullptr && !is_inside_tree()) {
+		return Vector3(0, 0, 0);
 	}
 
-	return offset;
+	return _camera->get_global_position() - Vector3(_render_size / 2.0f, 0, _render_size / 2.0f);
 }
 
 float OceanDetailer::get_detail_viewport_vertex_spacing() const {
