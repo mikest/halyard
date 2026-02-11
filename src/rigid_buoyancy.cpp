@@ -137,6 +137,8 @@ void RigidBuoyancy::_notification(int p_what) {
 		} break;
 
 		case NOTIFICATION_INTERNAL_PHYSICS_PROCESS: {
+			//SCOPED_TIMER(RigidBuoyancy_INTERNAL_PHYSICS_PROCESS);
+
 			if (is_node_ready()) {
 				if (Engine::get_singleton()->is_editor_hint()) {
 					// update the probe transforms so we can see the sampled locations in the editor

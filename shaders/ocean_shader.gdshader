@@ -72,6 +72,7 @@ void vertex() {
 	vec3 world_pos = NODE_POSITION_WORLD + VERTEX * vec3(spacing, 1.0, spacing);
 	float normal_sample_range = NormalSampleRange * spacing;
 	
+	// b channel is wave amplitude, mux by alpha so it can be used as a mask
 	vec4 detailEffectsLayerData = SampleDetailEffectsLayer(world_pos);
 	detailEffectsLayerData.b *= detailEffectsLayerData.a;
 

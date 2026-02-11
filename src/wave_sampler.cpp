@@ -3,6 +3,7 @@
 A Resource class that samples wave height and normal from a shader material's parameters.
 */
 #include "wave_sampler.h"
+#include "halyard_utils.h"
 
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/image.hpp>
@@ -292,6 +293,8 @@ void WaveSampler::_fetch_shader_parameters() {
 	if (_material.is_null()) {
 		return;
 	}
+
+	// SCOPED_TIMER(WaveSampler_FetchShaderParameters);
 
 	// Fetch shader uniform values
 	Variant mix_sharpness = _material->get_shader_parameter("BaseWavesMixSharpness");

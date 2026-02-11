@@ -18,6 +18,8 @@
 #include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
+#include "halyard_utils.h"
+
 // dump initial conditions for debugging stretch grow directions.
 #define DEBUG_INITIAL_POS false
 
@@ -233,13 +235,15 @@ void Rope::_notification(int p_what) {
 			_internal_ready();
 		} break;
 
-		case NOTIFICATION_INTERNAL_PHYSICS_PROCESS:
+		case NOTIFICATION_INTERNAL_PHYSICS_PROCESS: {
+			// SCOPED_TIMER(Rope_INTERNAL_PHYSICS_PROCESS);
 			_internal_physics_process(delta);
-			break;
+		} break;
 
-		case NOTIFICATION_INTERNAL_PROCESS:
+		case NOTIFICATION_INTERNAL_PROCESS: {
+			// SCOPED_TIMER(Rope_INTERNAL_PROCESS);
 			_internal_process(delta);
-			break;
+		} break;
 
 		case NOTIFICATION_EXIT_TREE: {
 			_liquid_area = nullptr;

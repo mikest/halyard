@@ -432,7 +432,7 @@ void ClipMapInstance::set_vertex_scaling(float p_scale) {
 void ClipMapInstance::set_layers(uint32_t p_layers) {
 	if (_layers != p_layers) {
 		_layers = p_layers;
-		
+
 		// Update all child mesh instances if tiles container exists
 		if (_tiles_container) {
 			for (int idx = 0; idx < _tiles_container->get_child_count(); idx++) {
@@ -498,7 +498,7 @@ MeshInstance3D *ClipMapInstance::_create_instance(const Ref<Mesh> &mesh, const V
 	MeshInstance3D *instance = memnew(MeshInstance3D);
 	_tiles_container->add_child(instance);
 
-	instance->set_extra_cull_margin(static_cast<float>(level + 1));
+	instance->set_extra_cull_margin(static_cast<float>((level + 1) * 10));
 	instance->set_mesh(mesh);
 	instance->set_surface_override_material(0, _get_ocean_material());
 	instance->set_layer_mask(_layers);
