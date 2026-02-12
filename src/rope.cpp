@@ -6,6 +6,7 @@
 #include <godot_cpp/classes/camera3d.hpp>
 #include <godot_cpp/classes/editor_interface.hpp>
 #include <godot_cpp/classes/engine.hpp>
+#include <godot_cpp/classes/material.hpp>
 #include <godot_cpp/classes/physics_direct_space_state3d.hpp>
 #include <godot_cpp/classes/physics_ray_query_parameters3d.hpp>
 #include <godot_cpp/classes/physics_server3d.hpp>
@@ -29,8 +30,8 @@ const int Y = 1;
 const int Z = 2;
 
 Rope::Rope() {
-	_generated_mesh.instantiate();
-	set_base(_generated_mesh->get_rid());
+	_rope_mesh.instantiate();
+	set_base(_rope_mesh->get_rid());
 
 	auto ps = PhysicsServer3D::get_singleton();
 	_physics_body = ps->body_create();
@@ -50,11 +51,6 @@ Rope::Rope(const Rope &other) {
 Rope::~Rope() {
 	if (_appearance != nullptr)
 		_appearance->disconnect("changed", Callable(this, "_on_appearance_changed"));
-
-	if (_generated_mesh.is_valid()) {
-		_generated_mesh->clear_surfaces();
-		_generated_mesh.unref();
-	}
 
 	_clear_instances();
 
@@ -518,7 +514,12 @@ uint64_t Rope::get_particle_count() const {
 }
 
 Ref<ArrayMesh> Rope::get_baked_mesh() const {
-	return _generated_mesh->duplicate();
+	if (_rope_mesh.is_valid()) {
+		_rope_mesh->_update_mesh_internal(_frames, get_material());
+		return _rope_mesh;
+	}
+
+	return Ref<ArrayMesh>();
 }
 
 void Rope::set_liquid_area(LiquidArea *liquid_area) {
@@ -1043,106 +1044,6 @@ void Rope::_calculate_links_for_particles(LocalVector<Transform3D> &links) const
 #pragma endregion
 
 #pragma region Mesh Rendering
-
-void Rope::_emit_tube(LocalVector<Transform3D> &frames, int start, int end, int sides, float radius, PackedVector3Array &V, PackedVector3Array &N, PackedVector2Array &UV1) {
-	// build cumulative length along the sampled positions so we can map V smoothly.
-	// rope can be stretchy so we can't just use rope_length here
-	// Reuse cached vector to avoid allocation
-	_cum_lengths.clear();
-	_cum_lengths.push_back(0.0);
-	for (int k = 1; k < frames.size(); k++)
-		_cum_lengths.push_back(_cum_lengths[k - 1] + frames[k - 1].origin.distance_to(frames[k].origin));
-
-	float total_length = _cum_lengths[_cum_lengths.size() - 1];
-	if (total_length <= 0.0)
-		total_length = 1.0;
-
-	// number of V repeats along the rope is based on rope width and twist factor
-	const float repeats = get_rope_length() / get_rope_width() * get_rope_twist();
-	float inv_total_length = 1.0f / total_length;
-	float inv_sides = 1.0f / float(sides);
-
-	// NOTE: run to the second to the last frame as we emit 2 frames at a time.
-	for (int i = 0; i < frames.size() - 1; i++) {
-		const auto &pos = frames[i].origin;
-		const auto &next_pos = frames[i + 1].origin;
-
-		const auto &norm = frames[i].basis.get_column(X);
-		const auto &binorm = frames[i].basis.get_column(Z);
-		const auto &next_norm = frames[i + 1].basis.get_column(X);
-		const auto &next_binorm = frames[i + 1].basis.get_column(Z);
-
-		const auto v = (_cum_lengths[i] * inv_total_length) * repeats;
-		const auto next_v = (_cum_lengths[i + 1] * inv_total_length) * repeats;
-
-		// loop one extra to close the seam (repeat first vertex)
-		// for the first and the last row.
-		for (int j = sides; j >= 0; j--) {
-			const auto wrap_j = j % sides;
-			const auto angle = Math_TAU * float(wrap_j) * inv_sides;
-			const auto ca = cos(angle);
-			const auto sa = sin(angle);
-
-			const auto offset = (binorm * ca + norm * sa) * radius;
-			const auto next_offset = (next_binorm * ca + next_norm * sa) * radius;
-
-			const auto normal = offset.normalized();
-			const auto next_normal = next_offset.normalized();
-
-			// U goes 0..1 around the tube; use j so the final seam vertex reaches 1.0;
-			const auto u = float(j) * inv_sides;
-
-			V.push_back(pos + offset);
-			N.push_back(normal);
-			UV1.push_back(Vector2(u, v));
-
-			V.push_back(next_pos + next_offset);
-			N.push_back(next_normal);
-			UV1.push_back(Vector2(u, next_v));
-		}
-	}
-}
-
-void Rope::_emit_endcap(bool front, const Transform3D &frame, int sides, float radius, PackedVector3Array &mesh_v, PackedVector3Array &mesh_n, PackedVector2Array &mesh_uv1) {
-	Vector3 center = frame.origin;
-	Vector3 T = frame.basis.get_column(Y);
-	Vector3 N = frame.basis.get_column(X);
-	Vector3 B = frame.basis.get_column(Z);
-
-	// UV to be aligned radially around the rope edge as a function of the side count
-	float u_width = 1.0 / sides;
-	Vector3 center_normal = T.normalized() * (front ? -1.0 : 1.0);
-
-	auto emit = [&](int j) {
-		const auto wrap_j = j % sides;
-		const auto angle = Math_TAU * float(wrap_j) / float(sides);
-		const auto ca = cos(angle);
-		const auto sa = sin(angle);
-		const auto a = center + (B * ca + N * sa) * radius;
-		const auto uv_a = Vector2(wrap_j * u_width, 0);
-
-		const auto center_uv = Vector2(j * u_width, 0);
-
-		mesh_v.push_back(a);
-		mesh_n.push_back(center_normal);
-		mesh_uv1.push_back(uv_a);
-
-		mesh_v.push_back(center);
-		mesh_n.push_back(center_normal);
-		mesh_uv1.push_back(center_uv);
-	};
-
-	// emit triangles for end cap in either CCW or CW order
-	if (front) {
-		for (int j = 0; j < sides + 1; j++)
-			emit(j);
-	} else {
-		for (int j = sides; j >= 0; j--) {
-			emit(j);
-		}
-	}
-}
-
 void Rope::_align_attachment_node(const NodePath &path, Transform3D xform, float offset) {
 	auto diameter = get_rope_width();
 	auto cap_scale = Vector3(diameter, diameter, diameter);
@@ -1160,32 +1061,10 @@ void Rope::_align_attachment_node(const NodePath &path, Transform3D xform, float
 
 void Rope::_update_aabb() {
 	AABB aabb;
-	// need at least one particle to compute bounds
-	if (_particles.size() == 0) {
-		aabb = AABB();
-		return;
-	}
-
-	// compute aabb from particle positions (local space)
-	Vector3 pos_cur = to_local(_particles[0].pos_cur);
-	Vector3 aabb_min = pos_cur;
-	Vector3 aabb_max = pos_cur;
-	for (int i = 1; i < _particles.size(); i++) {
-		pos_cur = to_local(_particles[i].pos_cur);
-		aabb_min = aabb_min.min(pos_cur);
-		aabb_max = aabb_max.max(pos_cur);
-	}
-
-	// expand by rope radius
-	float r = get_rope_width() * 0.5f;
-	aabb_min -= Vector3(r, r, r);
-	aabb_max += Vector3(r, r, r);
-
-	aabb.position = aabb_min;
-	aabb.size = aabb_max - aabb_min;
-
 	// update mesh and visual instance
-	_generated_mesh->set_custom_aabb(aabb);
+	if (_rope_mesh.is_valid()) {
+		aabb = _rope_mesh->get_custom_aabb();
+	}
 	set_custom_aabb(aabb);
 }
 
@@ -1238,17 +1117,14 @@ float Rope::_lod_factor() const {
 }
 
 void Rope::_draw_rope() {
-	_generated_mesh->clear_surfaces();
 	_update_aabb();
-
-	// nothing to draw
-	if (_particles.size() == 0)
-		return;
 
 	// Bail early if there are no particles in rope.
 	// This can happen if we get a draw call before the Rope is ready
 	if (_particles.size() == 0) {
-		WARN_PRINT("Skipping drawing, particle count is zero.");
+		if (_rope_mesh.is_valid()) {
+			_rope_mesh->clear_mesh();
+		}
 		return;
 	}
 
@@ -1259,77 +1135,77 @@ void Rope::_draw_rope() {
 	_calculate_frames_for_particles(_frames);
 
 	// Need at least two frames to draw a rope
-	if (_frames.size() >= 2) {
-		auto diameter = get_rope_width();
-		const auto radius = diameter * 0.5;
-
-		// tube parameters. set the number of sides based on rope width
-		// A 0.1 thickness rope will have 6 sides
-		// A 1.0 thickness rope will have 12 sides
-		float lod_factor = _lod_factor(); // calucate the lod scaling factor
-		int min_sides = MIN(get_rope_sides(), 6); // min LOD sizing to 6 sides
-		int sides = CLAMP(get_rope_sides() * lod_factor, min_sides, get_rope_sides());
-
-		// emit geometry
-		const int last_frame = _frames.size() - 1;
-
-		// move the link instances if present
-		bool has_chain = _instances.size() == _particles.size() - 1 && _instances.size() == _links.size();
-		if (has_chain) {
-			auto rs = RenderingServer::get_singleton();
-			ERR_FAIL_NULL_MSG(rs, "RenderingServer missing");
-
-			// N-1 chain links per particles
-			auto count = _links.size();
-			Vector3 scale_vec(diameter, diameter, diameter);
-			for (int idx = 0; idx < count; idx++) {
-				RID instance = _instances[idx];
-				Transform3D xform = _links[idx];
-
-				xform.scale_basis(scale_vec);
-				rs->instance_set_transform(instance, xform);
-			}
-
-			// render gen mesh
-		} else {
-			// clear previous set
-			_verts.clear();
-			_norms.clear();
-			_uv1s.clear();
-
-			_emit_endcap(true, _frames[0], sides, radius, _verts, _norms, _uv1s);
-			_emit_tube(_frames, 0, last_frame, sides, radius, _verts, _norms, _uv1s);
-			_emit_endcap(false, _frames[last_frame], sides, radius, _verts, _norms, _uv1s);
-
-			Array mesh_arrays;
-			mesh_arrays.resize(Mesh::ARRAY_MAX);
-			mesh_arrays[Mesh::ARRAY_VERTEX] = _verts;
-			mesh_arrays[Mesh::ARRAY_NORMAL] = _norms;
-			mesh_arrays[Mesh::ARRAY_TEX_UV] = _uv1s;
-			_generated_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLE_STRIP, mesh_arrays);
-			_generated_mesh->surface_set_material(0, get_material());
+	if (_frames.size() < 2) {
+		if (_rope_mesh.is_valid()) {
+			_rope_mesh->clear_mesh();
 		}
-
-		// align attachments if present
-		_align_attachment_node(get_start_attachment(), _frames[0], 0.0);
-
-		// mid attachments
-		int count = _get_attachment_count();
-		for (int idx = 0; idx < count; idx++) {
-			float position = _get_attachment_position(idx);
-			if (position != -1) {
-				NodePath node = _get_attachment_nodepath(idx);
-				Transform3D xform = _get_attachment_transform(idx);
-
-				int index = Math::clamp(int(last_frame * position), 0, last_frame);
-				_align_attachment_node(node, _frames[index] * xform, 0.0);
-			}
-		}
-
-		// end attachment
-		Transform3D xform = _frames[last_frame].rotated_local(Vector3(1, 0, 0), Math_PI);
-		_align_attachment_node(get_end_attachment(), xform, 0.0);
+		return;
 	}
+
+	auto diameter = get_rope_width();
+	const auto radius = diameter * 0.5;
+
+	// tube parameters. set the number of sides based on rope width
+	// A 0.1 thickness rope will have 6 sides
+	// A 1.0 thickness rope will have 12 sides
+	float lod_factor = _lod_factor(); // calucate the lod scaling factor
+	int min_sides = MIN(get_rope_sides(), 6); // min LOD sizing to 6 sides
+	int sides = CLAMP(get_rope_sides() * lod_factor, min_sides, get_rope_sides());
+
+	// emit geometry
+	const int last_frame = _frames.size() - 1;
+
+	// move the link instances if present
+	bool has_chain = _instances.size() == _particles.size() - 1 && _instances.size() == _links.size();
+	if (has_chain) {
+		auto rs = RenderingServer::get_singleton();
+		ERR_FAIL_NULL_MSG(rs, "RenderingServer missing");
+
+		// N-1 chain links per particles
+		auto count = _links.size();
+		Vector3 scale_vec(diameter, diameter, diameter);
+		for (int idx = 0; idx < count; idx++) {
+			RID instance = _instances[idx];
+			Transform3D xform = _links[idx];
+
+			xform.scale_basis(scale_vec);
+			rs->instance_set_transform(instance, xform);
+		}
+
+		// clear mesh if previous we weren't rendering chain links
+		if (_rope_mesh.is_valid()) {
+			_rope_mesh->clear_mesh();
+		}
+	} else if (_rope_mesh.is_valid()) {
+		_rope_mesh->set_radius(radius);
+		_rope_mesh->set_sides(sides);
+		_rope_mesh->set_rope_length(get_rope_length());
+		_rope_mesh->set_rope_width(get_rope_width());
+		_rope_mesh->set_rope_twist(get_rope_twist());
+
+		// rebuild
+		_rope_mesh->_update_mesh_internal(_frames, get_material());
+	}
+
+	// align attachments if present
+	_align_attachment_node(get_start_attachment(), _frames[0], 0.0);
+
+	// mid attachments
+	int count = _get_attachment_count();
+	for (int idx = 0; idx < count; idx++) {
+		float position = _get_attachment_position(idx);
+		if (position != -1) {
+			NodePath node = _get_attachment_nodepath(idx);
+			Transform3D xform = _get_attachment_transform(idx);
+
+			int index = Math::clamp(int(last_frame * position), 0, last_frame);
+			_align_attachment_node(node, _frames[index] * xform, 0.0);
+		}
+	}
+
+	// end attachment
+	Transform3D xform = _frames[last_frame].rotated_local(Vector3(1, 0, 0), Math_PI);
+	_align_attachment_node(get_end_attachment(), xform, 0.0);
 
 	update_gizmos();
 }
