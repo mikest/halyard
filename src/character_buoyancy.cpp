@@ -358,29 +358,34 @@ void CharacterBuoyancy::apply_buoyancy_velocity(float delta) {
 
 	// constants
 	const Vector3 one = Vector3(1, 1, 1);
-	const float probe_ratio = 1.0f / probes.size();
 
-	Vector3 submerged_linear_drag =
-			_buoyancy_material->get_linear_drag() *
-			_buoyancy_material->get_linear_drag_scale();
+	Vector3 submerged_linear_drag = _buoyancy_material->get_local_linear_drag();
 
 	// retrieve velocity
 	Vector3 velocity = body->get_velocity();
 
-	// add velocity changes from forces
+	// Sum all forces and apply once
+	Vector3 total_force = Vector3(0, 0, 0);
 	const int probe_count = probes.size();
 	for (int i = 0; i < probe_count; ++i) {
-		// don't apply drag if there is no force
-		const Vector3 force = forces[i];
-		if (force.length()) {
-			velocity += force / mass * delta;
+		total_force += forces[i];
+	}
 
-			// apply linear submerged drag, in local space
-			Vector3 linear_drag = one - submerged_linear_drag * delta * probe_ratio;
-			linear_drag = linear_drag.max(Vector3(0, 0, 0)); // prevent drag from going negative
-			Vector3 local_vel = body->get_basis().xform_inv(velocity);
-			velocity = body->get_basis().xform(local_vel * linear_drag);
-		}
+	// Apply total force to velocity
+	velocity += total_force / mass * delta;
+
+	// Apply drag once based on submersion ratio, not per-probe
+	// Drag acts on velocity relative to the current, not absolute velocity
+	float submerged_ratio = _probe_buoyancy.get_submerged_ratio();
+	if (submerged_ratio > 0.0f) {
+		Vector3 liquid_velocity = _probe_buoyancy.get_liquid_area() ? _probe_buoyancy.get_liquid_area()->get_liquid_velocity() : Vector3(0, 0, 0);
+		Vector3 relative_velocity = velocity - liquid_velocity;
+
+		// Apply anisotropic drag in global space: transform to body frame, scale per-axis, transform back
+		Vector3 drag_factor = one - submerged_linear_drag * delta * submerged_ratio;
+		drag_factor = drag_factor.max(Vector3(0, 0, 0)); // prevent negative drag
+		Basis basis = body->get_basis().orthonormalized();
+		velocity = basis.xform(basis.xform_inv(relative_velocity) * drag_factor) + liquid_velocity;
 	}
 
 	// write back velocity

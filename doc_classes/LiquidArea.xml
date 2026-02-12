@@ -1,5 +1,6 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<class name="LiquidArea" inherits="Node3D" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<?xml version="1.0" encoding="UTF-8"?>
+<class name="LiquidArea" inherits="Node3D" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
 		Represents a planar liquid surface where objects can be submerged.
 	</brief_description>
@@ -47,15 +48,19 @@
 		</method>
 	</methods>
 	<members>
-		<member name="current_speed" type="Vector3" setter="set_current_speed" getter="get_current_speed" default="Vector3(0, 0, 0)">
+		<member name="liquid_velocity" type="Vector3" setter="set_liquid_velocity"
+			getter="get_liquid_velocity" default="Vector3(0, 0, 0)">
 			Bulk current velocity of the liquid in m/s.
 		</member>
-		<member name="debug_color" type="Color" setter="set_debug_color" getter="get_debug_color" default="Color(0, 1, 0.5, 0.8)">
+		<member name="debug_color" type="Color" setter="set_debug_color" getter="get_debug_color"
+			default="Color(0, 1, 0.5, 0.8)">
 		</member>
-		<member name="density" type="float" setter="set_density" getter="get_density" default="1000.0">
+		<member name="density" type="float" setter="set_density" getter="get_density"
+			default="1000.0">
 			Liquid density in kg/m^3.
 		</member>
-		<member name="show_debug" type="bool" setter="set_show_debug" getter="get_show_debug" default="false">
+		<member name="show_debug" type="bool" setter="set_show_debug" getter="get_show_debug"
+			default="false">
 		</member>
 	</members>
 </class>

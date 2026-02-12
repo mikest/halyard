@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/classes/resource.hpp>
 #include <godot_cpp/core/binder_common.hpp>
 
@@ -51,4 +52,16 @@ public:
 
 	void set_angular_drag_scale(const Vector3 &p_scale);
 	Vector3 get_angular_drag_scale() const;
+
+	// Get drag vector in local space (linear_drag * linear_drag_scale)
+	Vector3 get_local_linear_drag() const;
+
+	// Get drag vector in global space
+	Vector3 get_global_linear_drag(const Transform3D &global_xform) const;
+
+	// Get angular drag vector in local space (angular_drag * angular_drag_scale)
+	Vector3 get_local_angular_drag() const;
+
+	// Get angular drag vector in global space
+	Vector3 get_global_angular_drag(const Transform3D &global_xform) const;
 };

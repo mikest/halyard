@@ -33,7 +33,7 @@ class LiquidArea : public Node3D, protected NodeDebug {
 	GDCLASS(LiquidArea, Node3D)
 
 	float _density = 1000.0f; // kg/m^3
-	Vector3 _current_speed = Vector3(0, 0, 0); // ms
+	Vector3 _liquid_velocity = Vector3(0, 0, 0); // ms
 
 	// Debug visualization
 
@@ -57,7 +57,7 @@ public:
 
 	// Properties
 	PROPERTY_GET_SET(float, density, {})
-	PROPERTY_GET_SET(Vector3, current_speed, {})
+	PROPERTY_GET_SET(Vector3, liquid_velocity, {})
 
 	// debug visualization
 	void set_show_debug(bool p_show);

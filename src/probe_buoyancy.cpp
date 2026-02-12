@@ -214,8 +214,21 @@ void ProbeBuoyancy::update_forces(const Transform3D &body_transform, const Vecto
 			wave_normal = wave_normal.lerp(Vector3(0, 1, 0), probe_ratio).normalized();
 			Vector3 wave_force = (wave_normal * -gravity.y) * fluid_density * probe_volume;
 
-			// Add current force
-			Vector3 current_force = _liquid_area->get_current_speed() * probe_volume * _mass;
+			// Add current force using drag model: F_drag = drag_coefficient * rho * V * velocity
+			Vector3 current_force = Vector3(0, 0, 0);
+			if (_buoyancy_material.is_valid()) {
+				// clamp drag as we shouldn't exceed 1:1 force to velocity
+				Vector3 linear_drag = _buoyancy_material->get_local_linear_drag();
+				linear_drag = CLAMP(linear_drag, Vector3(0, 0, 0), Vector3(1, 1, 1));
+
+				// get current in local space
+				Vector3 global_current_velocity = _liquid_area->get_liquid_velocity();
+				Vector3 local_current_velocity = body_transform.basis.xform_inv(global_current_velocity);
+
+				// calculate drag force in local space and transform to global
+				Vector3 local_current_force = local_current_velocity * linear_drag * fluid_density * probe_volume;
+				current_force = body_transform.basis.xform(local_current_force);
+			}
 
 			_forces[idx] = wave_force + current_force;
 		} else {

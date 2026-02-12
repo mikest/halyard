@@ -383,9 +383,20 @@ void MeshBuoyancy::update_forces(const Transform3D &body_transform, const Vector
 		// F_B = buoyancy * rho * V_submerged * g
 		_buoyancy_force = wave_normal * buoyancy_scalar * liquid_density * _submerged_volume * -gravity.y;
 
-		// Add current force scaled by submerged volume
-		Vector3 current_force = _liquid_area->get_current_speed() * liquid_density * _submerged_volume;
-		_buoyancy_force += current_force;
+		// Add current force using drag model: F_drag = drag_coefficient * rho * V * velocity
+		if (_buoyancy_material.is_valid()) {
+			// clamp drag as we shouldn't exceed 1:1 force to velocity
+			Vector3 linear_drag = _buoyancy_material->get_local_linear_drag();
+			linear_drag = CLAMP(linear_drag, Vector3(0, 0, 0), Vector3(1, 1, 1));
+
+			// get local velocity
+			Vector3 global_current_velocity = _liquid_area->get_liquid_velocity();
+			Vector3 local_current_velocity = body_transform.basis.xform_inv(global_current_velocity);
+
+			// do drag in local space and the convert force to global space
+			Vector3 local_current_force = local_current_velocity * linear_drag * liquid_density * _submerged_volume;
+			_buoyancy_force += body_transform.basis.xform(local_current_force);
+		}
 
 		// Apply force at the submerged centroid in global space
 		_force_position = body_transform.xform(_submerged_centroid);

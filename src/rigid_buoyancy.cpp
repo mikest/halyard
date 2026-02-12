@@ -488,32 +488,35 @@ void RigidBuoyancy::apply_buoyancy_mesh_forces(RigidBody3D *body, float delta) {
 	float submerged_volume = _mesh_buoyancy.get_submerged_volume();
 	float mesh_volume = _mesh_buoyancy.get_mesh_volume();
 
-	Vector3 submerged_linear_drag = _buoyancy_material->get_linear_drag() * _buoyancy_material->get_linear_drag_scale();
-	Vector3 submerged_angular_drag = _buoyancy_material->get_angular_drag() * _buoyancy_material->get_angular_drag_scale();
+	Vector3 submerged_linear_drag = _buoyancy_material->get_local_linear_drag();
+	Vector3 submerged_angular_drag = _buoyancy_material->get_local_angular_drag();
 
 	if (submerged_volume > 0.0) {
 		body->apply_force(buoyant_force, submerged_position - body->get_global_position());
 
-		// Drag is applied axis aligned with the rigid body
+		// Apply drag in global space
 		float ratio = submerged_volume / mesh_volume;
-		Basis basis = body->get_global_transform().basis.orthonormalized();
+		Transform3D body_xform = body->get_global_transform();
+		Basis basis = body_xform.basis.orthonormalized();
 		Vector3 one = Vector3(1, 1, 1);
 
-		// Underwater drag. We must get the current state directly from the Physics server.
-		Vector3 linear_drag = one - submerged_linear_drag * delta * ratio;
+		// Drag acts on velocity relative to the water, not absolute velocity
+		Vector3 liquid_velocity = _liquid_area ? _liquid_area->get_liquid_velocity() : Vector3(0, 0, 0);
 		Vector3 linear_velocity = PhysicsServer3D::get_singleton()->body_get_state(body->get_rid(), PhysicsServer3D::BODY_STATE_LINEAR_VELOCITY);
+		Vector3 relative_velocity = linear_velocity - liquid_velocity;
 
-		Vector3 local_vel = basis.xform_inv(linear_velocity);
-		Vector3 global_vel = basis.xform(local_vel * linear_drag);
+		// Apply anisotropic drag: transform to body frame, scale per-axis, transform back
+		Vector3 drag_factor = one - submerged_linear_drag * delta * ratio;
+		drag_factor = drag_factor.max(Vector3(0, 0, 0)); // prevent negative drag
+		Vector3 dragged_velocity = basis.xform(basis.xform_inv(relative_velocity) * drag_factor) + liquid_velocity;
+		body->set_linear_velocity(dragged_velocity);
 
-		body->set_linear_velocity(global_vel);
-
-		Vector3 angular_drag = one - submerged_angular_drag * delta * ratio;
+		// Apply angular drag
 		Vector3 angular_velocity = PhysicsServer3D::get_singleton()->body_get_state(body->get_rid(), PhysicsServer3D::BODY_STATE_ANGULAR_VELOCITY);
-		Vector3 local_ang = basis.xform_inv(angular_velocity);
-		Vector3 global_ang = basis.xform(local_ang * angular_drag);
-
-		body->set_angular_velocity(global_ang);
+		Vector3 angular_drag_factor = one - submerged_angular_drag * delta * ratio;
+		angular_drag_factor = angular_drag_factor.max(Vector3(0, 0, 0));
+		Vector3 dragged_angular = basis.xform(basis.xform_inv(angular_velocity) * angular_drag_factor);
+		body->set_angular_velocity(dragged_angular);
 	}
 }
 
@@ -548,35 +551,42 @@ void RigidBuoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) 
 
 	// constants
 	const Vector3 one = Vector3(1, 1, 1);
-	const float probe_ratio = 1.0f / probes.size();
 	const Transform3D body_transform = body->get_global_transform();
 	const Basis basis = body_transform.basis.orthonormalized();
 
-	Vector3 submerged_linear_drag = _buoyancy_material->get_linear_drag() * _buoyancy_material->get_linear_drag_scale();
-	Vector3 submerged_angular_drag = _buoyancy_material->get_angular_drag() * _buoyancy_material->get_angular_drag_scale();
+	Vector3 submerged_linear_drag = _buoyancy_material->get_local_linear_drag();
+	Vector3 submerged_angular_drag = _buoyancy_material->get_local_angular_drag();
 
-	// add velocity changes from forces
+	// Apply all forces first
 	const int probe_count = probes.size();
 	for (int i = 0; i < probe_count; ++i) {
-		// don't apply drag if there is no force
 		const Vector3 force = forces[i];
 		if (force.length()) {
 			Vector3 probe = body_transform.xform(probes[i]);
 			body->apply_force(force, probe - body_transform.origin);
-
-			// Apply submerged drag per probe
-			Vector3 linear_drag = one - submerged_linear_drag * delta * probe_ratio;
-			Vector3 linear_velocity = body->get_linear_velocity();
-			Vector3 local_vel = basis.xform_inv(linear_velocity);
-			Vector3 global_vel = basis.xform(local_vel * linear_drag);
-			body->set_linear_velocity(global_vel);
-
-			Vector3 angular_drag = one - submerged_angular_drag * delta * probe_ratio;
-			Vector3 angular_velocity = body->get_angular_velocity();
-			Vector3 local_ang = basis.xform_inv(angular_velocity);
-			Vector3 global_ang = basis.xform(local_ang * angular_drag);
-			body->set_angular_velocity(global_ang);
 		}
+	}
+
+	// Apply drag once based on submersion ratio
+	// Drag acts on velocity relative to the water, not absolute velocity
+	float submerged_ratio = _probe_buoyancy.get_submerged_ratio();
+	if (submerged_ratio > 0.0f) {
+		Vector3 current_velocity = _liquid_area ? _liquid_area->get_liquid_velocity() : Vector3(0, 0, 0);
+		Vector3 linear_velocity = body->get_linear_velocity();
+		Vector3 relative_velocity = linear_velocity - current_velocity;
+
+		// Apply anisotropic drag in global space: transform to body frame, scale per-axis, transform back
+		Vector3 drag_factor = one - submerged_linear_drag * delta * submerged_ratio;
+		drag_factor = drag_factor.max(Vector3(0, 0, 0)); // prevent negative drag
+		Vector3 dragged_velocity = basis.xform(basis.xform_inv(relative_velocity) * drag_factor) + current_velocity;
+		body->set_linear_velocity(dragged_velocity);
+
+		// Apply angular drag
+		Vector3 angular_velocity = body->get_angular_velocity();
+		Vector3 angular_drag_factor = one - submerged_angular_drag * delta * submerged_ratio;
+		angular_drag_factor = angular_drag_factor.max(Vector3(0, 0, 0));
+		Vector3 dragged_angular = basis.xform(basis.xform_inv(angular_velocity) * angular_drag_factor);
+		body->set_angular_velocity(dragged_angular);
 	}
 }
 
