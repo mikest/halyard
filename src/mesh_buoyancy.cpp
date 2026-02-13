@@ -36,6 +36,14 @@ Ref<ArrayMesh> MeshBuoyancy::get_buoyancy_mesh() const {
 	return _buoyancy_mesh;
 }
 
+void MeshBuoyancy::set_buoyancy_material(const Ref<BuoyancyMaterial> &p_material) {
+	_buoyancy_material = p_material;
+}
+
+Ref<BuoyancyMaterial> MeshBuoyancy::get_buoyancy_material() const {
+	return _buoyancy_material;
+}
+
 void MeshBuoyancy::set_ignore_waves(bool p_ignore) {
 	_ignore_waves = p_ignore;
 }
@@ -44,12 +52,12 @@ bool MeshBuoyancy::get_ignore_waves() const {
 	return _ignore_waves;
 }
 
-void MeshBuoyancy::set_buoyancy(float p_buoyancy) {
-	_buoyancy = p_buoyancy;
+void MeshBuoyancy::set_use_buoyancy_scalar(bool p_use) {
+	_use_buoyancy_scalar = p_use;
 }
 
-float MeshBuoyancy::get_buoyancy() const {
-	return _buoyancy;
+bool MeshBuoyancy::get_use_buoyancy_scalar() const {
+	return _use_buoyancy_scalar;
 }
 
 void MeshBuoyancy::set_mass(float p_mass) {
@@ -363,18 +371,32 @@ void MeshBuoyancy::update_forces(const Transform3D &body_transform, const Vector
 		// Blend wave normal toward vertical based on submersion ratio
 		Vector3 wave_normal = _buoyancy_normal.lerp(Vector3(0, 1, 0), ratio);
 
-		// Scale force so that _buoyancy=1 is neutral, _buoyancy=0 sinks
+		// Scale force so that buoyancy=1 is neutral, buoyancy=0 sinks
 		float buoyancy_scalar = 1.0f;
-		if (_buoyancy != INFINITY && _mass > 0.0f && !Math::is_zero_approx(_mesh_volume)) {
-			buoyancy_scalar = _buoyancy * _mass / (liquid_density * _mesh_volume);
+		if (_use_buoyancy_scalar && _buoyancy_material.is_valid()) {
+			float buoyancy = _buoyancy_material->get_buoyancy();
+			if (buoyancy != INFINITY && _mass > 0.0f && !Math::is_zero_approx(_mesh_volume)) {
+				buoyancy_scalar = buoyancy * _mass / (liquid_density * _mesh_volume);
+			}
 		}
 
 		// F_B = buoyancy * rho * V_submerged * g
 		_buoyancy_force = wave_normal * buoyancy_scalar * liquid_density * _submerged_volume * -gravity.y;
 
-		// Add current force scaled by submerged volume
-		Vector3 current_force = _liquid_area->get_current_speed() * liquid_density * _submerged_volume;
-		_buoyancy_force += current_force;
+		// Add current force using drag model: F_drag = drag_coefficient * rho * V * velocity
+		if (_buoyancy_material.is_valid()) {
+			// clamp drag as we shouldn't exceed 1:1 force to velocity
+			Vector3 linear_drag = _buoyancy_material->get_local_linear_drag();
+			linear_drag = CLAMP(linear_drag, Vector3(0, 0, 0), Vector3(1, 1, 1));
+
+			// get local velocity
+			Vector3 global_current_velocity = _liquid_area->get_liquid_velocity();
+			Vector3 local_current_velocity = body_transform.basis.xform_inv(global_current_velocity);
+
+			// do drag in local space and the convert force to global space
+			Vector3 local_current_force = local_current_velocity * linear_drag * liquid_density * _submerged_volume;
+			_buoyancy_force += body_transform.basis.xform(local_current_force);
+		}
 
 		// Apply force at the submerged centroid in global space
 		_force_position = body_transform.xform(_submerged_centroid);

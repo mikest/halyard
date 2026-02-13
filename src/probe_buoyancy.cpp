@@ -18,14 +18,15 @@ using namespace halyard;
 #pragma region Private Helpers
 
 void ProbeBuoyancy::_update_derived_properties() {
-	if (_liquid_area == nullptr) {
+	if (_liquid_area == nullptr || !_buoyancy_material.is_valid()) {
 		_character_density = 1000.0f;
 		_character_volume = _mass / 1000.0f;
 		return;
 	}
 
 	float fluid_density = _liquid_area->get_density();
-	_character_density = fluid_density / _buoyancy;
+	float buoyancy = _buoyancy_material->get_buoyancy();
+	_character_density = fluid_density / buoyancy;
 	_character_volume = _mass / _character_density;
 }
 
@@ -52,6 +53,15 @@ LiquidArea *ProbeBuoyancy::get_liquid_area() const {
 	return _liquid_area;
 }
 
+void ProbeBuoyancy::set_buoyancy_material(const Ref<BuoyancyMaterial> &p_material) {
+	_buoyancy_material = p_material;
+	_update_derived_properties();
+}
+
+Ref<BuoyancyMaterial> ProbeBuoyancy::get_buoyancy_material() const {
+	return _buoyancy_material;
+}
+
 void ProbeBuoyancy::set_mass(float p_mass) {
 	_mass = p_mass;
 	_update_derived_properties();
@@ -59,15 +69,6 @@ void ProbeBuoyancy::set_mass(float p_mass) {
 
 float ProbeBuoyancy::get_mass() const {
 	return _mass;
-}
-
-void ProbeBuoyancy::set_buoyancy(float p_buoyancy) {
-	_buoyancy = p_buoyancy;
-	_update_derived_properties();
-}
-
-float ProbeBuoyancy::get_buoyancy() const {
-	return _buoyancy;
 }
 
 void ProbeBuoyancy::set_ignore_waves(bool p_ignore) {
@@ -213,8 +214,21 @@ void ProbeBuoyancy::update_forces(const Transform3D &body_transform, const Vecto
 			wave_normal = wave_normal.lerp(Vector3(0, 1, 0), probe_ratio).normalized();
 			Vector3 wave_force = (wave_normal * -gravity.y) * fluid_density * probe_volume;
 
-			// Add current force
-			Vector3 current_force = _liquid_area->get_current_speed() * probe_volume;
+			// Add current force using drag model: F_drag = drag_coefficient * rho * V * velocity
+			Vector3 current_force = Vector3(0, 0, 0);
+			if (_buoyancy_material.is_valid()) {
+				// clamp drag as we shouldn't exceed 1:1 force to velocity
+				Vector3 linear_drag = _buoyancy_material->get_local_linear_drag();
+				linear_drag = CLAMP(linear_drag, Vector3(0, 0, 0), Vector3(1, 1, 1));
+
+				// get current in local space
+				Vector3 global_current_velocity = _liquid_area->get_liquid_velocity();
+				Vector3 local_current_velocity = body_transform.basis.xform_inv(global_current_velocity);
+
+				// calculate drag force in local space and transform to global
+				Vector3 local_current_force = local_current_velocity * linear_drag * fluid_density * probe_volume;
+				current_force = body_transform.basis.xform(local_current_force);
+			}
 
 			_forces[idx] = wave_force + current_force;
 		} else {

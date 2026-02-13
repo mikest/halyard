@@ -13,6 +13,7 @@ including depth calculation, force computation, and transform caching.
 #include <godot_cpp/variant/transform3d.hpp>
 #include <godot_cpp/variant/vector3.hpp>
 
+#include "buoyancy_material.h"
 #include "halyard_utils.h"
 
 using namespace godot;
@@ -26,8 +27,8 @@ private:
 	// Configuration
 	PackedVector3Array _probes;
 	LiquidArea *_liquid_area = nullptr;
+	Ref<BuoyancyMaterial> _buoyancy_material;
 	float _mass = 1.0f;
-	float _buoyancy = 1.0f;
 	bool _ignore_waves = false;
 
 	// Cached data
@@ -53,14 +54,12 @@ public:
 	void set_liquid_area(LiquidArea *p_liquid_area);
 	LiquidArea *get_liquid_area() const;
 
+	void set_buoyancy_material(const Ref<BuoyancyMaterial> &p_material);
+	Ref<BuoyancyMaterial> get_buoyancy_material() const;
+
 	// Mass in kg of the object represented by the probes
 	void set_mass(float p_mass);
 	float get_mass() const;
-
-	// Buoyancy is a scalar. A value of 1.0 means neutral buoyancy (displaces its own weight in fluid).
-	// Density is derived from mass and buoyancy.
-	void set_buoyancy(float p_buoyancy);
-	float get_buoyancy() const;
 
 	// disable the wave effects on this probe buoyancy calculation
 	void set_ignore_waves(bool p_ignore);

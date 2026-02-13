@@ -1370,10 +1370,12 @@ void Rope::_rebuild_physics_shapes() {
 	capsule["height"] = height + radius * 2;
 
 	// create N-1 capsule colliders
+	ps->body_set_enable_continuous_collision_detection(_physics_body, true);
 	for (int idx = 0; idx < particle_count - 1; idx++) {
 		// physics shape
 		RID shape = ps->capsule_shape_create();
 		ps->shape_set_data(shape, capsule);
+		ps->shape_set_margin(shape, radius / 10.0);
 		ps->body_add_shape(_physics_body, shape, Transform3D());
 		_particles[idx].shape = shape;
 	}
@@ -1551,14 +1553,21 @@ void Rope::_apply_forces() {
 					wave_normal = wave_normal.slerp(Vector3(0, 1, 0), Math::clamp(1.0f - buoyancy_factor, 0.0f, 1.0f));
 
 					Vector3 wave_force = wave_normal * _gravity * Math::clamp(wave_depth, -1.0f, 0.0f) * buoyancy_factor * submerged_ratio;
-					Vector3 current_force = _liquid_area->get_current_speed() * submerged_ratio;
 
-					// Apply buoyancy-related forces
+					// Apply buoyancy force
 					total_acceleration += wave_force;
-					total_acceleration += current_force;
 
-					// Apply submerged drag as deceleration proportional to velocity
-					total_acceleration += -velocity * _submerged_drag * submerged_ratio;
+					// Current and drag forces act on velocity relative to water velocity
+					// F_drag = drag_coefficient * (current_velocity - velocity)
+					//        = drag_coefficient * current_velocity - drag_coefficient * velocity
+					// First term: water current pushes the object
+					// Second term: drag slows down motion through water
+					Vector3 current_velocity = _liquid_area->get_liquid_velocity();
+					Vector3 current_force = current_velocity * CLAMP(_submerged_drag, 0.0, 10.0) * submerged_ratio; // clamped drag range. this is a fudge at the moment because we're not using real mass properties.
+					Vector3 drag_force = -velocity * _submerged_drag * submerged_ratio;
+
+					total_acceleration += current_force;
+					total_acceleration += drag_force;
 				}
 			}
 

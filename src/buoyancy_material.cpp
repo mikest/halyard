@@ -57,6 +57,24 @@ Vector3 BuoyancyMaterial::get_angular_drag_scale() const {
 	return _angular_drag_scale;
 }
 
+Vector3 BuoyancyMaterial::get_local_linear_drag() const {
+	return _linear_drag * _linear_drag_scale;
+}
+
+Vector3 BuoyancyMaterial::get_global_linear_drag(const Transform3D &global_xform) const {
+	Vector3 local_drag = _linear_drag * _linear_drag_scale;
+	return global_xform.basis.xform(local_drag);
+}
+
+Vector3 BuoyancyMaterial::get_local_angular_drag() const {
+	return _angular_drag * _angular_drag_scale;
+}
+
+Vector3 BuoyancyMaterial::get_global_angular_drag(const Transform3D &global_xform) const {
+	Vector3 local_drag = _angular_drag * _angular_drag_scale;
+	return global_xform.basis.xform(local_drag);
+}
+
 #pragma endregion
 
 #pragma region Bindings
@@ -81,6 +99,12 @@ void BuoyancyMaterial::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_angular_drag_scale", "angular_drag_scale"), &BuoyancyMaterial::set_angular_drag_scale);
 	ClassDB::bind_method(D_METHOD("get_angular_drag_scale"), &BuoyancyMaterial::get_angular_drag_scale);
 	ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "angular_drag_scale"), "set_angular_drag_scale", "get_angular_drag_scale");
+
+	ClassDB::bind_method(D_METHOD("get_local_linear_drag", ""), &BuoyancyMaterial::get_local_linear_drag);
+	ClassDB::bind_method(D_METHOD("get_global_linear_drag", "global_xform"), &BuoyancyMaterial::get_global_linear_drag);
+
+	ClassDB::bind_method(D_METHOD("get_local_angular_drag", ""), &BuoyancyMaterial::get_local_angular_drag);
+	ClassDB::bind_method(D_METHOD("get_global_angular_drag", "global_xform"), &BuoyancyMaterial::get_global_angular_drag);
 }
 
 #pragma endregion

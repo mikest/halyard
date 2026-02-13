@@ -237,7 +237,7 @@ void LiquidArea::_update_debug_mesh() {
 
 void LiquidArea::_bind_methods() {
 	EXPORT_PROPERTY_RANGED(Variant::FLOAT, density, LiquidArea, "1,10000,1,hide_slider,suffix:kg/m^3");
-	EXPORT_PROPERTY(Variant::VECTOR3, current_speed, LiquidArea);
+	EXPORT_PROPERTY(Variant::VECTOR3, liquid_velocity, LiquidArea);
 
 	ClassDB::bind_method(D_METHOD("is_point_submerged", "global_point"), &LiquidArea::is_point_submerged);
 	ClassDB::bind_method(D_METHOD("get_liquid_transform", "global_point"), &LiquidArea::get_liquid_transform);
