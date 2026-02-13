@@ -18,6 +18,7 @@
 #include "rope_appearance.h"
 #include "rope_attachment_positions.h"
 #include "rope_attachments_base.h"
+#include "rope_mesh.h"
 #include "wave_sampler.h"
 
 using namespace godot;
@@ -32,6 +33,7 @@ void initialize_gdextension_types(ModuleInitializationLevel p_level) {
 
 		case MODULE_INITIALIZATION_LEVEL_SCENE: {
 			ClassDB::register_class<Rope>();
+			ClassDB::register_class<RopeMesh>();
 			ClassDB::register_class<RopeAnchorsBase>();
 			ClassDB::register_class<RopeAttachmentsBase>();
 			ClassDB::register_class<RopeAnchorPositions>();

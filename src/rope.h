@@ -19,6 +19,7 @@
 #include <godot_cpp/variant/variant.hpp>
 
 #include "property_utils.h"
+#include "rope_mesh.h"
 
 using namespace godot;
 
@@ -30,7 +31,7 @@ class LiquidArea;
 class Rope : public GeometryInstance3D {
 	GDCLASS(Rope, GeometryInstance3D)
 
-	Ref<ArrayMesh> _generated_mesh;
+	Ref<RopeMesh> _rope_mesh;
 	RID _physics_body;
 	LocalVector<RID> _instances;
 	LiquidArea *_liquid_area = nullptr;
@@ -65,10 +66,6 @@ class Rope : public GeometryInstance3D {
 	// We store these as class members are reuse each physics frame
 	Ref<PhysicsRayQueryParameters3D> _ray_cast;
 	TypedArray<RID> _exclusion_list;
-	PackedVector3Array _verts;
-	PackedVector3Array _norms;
-	PackedVector2Array _uv1s;
-	LocalVector<float> _cum_lengths;
 
 	// rope geometry
 	float _rope_length = 4.0;
@@ -124,9 +121,6 @@ protected:
 	void _calculate_links_for_particles(LocalVector<Transform3D> &links) const;
 	PackedVector3Array _get_control_points_for_particle(int index) const;
 	Pair<Vector3, Vector3> _catmull_interpolate(const Vector3 &p0, const Vector3 &p1, const Vector3 &p2, const Vector3 &p3, float tension, float t) const;
-
-	void _emit_tube(LocalVector<Transform3D> &frames, int start, int end, int sides, float radius, PackedVector3Array &V, PackedVector3Array &N, PackedVector2Array &UV1);
-	void _emit_endcap(bool front, const Transform3D &frame, int sides, float radius, PackedVector3Array &V, PackedVector3Array &N, PackedVector2Array &UV1);
 
 	void _align_attachment_node(const NodePath &path, Transform3D xform, float offset);
 	int _frame_at_offset(const LocalVector<Transform3D> &frames, float offset, bool from_end) const;
