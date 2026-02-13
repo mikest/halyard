@@ -1169,7 +1169,7 @@ void Rope::_draw_rope() {
 			Transform3D xform = _links[idx];
 
 			xform.scale_basis(scale_vec);
-			rs->instance_set_transform(instance, xform);
+			rs->instance_set_transform(instance, xform.orthonormalized());
 		}
 
 		// clear mesh if previous we weren't rendering chain links
@@ -1456,6 +1456,7 @@ void Rope::_apply_forces() {
 
 			// Additional damping
 			if (_apply_damping) {
+				_damping_factor = Math::clamp(_damping_factor, 0.0f, 10000.0f);
 				Vector3 drag = -_damping_factor * velocity.length() * velocity;
 				total_acceleration += drag;
 			}
