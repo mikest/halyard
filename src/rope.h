@@ -10,6 +10,7 @@
 #include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/classes/physics_ray_query_parameters3d.hpp>
 #include <godot_cpp/classes/physics_server3d.hpp>
+#include <godot_cpp/classes/rigid_body3d.hpp>
 #include <godot_cpp/classes/wrapped.hpp>
 #include <godot_cpp/core/binder_common.hpp>
 #include <godot_cpp/core/gdvirtual.gen.inc>
@@ -47,6 +48,7 @@ class Rope : public GeometryInstance3D {
 		Vector3 B = Vector3(0, 0, 0);
 
 		bool attached = false;
+		RigidBody3D *attached_body = nullptr; // Reference to attached physics body for force feedback
 		RID shape;
 
 		Particle() = default;
@@ -78,6 +80,8 @@ class Rope : public GeometryInstance3D {
 	int _stiffness_iterations = 2;
 	float _stiffness = 0.9;
 	float _friction = 0.5;
+	float _tension_force_scale = 1.0; // Multiplier for forces applied to attached bodies
+	float _max_tension_force = 1000.0; // Maximum force magnitude to prevent instability
 
 	// initial simulation
 	int _preprocess_time = 1.0;
@@ -90,6 +94,9 @@ class Rope : public GeometryInstance3D {
 	NodePath _start_anchor = ".";
 	Ref<RopeAnchorsBase> _anchors;
 	NodePath _end_anchor;
+
+	Node3D *_start_node = nullptr;
+	Node3D *_end_node = nullptr;
 
 	// forces
 	bool _apply_wind = false;
@@ -131,9 +138,11 @@ protected:
 	int _get_index_for_position(float position) const;
 
 	// Anchors
+	Node3D *_get_start_node() const;
+	Node3D *_get_end_node() const;
+	bool _get_node_transform(Node3D *anchor, Transform3D &xform) const;
+	void _update_anchor(Node3D *anchor, float position);
 	void _update_anchors();
-	void _update_anchor(NodePath &anchor, float position);
-	bool _get_node_transform(const NodePath &path, Transform3D &xform) const;
 
 	// Physics
 	void _rebuild_rope();
@@ -231,8 +240,11 @@ public:
 	void set_appearance(const Ref<RopeAppearance> &val);
 
 	// anchors
-	PROPERTY_GET_SET(NodePath, start_anchor, _queue_redraw())
-	PROPERTY_GET_SET(NodePath, end_anchor, _queue_redraw())
+	void set_start_anchor(const NodePath &val);
+	NodePath get_start_anchor() const;
+
+	void set_end_anchor(const NodePath &val);
+	NodePath get_end_anchor() const;
 
 	void set_anchors(const Ref<RopeAnchorsBase> &);
 	Ref<RopeAnchorsBase> get_anchors() const;
@@ -259,6 +271,8 @@ public:
 	PROPERTY_GET_SET(int, stiffness_iterations, {})
 	PROPERTY_GET_SET(float, stiffness, {})
 	PROPERTY_GET_SET(float, friction, {})
+	PROPERTY_GET_SET(float, tension_force_scale, {})
+	PROPERTY_GET_SET(float, max_tension_force, {})
 
 	// initial simulation
 	PROPERTY_GET_SET(float, preprocess_time, {})

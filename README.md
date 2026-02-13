@@ -11,6 +11,8 @@ A high-performance, cross-platform rope & buoyancy simulation library. For all y
 - Fast rope physics using Verlet integration.
 - Supports arbitrary rope attachment points and anchors for complex rigging.
 - Configurable rope length, stiffness, and segment count.
+- Automatic force feedback to attached RigidBody3D objects for realistic physics interactions.
+- Tunable force scaling and clamping for stability control.
 - Limitted collision detection and response.
 	- Bodies can collide with rope, modelled as a capsule chain.
 	- Rope can collide with bodies, but is modelled as points.
@@ -83,6 +85,38 @@ The anchors can be used to create the illusion of pulleys.
 2. Create a rope instance and configure its parameters.
 3. Attach rope ends to objects or positions. Rope details will be scaled to rope width, so model your attachments at 1:1 for a 1m thick rope.
 
+## Rope Force Feedback
+
+Ropes automatically apply tension forces to attached RigidBody3D objects, enabling realistic physics interactions:
+
+```gdscript
+# Attach rope to a physics body
+$Rope.start_anchor = get_path_to($RigidBody3D)
+$Rope.end_anchor = get_path_to($AnotherRigidBody3D)
+
+# Tune force behavior
+$Rope.tension_force_scale = 1.0  # Force multiplier (0.0 = disabled, 1.0 = default, 5.0 = very strong)
+$Rope.max_tension_force = 1000.0  # Maximum force in Newtons to prevent instability
+```
+
+### Tuning Guidelines
+
+**For weak/soft ropes (elastic behavior):**
+- `tension_force_scale = 0.1 - 0.5`
+- `stiffness = 0.5 - 0.7`
+
+**For strong/rigid ropes (chain-like behavior):**
+- `tension_force_scale = 2.0 - 5.0`
+- `stiffness = 0.9 - 1.2`
+- `max_tension_force = 5000+` (for heavy objects)
+
+**Troubleshooting:**
+- Bodies flying apart? Lower `max_tension_force` or `tension_force_scale`
+- Rope too weak? Increase `tension_force_scale` or `max_tension_force`
+- Unstable simulation? Increase `stiffness_iterations` (default: 2)
+
+See `FAQ.md` for more troubleshooting tips.
+
 ## Demo
 
 See `example.tscn` for an example of using this library to generate ship _ratlines_.
@@ -112,10 +146,12 @@ Some examples:
 Here's some things I'd like to add to this library in the fullness of time.
 
 ### Rope
+- ✅ Force feedback to attached RigidBody3D objects
 - Implement pulleys and force transfer between ends. Remove PullRope.
 - Rope uses real mass properties
 - Full bidirectional collision support
 - Rope twist torque.
+- Optional torque application at attachment offset points
 
 ### Buoyancy
 - Use compute shader for buoyancy mesh volume integrator.

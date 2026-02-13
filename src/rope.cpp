@@ -121,6 +121,8 @@ void Rope::_bind_methods() {
 	EXPORT_PROPERTY_RANGED(Variant::INT, stiffness_iterations, Rope, "1,50,1,hide_slider");
 	EXPORT_PROPERTY_RANGED(Variant::FLOAT, stiffness, Rope, "0.01,1.99,0.01");
 	EXPORT_PROPERTY_RANGED(Variant::FLOAT, friction, Rope, "0.0,1.0,0.01");
+	EXPORT_PROPERTY_RANGED(Variant::FLOAT, tension_force_scale, Rope, "0.0,10.0,0.1");
+	EXPORT_PROPERTY(Variant::FLOAT, max_tension_force, Rope);
 
 	ClassDB::bind_method(D_METHOD("set_collision_layer", "collision_layer"), &Rope::set_collision_layer);
 	ClassDB::bind_method(D_METHOD("get_collision_layer"), &Rope::get_collision_layer);
@@ -131,7 +133,7 @@ void Rope::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "collision_mask", PROPERTY_HINT_LAYERS_3D_PHYSICS), "set_collision_mask", "get_collision_mask");
 
 	// forces
-	ADD_GROUP("Forces", "");
+	ADD_GROUP("Buoyancy", "");
 
 	// Buoyancy
 	EXPORT_PROPERTY(Variant::BOOL, apply_buoyancy, Rope);
@@ -142,6 +144,7 @@ void Rope::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "liquid_area", PROPERTY_HINT_NODE_TYPE, "LiquidArea"), "set_liquid_area", "get_liquid_area");
 
 	// Wind
+	ADD_GROUP("Wind", "");
 	EXPORT_PROPERTY(Variant::BOOL, apply_wind, Rope);
 	EXPORT_PROPERTY(Variant::FLOAT, wind_scale, Rope);
 	EXPORT_PROPERTY(Variant::VECTOR3, wind, Rope);
@@ -151,6 +154,7 @@ void Rope::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "wind_noise", PROPERTY_HINT_RESOURCE_TYPE, "FastNoiseLite"), "set_wind_noise", "get_wind_noise");
 
 	// Gravity
+	ADD_GROUP("Gravity & Damping", "");
 	EXPORT_PROPERTY(Variant::BOOL, apply_gravity, Rope);
 	EXPORT_PROPERTY(Variant::VECTOR3, gravity, Rope);
 	EXPORT_PROPERTY(Variant::FLOAT, gravity_scale, Rope);
@@ -251,6 +255,9 @@ void Rope::_internal_ready(void) {
 	set_process_internal(true);
 	set_physics_process_internal(true);
 	_queue_redraw();
+
+	_start_node = Object::cast_to<Node3D>(get_node_or_null(_start_anchor));
+	_end_node = Object::cast_to<Node3D>(get_node_or_null(_end_anchor));
 }
 
 void Rope::_internal_process(double delta) {
@@ -373,15 +380,19 @@ void Rope::_rebuild_rope() {
 		Vector3 start = global_position;
 		Vector3 end = global_position;
 		Transform3D xform;
+
+		Node3D *start_node = _get_start_node();
+		Node3D *end_node = _get_end_node();
+
 		if (_grow_from == Start) {
-			if (_get_node_transform(_start_anchor, xform))
+			if (_get_node_transform(start_node, xform))
 				start = xform.origin;
-			if (_get_node_transform(_end_anchor, xform))
+			if (_get_node_transform(end_node, xform))
 				end = xform.origin;
 		} else {
-			if (_get_node_transform(_start_anchor, xform))
+			if (_get_node_transform(start_node, xform))
 				end = xform.origin;
-			if (_get_node_transform(_end_anchor, xform))
+			if (_get_node_transform(end_node, xform))
 				start = xform.origin;
 		}
 		current_pos = start;
@@ -603,6 +614,32 @@ uint64_t Rope::get_particle_count_for_length() const {
 	return particle_count;
 }
 
+void Rope::set_start_anchor(const NodePath &val) {
+	if (val == _start_anchor)
+		return;
+
+	_start_anchor = val;
+	_start_node = Object::cast_to<Node3D>(get_node_or_null(_start_anchor));
+	_queue_rope_rebuild();
+}
+
+NodePath Rope::get_start_anchor() const {
+	return _start_anchor;
+}
+
+void Rope::set_end_anchor(const NodePath &val) {
+	if (val == _end_anchor)
+		return;
+
+	_end_anchor = val;
+	_end_node = Object::cast_to<Node3D>(get_node_or_null(_end_anchor));
+	_queue_rope_rebuild();
+}
+
+NodePath Rope::get_end_anchor() const {
+	return _end_anchor;
+}
+
 #pragma endregion
 
 #pragma region Subclassing
@@ -716,36 +753,54 @@ int Rope::_get_index_for_position(float position) const {
 	return Math::clamp(int(last * position), 0, last);
 }
 
-bool Rope::_get_node_transform(const NodePath &path, Transform3D &xform) const {
-	Node3D *node = cast_to<Node3D>(get_node_or_null(path));
-	if (node && node->is_visible()) {
-		xform = node->get_global_transform();
+Node3D *Rope::_get_start_node() const {
+	return Object::cast_to<Node3D>(get_node_or_null(_start_anchor));
+}
+
+Node3D *Rope::_get_end_node() const {
+	return Object::cast_to<Node3D>(get_node_or_null(_end_anchor));
+}
+
+bool Rope::_get_node_transform(Node3D *anchor, Transform3D &xform) const {
+	if (anchor) { // && node->is_visible()
+		xform = anchor->get_global_transform();
 		return true;
 	}
 
 	return false;
 }
 
-void Rope::_update_anchor(NodePath &anchor, float position) {
+void Rope::_update_anchor(Node3D *anchor, float position) {
 	Transform3D xform;
 	if (_get_node_transform(anchor, xform)) {
 		int index = _get_index_for_position(position);
 		_particles[index].pos_cur = xform.origin;
 		_particles[index].pos_prev = xform.origin;
 		_particles[index].attached = true;
+
+		// Track the attached body for force feedback
+		if (anchor) {
+			_particles[index].attached_body = cast_to<RigidBody3D>(anchor);
+		}
 	}
 }
 
 void Rope::_update_anchors() {
 	// for the first anchor, move the whole rope instead of the point
 	Transform3D xform;
-	if (_get_node_transform(_start_anchor, xform)) {
+
+	Node3D *start_node = _start_node; //_get_start_node();
+	Node3D *end_node = _end_node; //_get_end_node();
+
+	if (_get_node_transform(start_node, xform)) {
 		set_global_position(xform.origin);
 	}
 
 	// clear previous position attachments
-	for (auto &particle : _particles)
+	for (auto &particle : _particles) {
 		particle.attached = false;
+		particle.attached_body = nullptr;
+	}
 
 	// mark the mid anchors
 	int count = _get_anchor_count();
@@ -758,13 +813,20 @@ void Rope::_update_anchors() {
 			_particles[index].pos_cur = xform.origin;
 			_particles[index].pos_prev = xform.origin;
 			_particles[index].attached = true;
+
+			// Track the attached body for force feedback
+			NodePath node_path = _get_attachment_nodepath(idx);
+			Node3D *node = cast_to<Node3D>(get_node_or_null(node_path));
+			if (node) {
+				_particles[index].attached_body = cast_to<RigidBody3D>(node);
+			}
 		}
 	}
 
 	// attach to the start and end anchors last so that they are always
 	// anchored and not stomped on by mid anchors above.
-	_update_anchor(_start_anchor, 0.0);
-	_update_anchor(_end_anchor, 1.0);
+	_update_anchor(start_node, 0.0);
+	_update_anchor(end_node, 1.0);
 }
 
 void Rope::set_anchors(const Ref<RopeAnchorsBase> &val) {
@@ -1307,8 +1369,8 @@ void Rope::_stiff_rope(int iterations) {
 		print_line("Initial _stiff_rope:");
 #endif
 
+	// Position relaxation iterations — correct particle positions toward rest length.
 	for (int j = 0; j < iterations; j++) {
-		// First, apply the usual constraints between particles
 		for (int i = 0; i < _particles.size() - 1; i++) {
 			Particle &p0 = _particles[i];
 			Particle &p1 = _particles[i + 1];
@@ -1328,6 +1390,8 @@ void Rope::_stiff_rope(int iterations) {
 				print_line(segment, direction, length, " stretch:", stretch, " adj:", stretch * stiffness);
 			}
 #endif
+			// calculate tension before clamping
+			Vector3 tension = direction * stretch;
 
 			// prevent overshoot
 			stretch = Math::clamp(stretch * stiffness, -length, length);
@@ -1335,8 +1399,30 @@ void Rope::_stiff_rope(int iterations) {
 			// If either particle is attached, only move the other one
 			if (p0.attached) {
 				p1.pos_cur -= direction * stretch;
+
+				// Apply reaction force to p0's attached body (tension pulls it toward p1)
+				if (p0.attached && p0.attached_body != nullptr) {
+					Vector3 applied_force = tension * p0.attached_body->get_mass() * _tension_force_scale;
+					float force_magnitude = applied_force.length();
+					if (force_magnitude > _max_tension_force) {
+						applied_force = applied_force.normalized() * _max_tension_force;
+					}
+					p0.attached_body->apply_central_force(applied_force);
+				}
+
 			} else if (p1.attached) {
 				p0.pos_cur += direction * stretch;
+
+				// Apply reaction force to p1's attached body (tension pulls it toward p0)
+				if (p1.attached && p1.attached_body != nullptr) {
+					Vector3 applied_force = -tension * p1.attached_body->get_mass() * _tension_force_scale;
+					float force_magnitude = applied_force.length();
+					if (force_magnitude > _max_tension_force) {
+						applied_force = applied_force.normalized() * _max_tension_force;
+					}
+					p1.attached_body->apply_central_force(applied_force);
+				}
+
 			} else {
 				const Vector3 half_stretch = direction * 0.5f * stretch;
 				p0.pos_cur += half_stretch;
