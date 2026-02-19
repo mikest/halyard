@@ -1,4 +1,3 @@
-#pragma once
 #include "rope_positions.h"
 #include "rope.h"
 

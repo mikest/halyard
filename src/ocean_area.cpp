@@ -80,7 +80,7 @@ void OceanArea::_notification(int p_what) {
 				_ocean_detailer = Object::cast_to<OceanDetailer>(get_node_or_null("OceanDetailer"));
 			}
 			if (_wave_sampler.is_valid()) {
-				_wave_sampler->set_detail_map(_ocean_detailer ? _ocean_detailer->get_texture() : Ref<Texture2D>());
+				_wave_sampler->set_detail_map(_ocean_detailer ? (Ref<Texture2D>)_ocean_detailer->get_texture() : Ref<Texture2D>());
 				_wave_sampler->refresh_from_material();
 			}
 			break;

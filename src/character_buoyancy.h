@@ -44,7 +44,7 @@ public:
 	CharacterBuoyancy();
 	~CharacterBuoyancy() override;
 
-	PackedStringArray _get_configuration_warnings() const;
+	PackedStringArray _get_configuration_warnings() const override;
 
 	void apply_buoyancy_velocity(float delta);
 

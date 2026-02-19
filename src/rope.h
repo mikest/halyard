@@ -25,7 +25,6 @@
 using namespace godot;
 
 class RopeAnchor;
-enum RopeAnchor::Behavior;
 class RopeAnchorsBase;
 class RopeAttachmentsBase;
 class RopeAppearance;
