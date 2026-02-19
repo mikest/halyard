@@ -16,10 +16,12 @@ void RopeAnchorPositions::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_position", "index", "rope"), &RopeAnchorPositions::get_position);
 	// GDVIRTUAL_BIND(get_position, "idx", "rope");
 
-	ClassDB::bind_method(D_METHOD("set_nodepath", "index", "node", "rope"), &RopeAnchorPositions::set_nodepath);
-	ClassDB::bind_method(D_METHOD("get_nodepath", "index", "rope"), &RopeAnchorPositions::get_nodepath);
+	ClassDB::bind_method(D_METHOD("set_anchor_node", "index", "node", "rope"), &RopeAnchorPositions::set_anchor_node);
+	ClassDB::bind_method(D_METHOD("get_anchor_node", "index", "rope"), &RopeAnchorPositions::get_anchor_node);
 
 	ClassDB::bind_method(D_METHOD("get_transform", "index", "rope"), &RopeAnchorPositions::get_transform);
+	ClassDB::bind_method(D_METHOD("get_behavior", "index", "rope"), &RopeAnchorPositions::get_behavior);
+	ClassDB::bind_method(D_METHOD("get_anchor_parent", "index", "rope"), &RopeAnchorPositions::get_anchor_parent);
 	// GDVIRTUAL_BIND(get_transform, "idx", "rope");
 }
 
@@ -40,14 +42,20 @@ uint64_t RopeAnchorPositions::get_count(const Rope *rope) const {
 	return ret_val;
 }
 
-void RopeAnchorPositions::set_nodepath(uint64_t idx, const NodePath &val, const Rope *rope) {
+void RopeAnchorPositions::set_anchor_node(uint64_t idx, const Node3D *node, const Rope *rope) {
 	ERR_FAIL_NULL_MSG(rope, "Missing rope");
-	_set_nodepath(idx, val);
+	_set_nodepath(idx, node ? node->get_path() : NodePath());
 }
 
-NodePath RopeAnchorPositions::get_nodepath(uint64_t idx, const Rope *rope) const {
-	ERR_FAIL_NULL_V_MSG(rope, NodePath(), "Missing rope");
-	return _get_nodepath(idx);
+Node3D *RopeAnchorPositions::get_anchor_node(uint64_t idx, const Rope *rope) const {
+	ERR_FAIL_NULL_V_MSG(rope, nullptr, "Missing rope");
+
+	// if we're in a subclass implementation there may be no nodes backing the anchors,
+	// in which case we should just return null.
+	if (idx >= _get_count())
+		return nullptr;
+	else
+		return _get_node(idx, rope);
 }
 
 void RopeAnchorPositions::set_position(uint64_t idx, float val, const Rope *rope) {
@@ -61,6 +69,7 @@ float RopeAnchorPositions::get_position(uint64_t idx, const Rope *rope) const {
 
 	if (GDVIRTUAL_IS_OVERRIDDEN(get_position)) {
 		GDVIRTUAL_CALL(get_position, idx, rope, ret_val);
+
 	} else if (rope) {
 		ret_val = _position_for_distance(_get_position(idx), rope->get_rope_length());
 	}
@@ -75,11 +84,46 @@ Transform3D RopeAnchorPositions::get_transform(uint64_t idx, const Rope *rope) c
 
 	if (GDVIRTUAL_IS_OVERRIDDEN(get_transform)) {
 		GDVIRTUAL_CALL(get_transform, idx, rope, ret_val);
+
 	} else if (rope) {
-		const NodePath &path = get_nodepath(idx, rope);
-		Node3D *node = cast_to<Node3D>(rope->get_node_or_null(path));
-		if (node && node->is_visible()) {
+		Node3D *node = get_anchor_node(idx, rope);
+		if (node) {
 			ret_val = node->get_global_transform();
+		}
+	}
+
+	return ret_val;
+}
+
+RopeAnchor::Behavior RopeAnchorPositions::get_behavior(uint64_t idx, const Rope *rope) const {
+	RopeAnchor::Behavior ret_val = RopeAnchor::Behavior::ANCHORED;
+	ERR_FAIL_NULL_V_MSG(rope, ret_val, "Missing rope");
+
+	if (GDVIRTUAL_IS_OVERRIDDEN(get_behavior)) {
+		GDVIRTUAL_CALL(get_behavior, idx, rope, ret_val);
+
+	} else if (rope) {
+		Node3D *node = get_anchor_node(idx, rope);
+		RopeAnchor *anchor = Object::cast_to<RopeAnchor>(node);
+		if (anchor) {
+			ret_val = (RopeAnchor::Behavior)anchor->get_behavior();
+		}
+	}
+
+	return ret_val;
+}
+
+Node3D *RopeAnchorPositions::get_anchor_parent(uint64_t idx, const Rope *rope) const {
+	ERR_FAIL_NULL_V_MSG(rope, nullptr, "Missing rope");
+	Node3D *ret_val = nullptr;
+
+	if (GDVIRTUAL_IS_OVERRIDDEN(get_anchor_parent)) {
+		GDVIRTUAL_CALL(get_anchor_parent, idx, rope, ret_val);
+
+	} else if (rope) {
+		Node3D *node = get_anchor_node(idx, rope);
+		if (node) {
+			ret_val = Object::cast_to<Node3D>(node->get_parent());
 		}
 	}
 

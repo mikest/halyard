@@ -13,6 +13,7 @@
 #include "ocean_detailer.h"
 #include "rigid_buoyancy.h"
 #include "rope.h"
+#include "rope_anchor.h"
 #include "rope_anchor_positions.h"
 #include "rope_anchors_base.h"
 #include "rope_appearance.h"
@@ -33,6 +34,7 @@ void initialize_gdextension_types(ModuleInitializationLevel p_level) {
 
 		case MODULE_INITIALIZATION_LEVEL_SCENE: {
 			ClassDB::register_class<Rope>();
+			ClassDB::register_class<RopeAnchor>();
 			ClassDB::register_class<RopeMesh>();
 			ClassDB::register_class<RopeAnchorsBase>();
 			ClassDB::register_class<RopeAttachmentsBase>();

@@ -50,7 +50,13 @@ public:
 	//GDVIRTUAL2RC(Transform3D, get_transform, uint64_t, const Rope *);
 	virtual Transform3D get_transform(uint64_t idx, const Rope *rope) const override;
 
+	//GDVIRTUAL2RC(RopeAnchor::Behavior, get_behavior, uint64_t, const Rope *);
+	virtual RopeAnchor::Behavior get_behavior(uint64_t idx, const Rope *rope) const override;
+
+	//GDVIRTUAL2RC(Node3D*, get_anchor_parent, uint64_t, const Rope *);
+	virtual Node3D *get_anchor_parent(uint64_t idx, const Rope *rope) const override;
+
 	// via RopePositions
-	void set_nodepath(uint64_t idx, const NodePath &val, const Rope *rope);
-	NodePath get_nodepath(uint64_t idx, const Rope *rope) const;
+	void set_anchor_node(uint64_t idx, const Node3D *val, const Rope *rope);
+	Node3D *get_anchor_node(uint64_t idx, const Rope *rope) const;
 };

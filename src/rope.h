@@ -10,7 +10,6 @@
 #include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/classes/physics_ray_query_parameters3d.hpp>
 #include <godot_cpp/classes/physics_server3d.hpp>
-#include <godot_cpp/classes/rigid_body3d.hpp>
 #include <godot_cpp/classes/wrapped.hpp>
 #include <godot_cpp/core/binder_common.hpp>
 #include <godot_cpp/core/gdvirtual.gen.inc>
@@ -20,10 +19,13 @@
 #include <godot_cpp/variant/variant.hpp>
 
 #include "property_utils.h"
+#include "rope_anchor.h"
 #include "rope_mesh.h"
 
 using namespace godot;
 
+class RopeAnchor;
+enum RopeAnchor::Behavior;
 class RopeAnchorsBase;
 class RopeAttachmentsBase;
 class RopeAppearance;
@@ -48,7 +50,9 @@ class Rope : public GeometryInstance3D {
 		Vector3 B = Vector3(0, 0, 0);
 
 		bool attached = false;
-		RigidBody3D *attached_body = nullptr; // Reference to attached physics body for force feedback
+		Node3D *anchor_parent = nullptr; // Reference to attached RopeAnchor for force feedback
+		RopeAnchor::Behavior behavior = RopeAnchor::Behavior::ANCHORED;
+
 		RID shape;
 
 		Particle() = default;
@@ -151,6 +155,7 @@ protected:
 
 	void _update_physics(float delta, int iterations);
 	void _apply_chain_constraint(int from_idx);
+	void _apply_anchor_forces(Particle &p_particle, const Vector3 &tension);
 	void _stiff_rope(int interations);
 	void _verlet_process(float delta);
 	void _apply_forces();
@@ -220,6 +225,12 @@ public:
 
 	GDVIRTUAL1RC(Transform3D, _get_anchor_transform, int);
 	virtual Transform3D _get_anchor_transform(int idx) const;
+
+	GDVIRTUAL1RC(RopeAnchor::Behavior, _get_anchor_behavior, int);
+	virtual RopeAnchor::Behavior _get_anchor_behavior(int idx) const;
+
+	GDVIRTUAL1RC(Node3D *, _get_anchor_parent, int);
+	virtual Node3D *_get_anchor_parent(int idx) const;
 
 	// Return the position of the attachment along the rope in the range [-1, 0..1]
 	// If the position is -1, the attachment is unattached.

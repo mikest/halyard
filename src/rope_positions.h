@@ -28,6 +28,7 @@ using namespace godot;
 const int MAX_POSITIONS = 1000;
 #define POSITIONS_HINT "Scalar,DistanceFromStart,DistanceFromEnd"
 
+class Rope;
 class RopePositions {
 public:
 	RopePositions() = default;
@@ -43,6 +44,7 @@ protected:
 	struct Position {
 		float position = 0.0;
 		NodePath node = "";
+		Node3D *_node = nullptr;
 	};
 
 	Vector<Position> _positions;
@@ -65,6 +67,8 @@ protected:
 	float _get_position(uint64_t idx) const;
 	void _set_nodepath(uint64_t idx, const NodePath &val);
 	NodePath _get_nodepath(uint64_t idx) const;
+
+	Node3D *_get_node(uint64_t idx, const Rope *rope) const;
 
 	// this class stores raw position data, derrived classes will need to use the conversion functions
 	// as they have the rope length

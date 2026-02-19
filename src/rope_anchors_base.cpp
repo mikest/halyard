@@ -5,6 +5,8 @@ void RopeAnchorsBase::_bind_methods() {
 	GDVIRTUAL_BIND(get_count, "rope");
 	GDVIRTUAL_BIND(get_position, "idx", "rope");
 	GDVIRTUAL_BIND(get_transform, "idx", "rope");
+	GDVIRTUAL_BIND(get_behavior, "idx", "rope");
+	GDVIRTUAL_BIND(get_anchor_parent, "idx", "rope");
 }
 
 uint64_t RopeAnchorsBase::get_count(const Rope *rope) const {
@@ -33,6 +35,26 @@ Transform3D RopeAnchorsBase::get_transform(uint64_t idx, const Rope *rope) const
 	} else {
 		Transform3D ret_val;
 		GDVIRTUAL_CALL(get_transform, idx, rope, ret_val);
+		return ret_val;
+	}
+}
+
+RopeAnchor::Behavior RopeAnchorsBase::get_behavior(uint64_t idx, const Rope *rope) const {
+	if (!GDVIRTUAL_IS_OVERRIDDEN(get_behavior)) {
+		return RopeAnchor::Behavior::ANCHORED;
+	} else {
+		RopeAnchor::Behavior ret_val;
+		GDVIRTUAL_CALL(get_behavior, idx, rope, ret_val);
+		return ret_val;
+	}
+}
+
+Node3D *RopeAnchorsBase::get_anchor_parent(uint64_t idx, const Rope *rope) const {
+	if (!GDVIRTUAL_IS_OVERRIDDEN(get_anchor_parent)) {
+		return nullptr;
+	} else {
+		Node3D *ret_val;
+		GDVIRTUAL_CALL(get_anchor_parent, idx, rope, ret_val);
 		return ret_val;
 	}
 }

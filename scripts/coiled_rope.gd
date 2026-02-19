@@ -1,5 +1,5 @@
 @tool
-extends PullRope
+extends Rope
 class_name CoiledRope
 
 @export var clockwise: bool = false:

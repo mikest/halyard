@@ -1,5 +1,6 @@
 #include "rope.h"
 #include "liquid_area.h"
+#include "rope_anchor.h"
 #include "rope_anchors_base.h"
 #include "rope_appearance.h"
 #include "rope_attachments_base.h"
@@ -43,6 +44,9 @@ Rope::Rope() {
 	_ray_cast->set_exclude(_exclusion_list);
 	_ray_cast->set_collide_with_areas(false);
 	_ray_cast->set_collide_with_bodies(true);
+
+	// disable scaling, we should never be scaled
+	set_disable_scale(true);
 }
 
 Rope::Rope(const Rope &other) {
@@ -79,6 +83,8 @@ void Rope::_bind_methods() {
 	GDVIRTUAL_BIND(_get_anchor_count)
 	GDVIRTUAL_BIND(_get_anchor_position, "idx")
 	GDVIRTUAL_BIND(_get_anchor_transform, "idx")
+	GDVIRTUAL_BIND(_get_anchor_behavior, "idx")
+	GDVIRTUAL_BIND(_get_anchor_parent, "idx")
 
 	GDVIRTUAL_BIND(_get_attachment_count)
 	GDVIRTUAL_BIND(_get_attachment_position, "idx")
@@ -701,6 +707,34 @@ float Rope::_get_anchor_position(int idx) const {
 	return 0.0;
 }
 
+RopeAnchor::Behavior Rope::_get_anchor_behavior(int idx) const {
+	if (GDVIRTUAL_IS_OVERRIDDEN(_get_anchor_behavior)) {
+		RopeAnchor::Behavior ret_val;
+		GDVIRTUAL_CALL(_get_anchor_behavior, idx, ret_val);
+		return ret_val;
+	}
+
+	// default implementation
+	if (_anchors.is_valid()) {
+		return _anchors->get_behavior(idx, this);
+	}
+	return RopeAnchor::Behavior::ANCHORED;
+}
+
+Node3D *Rope::_get_anchor_parent(int idx) const {
+	if (GDVIRTUAL_IS_OVERRIDDEN(_get_anchor_parent)) {
+		Node3D *ret_val;
+		GDVIRTUAL_CALL(_get_anchor_parent, idx, ret_val);
+		return ret_val;
+	}
+
+	// default implementation
+	if (_anchors.is_valid()) {
+		return _anchors->get_anchor_parent(idx, this);
+	}
+	return nullptr;
+}
+
 float Rope::_get_attachment_position(int idx) const {
 	if (GDVIRTUAL_IS_OVERRIDDEN(_get_attachment_position)) {
 		float ret_val;
@@ -779,8 +813,10 @@ void Rope::_update_anchor(Node3D *anchor, float position) {
 		_particles[index].attached = true;
 
 		// Track the attached body for force feedback
-		if (anchor) {
-			_particles[index].attached_body = cast_to<RigidBody3D>(anchor);
+		RopeAnchor *rope_anchor = cast_to<RopeAnchor>(anchor);
+		if (rope_anchor) {
+			_particles[index].behavior = (RopeAnchor::Behavior)rope_anchor->get_behavior();
+			_particles[index].anchor_parent = rope_anchor->get_parent_node_3d();
 		}
 	}
 }
@@ -799,7 +835,8 @@ void Rope::_update_anchors() {
 	// clear previous position attachments
 	for (auto &particle : _particles) {
 		particle.attached = false;
-		particle.attached_body = nullptr;
+		particle.anchor_parent = nullptr;
+		particle.behavior = RopeAnchor::Behavior::ANCHORED;
 	}
 
 	// mark the mid anchors
@@ -815,11 +852,8 @@ void Rope::_update_anchors() {
 			_particles[index].attached = true;
 
 			// Track the attached body for force feedback
-			NodePath node_path = _get_attachment_nodepath(idx);
-			Node3D *node = cast_to<Node3D>(get_node_or_null(node_path));
-			if (node) {
-				_particles[index].attached_body = cast_to<RigidBody3D>(node);
-			}
+			_particles[index].anchor_parent = _get_anchor_parent(idx);
+			_particles[index].behavior = _get_anchor_behavior(idx);
 		}
 	}
 
@@ -1230,8 +1264,9 @@ void Rope::_draw_rope() {
 			RID instance = _instances[idx];
 			Transform3D xform = _links[idx];
 
+			// xform.orthonormalize();
 			xform.scale_basis(scale_vec);
-			rs->instance_set_transform(instance, xform.orthonormalized());
+			rs->instance_set_transform(instance, xform);
 		}
 
 		// clear mesh if previous we weren't rendering chain links
@@ -1358,8 +1393,42 @@ void Rope::_prepare_physics_server() {
 	// no-op for now
 }
 
+void Rope::_apply_anchor_forces(Particle &p_particle, const Vector3 &tension) {
+	// apply reaction force to p0's attached anchor (tension pulls it toward p1)
+	if (p_particle.attached && p_particle.anchor_parent != nullptr) {
+		switch (p_particle.behavior) {
+			// Do nothing, the anchor is static and doesn't react to forces
+			// or change the tension direction
+			case RopeAnchor::Behavior::ANCHORED:
+				break;
+
+			// Rope pulls on the rigid body associated with the anchor.
+			case RopeAnchor::Behavior::TOWING: {
+				RigidBody3D *body = Object::cast_to<RigidBody3D>(p_particle.anchor_parent);
+				if (body != nullptr) {
+					Vector3 applied_force = tension * body->get_mass();
+					float force_magnitude = applied_force.length();
+					if (force_magnitude > _max_tension_force) {
+						applied_force = applied_force.normalized() * _max_tension_force;
+					}
+
+					// apply force at anchor position
+					// NOTE: is pos_cur in global space? do transform if necessary
+					body->apply_force(applied_force, p_particle.pos_cur - body->get_global_position());
+
+					//p_particle.attached_anchor->apply_force(applied_force);
+				}
+			} break;
+
+			// TODO: Changes the tension direction
+			case RopeAnchor::Behavior::GUIDED: {
+			} break;
+		}
+	}
+}
+
 void Rope::_stiff_rope(int iterations) {
-	// Calculate the maximum allowed rope length
+	// calculate the maximum allowed rope length
 	const float max_segment_length = _get_average_segment_length();
 	const float stiffness = Math::clamp(_stiffness, 0.0f, 2.0f);
 
@@ -1371,6 +1440,8 @@ void Rope::_stiff_rope(int iterations) {
 
 	// Position relaxation iterations — correct particle positions toward rest length.
 	for (int j = 0; j < iterations; j++) {
+		Vector3 tension_direction_sum = Vector3();
+
 		for (int i = 0; i < _particles.size() - 1; i++) {
 			Particle &p0 = _particles[i];
 			Particle &p1 = _particles[i + 1];
@@ -1391,37 +1462,20 @@ void Rope::_stiff_rope(int iterations) {
 			}
 #endif
 			// calculate tension before clamping
-			Vector3 tension = direction * stretch;
+			// stretch is scaled by stiffness and force scale
+			Vector3 tension = direction * stretch * stiffness * _tension_force_scale;
 
 			// prevent overshoot
 			stretch = Math::clamp(stretch * stiffness, -length, length);
 
-			// If either particle is attached, only move the other one
+			// if either particle is attached, only move the other one
 			if (p0.attached) {
 				p1.pos_cur -= direction * stretch;
-
-				// Apply reaction force to p0's attached body (tension pulls it toward p1)
-				if (p0.attached && p0.attached_body != nullptr) {
-					Vector3 applied_force = tension * p0.attached_body->get_mass() * _tension_force_scale;
-					float force_magnitude = applied_force.length();
-					if (force_magnitude > _max_tension_force) {
-						applied_force = applied_force.normalized() * _max_tension_force;
-					}
-					p0.attached_body->apply_central_force(applied_force);
-				}
+				_apply_anchor_forces(p0, tension);
 
 			} else if (p1.attached) {
 				p0.pos_cur += direction * stretch;
-
-				// Apply reaction force to p1's attached body (tension pulls it toward p0)
-				if (p1.attached && p1.attached_body != nullptr) {
-					Vector3 applied_force = -tension * p1.attached_body->get_mass() * _tension_force_scale;
-					float force_magnitude = applied_force.length();
-					if (force_magnitude > _max_tension_force) {
-						applied_force = applied_force.normalized() * _max_tension_force;
-					}
-					p1.attached_body->apply_central_force(applied_force);
-				}
+				_apply_anchor_forces(p1, -tension);
 
 			} else {
 				const Vector3 half_stretch = direction * 0.5f * stretch;
@@ -1439,6 +1493,7 @@ void Rope::_stiff_rope(int iterations) {
 
 void Rope::_verlet_process(float delta) {
 	for (Particle &p : _particles) {
+		// ...this is probably interfereing with attached rigid bodies in the stiff rope function...
 		if (p.attached) {
 			continue;
 		}

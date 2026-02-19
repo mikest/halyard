@@ -1,5 +1,6 @@
 #pragma once
 #include "rope_positions.h"
+#include "rope.h"
 
 #define POSITION_PREFIX "position_"
 
@@ -129,6 +130,7 @@ void RopePositions::_set_nodepath(uint64_t idx, const NodePath &val) {
 
 	Position p = _positions.get(idx);
 	p.node = val;
+	p._node = nullptr;
 	_positions.set(idx, p);
 
 	_notify_changed();
@@ -141,6 +143,25 @@ NodePath RopePositions::_get_nodepath(uint64_t idx) const {
 	}
 
 	return _positions.get(idx).node;
+}
+
+Node3D *RopePositions::_get_node(uint64_t idx, const Rope *rope) const {
+	ERR_FAIL_NULL_V_MSG(rope, nullptr, "RopePositions::_get_node: rope is null");
+	if (idx >= _positions.size()) {
+		print_error("RopePositions::_get_node: index out of range.");
+		return nullptr;
+	}
+
+	Position p = _positions.get(idx);
+
+	// update cache
+	if (p._node == nullptr) {
+		Node *node = rope->get_node_or_null(p.node);
+		p._node = Object::cast_to<Node3D>(node);
+		const_cast<RopePositions *>(this)->_positions.set(idx, p);
+	}
+
+	return p._node;
 }
 
 void RopePositions::_set_spacing(Spacing val) {

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<class name="RopeAnchor" inherits="Node3D" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+    <brief_description>
+		An anchor point for a Rope that can apply forces to a parent RigidBody3D.
+	</brief_description>
+    <description>
+		RopeAnchor is a Node3D that serves as an attachment point on a Rope. When parented to a RigidBody3D, it can apply tension forces at its position in the body's local coordinate space. The [member behavior] property controls how the anchor interacts with the rope.
+	</description>
+    <tutorials>
+    </tutorials>
+    <methods>
+        <method name="get_parent_rigid_body" qualifiers="const">
+            <return type="RigidBody3D" />
+            <description>
+				Returns the parent node if it is a [RigidBody3D], otherwise returns [code]null[/code].
+			</description>
+        </method>
+        <method name="apply_force">
+            <return type="void" />
+            <param index="0" name="force" type="Vector3" />
+            <description>
+				Applies a force to the parent [RigidBody3D] at this anchor's global position. The position is automatically converted to a global offset from the body's origin.
+			</description>
+        </method>
+    </methods>
+    <members>
+        <member name="behavior" type="int" setter="set_behavior" getter="get_behavior"
+            enum="RopeAnchor.Behavior" default="0">
+			The behavior mode of this anchor. See [enum Behavior] for available modes.
+		</member>
+    </members>
+    <constants>
+        <constant name="ANCHORED" value="0" enum="Behavior">
+			The rope cannot move this anchor point.
+		</constant>
+        <constant name="TOWING" value="1" enum="Behavior">
+			The rope pulls on the parent rigid body at this point.
+		</constant>
+        <constant name="GUIDED" value="2" enum="Behavior">
+			The rope travels freely through this point, but the rope cannot move the anchor.
+		</constant>
+    </constants>
+</class>
