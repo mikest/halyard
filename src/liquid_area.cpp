@@ -87,7 +87,7 @@ Transform3D LiquidArea::get_liquid_transform(const Vector3 &global_point) const 
 
 	update_transforms_for_points(points, ret_val);
 
-	return ret_val.size() > 0 ? ret_val[0] : get_global_transform();
+	return ret_val.size() > 0 ? (Transform3D)ret_val[0] : get_global_transform();
 }
 
 void LiquidArea::update_transforms_for_points(const PackedVector3Array &global_points,
