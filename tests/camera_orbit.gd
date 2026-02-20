@@ -71,10 +71,27 @@ func _unhandled_input(event: InputEvent) -> void:
 			orbit_distance = minf(max_distance, orbit_distance + zoom_speed)
 			_apply_orbit()
 			get_viewport().set_input_as_handled()
+	
+	# Trackpad
+	if event is InputEventMagnifyGesture:
+		orbit_distance = maxf(min_distance, orbit_distance * event.factor)
+		_apply_orbit()
+		get_viewport().set_input_as_handled()
+	
+	if event is InputEventPanGesture:
+		var motion := event as InputEventPanGesture
+		var yaw_sign: float = -1.0 if not invert_yaw else 1.0
+		var pitch_sign: float = -1.0 if not invert_pitch else 1.0
+		_yaw += motion.delta.x * sensitivity * yaw_sign
+		_pitch += motion.delta.y * sensitivity * pitch_sign
+		_pitch = clampf(_pitch, min_pitch, max_pitch)
+		_apply_orbit()
+		get_viewport().set_input_as_handled()
+		
 
 	# Rotate while orbiting.
 	if event is InputEventMouseMotion and _orbiting:
-		var motion: InputEventMouseMotion = event as InputEventMouseMotion
+		var motion := event as InputEventMouseMotion
 		var yaw_sign: float = -1.0 if not invert_yaw else 1.0
 		var pitch_sign: float = -1.0 if not invert_pitch else 1.0
 		_yaw += motion.relative.x * sensitivity * yaw_sign
