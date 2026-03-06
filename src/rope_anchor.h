@@ -17,18 +17,18 @@ has been set as a child of that object.
 
 using namespace godot;
 
+enum AnchorBehavior {
+	FREE = -1, // Rope is unattached to this anchor
+	ANCHORED = 0, // Rope is attached to anchor and can not move it. (Not towing or guided.)
+	TOWING = 1, // If anchors is a child of a RigidBody3D rope will pull on it, otherwise acts like ANCHORED.
+	GUIDED = 2, // The rope travels freely through this point, but the rope cannot move the anchor.
+	SLIDING = 3, // If parent is a RigidBody, rope travels through like guided, and pulls on parent. (Towing and guided.)
+};
+
 // A node that serves as an anchor point on a Rope.
 // When parented to a RigidBody3D, it can apply forces at its position.
 class RopeAnchor : public Node3D {
 	GDCLASS(RopeAnchor, Node3D)
-
-public:
-	enum Behavior {
-		ANCHORED = 0, // Rope is attached to anchor and can not move it.
-		TOWING = 1, // If anchors is a child of a RigidBody3D rope will pull on it, otherwise acts like ANCHORED.
-		GUIDED = 2, // The rope travels freely through this point, but the rope cannot move the anchor.
-		//PULLEY = 3,	// If parent is a RopePulley, rope travels around the pulley, otherwise acts like GUIDED.
-	};
 
 private:
 	int _behavior = ANCHORED;
@@ -51,4 +51,4 @@ public:
 	void apply_force(const Vector3 &p_force);
 };
 
-VARIANT_ENUM_CAST(RopeAnchor::Behavior);
+VARIANT_ENUM_CAST(AnchorBehavior);

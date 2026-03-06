@@ -13,6 +13,7 @@
 #include <godot_cpp/classes/wrapped.hpp>
 #include <godot_cpp/core/binder_common.hpp>
 #include <godot_cpp/core/gdvirtual.gen.inc>
+#include <godot_cpp/templates/hash_map.hpp>
 #include <godot_cpp/templates/local_vector.hpp>
 #include <godot_cpp/templates/pair.hpp>
 #include <godot_cpp/variant/typed_array.hpp>
@@ -38,6 +39,27 @@ class Rope : public GeometryInstance3D {
 	LocalVector<RID> _instances;
 	LiquidArea *_liquid_area = nullptr;
 
+	// Anchor point along the rope.
+	struct Anchor {
+		float offset = 0.0; // Distance in meters along rope. positive from start.
+		Transform3D transform = Transform3D(); // The transform of the anchor in world space
+		AnchorBehavior behavior = AnchorBehavior::ANCHORED;
+		RigidBody3D *rigid_body = nullptr; // RigidBody to apply forces to
+		Node3D *node = nullptr; // If using a node for an anchor, transform and behavior may be derrived from it.
+
+		Anchor() = default;
+		Anchor(float p, Transform3D t, AnchorBehavior b = AnchorBehavior::ANCHORED, RigidBody3D *rb = nullptr, Node3D *n = nullptr) :
+				offset(p), transform(t), behavior(b), rigid_body(rb), node(n) {}
+
+		bool operator<(const Anchor &other) const {
+			return offset < other.offset;
+		}
+
+		bool operator==(const Anchor &other) const {
+			return offset == other.offset && transform == other.transform && behavior == other.behavior && rigid_body == other.rigid_body && node == other.node;
+		}
+	};
+
 	// Rope particle, segments connect between particles.
 	struct Particle {
 		Vector3 pos_prev = Vector3(0, 0, 0);
@@ -48,9 +70,11 @@ class Rope : public GeometryInstance3D {
 		Vector3 N = Vector3(0, 0, 0);
 		Vector3 B = Vector3(0, 0, 0);
 
-		bool attached = false;
-		Node3D *anchor_parent = nullptr; // Reference to attached RopeAnchor for force feedback
-		RopeAnchor::Behavior behavior = RopeAnchor::Behavior::ANCHORED;
+		// Node3D *anchor = nullptr; // Reference to attached RopeAnchor node
+		// RigidBody3D *rigid_body = nullptr; // Reference to attached RopeAnchor for force feedback
+		// AnchorBehavior behavior = AnchorBehavior::FREE;
+		int64_t anchor_idx = -1;
+		float stretch = 0.0;
 
 		RID shape;
 
@@ -59,6 +83,7 @@ class Rope : public GeometryInstance3D {
 	};
 
 	// internal state
+	LocalVector<Anchor> _anchors;
 	LocalVector<Particle> _particles; // the individual points in the simulation
 	LocalVector<Transform3D> _frames; // the transform frame for each LOD point along the rope
 	LocalVector<Transform3D> _links; // the transforms for the points between each particle, always N-1 in count.
@@ -95,7 +120,7 @@ class Rope : public GeometryInstance3D {
 
 	// attachments
 	NodePath _start_anchor = ".";
-	Ref<RopeAnchorsBase> _anchors;
+	Ref<RopeAnchorsBase> _mid_anchors;
 	NodePath _end_anchor;
 
 	Node3D *_start_node = nullptr;
@@ -144,18 +169,21 @@ protected:
 	Node3D *_get_start_node() const;
 	Node3D *_get_end_node() const;
 	bool _get_node_transform(Node3D *anchor, Transform3D &xform) const;
-	void _update_anchor(Node3D *anchor, float position);
 	void _update_anchors();
 
 	// Physics
 	void _rebuild_rope();
+	void _rebuild_anchors();
 	void _queue_rope_rebuild();
 	bool _pop_rebuild();
 
 	void _update_physics(float delta, int iterations);
 	void _apply_chain_constraint(int from_idx);
-	void _apply_anchor_forces(Particle &p_particle, const Vector3 &tension);
+	void _apply_anchor_forces(Particle &p_particle, Anchor &p_anchor, const Vector3 &tension);
+	Anchor *_get_anchor_for_particle(Particle &p_particle);
+
 	void _stiff_rope(int interations);
+	void _balance_tension();
 	void _verlet_process(float delta);
 	void _apply_forces();
 	void _apply_constraints();
@@ -225,8 +253,8 @@ public:
 	GDVIRTUAL1RC(Transform3D, _get_anchor_transform, int);
 	virtual Transform3D _get_anchor_transform(int idx) const;
 
-	GDVIRTUAL1RC(RopeAnchor::Behavior, _get_anchor_behavior, int);
-	virtual RopeAnchor::Behavior _get_anchor_behavior(int idx) const;
+	GDVIRTUAL1RC(AnchorBehavior, _get_anchor_behavior, int);
+	virtual AnchorBehavior _get_anchor_behavior(int idx) const;
 
 	GDVIRTUAL1RC(Node3D *, _get_anchor_parent, int);
 	virtual Node3D *_get_anchor_parent(int idx) const;

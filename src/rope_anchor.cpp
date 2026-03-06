@@ -3,10 +3,12 @@
 #include "rope_anchor.h"
 
 void RopeAnchor::_bind_methods() {
-	EXPORT_PROPERTY_ENUM(behavior, "Anchored,Towing,Guided", RopeAnchor);
+	EXPORT_PROPERTY_ENUM(behavior, "Free:-1,Anchored,Towing,Guided,Sliding", RopeAnchor);
+	BIND_ENUM_CONSTANT(FREE);
 	BIND_ENUM_CONSTANT(ANCHORED); // Rope can't move anchor.
 	BIND_ENUM_CONSTANT(TOWING); // Rope pulls on rigid body at this point
 	BIND_ENUM_CONSTANT(GUIDED); // Rope travels freely through this point, but rope cannot move it.
+	BIND_ENUM_CONSTANT(SLIDING);
 
 	ClassDB::bind_method(D_METHOD("get_parent_rigid_body"), &RopeAnchor::get_parent_rigid_body);
 	ClassDB::bind_method(D_METHOD("apply_force", "force"), &RopeAnchor::apply_force);

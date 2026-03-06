@@ -39,11 +39,11 @@ Transform3D RopeAnchorsBase::get_transform(uint64_t idx, const Rope *rope) const
 	}
 }
 
-RopeAnchor::Behavior RopeAnchorsBase::get_behavior(uint64_t idx, const Rope *rope) const {
+AnchorBehavior RopeAnchorsBase::get_behavior(uint64_t idx, const Rope *rope) const {
 	if (!GDVIRTUAL_IS_OVERRIDDEN(get_behavior)) {
-		return RopeAnchor::Behavior::ANCHORED;
+		return AnchorBehavior::ANCHORED;
 	} else {
-		RopeAnchor::Behavior ret_val;
+		AnchorBehavior ret_val;
 		GDVIRTUAL_CALL(get_behavior, idx, rope, ret_val);
 		return ret_val;
 	}

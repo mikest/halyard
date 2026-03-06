@@ -95,8 +95,8 @@ Transform3D RopeAnchorPositions::get_transform(uint64_t idx, const Rope *rope) c
 	return ret_val;
 }
 
-RopeAnchor::Behavior RopeAnchorPositions::get_behavior(uint64_t idx, const Rope *rope) const {
-	RopeAnchor::Behavior ret_val = RopeAnchor::Behavior::ANCHORED;
+AnchorBehavior RopeAnchorPositions::get_behavior(uint64_t idx, const Rope *rope) const {
+	AnchorBehavior ret_val = AnchorBehavior::ANCHORED;
 	ERR_FAIL_NULL_V_MSG(rope, ret_val, "Missing rope");
 
 	if (GDVIRTUAL_IS_OVERRIDDEN(get_behavior)) {
@@ -106,7 +106,7 @@ RopeAnchor::Behavior RopeAnchorPositions::get_behavior(uint64_t idx, const Rope 
 		Node3D *node = get_anchor_node(idx, rope);
 		RopeAnchor *anchor = Object::cast_to<RopeAnchor>(node);
 		if (anchor) {
-			ret_val = (RopeAnchor::Behavior)anchor->get_behavior();
+			ret_val = (AnchorBehavior)anchor->get_behavior();
 		}
 	}
 

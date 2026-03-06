@@ -1,12 +1,15 @@
 /* Copyright (c) 2024-25 M. Estee
 
-RopeAnchorBase is an abstract base class for returning a set of
+RopeAnchorBase is a base class for returning a set of
 anchor positions and behaviors. The anchors can be based on node
 or determined procedurally.
 
-For anchor behaviors that require a parent get anchor parent should
-return that Node3D.
-
+Anchors have an index and a position.
+Position is the distance in meters along the rope.
+Positive distances are measured from rope start, negative distances are measured from rope end.
+If the distance is greater than the rope length the behavior will be assumed to be FREE.
+If the anchor at a given index has a rigid_body, that rigid body may have forces applied to it.
+If the anchor at a given index has node, that node will used to derive the transform of the anchor and the rigid_body.
 */
 
 #pragma once
@@ -49,9 +52,9 @@ public:
 	GDVIRTUAL2RC(Transform3D, get_transform, uint64_t, const Rope *);
 	virtual Transform3D get_transform(uint64_t, const Rope *) const;
 
-	// return the behavior for the position, defaults to ANCHORED
-	GDVIRTUAL2RC(RopeAnchor::Behavior, get_behavior, uint64_t, const Rope *);
-	virtual RopeAnchor::Behavior get_behavior(uint64_t, const Rope *) const;
+	// return the behavior for the index, defaults to ANCHORED
+	GDVIRTUAL2RC(AnchorBehavior, get_behavior, uint64_t, const Rope *);
+	virtual AnchorBehavior get_behavior(uint64_t, const Rope *) const;
 
 	// return the node of the anchor parent node (TOWING, PULLEY)
 	// or nullptr if there is no anchor parent node for this position
