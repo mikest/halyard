@@ -2,7 +2,6 @@
 
 #include "property_utils.h"
 #include "rope_anchors_base.h"
-#include "rope_positions.h"
 #include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/classes/ref.hpp>
 #include <godot_cpp/classes/resource.hpp>
@@ -16,12 +15,52 @@
 
 using namespace godot;
 
-class RopeAnchorPositions : public RopeAnchorsBase, public RopePositions {
+class RopeAnchorPositions : public RopeAnchorsBase {
 	GDCLASS(RopeAnchorPositions, RopeAnchorsBase)
 
+public:
+	enum Spacing {
+		Scalar = 0,
+		DistanceFromStart = 1,
+		DistanceFromEnd = 2,
+	};
+
 protected:
+	struct Position {
+		float position = 0.0;
+		NodePath node = "";
+	};
+
+	Vector<Position> _positions;
+	Spacing _spacing = Scalar;
+
+	// Dynamic property list management
+	void _rp_get_property_list(List<PropertyInfo> *p_list) const;
+	bool _rp_property_can_revert(const StringName &p_name) const;
+	bool _rp_property_get_revert(const StringName &p_name, Variant &r_property) const;
+	bool _rp_set(const StringName &p_name, const Variant &p_property);
+	bool _rp_get(const StringName &p_name, Variant &r_property) const;
+
+	Pair<uint64_t, String> _get_propname_with_index(const StringName &p_name) const;
+
+	// Internal accessors; these call _notify_changed on mutations
+	void _set_count(uint64_t count);
+	uint64_t _get_count() const;
+
+	void _set_position(uint64_t idx, float val);
+	float _get_position(uint64_t idx) const;
+	void _set_nodepath(uint64_t idx, const NodePath &val);
+	NodePath _get_nodepath(uint64_t idx) const;
+
+	void _set_spacing(Spacing val);
+	Spacing _get_spacing() const;
+
+	// Convert between scalar [0,1] position and distance, depending on the current spacing mode
+	float _position_for_distance(float distance, float rope_length) const;
+	float _distance_for_position(float position, float rope_length) const;
+
 	static void _bind_methods();
-	void _notify_changed() override;
+	void _notify_changed();
 
 	void _get_property_list(List<PropertyInfo> *p_list) const { _rp_get_property_list(p_list); }
 	bool _property_can_revert(const StringName &p_name) const { return _rp_property_can_revert(p_name); }
@@ -39,15 +78,12 @@ public:
 	void set_spacing(Spacing val) { _set_spacing(val); }
 	Spacing get_spacing() const { return _get_spacing(); }
 
-	//GDVIRTUAL1RC(uint64_t, get_count, const Rope *);
 	virtual uint64_t get_count(const Rope *rope) const override;
 
 	// these return Scalar positions
 	void set_position(uint64_t idx, float val, const Rope *rope);
-	//GDVIRTUAL2RC(float, get_position, uint64_t, const Rope *);
 	virtual float get_position(uint64_t idx, const Rope *rope) const override;
 
-	//GDVIRTUAL2RC(Transform3D, get_transform, uint64_t, const Rope *);
 	virtual Transform3D get_transform(uint64_t idx, const Rope *rope) const override;
 
 	//GDVIRTUAL2RC(RopeBehavior, get_behavior, uint64_t, const Rope *);
@@ -59,4 +95,9 @@ public:
 	// via RopePositions
 	void set_anchor_node(uint64_t idx, const Node3D *val, const Rope *rope);
 	Node3D *get_anchor_node(uint64_t idx, const Rope *rope) const;
+
+	void set_nodepath(uint64_t idx, const NodePath &val, const Rope *rope);
+	NodePath get_nodepath(uint64_t idx, const Rope *rope) const;
 };
+
+VARIANT_ENUM_CAST(RopeAnchorPositions::Spacing)
