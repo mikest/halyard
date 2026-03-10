@@ -1777,6 +1777,9 @@ void Rope::_apply_constraints() {
 void Rope::_update_collision_shapes() {
 	auto ps = PhysicsServer3D::get_singleton();
 
+	if (_collision_mask == 0 && _collision_layer == 0)
+		return;
+
 	// update the shape positions1
 	int index = 0;
 	int count = ps->body_get_shape_count(_physics_body);
