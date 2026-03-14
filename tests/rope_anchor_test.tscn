@@ -1,0 +1,189 @@
+[gd_scene format=3 uid="uid://bckq7e6yxxadp"]
+
+[ext_resource type="PackedScene" uid="uid://cn1vm8lpn0kby" path="res://addons/halyard/tests/test_base.tscn" id="1_3jqx7"]
+[ext_resource type="Texture2D" uid="uid://dlhnxxyov3dea" path="res://addons/halyard/assets/three-ply-rope.png" id="2_dpfuq"]
+[ext_resource type="Script" uid="uid://bpo84j3idh1wu" path="res://addons/halyard/tests/draggable.gd" id="2_kpsk4"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gaj4q"]
+albedo_texture = ExtResource("2_dpfuq")
+
+[sub_resource type="RopeAppearance" id="RopeAppearance_akaj0"]
+rope_lod = 4
+particles_per_meter = 4.0
+material = SubResource("StandardMaterial3D_gaj4q")
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_dpfuq"]
+
+[sub_resource type="SphereMesh" id="SphereMesh_gaj4q"]
+
+[sub_resource type="BuoyancyMaterial" id="BuoyancyMaterial_akaj0"]
+
+[sub_resource type="TorusMesh" id="TorusMesh_3jqx7"]
+inner_radius = 0.125
+outer_radius = 0.25
+rings = 24
+ring_segments = 12
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_dpfuq"]
+top_radius = 0.125
+bottom_radius = 0.25
+height = 4.0
+
+[node name="TestBase" unique_id=2029226043 instance=ExtResource("1_3jqx7")]
+
+[node name="Rope" type="Rope" parent="." index="3" unique_id=540035405]
+rope_width = 0.25
+particles_per_meter = 4.0
+anchor_count = 3
+appearance = SubResource("RopeAppearance_akaj0")
+stiffness_iterations = 20
+stiffness = 1.5
+tension_force_scale = 2.0
+collision_layer = 0
+anchors/0/offset = 0.0
+anchors/0/from = 0
+anchors/0/node_path = NodePath("../Ball_A/BallRopeAnchor")
+anchors/1/offset = 2.0
+anchors/1/from = 0
+anchors/1/node_path = NodePath("../GuidedRing/Guided")
+anchors/2/offset = 0.0
+anchors/2/from = 1
+anchors/2/node_path = NodePath("../Ball_B/BallRopeAnchor")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.88976383, 1.098501)
+custom_aabb = AABB(-0.18107581, -0.2196014, -3.3119395, 0.3060758, 1.4548376, 4.438672)
+
+[node name="Ball_A" type="RigidBody3D" parent="." index="4" unique_id=2139964475]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.056137323, 0.7866516, -2.0885003)
+collision_layer = 2
+collision_mask = 3
+mass = 15.0
+linear_damp = 1.0
+angular_damp = 1.0
+script = ExtResource("2_kpsk4")
+drag_damping = 2.0
+metadata/_edit_group_ = true
+
+[node name="BallRopeAnchor" type="RopeAnchor" parent="Ball_A" index="0" unique_id=72407315]
+behavior = 1
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.151199e-05, 0.008510828, 6.16312e-05)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ball_A" index="1" unique_id=636553943]
+shape = SubResource("SphereShape3D_dpfuq")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ball_A" index="2" unique_id=2075187776]
+mesh = SubResource("SphereMesh_gaj4q")
+
+[node name="RigidBuoyancy" type="RigidBuoyancy" parent="Ball_A" index="3" unique_id=725337267 node_paths=PackedStringArray("collider")]
+collider = NodePath("../CollisionShape3D")
+buoyancy_material = SubResource("BuoyancyMaterial_akaj0")
+show_debug = true
+
+[node name="GuidedRing" type="MeshInstance3D" parent="." index="5" unique_id=1871174003]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 2, 0)
+mesh = SubResource("TorusMesh_3jqx7")
+
+[node name="Guided" type="RopeAnchor" parent="GuidedRing" index="0" unique_id=815460170]
+behavior = 2
+
+[node name="Ball_B" type="RigidBody3D" parent="." index="6" unique_id=347684372]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.056137323, 0.7866516, 2.1001718)
+collision_layer = 2
+collision_mask = 3
+mass = 15.0
+linear_damp = 1.0
+angular_damp = 1.0
+script = ExtResource("2_kpsk4")
+drag_damping = 2.0
+metadata/_edit_group_ = true
+
+[node name="BallRopeAnchor" type="RopeAnchor" parent="Ball_B" index="0" unique_id=227397698]
+behavior = 1
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.151199e-05, 0.008510828, 6.16312e-05)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ball_B" index="1" unique_id=1553646874]
+shape = SubResource("SphereShape3D_dpfuq")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ball_B" index="2" unique_id=623091864]
+mesh = SubResource("SphereMesh_gaj4q")
+
+[node name="RigidBuoyancy" type="RigidBuoyancy" parent="Ball_B" index="3" unique_id=1888731756 node_paths=PackedStringArray("collider")]
+collider = NodePath("../CollisionShape3D")
+buoyancy_material = SubResource("BuoyancyMaterial_akaj0")
+show_debug = true
+
+[node name="Rope2" type="Rope" parent="." index="7" unique_id=1270005629]
+rope_length = 6.0
+rope_width = 0.25
+particles_per_meter = 4.0
+anchor_count = 3
+appearance = SubResource("RopeAppearance_akaj0")
+stiffness_iterations = 20
+stiffness = 1.8
+tension_force_scale = 2.0
+collision_layer = 0
+anchors/0/offset = 0.0
+anchors/0/from = 0
+anchors/0/node_path = NodePath("../Pole_A/RopeAnchor")
+anchors/1/offset = 3.0
+anchors/1/from = 0
+anchors/1/node_path = NodePath("../Ball_C/SlidingRopeAnchor")
+anchors/2/offset = 0.0
+anchors/2/from = 1
+anchors/2/node_path = NodePath("../Pole_B/RopeAnchor")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.88976383, 1.098501)
+custom_aabb = AABB(-0.125, -0.125, -4.223501, 4.325467, 3.3602362, 6.25)
+
+[node name="Pole_A" type="MeshInstance3D" parent="." index="8" unique_id=124229271]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 2, -3)
+mesh = SubResource("CylinderMesh_dpfuq")
+
+[node name="RopeAnchor" type="RopeAnchor" parent="Pole_A" index="0" unique_id=440733512]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+
+[node name="Ball_C" type="RigidBody3D" parent="." index="9" unique_id=1593848935]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.0697937, 0.7866516, 0.039963722)
+collision_layer = 2
+collision_mask = 3
+mass = 15.0
+linear_damp = 1.0
+angular_damp = 1.0
+script = ExtResource("2_kpsk4")
+drag_damping = 2.0
+metadata/_edit_group_ = true
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ball_C" index="0" unique_id=1501474917]
+shape = SubResource("SphereShape3D_dpfuq")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Ball_C" index="1" unique_id=1391708128]
+mesh = SubResource("SphereMesh_gaj4q")
+
+[node name="RigidBuoyancy" type="RigidBuoyancy" parent="Ball_C" index="2" unique_id=1234014237 node_paths=PackedStringArray("collider")]
+collider = NodePath("../CollisionShape3D")
+buoyancy_material = SubResource("BuoyancyMaterial_akaj0")
+show_debug = true
+
+[node name="SlidingRopeAnchor" type="RopeAnchor" parent="Ball_C" index="3" unique_id=398032659]
+behavior = 3
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0.625, 0)
+
+[node name="SlidingRing" type="MeshInstance3D" parent="Ball_C" index="4" unique_id=187237365]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0.625, 0)
+mesh = SubResource("TorusMesh_3jqx7")
+skeleton = NodePath("../..")
+
+[node name="Pole_B" type="MeshInstance3D" parent="." index="10" unique_id=1191075476]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 2, 3)
+mesh = SubResource("CylinderMesh_dpfuq")
+
+[node name="RopeAnchor" type="RopeAnchor" parent="Pole_B" index="0" unique_id=198392257]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+
+[node name="Label3D" type="Label3D" parent="." index="11" unique_id=362730667]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3.4346669, 9.60385, -4.942705)
+pixel_size = 0.01
+text = "LMB: Drag Objects
+MMB: Orbit Camera
+
+Pay special attention to the Stiffness Iterations,
+Mass, and Tension Force when pulling RigidBodies."
+horizontal_alignment = 0

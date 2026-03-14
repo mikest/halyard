@@ -1,41 +1,41 @@
-[gd_scene load_steps=5 format=3 uid="uid://ddppwbtkh0t2f"]
+[gd_scene format=3 uid="uid://ddppwbtkh0t2f"]
 
 [ext_resource type="Script" uid="uid://dnnxtqukra31q" path="res://addons/halyard/scripts/coiled_rope.gd" id="1_3qe50"]
 [ext_resource type="ArrayMesh" uid="uid://j3u082cbuveh" path="res://addons/halyard/assets/chain-link.res" id="1_gn44e"]
-
-[sub_resource type="RopeAnchorPositions" id="RopeAnchorPositions_3qe50"]
-position_count = 1
-position_0/position = 0.0
-position_0/node = NodePath("../Drum")
+[ext_resource type="PackedScene" uid="uid://cn1vm8lpn0kby" path="res://addons/halyard/tests/test_base.tscn" id="3_sjw63"]
 
 [sub_resource type="RopeAppearance" id="RopeAppearance_xlb8c"]
-rope_width = 0.1
+rope_width = 0.125
 rope_lod = 1
 particles_per_meter = 16.0
 link_mesh = ExtResource("1_gn44e")
 
-[node name="CoilTest" type="Node3D"]
+[node name="CoilTest" type="Node3D" unique_id=653013393]
 
-[node name="CoiledRope" type="Rope" parent="."]
-rope_length = 29.925
-end_anchor = NodePath("../ChainHole")
-anchors = SubResource("RopeAnchorPositions_3qe50")
+[node name="CoiledRope" type="Rope" parent="." unique_id=1194387720 node_paths=PackedStringArray("drum_anchor", "chain_guide")]
+particles_per_meter = 16.0
 appearance = SubResource("RopeAppearance_xlb8c")
 stiffness_iterations = 8
 stiffness = 1.5
 collision_layer = 0
 collision_mask = 0
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.48389614, -0.12379396)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.057503402, 1.1796455, -0.0157578)
 script = ExtResource("1_3qe50")
 clockwise = true
 radius = 0.1
 turns_per_layer = 6.0
 offset_turns = 0.063
-coiled = 0.947
+coiled = 0.678
+drum_anchor = NodePath("../Drum")
+chain_guide = NodePath("../ChainHole")
 metadata/_custom_type_script = "uid://dnnxtqukra31q"
 
-[node name="Drum" type="Marker3D" parent="."]
+[node name="Drum" type="RopeAnchor" parent="." unique_id=1088114845]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.24843866, -1.3161365)
 
-[node name="ChainHole" type="Marker3D" parent="."]
+[node name="ChainHole" type="RopeAnchor" parent="." unique_id=1102286583]
+behavior = 2
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.21039295, -1.7626028)
+
+[node name="TestBase" parent="." unique_id=2029226043 instance=ExtResource("3_sjw63")]
+visible = false

@@ -9,6 +9,10 @@ const attach_icon := preload("res://addons/halyard/icons/Attachment.svg")
 const end_attach_icon := preload("res://addons/halyard/icons/EndAttachment.svg")
 const start_attach_icon := preload("res://addons/halyard/icons/StartAttachment.svg")
 
+const guided_icon := preload("res://addons/halyard/icons/Guided.svg")
+const sliding_icon := preload("res://addons/halyard/icons/Sliding.svg")
+const towing_icon := preload("res://addons/halyard/icons/Towing.svg")
+
 func _get_gizmo_name():
 	return "RopePositions"
 
@@ -23,6 +27,12 @@ func _init():
 	create_handle_material("start_attach", false, start_attach_icon)
 	create_handle_material("end_attach", false, end_attach_icon)
 	create_material("main", Color(1, 1, 0))
+	create_material("start", Color(1, 1, 1))
+	create_material("end", Color(.5, .5, .5))
+
+	create_handle_material("guided", false, guided_icon)
+	create_handle_material("sliding", false, sliding_icon)
+	create_handle_material("towing", false, towing_icon)
 
 
 func _redraw(gizmo: EditorNode3DGizmo):
@@ -30,28 +40,27 @@ func _redraw(gizmo: EditorNode3DGizmo):
 
 	var rope: Rope = gizmo.get_node_3d()
 	if rope:
-		var anchors := rope.anchors
-		_draw_anchors(gizmo, rope, rope.start_anchor, rope.end_anchor, anchors, "anchor", false)
+		_draw_anchors(gizmo, rope, "anchor", false)
 		
 		var attach := rope.get_attachments()
 		_draw_attachments(gizmo, rope, rope.get_start_attachment(), rope.get_end_attachment(), attach, "attach", true)
 
-func _draw_anchors(gizmo: EditorNode3DGizmo, rope: Rope, start_path: NodePath, end_path: NodePath, anchors: RopeAnchorsBase, style: StringName, flip: bool):
+func _draw_anchors(gizmo: EditorNode3DGizmo, rope: Rope, style: StringName, flip: bool):
 	var lines = PackedVector3Array()
 	var handles = PackedVector3Array()
 	var start = PackedVector3Array()
 	var end = PackedVector3Array()
 	
-	var count := 0
-	if anchors:
-		count = anchors.get_count(rope)
-		for idx in count:
-			var xform := anchors.get_transform(idx, rope)
+	var count := rope.get_anchor_count()
+	for idx in count:
+		var xform := rope.get_anchor_transform(idx)
+		if idx == 0:
+			_push_position(xform, rope, lines, start, flip, 0)
+		elif idx == count-1:
+			_push_position(xform, rope, lines, end, flip, count - 1)
+		else:
 			_push_position(xform, rope, lines, handles, flip, idx)
 
-	_push_positions_for_node(start_path, rope, lines, start, flip, 0)
-	_push_positions_for_node(end_path, rope, lines, end, flip, count - 1)
-	
 	if lines.size():
 		gizmo.add_lines(lines, get_material("main", gizmo))
 	if handles.size():

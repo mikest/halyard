@@ -1,26 +1,45 @@
 #include "rope_anchor_positions.h"
 #include "rope.h"
+#include <godot_cpp/variant/callable.hpp>
 
 #define POSITION_PREFIX "position_"
 #define POSITIONS_HINT "Scalar,DistanceFromStart,DistanceFromEnd"
+#define BEHAVIOR_HINT "Free:-1,Anchored:0,Towing:1,Guided:2,Sliding:3"
 
 // performance above this value is going to be... disappointing.
 static const int MAX_POSITIONS = 1000;
 
-#pragma region RopePositions functionality
+// PROPERTY_HINT_TOOL_BUTTON may not be in older godot-cpp builds; define it by value.
+#ifndef PROPERTY_HINT_TOOL_BUTTON
+static constexpr PropertyHint PROPERTY_HINT_TOOL_BUTTON = (PropertyHint)39;
+#endif
+
+#pragma region Dynamic Properties
 
 // Build up a dynamic list of properties for each element in the position vector.
-void RopeAnchorPositions::_rp_get_property_list(List<PropertyInfo> *p_list) const {
+void RopeAnchorPositions::_get_property_list(List<PropertyInfo> *p_list) const {
+	ERR_FAIL_NULL(p_list);
+
 	for (uint64_t idx = 0; idx < _positions.size(); ++idx) {
 		String name = POSITION_PREFIX + itos(idx);
 
 		p_list->push_back(PropertyInfo(Variant::NIL, name.capitalize(), PROPERTY_HINT_NONE, name + "/", PROPERTY_USAGE_GROUP));
 		p_list->push_back(PropertyInfo(Variant::FLOAT, name + "/position", PROPERTY_HINT_NONE, ""));
-		p_list->push_back(PropertyInfo(Variant::NODE_PATH, name + "/node", PROPERTY_HINT_NODE_PATH_TO_EDITED_NODE, ""));
+		p_list->push_back(PropertyInfo(Variant::NODE_PATH, name + "/node", PROPERTY_HINT_NODE_PATH_VALID_TYPES, "Node3D,RopeAnchor,RigidBody3D"));
+	}
+
+	// new layout
+	LocalVector<PropertyInfo> props;
+	for (uint32_t i = 0; i < _anchors.size(); i++) {
+		String path = "anchors/" + itos(i) + "/";
+		p_list->push_back(PropertyInfo(Variant::FLOAT, path + "position"));
+		p_list->push_back(PropertyInfo(Variant::NODE_PATH, path + "node_path", PROPERTY_HINT_NODE_PATH_VALID_TYPES, "RopeAnchor,RigidBody3D"));
+		p_list->push_back(PropertyInfo(Variant::INT, path + "behavior", PROPERTY_HINT_ENUM, BEHAVIOR_HINT));
 	}
 }
 
-bool RopeAnchorPositions::_rp_property_can_revert(const StringName &p_name) const {
+
+bool RopeAnchorPositions::_property_can_revert(const StringName &p_name) const {
 	if (p_name.begins_with(POSITION_PREFIX)) {
 		return true;
 	}
@@ -28,7 +47,7 @@ bool RopeAnchorPositions::_rp_property_can_revert(const StringName &p_name) cons
 	return false;
 }
 
-bool RopeAnchorPositions::_rp_property_get_revert(const StringName &p_name, Variant &r_property) const {
+bool RopeAnchorPositions::_property_get_revert(const StringName &p_name, Variant &r_property) const {
 	if (p_name.begins_with(POSITION_PREFIX)) {
 		Pair<uint64_t, String> subprop = _get_propname_with_index(p_name);
 		String sub_name = subprop.second;
@@ -44,7 +63,7 @@ bool RopeAnchorPositions::_rp_property_get_revert(const StringName &p_name, Vari
 	return false;
 }
 
-bool RopeAnchorPositions::_rp_set(const StringName &p_name, const Variant &p_property) {
+bool RopeAnchorPositions::_set(const StringName &p_name, const Variant &p_property) {
 	if (p_name.begins_with(POSITION_PREFIX)) {
 		Pair<uint64_t, String> subprop = _get_propname_with_index(p_name);
 		uint64_t idx = subprop.first;
@@ -58,10 +77,31 @@ bool RopeAnchorPositions::_rp_set(const StringName &p_name, const Variant &p_pro
 		}
 		return true;
 	}
+
+	String path = p_name;
+	if (path.begins_with("anchors/")) {
+		int which = path.get_slicec('/', 1).to_int();
+		String what = path.get_slicec('/', 2);
+		ERR_FAIL_INDEX_V(which, (int)_anchors.size(), false);
+
+		WARN_PRINT("_set:" + path);
+
+		if (what == "position") {
+			_set_anchor_position(which, (float)p_property);
+		} else if (what == "node_path") {
+			_set_anchor_node(which, (NodePath)p_property);
+		} else if (what == "behavior") {
+			_set_anchor_behavior(which, (AnchorBehavior)(int)p_property);
+		} else {
+			return false;
+		}
+		return true;
+	}
+
 	return false;
 }
 
-bool RopeAnchorPositions::_rp_get(const StringName &p_name, Variant &r_property) const {
+bool RopeAnchorPositions::_get(const StringName &p_name, Variant &r_property) const {
 	if (p_name.begins_with(POSITION_PREFIX)) {
 		Pair<uint64_t, String> subprop = _get_propname_with_index(p_name);
 		uint64_t idx = subprop.first;
@@ -75,8 +115,101 @@ bool RopeAnchorPositions::_rp_get(const StringName &p_name, Variant &r_property)
 		}
 		return true;
 	}
+
+	// new layout
+	String path = p_name;
+	if (path.begins_with("anchors/")) {
+		int which = path.get_slicec('/', 1).to_int();
+		String what = path.get_slicec('/', 2);
+		ERR_FAIL_INDEX_V(which, (int)_anchors.size(), false);
+
+		if (what == "position") {
+			r_property = _get_anchor_position(which);
+		} else if (what == "node_path") {
+			r_property = (NodePath)_get_anchor_node(which);
+		} else if (what == "behavior") {
+			r_property = (int)_get_anchor_behavior(which);
+		} else {
+			return false;
+		}
+		return true;
+	}
+
 	return false;
 }
+
+#pragma endregion
+
+#pragma region Anchors
+void RopeAnchorPositions::set_anchor_count(int count) {
+	WARN_PRINT("RopeAnchorPositions::set_anchor_count: " + itos(count));
+	_anchors.resize(count);
+	notify_property_list_changed();
+}
+
+int RopeAnchorPositions::get_anchor_count() const {
+	return _anchors.size();
+}
+
+void RopeAnchorPositions::clear_anchors() {
+	_anchors.clear();
+	notify_property_list_changed();
+}
+
+void RopeAnchorPositions::_set_anchor_behavior(int idx, AnchorBehavior val) {
+	if (idx >= (int)_anchors.size()) {
+		print_error("RopeAnchorPositions::_set_anchor_behavior: index out of range.");
+		return;
+	}
+	_anchors[idx].behavior = val;
+	notify_property_list_changed();
+}
+
+AnchorBehavior RopeAnchorPositions::_get_anchor_behavior(int idx) const {
+	if (idx >= (int)_anchors.size()) {
+		print_error("RopeAnchorPositions::_get_anchor_behavior: index out of range.");
+		return AnchorBehavior::ANCHORED;
+	}
+	return _anchors[idx].behavior;
+}
+
+void RopeAnchorPositions::_set_anchor_position(int idx, float val) {
+	if (idx >= (int)_anchors.size()) {
+		print_error("RopeAnchorPositions::_set_anchor_position: index out of range.");
+		return;
+	}
+	_anchors[idx].position = val;
+	notify_property_list_changed();
+}
+
+float RopeAnchorPositions::_get_anchor_position(int idx) const {
+	if (idx >= (int)_anchors.size()) {
+		print_error("RopeAnchorPositions::_get_anchor_position: index out of range.");
+		return -1.0;
+	}
+	return _anchors[idx].position;
+}
+
+void RopeAnchorPositions::_set_anchor_node(int idx, NodePath val) {
+	if (idx >= (int)_anchors.size()) {
+		print_error("RopeAnchorPositions::_set_anchor_node: index out of range.");
+		return;
+	}
+	_anchors[idx].node_path = val;
+	notify_property_list_changed();
+}
+
+NodePath RopeAnchorPositions::_get_anchor_node(int idx) const {
+	if (idx >= (int)_anchors.size()) {
+		print_error("RopeAnchorPositions::_get_anchor_node: index out of range.");
+		return "";
+	}
+	return _anchors[idx].node_path;
+}
+
+#pragma endregion
+
+#pragma region Property Helpers
 
 Pair<uint64_t, String> RopeAnchorPositions::_get_propname_with_index(const StringName &p_name) const {
 	PackedStringArray prop_path = p_name.split("/");
@@ -198,14 +331,15 @@ float RopeAnchorPositions::_distance_for_position(float position, float rope_len
 
 #pragma region Bindings
 
+#if 1 // Array binding is not included in GDExtension, so replicate the calls here.
+#define ADD_ARRAY_COUNT(m_label, m_count_property, m_count_property_setter, m_count_property_getter, m_prefix) ClassDB_add_property_array_count(get_class_static(), m_label, m_count_property, StringName(m_count_property_setter), StringName(m_count_property_getter), m_prefix)
+
+inline void ClassDB_add_property_array_count(const StringName &p_class, const String &p_label, const StringName &p_count_property, const StringName &p_count_setter, const StringName &p_count_getter, const String &p_array_element_prefix, uint32_t p_count_usage = PROPERTY_USAGE_DEFAULT) {
+	ClassDB::add_property(p_class, PropertyInfo(Variant::INT, p_count_property, PROPERTY_HINT_NONE, "", p_count_usage | PROPERTY_USAGE_ARRAY, vformat("%s,%s", p_label, p_array_element_prefix)), p_count_setter, p_count_getter);
+}
+#endif
+
 void RopeAnchorPositions::_bind_methods() {
-	BIND_ENUM_CONSTANT(Scalar);
-	BIND_ENUM_CONSTANT(DistanceFromStart);
-	BIND_ENUM_CONSTANT(DistanceFromEnd);
-
-	EXPORT_PROPERTY_ENUM(spacing, POSITIONS_HINT, RopeAnchorPositions);
-	EXPORT_PROPERTY(Variant::INT, position_count, RopeAnchorPositions);
-
 	ClassDB::bind_method(D_METHOD("get_count", "rope"), &RopeAnchorPositions::get_count);
 	// GDVIRTUAL_BIND(get_count, "rope");
 
@@ -220,12 +354,47 @@ void RopeAnchorPositions::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_behavior", "index", "rope"), &RopeAnchorPositions::get_behavior);
 	ClassDB::bind_method(D_METHOD("get_anchor_parent", "index", "rope"), &RopeAnchorPositions::get_anchor_parent);
 	// GDVIRTUAL_BIND(get_transform, "idx", "rope");
+
+	ClassDB::bind_method(D_METHOD("set_anchor_count", "count"), &RopeAnchorPositions::set_anchor_count);
+	ClassDB::bind_method(D_METHOD("get_anchor_count"), &RopeAnchorPositions::get_anchor_count);
+	ClassDB::bind_method(D_METHOD("clear_anchors"), &RopeAnchorPositions::clear_anchors);
+
+	// Properties
+	BIND_ENUM_CONSTANT(Scalar);
+	BIND_ENUM_CONSTANT(DistanceFromStart);
+	BIND_ENUM_CONSTANT(DistanceFromEnd);
+	EXPORT_PROPERTY_ENUM(spacing, POSITIONS_HINT, RopeAnchorPositions);
+
+#if 0
+	ClassDB::bind_method(D_METHOD("_get_sort_anchors_callable"), &RopeAnchorPositions::_get_sort_anchors_callable);
+	ClassDB::add_property(get_class_static(), PropertyInfo(Variant::CALLABLE, "sort_anchors_btn", PROPERTY_HINT_TOOL_BUTTON, "Sort Anchors,Sort", PROPERTY_USAGE_EDITOR), "", "_get_sort_anchors_callable");
+#endif
+
+	ADD_ARRAY_COUNT("Anchors", "anchor_count", "set_anchor_count", "get_anchor_count", "anchors/");
+
+	ClassDB::bind_method(D_METHOD("sort_anchors"), &RopeAnchorPositions::sort_anchors);
+
+	EXPORT_PROPERTY(Variant::INT, position_count, RopeAnchorPositions);
 }
 
 #pragma endregion
 
 void RopeAnchorPositions::_notify_changed() {
 	notify_property_list_changed();
+}
+
+void RopeAnchorPositions::sort_anchors() {
+	struct AnchorByPosition {
+		bool operator()(const Anchor &a, const Anchor &b) const {
+			return a.position < b.position;
+		}
+	};
+	_anchors.sort_custom<AnchorByPosition>();
+	_notify_changed();
+}
+
+Callable RopeAnchorPositions::_get_sort_anchors_callable() const {
+	return Callable(const_cast<RopeAnchorPositions *>(this), "sort_anchors");
 }
 
 uint64_t RopeAnchorPositions::get_count(const Rope *rope) const {
@@ -254,7 +423,8 @@ Node3D *RopeAnchorPositions::get_anchor_node(uint64_t idx, const Rope *rope) con
 	if (idx >= _get_count())
 		return nullptr;
 	else
-		return _get_node(idx, rope);
+		return Object::cast_to<Node3D>(rope->get_node_or_null(_get_nodepath(idx)));
+		
 }
 
 void RopeAnchorPositions::set_position(uint64_t idx, float val, const Rope *rope) {
@@ -306,7 +476,9 @@ AnchorBehavior RopeAnchorPositions::get_behavior(uint64_t idx, const Rope *rope)
 		RopeAnchor *anchor = Object::cast_to<RopeAnchor>(node);
 		if (anchor) {
 			ret_val = (AnchorBehavior)anchor->get_behavior();
-		}
+		}/* else if (idx < (uint64_t)_anchors.size()) {
+			ret_val = _get_anchor_behavior((int)idx);
+		}*/
 	}
 
 	return ret_val;
