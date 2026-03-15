@@ -11,7 +11,7 @@ const start_icon := preload("res://addons/halyard/icons/Start.svg")
 const end_icon := preload("res://addons/halyard/icons/End.svg")
 
 var lines := PackedVector3Array()
-var attachments := PackedVector3Array()
+var attaches := PackedVector3Array()
 var anchors := PackedVector3Array()
 var guideds := PackedVector3Array()
 var slidings := PackedVector3Array()
@@ -37,15 +37,13 @@ func _init():
 	create_handle_material("end", false, end_icon)
 
 	create_material("main", Color(1, 1, 0))
-	#create_material("start", Color(1, 1, 1))
-	#create_material("end", Color(.5, .5, .5))
 
 
 func _redraw(gizmo: EditorNode3DGizmo):
 	gizmo.clear()
 	
 	lines.clear()
-	attachments.clear()
+	attaches.clear()
 	anchors.clear()
 	guideds.clear()
 	slidings.clear()
@@ -56,13 +54,11 @@ func _redraw(gizmo: EditorNode3DGizmo):
 	var rope: Rope = gizmo.get_node_3d()
 	if rope:
 		_draw_anchors(gizmo, rope, false)
-		
-		var attach := rope.get_attachments()
-		_draw_attachments(gizmo, rope, rope.get_start_attachment(), rope.get_end_attachment(), attach, "attach", true)
+		_draw_attachments(gizmo, rope, true)
 	
 	# draw accumulated icons and lines
 	if lines.size(): gizmo.add_lines(lines, get_material("main", gizmo))
-	if attachments.size(): gizmo.add_handles(attachments, get_material("attach", gizmo), [])
+	if attaches.size(): gizmo.add_handles(attaches, get_material("attach", gizmo), [])
 	if anchors.size(): gizmo.add_handles(anchors, get_material("anchor", gizmo), [])
 	if guideds.size(): gizmo.add_handles(guideds, get_material("guided", gizmo), [])
 	if slidings.size(): gizmo.add_handles(slidings, get_material("sliding", gizmo), [])	
@@ -90,30 +86,19 @@ func _draw_anchors(gizmo: EditorNode3DGizmo, rope: Rope, flip: bool):
 			_push_position(xform, rope, lines, ends, flip, idx)
 
 
-func _draw_attachments(gizmo: EditorNode3DGizmo, rope: Rope, start_path: NodePath, end_path: NodePath, attachments: RopeAttachmentsBase, style: StringName, flip: bool):
-	var lines = PackedVector3Array()
-	var handles = PackedVector3Array()
-	var start = PackedVector3Array()
-	var end = PackedVector3Array()
-	
+func _draw_attachments(gizmo: EditorNode3DGizmo, rope: Rope, flip: bool):
+
 	var count := 0
+	var attachments: RopeAttachmentsBase = rope.get_attachments()
 	if attachments:
 		count = attachments.get_count(rope)
 		for idx in count:
 			var path := attachments.get_nodepath(idx, rope)
-			_push_positions_for_node(path, rope, lines, handles, flip, idx)
+			_push_positions_for_node(path, rope, lines, attaches, flip, idx)
 	
-	_push_positions_for_node(start_path, rope, lines, start, flip, 0)
-	_push_positions_for_node(end_path, rope, lines, end, flip, count - 1)
-	
-	if lines.size():
-		gizmo.add_lines(lines, get_material("main", gizmo))
-	if handles.size():
-		gizmo.add_handles(handles, get_material(style, gizmo), [])
-	if start.size():
-		gizmo.add_handles(start, get_material("start_" + style, gizmo), [])
-	if end.size():
-		gizmo.add_handles(end, get_material("end_" + style, gizmo), [])
+	_push_positions_for_node(rope.get_start_attachment(), rope, lines, starts, flip, 0)
+	_push_positions_for_node(rope.get_end_attachment(), rope, lines, ends, flip, count - 1)
+
 
 func _push_positions_for_node(path: NodePath, rope: Rope, lines: PackedVector3Array, handles: PackedVector3Array, flip: bool, index: int):
 		var node: Node3D = rope.get_node_or_null(path)
