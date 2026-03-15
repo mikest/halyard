@@ -986,6 +986,13 @@ void Rope::set_anchor_behavior(int idx, AnchorBehavior behavior) {
 
 AnchorBehavior Rope::get_anchor_behavior(int idx) const {
 	ERR_FAIL_INDEX_V(idx, (int)_anchors.size(), AnchorBehavior::ANCHORED);
+	
+	// use the node transform if available
+	RopeAnchor *anchor = Object::cast_to<RopeAnchor>(_anchors[idx].node);
+	if (is_inside_tree() && _anchors[idx].node && anchor) {
+		return (AnchorBehavior)anchor->get_behavior();
+	}
+
 	return _anchors[idx].behavior;
 }
 
@@ -1022,10 +1029,42 @@ RigidBody3D *Rope::get_anchor_rigidbody(int idx) const {
 }
 
 void Rope::set_anchor_distribution(int val) {
-	if ((Distribution)val != _anchor_distribution) {
-		_anchor_distribution = (Distribution)val;
-		_notify_anchors_changed();
+	const Distribution new_dist = (Distribution)val;
+	if (new_dist == _anchor_distribution) {
+		return;
 	}
+
+	// Remap existing offset values through _abs_offset so anchors stay at the same
+	// rope positions after the mode change.
+	if (!_anchors.is_empty()) {
+		const float rope_len = get_rope_length();
+
+		switch (new_dist) {
+		case Distribution::ABSOLUTE:
+			// preserve from_end direction
+			for (auto &anchor : _anchors) {
+				anchor.offset = anchor.from_end ? (rope_len - anchor._abs_offset) : anchor._abs_offset;
+			}
+			break;
+		case Distribution::RELATIVE:
+			// offset[0] = _abs_offset[0]; offset[i] = _abs_offset[i] - offset[i-1]
+			for (int idx = 0; idx < (int)_anchors.size(); idx++) {
+				float prev_offset = (idx > 0) ? _anchors[idx - 1]._abs_offset : 0.0f;
+				_anchors[idx].offset = _anchors[idx]._abs_offset - prev_offset;
+			}
+			break;
+		case Distribution::SCALAR:
+			for (auto &anchor : _anchors) {
+				anchor.offset = (rope_len > 0.0f) ? (anchor._abs_offset / rope_len) : 0.0f;
+			}
+			break;
+		case Distribution::UNIFORM:
+			break;
+		}
+	}
+
+	_anchor_distribution = new_dist;
+	_notify_anchors_changed();
 }
 
 int Rope::get_anchor_distribution() const {
@@ -1079,7 +1118,7 @@ void Rope::_rebuild_anchors() {
 			break;
 		case Distribution::RELATIVE:
 			if (idx > 0) {
-				anchor._abs_offset = _anchors[idx].offset + _anchors[idx - 1].offset;
+				anchor._abs_offset = _anchors[idx].offset + _anchors[idx - 1]._abs_offset;
 			} else {
 				anchor._abs_offset = anchor.offset;
 			}
