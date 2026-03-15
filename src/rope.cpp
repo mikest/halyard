@@ -99,21 +99,6 @@ void Rope::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_link", "index"), &Rope::get_rope_frame);
 	ClassDB::bind_method(D_METHOD("get_all_links"), &Rope::get_all_rope_frames);
 
-	// virtuals
-	GDVIRTUAL_BIND(_update_anchors)
-
-	GDVIRTUAL_BIND(_get_attachment_count)
-	GDVIRTUAL_BIND(_get_attachment_position, "idx")
-	GDVIRTUAL_BIND(_get_attachment_nodepath, "idx")
-	GDVIRTUAL_BIND(_get_attachment_transform, "idx")
-
-	// pass through
-	// ClassDB::bind_method(D_METHOD("set_rope_width", "width"), &Rope::set_rope_width);
-	// ClassDB::bind_method(D_METHOD("get_rope_width"), &Rope::get_rope_width);
-
-	// ClassDB::bind_method(D_METHOD("set_particles_per_meter", "particles_per_meter"), &Rope::set_particles_per_meter);
-	// ClassDB::bind_method(D_METHOD("get_particles_per_meter"), &Rope::get_particles_per_meter);
-
 	ClassDB::bind_method(D_METHOD("get_rope_sides"), &Rope::get_rope_sides);
 	ClassDB::bind_method(D_METHOD("get_rope_twist"), &Rope::get_rope_twist);
 	ClassDB::bind_method(D_METHOD("get_rope_lod"), &Rope::get_rope_lod);
@@ -141,25 +126,48 @@ void Rope::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_anchor_transform", "idx", "transform"), &Rope::set_anchor_transform);
 	ClassDB::bind_method(D_METHOD("get_anchor_transform", "idx"), &Rope::get_anchor_transform);
 
+	ClassDB::bind_method(D_METHOD("_internal_get_anchor_count"), &Rope::_internal_get_anchor_count);
+
+	ClassDB::bind_method(D_METHOD("set_appearance", "appearance"), &Rope::set_appearance);
+	ClassDB::bind_method(D_METHOD("get_appearance"), &Rope::get_appearance);
+
+	// simulation
+	ClassDB::bind_method(D_METHOD("set_collision_layer", "collision_layer"), &Rope::set_collision_layer);
+	ClassDB::bind_method(D_METHOD("get_collision_layer"), &Rope::get_collision_layer);
+
+	ClassDB::bind_method(D_METHOD("set_collision_mask", "collision_mask"), &Rope::set_collision_mask);
+	ClassDB::bind_method(D_METHOD("get_collision_mask"), &Rope::get_collision_mask);
+
+	ClassDB::bind_method(D_METHOD("set_liquid_area", "liquid_area"), &Rope::set_liquid_area);
+	ClassDB::bind_method(D_METHOD("get_liquid_area"), &Rope::get_liquid_area);
+
+	ClassDB::bind_method(D_METHOD("set_wind_noise", "wind_noise"), &Rope::set_wind_noise);
+	ClassDB::bind_method(D_METHOD("get_wind_noise"), &Rope::get_wind_noise);
+
+	// virtuals
+	GDVIRTUAL_BIND(_update_anchors)
+	GDVIRTUAL_BIND(_get_attachment_count)
+	GDVIRTUAL_BIND(_get_attachment_position, "idx")
+	GDVIRTUAL_BIND(_get_attachment_nodepath, "idx")
+	GDVIRTUAL_BIND(_get_attachment_transform, "idx")
+
+	// Main Properties
 	EXPORT_PROPERTY(Variant::FLOAT, rope_length, Rope);
 	EXPORT_PROPERTY(Variant::FLOAT, rope_width, Rope);
 	EXPORT_PROPERTY_RANGED(Variant::FLOAT, particles_per_meter, Rope, "0.1,20,,hide_slider");
 	EXPORT_PROPERTY_ENUM(grow_from, FROM_HINT, Rope);
-	EXPORT_PROPERTY(Variant::BOOL, jitter_initial_position, Rope);
 
 	// Anchor array
 	EXPORT_PROPERTY_ENUM(anchor_distribution, DISTRIBUTION_HINT, Rope);
-	ClassDB::bind_method(D_METHOD("_internal_get_anchor_count"), &Rope::_internal_get_anchor_count);
 	ADD_ARRAY_COUNT("Anchors", "anchor_count", "set_anchor_count", "_internal_get_anchor_count", ANCHORS_KEY);
 
 	ADD_GROUP("Appearance", "");
-	ClassDB::bind_method(D_METHOD("set_appearance", "appearance"), &Rope::set_appearance);
-	ClassDB::bind_method(D_METHOD("get_appearance"), &Rope::get_appearance);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "appearance", PROPERTY_HINT_RESOURCE_TYPE, "RopeAppearance"), "set_appearance", "get_appearance");
 
 	// simulation parameters
 	ADD_GROUP("Simulation", "");
 	EXPORT_PROPERTY(Variant::BOOL, simulate, Rope);
+	EXPORT_PROPERTY(Variant::BOOL, jitter_initial_position, Rope);
 	EXPORT_PROPERTY(Variant::FLOAT, preprocess_time, Rope);
 	EXPORT_PROPERTY(Variant::FLOAT, simulation_rate, Rope);
 	EXPORT_PROPERTY_RANGED(Variant::INT, stiffness_iterations, Rope, "1,50,1,hide_slider");
@@ -167,24 +175,14 @@ void Rope::_bind_methods() {
 	EXPORT_PROPERTY_RANGED(Variant::FLOAT, friction, Rope, "0.0,1.0,0.01");
 	EXPORT_PROPERTY_RANGED(Variant::FLOAT, tension_force_scale, Rope, "0.0,10.0,0.1");
 	EXPORT_PROPERTY(Variant::FLOAT, max_tension_force, Rope);
-
-	ClassDB::bind_method(D_METHOD("set_collision_layer", "collision_layer"), &Rope::set_collision_layer);
-	ClassDB::bind_method(D_METHOD("get_collision_layer"), &Rope::get_collision_layer);
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "collision_layer", PROPERTY_HINT_LAYERS_3D_PHYSICS), "set_collision_layer", "get_collision_layer");
-
-	ClassDB::bind_method(D_METHOD("set_collision_mask", "collision_mask"), &Rope::set_collision_mask);
-	ClassDB::bind_method(D_METHOD("get_collision_mask"), &Rope::get_collision_mask);
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "collision_mask", PROPERTY_HINT_LAYERS_3D_PHYSICS), "set_collision_mask", "get_collision_mask");
 
-	// forces
-	ADD_GROUP("Buoyancy", "");
-
 	// Buoyancy
+	ADD_GROUP("Buoyancy", "");
 	EXPORT_PROPERTY(Variant::BOOL, apply_buoyancy, Rope);
 	EXPORT_PROPERTY(Variant::FLOAT, buoyancy_scale, Rope);
 	EXPORT_PROPERTY(Variant::FLOAT, submerged_drag, Rope);
-	ClassDB::bind_method(D_METHOD("set_liquid_area", "liquid_area"), &Rope::set_liquid_area);
-	ClassDB::bind_method(D_METHOD("get_liquid_area"), &Rope::get_liquid_area);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "liquid_area", PROPERTY_HINT_NODE_TYPE, "LiquidArea"), "set_liquid_area", "get_liquid_area");
 
 	// Wind
@@ -192,18 +190,16 @@ void Rope::_bind_methods() {
 	EXPORT_PROPERTY(Variant::BOOL, apply_wind, Rope);
 	EXPORT_PROPERTY(Variant::FLOAT, wind_scale, Rope);
 	EXPORT_PROPERTY(Variant::VECTOR3, wind, Rope);
-
-	ClassDB::bind_method(D_METHOD("set_wind_noise", "wind_noise"), &Rope::set_wind_noise);
-	ClassDB::bind_method(D_METHOD("get_wind_noise"), &Rope::get_wind_noise);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "wind_noise", PROPERTY_HINT_RESOURCE_TYPE, "FastNoiseLite"), "set_wind_noise", "get_wind_noise");
 
 	// Gravity
-	ADD_GROUP("Gravity & Damping", "");
+	ADD_GROUP("Gravity", "");
 	EXPORT_PROPERTY(Variant::BOOL, apply_gravity, Rope);
 	EXPORT_PROPERTY(Variant::VECTOR3, gravity, Rope);
 	EXPORT_PROPERTY(Variant::FLOAT, gravity_scale, Rope);
 
 	// Damping
+	ADD_GROUP("Damping", "");
 	EXPORT_PROPERTY(Variant::BOOL, apply_damping, Rope);
 	EXPORT_PROPERTY(Variant::FLOAT, damping_factor, Rope);
 }
@@ -532,17 +528,13 @@ bool Rope::_pop_rebuild() {
 #pragma region Accessors
 
 void Rope::set_rope_width(float val) {
-	if(_appearance != nullptr) {
-		_appearance->set_rope_width(val);
+	if (val != _rope_width) {
+		_rope_width = val;
+		_queue_rope_rebuild();
 	}
-
-	_rope_width = val;
-	_queue_rope_rebuild();
 }
 
 float Rope::get_rope_width() const {
-	if(_appearance != nullptr)
-		return _appearance->get_rope_width();
 	return _rope_width;
 }
 
@@ -561,18 +553,13 @@ APPEARENCE_ACCESSOR(Ref<RopeAttachmentsBase>, attachments, nullptr)
 #undef APPEARENCE_ACCESSOR
 
 void Rope::set_particles_per_meter(float val) {
-	if (_appearance != nullptr) {
-		_appearance->set_particles_per_meter(val);
+	if( val != _particles_per_meter) {
+		_particles_per_meter = val;
+		_queue_rope_rebuild();
 	}
-
-	_particles_per_meter = val;
-	_queue_rope_rebuild();
 }
 
 float Rope::get_particles_per_meter() const {
-	if (_appearance != nullptr) {
-		return _appearance->get_particles_per_meter();
-	}
 	return _particles_per_meter;
 }
 
@@ -1874,8 +1861,8 @@ void Rope::_balance_tension() {
 			continue;
 		}
 
-		// stretch of the segment to the left (pi-1 → pi) is stored on _particles[pi-1]
-		// stretch of the segment to the right (pi → pi+1) is stored on _particles[pi]
+		// stretch of the segment to the left (idx-1 -> idx) is stored on _particles[idx-1]
+		// stretch of the segment to the right (idx -> idx+1) is stored on _particles[idx]
 		float left_stretch = _particles[idx - 1].stretch;
 		float right_stretch = _particles[idx].stretch;
 		float stretch_diff = Math::abs(left_stretch - right_stretch);

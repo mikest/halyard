@@ -21,7 +21,6 @@ class RopeAppearance : public Resource {
 	friend Rope;
 	GDCLASS(RopeAppearance, Resource)
 
-	float _rope_width = 0.25;
 	int _rope_sides = -1;
 	float _rope_twist = 1.0;
 	int _rope_lod = 2;
@@ -36,8 +35,6 @@ class RopeAppearance : public Resource {
 	NodePath _end_attachment;
 	float _end_offset = 0.0;
 
-	float _particles_per_meter = 2;
-
 protected:
 	static void _bind_methods();
 	void _notify_change() {
@@ -49,8 +46,6 @@ public:
 	virtual ~RopeAppearance() override = default;
 
 	// Exported Properties
-	PROPERTY_GET_SET(float, rope_width, _notify_change())
-
 	void set_rope_sides(int p_rope_sides);
 	int get_rope_sides() const;
 
@@ -70,7 +65,4 @@ public:
 
 	void set_attachments(const Ref<RopeAttachmentsBase> &p_attachments);
 	Ref<RopeAttachmentsBase> get_attachments() const;
-
-	// simulation parameters
-	PROPERTY_GET_SET(float, particles_per_meter, _notify_change())
 };
