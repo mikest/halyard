@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://dnnxtqukra31q" path="res://addons/halyard/scripts/coiled_rope.gd" id="1_3qe50"]
 [ext_resource type="ArrayMesh" uid="uid://j3u082cbuveh" path="res://addons/halyard/assets/chain-link.res" id="1_gn44e"]
-[ext_resource type="PackedScene" uid="uid://cn1vm8lpn0kby" path="res://addons/halyard/tests/test_base.tscn" id="3_sjw63"]
+[ext_resource type="PackedScene" uid="uid://cn1vm8lpn0kby" path="res://addons/halyard/tests/base.tscn" id="3_sjw63"]
 
 [sub_resource type="RopeAppearance" id="RopeAppearance_xlb8c"]
 rope_width = 0.125

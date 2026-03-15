@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://crgf2p88i5w4l"]
 
 [ext_resource type="ArrayMesh" uid="uid://j3u082cbuveh" path="res://addons/halyard/assets/chain-link.res" id="1_623gb"]
-[ext_resource type="PackedScene" uid="uid://cn1vm8lpn0kby" path="res://addons/halyard/tests/test_base.tscn" id="1_u0cki"]
+[ext_resource type="PackedScene" uid="uid://cn1vm8lpn0kby" path="res://addons/halyard/tests/base.tscn" id="1_u0cki"]
 [ext_resource type="Script" uid="uid://bpo84j3idh1wu" path="res://addons/halyard/tests/draggable.gd" id="2_u0cki"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_623gb"]

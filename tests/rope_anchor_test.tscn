@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://bckq7e6yxxadp"]
 
-[ext_resource type="PackedScene" uid="uid://cn1vm8lpn0kby" path="res://addons/halyard/tests/test_base.tscn" id="1_3jqx7"]
+[ext_resource type="PackedScene" uid="uid://cn1vm8lpn0kby" path="res://addons/halyard/tests/base.tscn" id="1_3jqx7"]
 [ext_resource type="Texture2D" uid="uid://dlhnxxyov3dea" path="res://addons/halyard/assets/three-ply-rope.png" id="2_dpfuq"]
 [ext_resource type="Script" uid="uid://bpo84j3idh1wu" path="res://addons/halyard/tests/draggable.gd" id="2_kpsk4"]
 

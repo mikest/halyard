@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://c6m5djyl84pub"]
 
 [ext_resource type="ArrayMesh" uid="uid://j3u082cbuveh" path="res://addons/halyard/assets/chain-link.res" id="1_5qxvb"]
-[ext_resource type="PackedScene" uid="uid://cn1vm8lpn0kby" path="res://addons/halyard/tests/test_base.tscn" id="1_24i6o"]
+[ext_resource type="PackedScene" uid="uid://cn1vm8lpn0kby" path="res://addons/halyard/tests/base.tscn" id="1_24i6o"]
 [ext_resource type="PackedScene" uid="uid://v81l42df6bcu" path="res://addons/halyard/assets/rope-endcap.blend" id="2_of4qs"]
 [ext_resource type="Script" uid="uid://32rfsoftyutc" path="res://addons/halyard/tests/link_test.gd" id="2_pmwqi"]
 
