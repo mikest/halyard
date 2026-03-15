@@ -41,6 +41,7 @@ public:
 		RELATIVE,    // Distance is a relative offset from previous anchor. Offsets can be negative.
 		UNIFORM,     // Anchors are distributed uniformly along the rope. Offsets are ignored.
 		SCALAR,      // Distance is a scalar multiple of the rope length, where 0=start and 1=end
+		REAL,		 // Distance is auto calculated from the initial anchor transforms.
 	};
 
 	enum From {

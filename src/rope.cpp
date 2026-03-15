@@ -25,7 +25,7 @@
 
 #define BEHAVIOR_HINT "Free:-1,Anchored:0,Towing:1,Guided:2,Sliding:3"
 #define FROM_HINT "Start:0,End:1"
-#define DISTRIBUTION_HINT "Absolute:0,Relative:1,Uniform:2,Scalar:3"
+#define DISTRIBUTION_HINT "Absolute:0,Relative:1,Uniform:2,Scalar:3,Real:4"
 
 // dump initial conditions for debugging stretch grow directions.
 #define DEBUG_INITIAL_POS false
@@ -794,7 +794,8 @@ void Rope::_get_property_list(List<PropertyInfo> *p_list) const {
 		String path = ANCHORS_KEY + itos(i) + "/";
 		
 		// uniform doesn't use offset
-		usage = _anchor_distribution==Distribution::UNIFORM ? PROPERTY_USAGE_NONE : PROPERTY_USAGE_DEFAULT;
+		usage = (_anchor_distribution==Distribution::UNIFORM || _anchor_distribution==Distribution::REAL) \
+			? PROPERTY_USAGE_NONE : PROPERTY_USAGE_DEFAULT;
 		p_list->push_back(PropertyInfo(Variant::FLOAT, path + OFFSET_KEY, PROPERTY_HINT_NONE, "suffix:m", usage));
 
 		// Only absolute uses the from end/start
@@ -1060,6 +1061,9 @@ void Rope::set_anchor_distribution(int val) {
 			break;
 		case Distribution::UNIFORM:
 			break;
+		case Distribution::REAL:
+			// _abs_offset is computed from anchor transforms in _rebuild_anchors; nothing to remap
+			break;
 		}
 	}
 
@@ -1129,6 +1133,15 @@ void Rope::_rebuild_anchors() {
 			break;
 		case Distribution::SCALAR:
 			anchor._abs_offset = get_rope_length() * anchor.offset;
+			break;
+		case Distribution::REAL:
+			// Cumulative straight-line distance between consecutive anchor origins.
+			if (idx == 0) {
+				anchor._abs_offset = 0.0f;
+			} else {
+				anchor._abs_offset = _anchors[idx - 1]._abs_offset
+						+ _anchors[idx - 1].transform.origin.distance_to(anchor.transform.origin);
+			}
 			break;
 		}
 	}
@@ -1856,15 +1869,15 @@ void Rope::_balance_tension() {
 			continue;
 		}
 
-		int64_t pi = anchor_to_particle[anchor_idx];
-		if (pi < 1 || pi >= (int64_t)_particles.size() - 1) {
+		int64_t idx = anchor_to_particle[anchor_idx];
+		if (idx < 1 || idx >= (int64_t)_particles.size() - 1) {
 			continue;
 		}
 
 		// stretch of the segment to the left (pi-1 → pi) is stored on _particles[pi-1]
 		// stretch of the segment to the right (pi → pi+1) is stored on _particles[pi]
-		float left_stretch = _particles[pi - 1].stretch;
-		float right_stretch = _particles[pi].stretch;
+		float left_stretch = _particles[idx - 1].stretch;
+		float right_stretch = _particles[idx].stretch;
 		float stretch_diff = Math::abs(left_stretch - right_stretch);
 
 		// require the imbalance to exceed a fraction of segment length before shifting,
@@ -1879,30 +1892,30 @@ void Rope::_balance_tension() {
 		int64_t max_idx = anchor_to_particle[anchor_idx + 1] - 1;
 
 		// determine shift direction: move toward the slack side to feed rope to the taut side
-		int64_t new_pi = pi;
+		int64_t new_idx = idx;
 		if (left_stretch > right_stretch) {
 			// left side is tighter — feed rope left by sliding the anchor point right
-			new_pi = pi + 1;
+			new_idx = idx + 1;
 		} else if (right_stretch > left_stretch) {
 			// right side is tighter — feed rope right by sliding the anchor point left
-			new_pi = pi - 1;
+			new_idx = idx - 1;
 		}
 
 		// clamp to valid range
-		new_pi = Math::clamp(new_pi, min_idx, max_idx);
+		new_idx = Math::clamp(new_idx, min_idx, max_idx);
 
-		if (new_pi != pi) {
+		if (new_idx != idx && new_idx >= 0 && new_idx < (int64_t)_particles.size()) {
 			// move the anchor binding to the new particle
-			_particles[pi].anchor_idx = -1;
-			_particles[new_pi].anchor_idx = anchor_idx;
+			_particles[idx].anchor_idx = -1;
+			_particles[new_idx].anchor_idx = anchor_idx;
 
 			// snap the new particle to the anchor position and reset verlet state
 			Transform3D xform = get_anchor_transform(anchor_idx);
-			_particles[new_pi].pos_cur = xform.origin;
-			_particles[new_pi].pos_prev = xform.origin;
+			_particles[new_idx].pos_cur = xform.origin;
+			_particles[new_idx].pos_prev = xform.origin;
 
 			// update the mapping for subsequent iterations
-			anchor_to_particle[anchor_idx] = new_pi;
+			anchor_to_particle[anchor_idx] = new_idx;
 		}
 	}
 }
