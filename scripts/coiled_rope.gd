@@ -20,7 +20,9 @@ class_name CoiledRope
 @export var debug: bool = false
 
 ## What ratio of the rope is coiled.
-@export_range(0,1,0.001) var coiled := 0.5
+@export_range(0,1,0.001) var coiled := 0.5:
+		set(val):
+			coiled = val
 
 @export var drum_anchor: RopeAnchor
 @export var chain_guide: RopeAnchor
@@ -40,8 +42,8 @@ func _ready() -> void:
 	pass
 
 func _process(delta: float) -> void:
-	#if debug:
-		#DebugDraw3D.draw_point_path(_positions, DebugDraw3D.POINT_TYPE_SQUARE, 0.01, Color.BLUE)
+	if debug:
+		DebugDraw3D.draw_point_path(global_transform * _positions, DebugDraw3D.POINT_TYPE_SQUARE, 0.01, Color.BLUE, Color.GREEN)
 	
 	# rebuild positions for coils when the parameters change
 	if _dirty:
@@ -92,6 +94,9 @@ func _rebuild_coil_positions():
 		
 		# advance accumulators
 		turn += 1.0 / anchors_per_turn
+	
+	# rebuild anchor set
+	_notify_anchors_changed()
 
 
 func _get_nodepath_transform(path: NodePath) -> Transform3D:
@@ -110,52 +115,20 @@ func _get_coil_anchor_count() -> int:
 	var coil_length := rope_length * coiled
 	return int(coil_length * get_particles_per_meter())
 
-func _get_other_anchor_acount() -> int:
-	var count := 0
-	if drum_anchor: count += 1
-	if chain_guide: count += 1
-	if anchor_tow: count += 1
-	return count
-
 #region Overloads
 
 func _get_anchor_count() -> int:
-	# specific anchors come after the coil
-	#var count := _get_coil_anchor_count() + get_anchor_count()
-	#return count
-	return _get_coil_anchor_count()
+	return _positions.size()
 
 func _get_anchor_behavior(idx: int) -> int:
-	return RopeAnchor.AnchorBehavior.ANCHORED
+	if idx < _get_coil_anchor_count():
+		return RopeAnchor.AnchorBehavior.ANCHORED
+	else:
+		return RopeAnchor.AnchorBehavior.FREE
 
 func _get_anchor_abs_offset(idx: int) -> float:
-	#var drum_start := 0
-	#var coil_start := drum_start + 1
-	#var other_start := coil_start + _get_coil_anchor_count()
-	#
-	#var pos := 0.0
-	#if idx >= other_start:
-		#pos = 0.0
-	#elif idx>=coil_start:
 	return idx * 1.0 / get_particles_per_meter()
-	#elif idx>=drum_start:
-		#pos = 0.0
-		#
 
-	#return pos
-	#var count := _get_anchor_count()
-	#var coil_count := _get_coil_anchor_count()
-	#var pos := 0.0
-	#
-	#if idx >= coil_count:
-		#var coil_end := _get_anchor_transform(idx-1)
-		#var anchor := _get_anchor_transform(idx)
-		#var dist := coil_end.origin.distance_to(anchor.origin)
-		#pos = coiled + (dist) * coil_to_first_anchor_tension
-	#else:
-		#pos = idx * coiled
-#
-	#return pos
 
 
 func _get_anchor_transform(idx: int) -> Transform3D:
@@ -164,19 +137,11 @@ func _get_anchor_transform(idx: int) -> Transform3D:
 	var coil_count := _get_coil_anchor_count()
 	
 	var start_xform := global_transform
-	#if _get_anchor_count():
-		#start_xform = get_anchor_transform(0)
-	#
-	## if we're past the coil return the normal anchors
-	#if idx >= coil_count:
-		#xform = get_anchor_transform(idx - coil_count)
-	#
-	## return the rotated coil position for this index
-	#el
 	if idx < _positions.size():
 		xform = Transform3D(Basis(), _positions[idx])
 		var turn_idx = clamp(coil_count-1, 0, _turns.size()-1)
 		xform = xform.rotated(Vector3(1,0,0), (-_turns[turn_idx] + offset_turns) * TAU * (-1 if clockwise else 1))
 		xform = start_xform * xform
+	
 	return xform
 ##endregion

@@ -138,11 +138,14 @@ void Rope::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_wind_noise"), &Rope::get_wind_noise);
 
 	// virtuals
+	ClassDB::bind_method(D_METHOD("_notify_anchors_changed"), &Rope::_notify_anchors_changed);
 	GDVIRTUAL_BIND(_get_anchor_count)
 	GDVIRTUAL_BIND(_get_anchor_abs_offset, "idx")
 	GDVIRTUAL_BIND(_get_anchor_behavior, "idx")
 	GDVIRTUAL_BIND(_get_anchor_transform, "idx")
 	GDVIRTUAL_BIND(_get_anchor_rigidbody, "idx")
+
+	ClassDB::bind_method(D_METHOD("_notify_attachments_changed"), &Rope::_notify_attachments_changed);
 	GDVIRTUAL_BIND(_get_attachment_count)
 	GDVIRTUAL_BIND(_get_attachment_position, "idx")
 	GDVIRTUAL_BIND(_get_attachment_nodepath, "idx")
@@ -152,14 +155,16 @@ void Rope::_bind_methods() {
 	EXPORT_PROPERTY(Variant::FLOAT, rope_length, Rope);
 	EXPORT_PROPERTY(Variant::FLOAT, rope_width, Rope);
 	EXPORT_PROPERTY_RANGED(Variant::FLOAT, particles_per_meter, Rope, "0.1,20,,hide_slider");
-	EXPORT_PROPERTY_ENUM(grow_from, FROM_HINT, Rope);
+
+	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "appearance", PROPERTY_HINT_RESOURCE_TYPE, "RopeAppearance"), "set_appearance", "get_appearance");
 
 	// Anchor array
+	// ADD_GROUP("Rigging", "");
+	EXPORT_PROPERTY_ENUM(grow_from, FROM_HINT, Rope);
 	EXPORT_PROPERTY_ENUM(anchor_distribution, DISTRIBUTION_HINT, Rope);
-	ADD_ARRAY_COUNT("Anchors", "anchor_count", "set_anchor_count", "get_anchor_count", ANCHORS_KEY);
 
-	ADD_GROUP("Appearance", "");
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "appearance", PROPERTY_HINT_RESOURCE_TYPE, "RopeAppearance"), "set_appearance", "get_appearance");
+	// ADD_GROUP("", "");
+	ADD_ARRAY_COUNT("Anchors", "anchor_count", "set_anchor_count", "get_anchor_count", ANCHORS_KEY);
 
 	// simulation parameters
 	ADD_GROUP("Simulation", "");
@@ -293,7 +298,6 @@ void Rope::_internal_ready(void) {
 	_queue_redraw();
 
 	// if _anchors is empty, add self as start
-
 	if (_anchors.size() == 0) {
 		_anchors.push_back(Anchor(0.0, get_global_transform(), AnchorBehavior::ANCHORED, nullptr, this));
 	}
@@ -423,8 +427,9 @@ void Rope::_rebuild_rope() {
 		Transform3D xform;
 
 		// do we have a start/end anchor?
-		int start_idx = _anchors.size() > 0 ? 0 : -1;
-		int end_idx = _anchors.size() > 1 ? _anchors.size()-1 : -1;
+		int anchor_count = _get_anchor_count();
+		int start_idx = anchor_count > 0 ? 0 : -1;
+		int end_idx = anchor_count > 1 ? anchor_count-1 : -1;
 
 		if (_grow_from == Start) {
 			if (start_idx >= 0)
@@ -685,6 +690,13 @@ uint64_t Rope::get_particle_count_for_length() const {
 
 #pragma region Subclassing
 
+void Rope::_notify_attachments_changed() {
+	if (_appearance.is_valid()) {
+		_appearance->notify_property_list_changed();
+	}
+	_queue_rope_rebuild();
+}
+
 int Rope::_get_attachment_count() const {
 	if (GDVIRTUAL_IS_OVERRIDDEN(_get_attachment_count)) {
 		int ret_val;
@@ -698,7 +710,7 @@ int Rope::_get_attachment_count() const {
 }
 
 float Rope::_get_attachment_position(int idx) const {
-	if (GDVIRTUAL_IS_OVERRIDDEN(_get_attachment_position)) {
+	if (GDVIRTUAL_IS_OVERRIDDEN(_get_attachment_position) || GDVIRTUAL_IS_OVERRIDDEN(_get_attachment_count)) {
 		float ret_val;
 		GDVIRTUAL_CALL(_get_attachment_position, idx, ret_val);
 		return ret_val;
@@ -731,7 +743,7 @@ float Rope::_get_attachment_position(int idx) const {
 }
 
 NodePath Rope::_get_attachment_nodepath(int idx) const {
-	if (GDVIRTUAL_IS_OVERRIDDEN(_get_attachment_nodepath)) {
+	if (GDVIRTUAL_IS_OVERRIDDEN(_get_attachment_nodepath) || GDVIRTUAL_IS_OVERRIDDEN(_get_attachment_count)) {
 		NodePath ret_val;
 		GDVIRTUAL_CALL(_get_attachment_nodepath, idx, ret_val);
 		return ret_val;
@@ -743,12 +755,17 @@ NodePath Rope::_get_attachment_nodepath(int idx) const {
 }
 
 Transform3D Rope::_get_attachment_transform(int idx) const {
-	if (GDVIRTUAL_IS_OVERRIDDEN(_get_attachment_transform)) {
+	if (GDVIRTUAL_IS_OVERRIDDEN(_get_attachment_transform) || GDVIRTUAL_IS_OVERRIDDEN(_get_attachment_count)) {
 		Transform3D ret_val;
 		GDVIRTUAL_CALL(_get_attachment_transform, idx, ret_val);
 		return ret_val;
 	}
 	return Transform3D();
+}
+
+void Rope::_notify_anchors_changed() {
+	notify_property_list_changed();
+	_queue_rope_rebuild();
 }
 
 // once this is overridden, the others must also be considered overridden
@@ -896,13 +913,6 @@ bool Rope::_get(const StringName &p_name, Variant &r_property) const {
 	return false;
 }
 
-
-void Rope::_notify_anchors_changed() {
-	notify_property_list_changed();
-	_queue_rope_rebuild();
-}
-
-
 void Rope::set_anchor_count(int count) {
 	ERR_FAIL_COND(count < 0);
 	if (_anchors.size() != count) {
@@ -910,7 +920,6 @@ void Rope::set_anchor_count(int count) {
 		_notify_anchors_changed();
 	}
 }
-
 
 int Rope::get_anchor_count() const {
 	return (int)_anchors.size();
@@ -920,7 +929,6 @@ void Rope::clear_anchors() {
 	_anchors.clear();
 	_notify_anchors_changed();
 }
-
 
 void Rope::set_anchor_offset(int idx, float offset) {
 	ERR_FAIL_INDEX(idx, (int)_anchors.size());
@@ -1189,7 +1197,7 @@ void Rope::_internal_update_anchors() {
 	for (auto &particle : _particles) {
 		if (particle.anchor_idx >= 0 && particle.anchor_idx < anchor_count) {
 			// Skip FREE anchors — they don't constrain particle position
-			if ((AnchorBehavior)_get_anchor_behavior(particle.anchor_idx) == AnchorBehavior::FREE) {
+			if (_is_anchor_free(particle.anchor_idx, anchor_count)) {
 				continue;
 			}
 			// Update transform from node if present
@@ -1202,6 +1210,41 @@ void Rope::_internal_update_anchors() {
 			particle.anchor_idx = -1;
 		}
 	}
+}
+
+bool Rope::_is_anchor_free(int anchor_idx, int anchor_count) const {
+	// index out of range? default to free
+	if(anchor_idx < 0 || anchor_idx >= anchor_count) {
+		return true;
+	}
+	return _get_anchor_behavior(anchor_idx) == AnchorBehavior::FREE;
+}
+
+bool Rope::_is_anchor_fixed(int anchor_idx, int anchor_count) const {
+	// index out of range? not fixed
+	if(anchor_idx < 0 || anchor_idx >= anchor_count) {
+		return false;
+	}
+	auto behavior = _get_anchor_behavior(anchor_idx);
+	return behavior == AnchorBehavior::ANCHORED || behavior == AnchorBehavior::GUIDED;
+}
+
+bool Rope::_is_anchor_moving(int anchor_idx, int anchor_count) const {
+	// index out of range? not moving
+	if(anchor_idx < 0 || anchor_idx >= anchor_count) {
+		return false;
+	}
+	auto behavior = _get_anchor_behavior(anchor_idx);
+	return behavior == AnchorBehavior::SLIDING || behavior == AnchorBehavior::TOWING;
+}
+
+bool Rope::_is_rope_sliding(int anchor_idx, int anchor_count) const {
+	// index out of range? not sliding
+	if(anchor_idx < 0 || anchor_idx >= anchor_count) {
+		return false;
+	}
+	auto behavior = _get_anchor_behavior(anchor_idx);
+	return behavior == AnchorBehavior::SLIDING || behavior == AnchorBehavior::GUIDED;
 }
 
 #pragma endregion
@@ -1835,8 +1878,8 @@ void Rope::_stiff_rope(int iterations) {
 			p0.stretch = stretch;
 
 			// only anchored and guided anchors stay put
-			bool anchored_0 = (p0.anchor_idx>=0 && p0.anchor_idx < anchor_count && (_get_anchor_behavior(p0.anchor_idx) != AnchorBehavior::FREE));
-			bool anchored_1 = (p1.anchor_idx>=0 && p1.anchor_idx < anchor_count && (_get_anchor_behavior(p1.anchor_idx) != AnchorBehavior::FREE));
+			bool anchored_0 = !_is_anchor_free(p0.anchor_idx, anchor_count);
+			bool anchored_1 = !_is_anchor_free(p1.anchor_idx, anchor_count);
 
 			// if both are attached skip
 			if (anchored_0 && anchored_1) {
@@ -1870,30 +1913,31 @@ void Rope::_stiff_rope(int iterations) {
 // for GUIDED and SLIDING anchors. Indexes will not move past an existing index.
 void Rope::_balance_tension() {
 	SCOPED_TIMER(_balance_tension);
+
+	int anchor_count = _get_anchor_count();
+
 	// need a minimum of 3 particles and anchors to balance tension
-	if (_particles.size() < 3 || _anchors.size() < 3) {
+	if (_particles.size() < 3 || anchor_count < 3) {
 		return;
 	}
 
 	// build a mapping from anchor index to particle index
 	LocalVector<int64_t> anchor_to_particle;
-	anchor_to_particle.resize(_anchors.size());
+	anchor_to_particle.resize(anchor_count);
 	for (uint64_t idx = 0; idx < anchor_to_particle.size(); idx++) {
 		anchor_to_particle[idx] = -1;
 	}
 	for (int64_t idx = 0; idx < (int64_t)_particles.size(); idx++) {
 		int64_t ai = _particles[idx].anchor_idx;
-		if (ai >= 0 && ai < (int64_t)_anchors.size()) {
+		if (ai >= 0 && ai < (int64_t)anchor_count) {
 			anchor_to_particle[ai] = idx;
 		}
 	}
 
 	// iterate over mid-anchors only (skip start and end)
-	for (uint64_t anchor_idx = 1; anchor_idx < _anchors.size() - 1; anchor_idx++) {
-		AnchorBehavior behavior = (AnchorBehavior)_get_anchor_behavior(anchor_idx);
-
+	for (uint64_t anchor_idx = 1; anchor_idx < anchor_count - 1; anchor_idx++) {
 		// only balance GUIDED and SLIDING anchors — these allow the rope to slide through
-		if (behavior != AnchorBehavior::GUIDED && behavior != AnchorBehavior::SLIDING) {
+		if (!_is_rope_sliding(anchor_idx, anchor_count)) {
 			continue;
 		}
 
@@ -1952,13 +1996,10 @@ void Rope::_verlet_process(float delta) {
 	SCOPED_TIMER(_verlet_process);
 	int count = _get_anchor_count();
 	for (Particle &p : _particles) {
-		// can this point move?
-		if (p.anchor_idx >= 0 && p.anchor_idx < (int64_t)count) {
-			AnchorBehavior behavior = (AnchorBehavior)_get_anchor_behavior(p.anchor_idx);
-			if (behavior == AnchorBehavior::GUIDED || behavior == AnchorBehavior::ANCHORED) {
-				continue;
-			}
-	}
+		// is this point fixed in space?
+		if(_is_anchor_fixed(p.anchor_idx, count)) {
+			continue;
+		}
 
 		Vector3 position_current_copy = p.pos_cur;
 		p.pos_cur = (2.0 * p.pos_cur) - p.pos_prev + (delta * delta * p.accel);
@@ -2096,12 +2137,8 @@ void Rope::_apply_constraints() {
 		float radius = get_rope_width() * 0.5f;
 		int anchor_count = _get_anchor_count();
 		for (Particle &p : _particles) {
-			int anchor_idx = p.anchor_idx;
-			if (anchor_idx < 0 || anchor_idx >= anchor_count)
-				continue;
-
-			AnchorBehavior behavior = (AnchorBehavior)_get_anchor_behavior(anchor_idx);
-			if (behavior == AnchorBehavior::GUIDED || behavior == AnchorBehavior::ANCHORED)
+			// fixed points don't move
+			if (_is_anchor_fixed(p.anchor_idx, anchor_count))
 				continue;
 
 			Vector3 from = p.pos_prev;

@@ -186,6 +186,14 @@ protected:
 	void _notify_anchors_changed();
 	void _internal_update_anchors();
 
+	bool _is_anchor_free(int anchor_idx, int anchor_count) const;
+	bool _is_anchor_fixed(int anchor_idx, int anchor_count) const;	// ANCHORED || GUIDED
+	bool _is_anchor_moving(int anchor_idx, int anchor_count) const;	// SLIDING || TOWING
+	bool _is_rope_sliding(int anchor_idx, int anchor_count) const;	// SLIDING || GUIDED
+
+	// Attachments
+	void _notify_attachments_changed();
+
 	// Physics
 	void _rebuild_rope();
 	void _rebuild_anchors();

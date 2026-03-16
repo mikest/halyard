@@ -35,6 +35,8 @@ func _get_anchor_transform(idx: int) -> Transform3D:
 		
 	return global_transform.translated(offset)
 
+func _get_anchor_behavior(idx: int) -> int:
+	return RopeAnchor.AnchorBehavior.ANCHORED
 
 # Use all the child nodes as attachments and distribute them evenly along the rope
 func _get_attachment_count() -> int:
