@@ -19,14 +19,20 @@ func _process(delta: float):
 
 # Create a single anchor point that is always a fixed distance from the start
 func _get_anchor_count() -> int:
-	return 1
+	return 2
 
-func _get_anchor_position(idx: int) -> float:
+func _get_anchor_abs_offset(idx: int) -> float:
+	if idx == 0:
+		return 0
+	
 	var pos := global_position + offset
 	var dist := (pos - global_position).length() + (idx* 0.1)
-	return dist / rope_length * (1.0 - anchor_tension)
+	return dist * (1.0 - anchor_tension)
 
 func _get_anchor_transform(idx: int) -> Transform3D:
+	if idx == 0:
+		return global_transform
+		
 	return global_transform.translated(offset)
 
 

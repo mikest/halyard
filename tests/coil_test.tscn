@@ -5,27 +5,30 @@
 [ext_resource type="PackedScene" uid="uid://cn1vm8lpn0kby" path="res://addons/halyard/tests/base.tscn" id="3_sjw63"]
 
 [sub_resource type="RopeAppearance" id="RopeAppearance_xlb8c"]
-rope_width = 0.125
 rope_lod = 1
-particles_per_meter = 16.0
 link_mesh = ExtResource("1_gn44e")
 
 [node name="CoilTest" type="Node3D" unique_id=653013393]
 
 [node name="CoiledRope" type="Rope" parent="." unique_id=1194387720 node_paths=PackedStringArray("drum_anchor", "chain_guide")]
+rope_length = 12.0
 particles_per_meter = 16.0
+anchor_count = 1
 appearance = SubResource("RopeAppearance_xlb8c")
 stiffness_iterations = 8
 stiffness = 1.5
 collision_layer = 0
 collision_mask = 0
+anchors/0/offset = 0.0
+anchors/0/from = 0
+anchors/0/node_path = NodePath(".")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.057503402, 1.1796455, -0.0157578)
 script = ExtResource("1_3qe50")
 clockwise = true
-radius = 0.1
+radius = 0.2
 turns_per_layer = 6.0
 offset_turns = 0.063
-coiled = 0.678
+coiled = 0.96
 drum_anchor = NodePath("../Drum")
 chain_guide = NodePath("../ChainHole")
 metadata/_custom_type_script = "uid://dnnxtqukra31q"

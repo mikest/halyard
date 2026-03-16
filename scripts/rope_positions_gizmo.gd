@@ -67,10 +67,10 @@ func _redraw(gizmo: EditorNode3DGizmo):
 	if ends.size(): gizmo.add_handles(ends, get_material("end", gizmo), [])
 
 func _draw_anchors(gizmo: EditorNode3DGizmo, rope: Rope, flip: bool):
-	var count := rope.get_anchor_count()
+	var count := rope._get_anchor_count()
 	for idx in count:
-		var xform := rope.get_anchor_transform(idx)
-		var behavior := rope.get_anchor_behavior(idx)
+		var xform := rope._get_anchor_transform(idx)
+		var behavior := rope._get_anchor_behavior(idx)
 		match behavior:
 			RopeAnchor.AnchorBehavior.ANCHORED:
 				_push_position(xform, rope, lines, anchors, flip, idx)
@@ -87,23 +87,21 @@ func _draw_anchors(gizmo: EditorNode3DGizmo, rope: Rope, flip: bool):
 
 
 func _draw_attachments(gizmo: EditorNode3DGizmo, rope: Rope, flip: bool):
-
 	var count := 0
-	var attachments: RopeAttachmentsBase = rope.get_attachments()
-	if attachments:
-		count = attachments.get_count(rope)
+	var appearance: RopeAppearance = rope.get_appearance()
+	if appearance:
+		count = appearance.attachment_count
 		for idx in count:
-			var path := attachments.get_nodepath(idx, rope)
-			_push_positions_for_node(path, rope, lines, attaches, flip, idx)
-	
-	_push_positions_for_node(rope.get_start_attachment(), rope, lines, starts, flip, 0)
-	_push_positions_for_node(rope.get_end_attachment(), rope, lines, ends, flip, count - 1)
+			var path := appearance.get_attachment_nodepath(idx)
+			var node: Node3D = rope.get_node_or_null(path)
+			if node:
+				var xform := node.global_transform
+				_push_position(xform, rope, lines, attaches, flip, idx)
+				if idx == 0:
+					_push_position(xform, rope, lines, starts, flip, idx)
+				if idx == count-1:
+					_push_position(xform, rope, lines, ends, flip, idx)
 
-
-func _push_positions_for_node(path: NodePath, rope: Rope, lines: PackedVector3Array, handles: PackedVector3Array, flip: bool, index: int):
-		var node: Node3D = rope.get_node_or_null(path)
-		if node:
-			_push_position(node.global_transform, rope, lines, handles, flip, index)
 
 func _push_position(position: Transform3D, rope: Rope, lines: PackedVector3Array, handles: PackedVector3Array, flip: bool, index: int):
 		var xform := rope.global_transform.inverse()

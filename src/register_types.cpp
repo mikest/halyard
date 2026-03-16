@@ -14,11 +14,7 @@
 #include "rigid_buoyancy.h"
 #include "rope.h"
 #include "rope_anchor.h"
-#include "rope_anchor_positions.h"
-#include "rope_anchors_base.h"
 #include "rope_appearance.h"
-#include "rope_attachment_positions.h"
-#include "rope_attachments_base.h"
 #include "rope_mesh.h"
 #include "wave_sampler.h"
 
@@ -36,10 +32,6 @@ void initialize_gdextension_types(ModuleInitializationLevel p_level) {
 			ClassDB::register_class<Rope>();
 			ClassDB::register_class<RopeAnchor>();
 			ClassDB::register_class<RopeMesh>();
-			ClassDB::register_class<RopeAnchorsBase>();
-			ClassDB::register_class<RopeAttachmentsBase>();
-			ClassDB::register_class<RopeAnchorPositions>();
-			ClassDB::register_class<RopeAttachmentPositions>();
 			ClassDB::register_class<RopeAppearance>();
 			ClassDB::register_class<CharacterBuoyancy>();
 			ClassDB::register_class<RigidBuoyancy>();

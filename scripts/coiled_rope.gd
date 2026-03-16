@@ -36,7 +36,8 @@ var _turns: PackedFloat32Array
 var _dirty: bool = true
 
 func _ready() -> void:
-	anchor_count = _get_anchor_count()
+	#anchor_count = _get_anchor_count()
+	pass
 
 func _process(delta: float) -> void:
 	#if debug:
@@ -117,36 +118,44 @@ func _get_other_anchor_acount() -> int:
 	return count
 
 #region Overloads
-func _update_anchors() -> void:
-	for idx in anchor_count:
-		if drum_anchor:
-			if idx==0:
-				set_anchor_nodepath(idx, get_path_to(drum_anchor))
-			else:
-				set_anchor_offset(idx, _get_anchor_position(idx)/rope_length)
-				set_anchor_transform(idx, _get_anchor_transform(idx))
-	pass
 
 func _get_anchor_count() -> int:
 	# specific anchors come after the coil
-	var count := _get_coil_anchor_count() + _get_other_anchor_acount()
-	return count
+	#var count := _get_coil_anchor_count() + get_anchor_count()
+	#return count
+	return _get_coil_anchor_count()
 
+func _get_anchor_behavior(idx: int) -> int:
+	return RopeAnchor.AnchorBehavior.ANCHORED
 
-func _get_anchor_position(idx: int) -> float:
-	var count := _get_anchor_count()
-	var coil_count := _get_coil_anchor_count()
-	var pos := -1.0
-	
-	if idx >= coil_count:
-		var coil_end := _get_anchor_transform(idx-1)
-		var anchor := _get_anchor_transform(idx)
-		var dist := coil_end.origin.distance_to(anchor.origin)
-		pos = coiled + (dist/rope_length) * coil_to_first_anchor_tension
-	else:
-		pos = idx / float(count) * coiled
-	
-	return pos
+func _get_anchor_abs_offset(idx: int) -> float:
+	#var drum_start := 0
+	#var coil_start := drum_start + 1
+	#var other_start := coil_start + _get_coil_anchor_count()
+	#
+	#var pos := 0.0
+	#if idx >= other_start:
+		#pos = 0.0
+	#elif idx>=coil_start:
+	return idx * 1.0 / get_particles_per_meter()
+	#elif idx>=drum_start:
+		#pos = 0.0
+		#
+
+	#return pos
+	#var count := _get_anchor_count()
+	#var coil_count := _get_coil_anchor_count()
+	#var pos := 0.0
+	#
+	#if idx >= coil_count:
+		#var coil_end := _get_anchor_transform(idx-1)
+		#var anchor := _get_anchor_transform(idx)
+		#var dist := coil_end.origin.distance_to(anchor.origin)
+		#pos = coiled + (dist) * coil_to_first_anchor_tension
+	#else:
+		#pos = idx * coiled
+#
+	#return pos
 
 
 func _get_anchor_transform(idx: int) -> Transform3D:
@@ -155,18 +164,19 @@ func _get_anchor_transform(idx: int) -> Transform3D:
 	var coil_count := _get_coil_anchor_count()
 	
 	var start_xform := global_transform
-	if get_anchor_count():
-		start_xform = get_anchor_transform(0)
-	
-	# if we're past the coil return the normal anchors
-	if idx >= coil_count:
-		xform = get_anchor_transform(idx - coil_count)
-	
-	# return the rotated coil position for this index
-	elif idx < _positions.size():
+	#if _get_anchor_count():
+		#start_xform = get_anchor_transform(0)
+	#
+	## if we're past the coil return the normal anchors
+	#if idx >= coil_count:
+		#xform = get_anchor_transform(idx - coil_count)
+	#
+	## return the rotated coil position for this index
+	#el
+	if idx < _positions.size():
 		xform = Transform3D(Basis(), _positions[idx])
 		var turn_idx = clamp(coil_count-1, 0, _turns.size()-1)
 		xform = xform.rotated(Vector3(1,0,0), (-_turns[turn_idx] + offset_turns) * TAU * (-1 if clockwise else 1))
 		xform = start_xform * xform
 	return xform
-#endregion
+##endregion

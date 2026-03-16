@@ -27,7 +27,6 @@ using namespace godot;
 
 class RopeAnchor;
 class RopeAnchorsBase;
-class RopeAttachmentsBase;
 class RopeAppearance;
 class LiquidArea;
 
@@ -186,7 +185,6 @@ protected:
 	// Anchors
 	void _notify_anchors_changed();
 	void _internal_update_anchors();
-	int _internal_get_anchor_count() const;
 
 	// Physics
 	void _rebuild_rope();
@@ -196,8 +194,7 @@ protected:
 
 	void _update_physics(float delta, int iterations);
 	void _apply_chain_constraint(int from_idx);
-	void _apply_anchor_forces(Particle &p_particle, Anchor &p_anchor, const Vector3 &tension);
-	Anchor *_get_anchor_for_particle(Particle &p_particle);
+	void _apply_anchor_forces(Particle &p_particle, int p_anchor_idx, const Vector3 &tension);
 
 	void _stiff_rope(int interations);
 	void _balance_tension();
@@ -267,10 +264,6 @@ public:
 #pragma endregion
 
 #pragma region Anchors
-	// subclasses can override this to rebuild the list of anchors on demand.
-	GDVIRTUAL0(_update_anchors);
-	virtual void _update_anchors();
-
 	// Anchor management
 	void set_anchor_count(int count);
 	int get_anchor_count() const;
@@ -296,6 +289,9 @@ public:
 	void set_anchor_behavior(int idx, AnchorBehavior behavior);
 	AnchorBehavior get_anchor_behavior(int idx) const;
 
+	// Get the computed absolute offset from start of rope for the given anchor index.
+	float get_anchor_abs_offset(int idx) const;
+
 	// Anchor distribution mode
 	void set_anchor_distribution(int val);
 	int get_anchor_distribution() const;
@@ -305,7 +301,26 @@ public:
 	RigidBody3D* get_anchor_rigidbody(int idx) const;
 #pragma endregion
 
-#pragma region Attachments
+#pragma region Anchor Subclassing
+	// Subclasses can override these to provide dynamic anchor data per-frame.
+	// Default implementations call through to the corresponding get_anchor_* methods.
+	GDVIRTUAL0RC(int, _get_anchor_count);
+	virtual int _get_anchor_count() const;
+
+	GDVIRTUAL1RC(float, _get_anchor_abs_offset, int);
+	virtual float _get_anchor_abs_offset(int idx) const;
+
+	GDVIRTUAL1RC(int, _get_anchor_behavior, int);
+	virtual int _get_anchor_behavior(int idx) const;
+
+	GDVIRTUAL1RC(Transform3D, _get_anchor_transform, int);
+	virtual Transform3D _get_anchor_transform(int idx) const;
+
+	GDVIRTUAL1RC(RigidBody3D*, _get_anchor_rigidbody, int);
+	virtual RigidBody3D* _get_anchor_rigidbody(int idx) const;
+#pragma endregion
+
+#pragma region Attachment Subclassing
 	GDVIRTUAL0RC(int, _get_attachment_count);
 	virtual int _get_attachment_count() const;
 
@@ -331,11 +346,8 @@ public:
 	APPEARENCE_ACCESSOR(float, rope_twist, 1.0)
 	APPEARENCE_ACCESSOR(int, rope_lod, 2)
 	APPEARENCE_ACCESSOR(Ref<Material>, material, nullptr)
-	APPEARENCE_ACCESSOR(NodePath, start_attachment, NodePath())
 	APPEARENCE_ACCESSOR(float, start_offset, 0.0)
-	APPEARENCE_ACCESSOR(NodePath, end_attachment, NodePath())
 	APPEARENCE_ACCESSOR(float, end_offset, 0.0)
-	APPEARENCE_ACCESSOR(Ref<RopeAttachmentsBase>, attachments, nullptr)
 #undef APPEARENCE_ACCESSOR
 
 	// simulation parameters
