@@ -2,43 +2,69 @@
 
 [ext_resource type="Script" uid="uid://dnnxtqukra31q" path="res://addons/halyard/scripts/coiled_rope.gd" id="1_3qe50"]
 [ext_resource type="ArrayMesh" uid="uid://j3u082cbuveh" path="res://addons/halyard/assets/chain-link.res" id="1_gn44e"]
+[ext_resource type="Script" uid="uid://bpo84j3idh1wu" path="res://addons/halyard/tests/draggable.gd" id="3_ebii4"]
 [ext_resource type="PackedScene" uid="uid://cn1vm8lpn0kby" path="res://addons/halyard/tests/base.tscn" id="3_sjw63"]
 
 [sub_resource type="RopeAppearance" id="RopeAppearance_xlb8c"]
 rope_lod = 1
 link_mesh = ExtResource("1_gn44e")
 
+[sub_resource type="SphereShape3D" id="SphereShape3D_x6pmj"]
+
 [node name="CoilTest" type="Node3D" unique_id=653013393]
 
-[node name="CoiledRope" type="Rope" parent="." unique_id=1194387720 node_paths=PackedStringArray("drum_anchor", "chain_guide")]
+[node name="CoiledRope" type="Rope" parent="." unique_id=1194387720 node_paths=PackedStringArray("drum_anchor", "chain_guide", "anchor_tow")]
 rope_length = 12.0
 particles_per_meter = 16.0
 appearance = SubResource("RopeAppearance_xlb8c")
-anchor_count = 1
+anchor_distribution = 1
+anchor_count = 125
+preprocess_time = 10.0
 stiffness_iterations = 20
-stiffness = 1.5
+stiffness = 1.9
+tension_force_scale = 10.0
 collision_layer = 0
 collision_mask = 0
-anchors/0/offset = nan
-anchors/0/from = 1
-anchors/0/node_path = NodePath("../ChainHole")
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.057503402, 1.1796455, -0.0157578)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5163033, 0, -1.005949)
 script = ExtResource("1_3qe50")
 clockwise = true
 radius = 0.1
 turns_per_layer = 6.0
 offset_turns = 0.063
-coiled = 0.765
+coiled = 0.636
 drum_anchor = NodePath("../Drum")
 chain_guide = NodePath("../ChainHole")
+anchor_tow = NodePath("../Ball/Towing")
 metadata/_custom_type_script = "uid://dnnxtqukra31q"
 
 [node name="Drum" type="RopeAnchor" parent="." unique_id=1088114845]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.24843866, -1.3161365)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3895323, 0.18710685, -1.100424)
 
 [node name="ChainHole" type="RopeAnchor" parent="." unique_id=1102286583]
 behavior = 2
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.21039295, -1.7626028)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.95653313, 0.005342126, -1.7220974)
+
+[node name="Ball" type="RigidBody3D" parent="." unique_id=1657036312]
+unique_name_in_owner = true
+transform = Transform3D(0.717835, 0, -0.696214, 0, 1, 0, 0.696214, 0, 0.717835, -3, 0, -1.6104851)
+collision_layer = 4
+collision_mask = 15
+mass = 10.0
+linear_damp = 0.1
+angular_damp = 1.0
+script = ExtResource("3_ebii4")
+metadata/_edit_group_ = true
+
+[node name="Towing" type="RopeAnchor" parent="Ball" unique_id=1785101900]
+behavior = 1
+transform = Transform3D(1, 0, -2.9802322e-08, 0, 1, 0, 2.9802322e-08, 0, 1, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ball" unique_id=1812067470]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+shape = SubResource("SphereShape3D_x6pmj")
+
+[node name="CSGSphere3D" type="CSGSphere3D" parent="Ball" unique_id=850739797]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 
 [node name="TestBase" parent="." unique_id=2029226043 instance=ExtResource("3_sjw63")]
-visible = false
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -10, 0)

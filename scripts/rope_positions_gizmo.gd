@@ -67,10 +67,10 @@ func _redraw(gizmo: EditorNode3DGizmo):
 	if ends.size(): gizmo.add_handles(ends, get_material("end", gizmo), [])
 
 func _draw_anchors(gizmo: EditorNode3DGizmo, rope: Rope, flip: bool):
-	var count := rope._get_anchor_count()
+	var count := rope.get_anchor_count()
 	for idx in count:
-		var xform := rope._get_anchor_transform(idx)
-		var behavior := rope._get_anchor_behavior(idx)
+		var xform := rope.get_anchor_transform(idx)
+		var behavior := rope.get_anchor_behavior(idx)
 		match behavior:
 			RopeAnchor.AnchorBehavior.ANCHORED:
 				_push_position(xform, rope, lines, anchors, flip, idx)

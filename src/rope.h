@@ -106,7 +106,11 @@ private:
 	LocalVector<Transform3D> _links; // the transforms for the points between each particle, always N-1 in count.
 	bool _rebuild = true;
 	bool _is_rebuilding = false;
-	bool _dirty = true;
+	
+	bool _rope_dirty = true;
+	bool _anchors_dirty = true;
+	bool _attachments_dirty = true;
+
 	double _time = 0.0;
 	double _simulation_delta = 0.0;
 
@@ -183,16 +187,12 @@ protected:
 	bool _get(const StringName &p_name, Variant &r_property) const;
 
 	// Anchors
-	void _notify_anchors_changed();
 	void _internal_update_anchors();
 
 	bool _is_anchor_free(int anchor_idx, int anchor_count) const;
 	bool _is_anchor_fixed(int anchor_idx, int anchor_count) const;	// ANCHORED || GUIDED
 	bool _is_anchor_moving(int anchor_idx, int anchor_count) const;	// SLIDING || TOWING
 	bool _is_rope_sliding(int anchor_idx, int anchor_count) const;	// SLIDING || GUIDED
-
-	// Attachments
-	void _notify_attachments_changed();
 
 	// Physics
 	void _rebuild_rope();
@@ -309,39 +309,26 @@ public:
 	RigidBody3D* get_anchor_rigidbody(int idx) const;
 #pragma endregion
 
-#pragma region Anchor Subclassing
-	// Subclasses can override these to provide dynamic anchor data per-frame.
-	// Default implementations call through to the corresponding get_anchor_* methods.
-	GDVIRTUAL0RC(int, _get_anchor_count);
-	virtual int _get_anchor_count() const;
-
-	GDVIRTUAL1RC(float, _get_anchor_abs_offset, int);
-	virtual float _get_anchor_abs_offset(int idx) const;
-
-	GDVIRTUAL1RC(int, _get_anchor_behavior, int);
-	virtual int _get_anchor_behavior(int idx) const;
-
-	GDVIRTUAL1RC(Transform3D, _get_anchor_transform, int);
-	virtual Transform3D _get_anchor_transform(int idx) const;
-
-	GDVIRTUAL1RC(RigidBody3D*, _get_anchor_rigidbody, int);
-	virtual RigidBody3D* _get_anchor_rigidbody(int idx) const;
+#pragma region Attachments
+	// int get_attachment_count(int idx) const;
+	// float get_attachment_position(int idx) const;
+	// NodePath get_attachment_nodepath(int idx) const;
+	// Transform3D get_attachment_transform(int idx) const;
 #pragma endregion
 
-#pragma region Attachment Subclassing
-	GDVIRTUAL0RC(int, _get_attachment_count);
-	virtual int _get_attachment_count() const;
+#pragma region Subclassing
+	void _notify_anchors_changed();
+	void _notify_attachments_changed();
 
-	// Return the position of the attachment along the rope in the range [-1, 0..1]
-	// If the position is -1, the attachment is unattached.
-	GDVIRTUAL1RC(float, _get_attachment_position, int);
-	virtual float _get_attachment_position(int idx) const;
+	// Subclasses can override these to provide dynamic anchor lists after a _notify_anchors_changed
+	GDVIRTUAL0C(_update_anchors);
+	void _update_anchors() const;
 
-	GDVIRTUAL1RC(NodePath, _get_attachment_nodepath, int);
-	virtual NodePath _get_attachment_nodepath(int idx) const;
+	GDVIRTUAL0C(_update_attachments);
+	void _update_attachments() const;
 
-	GDVIRTUAL1RC(Transform3D, _get_attachment_transform, int);
-	Transform3D _get_attachment_transform(int idx) const;
+	GDVIRTUAL1RC(Transform3D, _get_attachment_local_transform, int);
+	Transform3D _get_attachment_local_transform(int attach_idx) const;
 #pragma endregion
 
 	Ref<RopeAppearance> get_appearance() const;

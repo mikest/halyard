@@ -23,6 +23,8 @@ class_name CoiledRope
 @export_range(0,1,0.001) var coiled := 0.5:
 		set(val):
 			coiled = val
+			#_update_behaviors()
+			_update_anchors()
 
 @export var drum_anchor: RopeAnchor
 @export var chain_guide: RopeAnchor
@@ -48,6 +50,7 @@ func _process(delta: float) -> void:
 	# rebuild positions for coils when the parameters change
 	if _dirty:
 		_rebuild_coil_positions()
+		_update_anchors()
 		_dirty = false
 	pass
 
@@ -115,33 +118,65 @@ func _get_coil_anchor_count() -> int:
 	var coil_length := rope_length * coiled
 	return int(coil_length * get_particles_per_meter())
 
+func _update_behaviors():
+	for idx in anchor_count:
+		# behavior
+		if idx == 0 and drum_anchor:
+			pass
+		elif idx < _get_coil_anchor_count():
+			set_anchor_behavior(idx, RopeAnchor.ANCHORED)
+		else:
+			set_anchor_behavior(idx, RopeAnchor.FREE)
+
 #region Overloads
 
-func _get_anchor_count() -> int:
-	return _positions.size()
-
-func _get_anchor_behavior(idx: int) -> int:
-	if idx < _get_coil_anchor_count():
-		return RopeAnchor.AnchorBehavior.ANCHORED
-	else:
-		return RopeAnchor.AnchorBehavior.FREE
-
-func _get_anchor_abs_offset(idx: int) -> float:
-	return idx * 1.0 / get_particles_per_meter()
-
-
-
-func _get_anchor_transform(idx: int) -> Transform3D:
-	var xform := global_transform
-	var count := _get_anchor_count()
+func _update_anchors():
+	clear_anchors()
 	var coil_count := _get_coil_anchor_count()
+	var pos_count := coil_count #_positions.size()
+	var total_count := pos_count
+	if drum_anchor: total_count += 1
+	if chain_guide: total_count += 1
+	if anchor_tow: total_count += 1
+	anchor_count = total_count
 	
-	var start_xform := global_transform
-	if idx < _positions.size():
-		xform = Transform3D(Basis(), _positions[idx])
-		var turn_idx = clamp(coil_count-1, 0, _turns.size()-1)
-		xform = xform.rotated(Vector3(1,0,0), (-_turns[turn_idx] + offset_turns) * TAU * (-1 if clockwise else 1))
-		xform = start_xform * xform
+	# use relative offset positioning.
+	anchor_distribution = Rope.RELATIVE
 	
-	return xform
+	var start := 0
+	var total_dist := 0.0
+	for idx in anchor_count:
+		if idx == 0 and drum_anchor:
+			set_anchor_nodepath(idx, get_path_to(drum_anchor))
+			set_anchor_offset(idx, 0)
+			start += 1
+		
+		elif idx >= start and idx < start+pos_count:
+			# transform
+			var xform := global_transform
+			var start_xform := global_transform
+			if idx < _positions.size():
+				xform = Transform3D(Basis(), _positions[idx])
+				var turn_idx = clamp(coil_count-1, 0, _turns.size()-1)
+				xform = xform.rotated(Vector3(1,0,0), (-_turns[turn_idx] + offset_turns) * TAU * (-1 if clockwise else 1))
+				xform = start_xform * xform
+			set_anchor_transform(idx, xform)
+			var dist := 1.0 / get_particles_per_meter()
+			set_anchor_offset(idx, dist)
+			total_dist += dist
+			
+		elif idx == start+pos_count and chain_guide:
+			set_anchor_nodepath(idx, get_path_to(chain_guide))
+			var prev := get_anchor_transform(idx-1).origin
+			var cur := get_anchor_transform(idx).origin
+			var dist := prev.distance_to(cur)
+			set_anchor_offset(idx, dist)
+			total_dist += dist
+			
+		elif idx == start+pos_count+1 and anchor_tow:
+			set_anchor_nodepath(idx, get_path_to(anchor_tow))
+			set_anchor_offset(idx, rope_length - total_dist)
+	
+	# and the behaviors
+	_update_behaviors();
 ##endregion
