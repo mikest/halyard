@@ -1,59 +1,64 @@
-[gd_scene load_steps=5 format=3 uid="uid://b5q5mxkwn7e2y"]
+[gd_scene format=3 uid="uid://b5q5mxkwn7e2y"]
 
+[ext_resource type="PackedScene" uid="uid://cn1vm8lpn0kby" path="res://addons/halyard/tests/base.tscn" id="2_0cyhg"]
+[ext_resource type="Script" uid="uid://bpo84j3idh1wu" path="res://addons/halyard/tests/draggable.gd" id="2_06evi"]
 [ext_resource type="ArrayMesh" uid="uid://j3u082cbuveh" path="res://addons/halyard/assets/chain-link.res" id="2_vqcs3"]
-[ext_resource type="Script" uid="uid://dl6y1t3o1yx0o" path="res://addons/halyard/scripts/pull_rope.gd" id="3_i11ko"]
 
 [sub_resource type="RopeAppearance" id="RopeAppearance_06evi"]
 rope_twist = 0.5
 rope_lod = 1
-particles_per_meter = 8.0
 link_mesh = ExtResource("2_vqcs3")
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_vqcs3"]
 
-[node name="Node3D" type="Node3D"]
+[node name="Node3D" type="Node3D" unique_id=1768900519]
 
-[node name="Chain" type="Rope" parent="." node_paths=PackedStringArray("pull_on")]
-rope_length = 4.61
-grow_from = 1
-end_anchor = NodePath("../Ball/Marker3D")
+[node name="Chain" type="Rope" parent="." unique_id=296472278]
+rope_length = 4.5
+rope_width = 0.25
+particles_per_meter = 8.0
 appearance = SubResource("RopeAppearance_06evi")
-stiffness_iterations = 4
-stiffness = 1.0
-friction = 0.1
-collision_layer = 5
-collision_mask = 5
+grow_from = 1
+anchor_count = 2
+stiffness_iterations = 20
+stiffness = 1.8
+tension_force_scale = 10.0
+max_tension_force = 10000.0
+collision_layer = 0
+collision_mask = 7
 apply_wind = true
 wind_scale = 5.0
 wind = Vector3(-1, 0, 0)
+anchors/0/offset = 0.0
+anchors/0/from = 0
+anchors/0/node_path = NodePath(".")
+anchors/1/offset = 0.0
+anchors/1/from = 1
+anchors/1/node_path = NodePath("../Ball/Towing")
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.39385, -0.986826, -0.950613)
-script = ExtResource("3_i11ko")
-pull_on = NodePath("../Ball")
-force_strength = 10.0
 
-[node name="Ball" type="RigidBody3D" parent="."]
+[node name="Ball" type="RigidBody3D" parent="." unique_id=1131594926]
 unique_name_in_owner = true
 transform = Transform3D(0.717835, 0, -0.696214, 0, 1, 0, 0.696214, 0, 0.717835, 2.40847, -0.650798, -1.50397)
 collision_layer = 4
 collision_mask = 15
-mass = 1000.0
+mass = 10.0
 linear_damp = 0.1
 angular_damp = 1.0
+script = ExtResource("2_06evi")
 metadata/_edit_group_ = true
 
-[node name="Marker3D" type="Marker3D" parent="Ball"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.15, 0)
+[node name="Towing" type="RopeAnchor" parent="Ball" unique_id=102254346]
+behavior = 1
+transform = Transform3D(1, 0, -2.9802322e-08, 0, 1, 0, 2.9802322e-08, 0, 1, 0, 0, 0)
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Ball"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ball" unique_id=285463323]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 shape = SubResource("SphereShape3D_vqcs3")
 
-[node name="CSGSphere3D" type="CSGSphere3D" parent="Ball"]
+[node name="CSGSphere3D" type="CSGSphere3D" parent="Ball" unique_id=1761208523]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 
-[node name="Camera3D" type="Camera3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.953748, 0.300606, 0, -0.300606, 0.953748, 0, 0, 7.75286)
-
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 0.785014, 0.619478, 0, -0.619478, 0.785014, 0, 0, 8.2601)
+[node name="TestBase" parent="." unique_id=2029226043 instance=ExtResource("2_0cyhg")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -10, 0)

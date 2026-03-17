@@ -1,6 +1,7 @@
-[gd_scene load_steps=5 format=3 uid="uid://c6m5djyl84pub"]
+[gd_scene format=3 uid="uid://c6m5djyl84pub"]
 
 [ext_resource type="ArrayMesh" uid="uid://j3u082cbuveh" path="res://addons/halyard/assets/chain-link.res" id="1_5qxvb"]
+[ext_resource type="PackedScene" uid="uid://cn1vm8lpn0kby" path="res://addons/halyard/tests/base.tscn" id="1_24i6o"]
 [ext_resource type="PackedScene" uid="uid://v81l42df6bcu" path="res://addons/halyard/assets/rope-endcap.blend" id="2_of4qs"]
 [ext_resource type="Script" uid="uid://32rfsoftyutc" path="res://addons/halyard/tests/link_test.gd" id="2_pmwqi"]
 
@@ -10,12 +11,17 @@ particles_per_meter = 6.0
 link_mesh = ExtResource("1_5qxvb")
 end_attachment = NodePath("../rope-endcap")
 
-[node name="Node3D" type="Node3D"]
+[node name="Node3D" type="Node3D" unique_id=422886374]
 
-[node name="Rope" type="Rope" parent="."]
-rope_length = 3.3408065
+[node name="TestBase" parent="." unique_id=2029226043 instance=ExtResource("1_24i6o")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -10, 0)
+
+[node name="Rope" type="Rope" parent="." unique_id=2059140967]
+rope_length = 2.6322126
+rope_width = 0.25
+particles_per_meter = 6.0
 grow_from = 1
-end_anchor = NodePath("../Marker3D")
+anchor_count = 1
 appearance = SubResource("RopeAppearance_nksku")
 preprocess_time = 0.0
 stiffness_iterations = 10
@@ -23,32 +29,37 @@ stiffness = 1.8
 collision_layer = 0
 collision_mask = 0
 apply_damping = false
+anchors/0/offset = 0.0
+anchors/0/from = 0
+anchors/0/node_path = NodePath("")
+anchors/0/behavior = 0
+anchors/0/position = Vector3(0, -0.236, 0)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.236, 0)
 script = ExtResource("2_pmwqi")
 grow_length = 10.0
 grow_speed = 3.0
 
-[node name="Marker3D" type="Marker3D" parent="."]
+[node name="Marker3D" type="Marker3D" parent="." unique_id=434205517]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
 
-[node name="rope-endcap" parent="." instance=ExtResource("2_of4qs")]
-transform = Transform3D(-0.16372901, -0.11101523, -0.15286735, 0.03773059, -0.21742438, 0.11748635, -0.18511945, 0.0538726, 0.15914941, 0, 2, 0)
+[node name="rope-endcap" parent="." unique_id=383005952 instance=ExtResource("2_of4qs")]
+transform = Transform3D(-0.24975376, 0.0033785799, 0.010566333, -0.0027654874, -0.24956776, 0.014432042, 0.010743104, 0.0143009415, 0.24935931, -0.1719206, -3.040627, 0.23363222)
 
-[node name="Label3D" type="Label3D" parent="."]
+[node name="Label3D" type="Label3D" parent="." unique_id=1991364270]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0)
-text = "stretch: 0.319253
+text = "stretch: 0.351854
 0 (0.0, -0.236, 0.0)
-1 (-0.077248, -0.411101, -0.03549)
-2 (-0.010863, -0.241144, -0.066324)
+1 (0.048818, -0.38637, 0.07381)
+2 (0.009668, -0.560858, 0.047635)
 ...
-19 (0.192516, 2.252451, -0.08883)
-20 (0.073594, 2.144134, -0.035713)
-21 (0.0, 2.0, 0.0)
+15 (-0.124212, -2.707219, 0.266471)
+16 (-0.17427, -2.867083, 0.223688)
+17 (-0.171921, -3.040627, 0.233632)
 "
 horizontal_alignment = 0
 
-[node name="Label3D2" type="Label3D" parent="."]
+[node name="Label3D2" type="Label3D" parent="." unique_id=193825664]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.4141474, 0, 0)
 text = "This demonstrates how to

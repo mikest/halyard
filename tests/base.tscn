@@ -1,0 +1,34 @@
+[gd_scene format=3 uid="uid://cn1vm8lpn0kby"]
+
+[ext_resource type="Script" uid="uid://2r7wl4076d3p" path="res://addons/halyard/tests/camera_orbit.gd" id="1_xlo8d"]
+
+[sub_resource type="WorldBoundaryShape3D" id="WorldBoundaryShape3D_2m6pt"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ck6w2"]
+albedo_color = Color(0.51606566, 0.4895063, 0.4280977, 1)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_gbyd6"]
+size = Vector2(20, 20)
+
+[node name="TestBase" type="Node3D" unique_id=2029226043]
+
+[node name="Camera3D" type="Camera3D" parent="." unique_id=1498562229]
+process_priority = 1
+transform = Transform3D(0.9102, -0.22145273, 0.34999245, 0, 0.8450473, 0.53469163, -0.41416907, -0.4866763, 0.76916206, 3.9291663, 7.0730143, 9.695052)
+script = ExtResource("1_xlo8d")
+min_pitch = 5.0
+invert_pitch = true
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=2118271038]
+transform = Transform3D(1, 0, 0, 0, 0.4408167, 0.89759713, 0, -0.89759713, 0.4408167, 0, 12.021552, 6.9154296)
+shadow_enabled = true
+
+[node name="GroundPlane" type="StaticBody3D" parent="." unique_id=1852517589]
+collision_mask = 3
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="GroundPlane" unique_id=1255351187]
+shape = SubResource("WorldBoundaryShape3D_2m6pt")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="GroundPlane" unique_id=2127319800]
+material_override = SubResource("StandardMaterial3D_ck6w2")
+mesh = SubResource("PlaneMesh_gbyd6")

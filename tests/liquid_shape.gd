@@ -50,6 +50,8 @@ func _set(_property: StringName, _value: Variant) -> bool:
 func update_transforms_for_points(global_points: PackedVector3Array,
 		transforms: Array[Transform3D]) -> void:
 	
+	if Engine.is_editor_hint(): return
+	
 	var no_hit := Transform3D(Basis(), Vector3(0,-1000,0))
 	
 	## Cast a ray downward at each query point to find the liquid surface.
@@ -65,7 +67,7 @@ func update_transforms_for_points(global_points: PackedVector3Array,
 	var ray_bottom: float = origin_y - liquid_range
 	
 	transforms.resize(global_points.size())
-	
+		
 	for idx in global_points.size():
 		var point: Vector3 = global_points[idx]
 

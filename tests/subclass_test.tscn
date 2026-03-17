@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://bkvgpdc7562a2"]
+[gd_scene format=3 uid="uid://bkvgpdc7562a2"]
 
 [ext_resource type="PackedScene" uid="uid://dfoecgqwuprw2" path="res://addons/halyard/assets/vine-tip.blend" id="1_ahbjl"]
 [ext_resource type="PackedScene" uid="uid://dp4m3bjt5qarp" path="res://addons/halyard/assets/rope-endcap-3ply.blend" id="2_tmr6b"]
@@ -11,70 +11,87 @@ albedo_color = Color(0.4093379, 0.63406885, 0.31892848, 1)
 
 [sub_resource type="RopeAppearance" id="RopeAppearance_qrl3x"]
 rope_sides = 12
-rope_lod = 8
-particles_per_meter = 12.0
+rope_lod = 6
 material = SubResource("StandardMaterial3D_kgbon")
-end_attachment = NodePath("../vine-tip")
+attachment_distribution = 2
 
-[node name="Node3D" type="Node3D"]
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_n3f8v"]
 
-[node name="vine-tip" parent="." instance=ExtResource("1_ahbjl")]
-transform = Transform3D(-0.21525437, -0.12714384, 1.11152705e-08, 0.12714384, -0.21525437, 1.8818133e-08, 3.5527137e-15, 2.1855694e-08, 0.25, 1.1351198, -8.922155, 0)
+[node name="Node3D" type="Node3D" unique_id=1202974791]
 
-[node name="Rope" type="Rope" parent="."]
-rope_length = 5.9622765
+[node name="Rope" type="Rope" parent="." unique_id=141577133]
+rope_length = 5.991328
+particles_per_meter = 4.0
 appearance = SubResource("RopeAppearance_qrl3x")
+anchor_count = 1
+stiffness_iterations = 5
+stiffness = 1.0
 collision_layer = 0
 collision_mask = 0
+apply_wind = true
+wind_scale = 2.0
+wind_noise = SubResource("FastNoiseLite_n3f8v")
+anchors/0/offset = 0.0
+anchors/0/from = 0
+anchors/0/node_path = NodePath("")
+anchors/0/behavior = 0
+anchors/0/position = Vector3(0, 0, 0)
+custom_aabb = AABB(-0.0625, -5.841293, -0.23349357, 1.3624697, 5.923693, 0.2971124)
 script = ExtResource("3_n3f8v")
 anchor_tension = 0.7
-offset = Vector3(2, 0, 0)
+offset = Vector3(1, 0, 0)
 metadata/_custom_type_script = "uid://hqnopanjkd43"
 
-[node name="rope-endcap-3ply" parent="Rope" instance=ExtResource("2_tmr6b")]
-transform = Transform3D(-0.21525435, 0.12714387, 2.1855694e-08, 0.12714387, 0.21525435, 0, -1.8818133e-08, 1.11152705e-08, -0.25, 1.1351198, -8.922155, 0)
+[node name="Node3D" type="Node3D" parent="Rope" unique_id=696326768]
+transform = Transform3D(-0.12427067, -0.013467586, -0.00065142085, -0.010278847, 0.09853395, -0.07622602, 0.0087261405, -0.0757277, -0.09906649, 1.2468324, -5.777384, -0.0010849037)
 
-[node name="vines-thorn3" parent="Rope" instance=ExtResource("4_v6m5v")]
-transform = Transform3D(-0.11106384, 0.11471385, -0.1923683, 0.057356916, 0.22212775, 0.0993451, 0.21650639, -1.1175871e-08, -0.12499998, 1.2395216, -8.736519, 0)
+[node name="vine-tip" parent="Rope/Node3D" unique_id=495801773 instance=ExtResource("1_ahbjl")]
+transform = Transform3D(1, 0, 0, 0, -1, 8.742278e-08, 0, -8.742278e-08, -1, 0, 0, 0)
 
-[node name="vine-leaves-2" parent="Rope" instance=ExtResource("5_n3f8v")]
-transform = Transform3D(0.11479294, 0.09894609, -0.19882719, -0.04947305, 0.22958587, 0.08568982, 0.21650636, 1.1175871e-08, 0.125, 1.3294514, -8.546178, 0)
+[node name="vines-thorn3" parent="Rope" unique_id=695959952 instance=ExtResource("4_v6m5v")]
+transform = Transform3D(-0.060302123, -0.014051162, -0.10858738, 0.05238316, 0.10515676, -0.04269732, 0.09614915, -0.06610311, -0.044841055, 1.2235572, -5.608818, -0.1414136)
 
-[node name="vines-thorn2" parent="Rope" instance=ExtResource("4_v6m5v")]
-transform = Transform3D(0.23557356, 0.08369647, 2.0594493e-08, -0.08369647, 0.23557356, -7.3169764e-09, -2.1855694e-08, -8.881784e-16, 0.25, 1.4092897, -8.342438, 0)
+[node name="vine-leaves-2" parent="Rope" unique_id=786572627 instance=ExtResource("5_n3f8v")]
+transform = Transform3D(0.072854385, -0.01614506, -0.100282475, -0.00032346044, 0.123373345, -0.020097584, 0.101573296, 0.011973077, 0.071864545, 1.2017109, -5.4457693, -0.1669745)
 
-[node name="vine-leaves-3" parent="Rope" instance=ExtResource("5_n3f8v")]
-transform = Transform3D(0.120055795, 0.06961617, 0.20794275, -0.03480808, 0.2401116, -0.06028938, -0.21650635, 5.5879354e-09, 0.124999985, 1.4790188, -8.12552, 0)
+[node name="vines-thorn2" parent="Rope" unique_id=1985175506 instance=ExtResource("4_v6m5v")]
+transform = Transform3D(0.12422062, -0.0032354959, 0.013556267, 0.0051805745, 0.12359257, -0.017973298, -0.01293841, 0.018423066, 0.122956045, 1.1860354, -5.270053, -0.14404868)
 
-[node name="vines-thorn4" parent="Rope" instance=ExtResource("4_v6m5v")]
-transform = Transform3D(-0.12168274, 0.057212126, 0.21076071, 0.028606055, 0.2433655, -0.04954716, -0.21650635, -5.5879354e-09, -0.124999985, 1.5388244, -7.8967233, 0)
+[node name="vine-leaves-3" parent="Rope" unique_id=189462448 instance=ExtResource("5_n3f8v")]
+transform = Transform3D(0.05045677, -0.0034301225, 0.1143125, 0.020249335, 0.1232376, -0.005239986, -0.11255701, 0.020633161, 0.05030103, 1.1858859, -5.0554156, -0.10419489)
 
-[node name="vine-leaves-4" parent="Rope" instance=ExtResource("5_n3f8v")]
-transform = Transform3D(-0.24562864, 0.046546474, -3.774895e-08, 0.046546474, 0.24562864, 8.138444e-09, 3.8604156e-08, 9.678174e-10, -0.25, 1.5893216, -7.657782, 0)
+[node name="vines-thorn4" parent="Rope" unique_id=532724629 instance=ExtResource("4_v6m5v")]
+transform = Transform3D(-0.07362193, -0.006692631, 0.10079693, 0.011643553, 0.12333191, 0.016693324, -0.1003456, 0.019221034, -0.07201605, 1.1778066, -4.883162, -0.074970104)
 
-[node name="vines-thorn5" parent="Rope" instance=ExtResource("4_v6m5v")]
-transform = Transform3D(-0.12356783, 0.03773566, -0.21402574, 0.018867832, 0.24713564, 0.03268004, 0.21650635, 0, -0.12500001, 1.6316143, -7.409522, 0)
+[node name="vine-leaves-4" parent="Rope" unique_id=176946474 instance=ExtResource("5_n3f8v")]
+transform = Transform3D(-0.12422984, -0.0048404564, -0.0129814185, -0.005826751, 0.12451488, 0.009332369, 0.012569655, 0.009879986, -0.12397335, 1.1700304, -4.7094865, -0.054763485)
 
-[node name="vines-thorn6" parent="Rope" instance=ExtResource("4_v6m5v")]
-transform = Transform3D(0.12406102, 0.030585777, -0.21487992, -0.015292895, 0.24812198, 0.026488056, 0.21650633, 1.8626451e-09, 0.12500003, 1.6669303, -7.1523485, 0)
+[node name="vines-thorn5" parent="Rope" unique_id=2129256047 instance=ExtResource("4_v6m5v")]
+transform = Transform3D(-0.05105548, -0.0022741826, -0.114075266, -0.0044777878, 0.124918826, -0.00048628083, 0.114010036, 0.0038878203, -0.05110379, 1.1634755, -4.4905276, -0.043018483)
 
-[node name="vines-thorn7" parent="Rope" instance=ExtResource("4_v6m5v")]
-transform = Transform3D(0.24876039, 0.024865024, 5.932876e-09, -0.024865024, 0.24876039, -5.9302485e-10, -5.9624403e-09, -5.551115e-17, 0.25, 1.6964617, -6.8864756, 0)
+[node name="vines-thorn6" parent="Rope" unique_id=1251471499 instance=ExtResource("4_v6m5v")]
+transform = Transform3D(0.07324804, -0.0007160837, -0.10128776, -0.00013399805, 0.12499608, -0.0009805998, 0.101290196, 0.000683195, 0.07324499, 1.161551, -4.314778, -0.04037586)
 
-[node name="vines-thorn8" parent="Rope" instance=ExtResource("4_v6m5v")]
-transform = Transform3D(0.12458134, 0.02044537, 0.2157811, -0.010222689, 0.24916257, -0.017706206, -0.21650633, -1.8626451e-09, 0.12500004, 1.7213004, -6.6122537, 0)
+[node name="vines-thorn7" parent="Rope" unique_id=1019199795 instance=ExtResource("4_v6m5v")]
+transform = Transform3D(0.12434217, 0.0005729748, 0.012794286, -0.00069826836, 0.1249924, 0.0011885555, -0.012788059, -0.0012537714, 0.12433782, 1.1614683, -4.1387987, -0.04069081)
 
-[node name="vines-thorn9" parent="Rope" instance=ExtResource("4_v6m5v")]
-transform = Transform3D(-0.124709755, 0.017024036, 0.21600385, 0.008512013, 0.2494197, -0.014743253, -0.2165064, -9.313226e-10, -0.12499991, 1.7424147, -6.3299866, 0)
+[node name="vines-thorn8" parent="Rope" unique_id=515634237 instance=ExtResource("4_v6m5v")]
+transform = Transform3D(0.051091548, 0.00027633717, 0.11408144, -0.0010311805, 0.12499564, 0.00015904132, -0.11407712, -0.0010061138, 0.05109205, 1.1621882, -3.9185054, -0.042589534)
 
-[node name="vines-thorn10" parent="Rope" instance=ExtResource("4_v6m5v")]
-transform = Transform3D(-0.2495827, 0.014438795, -9.735359e-08, 0.014438795, 0.2495827, 5.049118e-09, 9.74827e-08, -5.8198424e-10, -0.25, 1.7606498, -6.039569, 0)
+[node name="vines-thorn9" parent="Rope" unique_id=1049569679 instance=ExtResource("4_v6m5v")]
+transform = Transform3D(-0.0732548, -0.00060866505, 0.10128358, 0.0002758987, 0.12499608, 0.0009507133, -0.10128503, 0.0007807066, -0.073251165, 1.1621201, -3.7420292, -0.04312356)
 
-[node name="vines-thorn11" parent="Rope" instance=ExtResource("4_v6m5v")]
-transform = Transform3D(-0.12484245, 0.012546481, -0.21623355, 0.00627324, 0.24968497, 0.010865572, 0.21650638, -9.313226e-10, -0.12499997, 1.7767315, -5.7407527, 0)
+[node name="vines-thorn10" parent="Rope" unique_id=1288870320 instance=ExtResource("4_v6m5v")]
+transform = Transform3D(-0.12433238, -0.0014912906, -0.012815453, -0.0017459089, 0.124964826, 0.0023966467, 0.0127832545, 0.0025628433, -0.12431822, 1.1605871, -3.5653417, -0.040820844)
 
-[node name="vines-thorn12" parent="Rope" instance=ExtResource("4_v6m5v")]
-transform = Transform3D(0.12487681, 0.011095244, -0.21629304, -0.0055476218, 0.24975367, 0.009608764, 0.21650636, 4.656613e-10, 0.12499997, 1.7919906, -5.416986, 0)
+[node name="vines-thorn11" parent="Rope" unique_id=1264666538 instance=ExtResource("4_v6m5v")]
+transform = Transform3D(-0.051019307, -0.002416785, -0.11408851, -0.005903666, 0.12486051, -4.909234e-06, 0.113961294, 0.00538632, -0.051076517, 1.1571265, -3.3443108, -0.033721477)
 
-[node name="vines-thorn13" parent="Rope" instance=ExtResource("4_v6m5v")]
-transform = Transform3D(0.24979302, 0.010170855, -6.9477885e-08, -0.010170855, 0.24979302, 2.82894e-09, 6.953546e-08, 0, 0.25, 1.8054255, -5.100467, 0)
+[node name="vines-thorn12" parent="Rope" unique_id=2084665811 instance=ExtResource("4_v6m5v")]
+transform = Transform3D(0.0733105, -0.002366717, -0.10121743, -0.0038071559, 0.12481301, -0.0056759156, 0.10117349, 0.006411638, 0.07312876, 1.1537465, -3.1673536, -0.025454354)
+
+[node name="vines-thorn13" parent="Rope" unique_id=918063929 instance=ExtResource("4_v6m5v")]
+transform = Transform3D(0.124317676, -0.0020414698, 0.012882076, 0.002690929, 0.12481772, -0.0061883233, -0.012762223, 0.006431862, 0.12418035, 1.1504788, -2.9902601, -0.015924051)
+
+[node name="rope-endcap-3ply" parent="Rope" unique_id=952253413 instance=ExtResource("2_tmr6b")]
+transform = Transform3D(0.051021878, -0.0011556293, 0.11410711, 0.005058462, 0.12489362, -0.000996971, -0.11400078, 0.0050245905, 0.051025223, 1.1477075, -2.7685118, -0.005643609)

@@ -1,49 +1,62 @@
-[gd_scene load_steps=4 format=3 uid="uid://uyxawsqlqrb4"]
-
-[ext_resource type="Script" uid="uid://ccqeo0jjod5r0" path="res://addons/halyard/scripts/distributed_anchors.gd" id="1_iqonh"]
-
-[sub_resource type="RopeAnchorsBase" id="RopeAnchorsBase_u3alf"]
-resource_local_to_scene = false
-resource_name = ""
-script = ExtResource("1_iqonh")
-include_start = true
-metadata/_custom_type_script = "uid://ccqeo0jjod5r0"
+[gd_scene format=3 uid="uid://uyxawsqlqrb4"]
 
 [sub_resource type="RopeAppearance" id="RopeAppearance_do1de"]
 rope_width = 0.125
 rope_lod = 10
 
-[node name="Node3D" type="Node3D"]
+[node name="Node3D" type="Node3D" unique_id=918674348]
 
-[node name="StretchedRope" type="Rope" parent="."]
+[node name="StretchedRope" type="Rope" parent="." unique_id=989013954]
 rope_length = 1.0
-end_anchor = NodePath("EndAnchor")
-anchors = SubResource("RopeAnchorsBase_u3alf")
+anchor_count = 5
 stiffness = 0.1
 collision_layer = 0
 collision_mask = 0
+anchors/0/offset = 0.0
+anchors/0/from = 0
+anchors/0/node_path = NodePath(".")
+anchors/1/offset = 0.25
+anchors/1/from = 0
+anchors/1/node_path = NodePath("Anchor1")
+anchors/2/offset = 0.5
+anchors/2/from = 0
+anchors/2/node_path = NodePath("Anchor2")
+anchors/3/offset = 0.75
+anchors/3/from = 0
+anchors/3/node_path = NodePath("Anchor3")
+anchors/4/offset = 0.0
+anchors/4/from = 1
+anchors/4/node_path = NodePath("EndAnchor")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1)
+custom_aabb = AABB(-0.0625, -0.0625, -0.0625, 2.125, 0.125, 0.125)
 
-[node name="Anchor1" type="Marker3D" parent="StretchedRope"]
+[node name="Anchor1" type="RopeAnchor" parent="StretchedRope" unique_id=1079396187]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0, 0)
 
-[node name="Anchor2" type="Marker3D" parent="StretchedRope"]
+[node name="Anchor2" type="RopeAnchor" parent="StretchedRope" unique_id=641013509]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0)
 
-[node name="Anchor3" type="Marker3D" parent="StretchedRope"]
+[node name="Anchor3" type="RopeAnchor" parent="StretchedRope" unique_id=725334748]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, 0)
 
-[node name="EndAnchor" type="Marker3D" parent="StretchedRope"]
+[node name="EndAnchor" type="RopeAnchor" parent="StretchedRope" unique_id=141191236]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
 
-[node name="StretchedRope2" type="Rope" parent="."]
+[node name="StretchedRope2" type="Rope" parent="." unique_id=83582394]
 rope_length = 1.0
-end_anchor = NodePath("EndAnchor")
+anchor_count = 2
 appearance = SubResource("RopeAppearance_do1de")
 stiffness = 0.1
 collision_layer = 0
 collision_mask = 0
+anchors/0/offset = 0.0
+anchors/0/from = 0
+anchors/0/node_path = NodePath(".")
+anchors/1/offset = 0.0
+anchors/1/from = 1
+anchors/1/node_path = NodePath("EndAnchor")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.25)
+custom_aabb = AABB(-0.0625, -0.069826305, -0.06250143, 4.125, 0.1323263, 0.12500143)
 
-[node name="EndAnchor" type="Marker3D" parent="StretchedRope2"]
+[node name="EndAnchor" type="RopeAnchor" parent="StretchedRope2" unique_id=1632676842]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, 0)

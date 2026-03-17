@@ -4,9 +4,12 @@
 #include <godot_cpp/classes/time.hpp>
 #include <godot_cpp/variant/packed_vector3_array.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
+#include <godot_cpp/classes/performance.hpp>
+
+// Enabled/disable performance testing data collection
+#define PERFORMANCE_TESTING 1
 
 using namespace godot;
-
 namespace halyard {
 
 /// Calculate the full submerged depth based on probe extents in local space
@@ -40,8 +43,7 @@ inline float calculate_full_submerged_depth(const godot::PackedVector3Array &pro
 	return depth;
 }
 
-#define PERFORMANCE_TESTING
-#ifdef PERFORMANCE_TESTING
+#if PERFORMANCE_TESTING
 
 struct TimerStats {
 	uint64_t call_count = 0;

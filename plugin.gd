@@ -1,8 +1,8 @@
 @tool
 extends EditorPlugin
 
-const DistributedAnchors = preload("scripts/distributed_anchors.gd")
-const DistributedAttachments = preload("scripts/distributed_attachments.gd")
+# const DistributedAnchors = preload("scripts/distributed_anchors.gd")
+# const DistributedAttachments = preload("scripts/distributed_attachments.gd")
 
 const RopeParticlesGizmo = preload("scripts/rope_particles_gizmo.gd")
 const RopePositionsGizmo = preload("scripts/rope_positions_gizmo.gd")
@@ -18,13 +18,14 @@ var rope_frames_gizmo = RopeFramesGizmo.new()
 var rope_positions_gizmo = RopePositionsGizmo.new()
 
 func _enable_plugin() -> void:
-	add_custom_type("DistributedAnchors", "RopeAnchorsBase", DistributedAnchors, RopePositionsIcon)
-	add_custom_type("DistributedAttachments", "RopeAttachmentsBase", DistributedAttachments, RopePositionsIcon)
+	# add_custom_type("DistributedAnchors", "RopeAnchorsBase", DistributedAnchors, RopePositionsIcon)
+	# add_custom_type("DistributedAttachments", "RopeAttachmentsBase", DistributedAttachments, RopePositionsIcon)
+	pass
 
 
 func _disable_plugin() -> void:
-	remove_custom_type("DistributedAnchors")
-	remove_custom_type("DistributedAttachments")
+	# remove_custom_type("DistributedAnchors")
+	# remove_custom_type("DistributedAttachments")
 	pass
 
 
