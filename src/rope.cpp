@@ -150,10 +150,9 @@ void Rope::_bind_methods() {
 	// Attachment virtuals
 	ClassDB::bind_method(D_METHOD("_notify_attachments_changed"), &Rope::_notify_attachments_changed);
 	GDVIRTUAL_BIND(_update_attachments)
-	ClassDB::bind_method(D_METHOD("_get_attachment_local_transform", "attach_idx"), \
-		&Rope::_get_attachment_local_transform);
+	ClassDB::bind_method(D_METHOD("_get_attachment_local_transform", "attach_idx"),
+			&Rope::_get_attachment_local_transform);
 	GDVIRTUAL_BIND(_get_attachment_local_transform)
-
 
 	// Main Properties
 	EXPORT_PROPERTY(Variant::FLOAT, rope_length, Rope);
@@ -309,6 +308,10 @@ void Rope::_internal_ready(void) {
 }
 
 void Rope::_internal_process(double delta) {
+	if (!is_inside_tree()) {
+		return;
+	}
+
 	if (_pop_is_dirty()) {
 		// rebuild if necessary
 		if (_attachments_dirty) {
@@ -326,6 +329,9 @@ void Rope::_internal_process(double delta) {
 
 void Rope::_internal_physics_process(double delta) {
 	SCOPED_TIMER(Rope_internal_physics_process);
+	if (!is_inside_tree()) {
+		return;
+	}
 
 	_time += delta;
 	_simulation_delta += delta;
@@ -445,7 +451,7 @@ void Rope::_rebuild_rope() {
 		// do we have a start/end anchor?
 		int anchor_count = get_anchor_count();
 		int start_idx = anchor_count > 0 ? 0 : -1;
-		int end_idx = anchor_count > 1 ? anchor_count-1 : -1;
+		int end_idx = anchor_count > 1 ? anchor_count - 1 : -1;
 
 		if (_grow_from == Start) {
 			if (start_idx >= 0)
@@ -568,7 +574,7 @@ APPEARENCE_ACCESSOR(float, end_offset, 0.0)
 #undef APPEARENCE_ACCESSOR
 
 void Rope::set_particles_per_meter(float val) {
-	if( val != _particles_per_meter) {
+	if (val != _particles_per_meter) {
 		_particles_per_meter = val;
 		_queue_rope_rebuild();
 	}
@@ -701,19 +707,20 @@ uint64_t Rope::get_particle_count_for_length() const {
 	return particle_count;
 }
 
-
 #pragma endregion
 
 #pragma region Subclassing
 void Rope::_notify_anchors_changed() {
-	if( !GDVIRTUAL_IS_OVERRIDDEN(_update_anchors)) {
+	if (!GDVIRTUAL_IS_OVERRIDDEN(_update_anchors)) {
 		notify_property_list_changed();
 	}
 	_anchors_dirty = true;
 }
 
-
 void Rope::_update_anchors() const {
+	if (!is_inside_tree())
+		return;
+
 	if (GDVIRTUAL_IS_OVERRIDDEN(_update_anchors)) {
 		GDVIRTUAL_CALL(_update_anchors);
 	}
@@ -758,18 +765,19 @@ void Rope::_get_property_list(List<PropertyInfo> *p_list) const {
 	for (uint32_t i = 0; i < _anchors.size(); i++) {
 		uint32_t usage = PROPERTY_USAGE_DEFAULT;
 		String path = ANCHORS_KEY + itos(i) + "/";
-		
+
 		// uniform doesn't use offset
-		usage = (_anchor_distribution==Distribution::UNIFORM || _anchor_distribution==Distribution::REAL) \
-			? PROPERTY_USAGE_NONE : PROPERTY_USAGE_DEFAULT;
+		usage = (_anchor_distribution == Distribution::UNIFORM || _anchor_distribution == Distribution::REAL)
+				? PROPERTY_USAGE_NONE
+				: PROPERTY_USAGE_DEFAULT;
 		p_list->push_back(PropertyInfo(Variant::FLOAT, path + OFFSET_KEY, PROPERTY_HINT_NONE, "suffix:m", usage));
 
 		// Only absolute uses the from end/start
-		usage = _anchor_distribution==Distribution::ABSOLUTE ? PROPERTY_USAGE_DEFAULT : PROPERTY_USAGE_NONE;
+		usage = _anchor_distribution == Distribution::ABSOLUTE ? PROPERTY_USAGE_DEFAULT : PROPERTY_USAGE_NONE;
 		p_list->push_back(PropertyInfo(Variant::INT, path + FROM_KEY, PROPERTY_HINT_ENUM, FROM_HINT, usage));
 
-		p_list->push_back(PropertyInfo(Variant::NODE_PATH, path + NODE_PATH_KEY, \
-			PROPERTY_HINT_NODE_PATH_VALID_TYPES, "Rope,RopeAnchor,RigidBody3D"));
+		p_list->push_back(PropertyInfo(Variant::NODE_PATH, path + NODE_PATH_KEY,
+				PROPERTY_HINT_NODE_PATH_VALID_TYPES, "Rope,RopeAnchor,RigidBody3D"));
 
 		// if node_path points to a RopeAnchor, hide the behavior property
 		NodePath node_path = _anchors[i].node_path;
@@ -777,17 +785,16 @@ void Rope::_get_property_list(List<PropertyInfo> *p_list) const {
 		RopeAnchor *as_anchor = Object::cast_to<RopeAnchor>(get_node_or_null(node_path));
 		RigidBody3D *as_rigid = Object::cast_to<RigidBody3D>(get_node_or_null(node_path));
 
-
-		usage = is_inside_tree() && (as_anchor || as_rope) \
-			 ? PROPERTY_USAGE_NONE : PROPERTY_USAGE_DEFAULT;
+		usage = is_inside_tree() && (as_anchor || as_rope)
+				? PROPERTY_USAGE_NONE
+				: PROPERTY_USAGE_DEFAULT;
 		p_list->push_back(PropertyInfo(Variant::INT, path + BEHAVIOR_KEY, PROPERTY_HINT_ENUM, BEHAVIOR_HINT, usage));
 
-		usage = is_inside_tree() && Object::cast_to<Node3D>(get_node_or_null(node_path)) \
-			? PROPERTY_USAGE_NONE : PROPERTY_USAGE_DEFAULT;
+		usage = is_inside_tree() && Object::cast_to<Node3D>(get_node_or_null(node_path))
+				? PROPERTY_USAGE_NONE
+				: PROPERTY_USAGE_DEFAULT;
 		p_list->push_back(PropertyInfo(Variant::VECTOR3, path + POSITION_KEY, PROPERTY_HINT_NONE, "suffix:m", usage));
 	}
-
-
 }
 
 bool Rope::_set(const StringName &p_name, const Variant &p_property) {
@@ -883,7 +890,6 @@ float Rope::get_anchor_offset(int idx) const {
 	return _anchors[idx].offset;
 }
 
-
 void Rope::set_anchor_from(int idx, int from) {
 	ERR_FAIL_INDEX(idx, (int)_anchors.size());
 	if (_anchors[idx].from_end != (from == End)) {
@@ -935,7 +941,7 @@ void Rope::set_anchor_behavior(int idx, AnchorBehavior behavior) {
 
 AnchorBehavior Rope::get_anchor_behavior(int idx) const {
 	ERR_FAIL_INDEX_V(idx, (int)_anchors.size(), AnchorBehavior::ANCHORED);
-	
+
 	// use the node transform if available
 	RopeAnchor *anchor = Object::cast_to<RopeAnchor>(_anchors[idx].node);
 	if (is_inside_tree() && _anchors[idx].node && anchor) {
@@ -994,29 +1000,29 @@ void Rope::set_anchor_distribution(int val) {
 		const float rope_len = get_rope_length();
 
 		switch (new_dist) {
-		case Distribution::ABSOLUTE:
-			// preserve from_end direction
-			for (auto &anchor : _anchors) {
-				anchor.offset = anchor.from_end ? (rope_len - anchor._abs_offset) : anchor._abs_offset;
-			}
-			break;
-		case Distribution::RELATIVE:
-			// offset[0] = _abs_offset[0]; offset[i] = _abs_offset[i] - offset[i-1]
-			for (int idx = 0; idx < (int)_anchors.size(); idx++) {
-				float prev_offset = (idx > 0) ? _anchors[idx - 1]._abs_offset : 0.0f;
-				_anchors[idx].offset = _anchors[idx]._abs_offset - prev_offset;
-			}
-			break;
-		case Distribution::SCALAR:
-			for (auto &anchor : _anchors) {
-				anchor.offset = (rope_len > 0.0f) ? (anchor._abs_offset / rope_len) : 0.0f;
-			}
-			break;
-		case Distribution::UNIFORM:
-			break;
-		case Distribution::REAL:
-			// _abs_offset is computed from anchor transforms in _rebuild_anchors; nothing to remap
-			break;
+			case Distribution::ABSOLUTE:
+				// preserve from_end direction
+				for (auto &anchor : _anchors) {
+					anchor.offset = anchor.from_end ? (rope_len - anchor._abs_offset) : anchor._abs_offset;
+				}
+				break;
+			case Distribution::RELATIVE:
+				// offset[0] = _abs_offset[0]; offset[i] = _abs_offset[i] - offset[i-1]
+				for (int idx = 0; idx < (int)_anchors.size(); idx++) {
+					float prev_offset = (idx > 0) ? _anchors[idx - 1]._abs_offset : 0.0f;
+					_anchors[idx].offset = _anchors[idx]._abs_offset - prev_offset;
+				}
+				break;
+			case Distribution::SCALAR:
+				for (auto &anchor : _anchors) {
+					anchor.offset = (rope_len > 0.0f) ? (anchor._abs_offset / rope_len) : 0.0f;
+				}
+				break;
+			case Distribution::UNIFORM:
+				break;
+			case Distribution::REAL:
+				// _abs_offset is computed from anchor transforms in _rebuild_anchors; nothing to remap
+				break;
 		}
 	}
 
@@ -1028,10 +1034,9 @@ int Rope::get_anchor_distribution() const {
 	return (int)_anchor_distribution;
 }
 
-
 void Rope::_rebuild_anchors() {
 	SCOPED_TIMER(_rebuild_anchors);
-	
+
 	// exit early if not inside tree
 	ERR_FAIL_COND(!is_inside_tree());
 
@@ -1065,42 +1070,41 @@ void Rope::_rebuild_anchors() {
 		}
 
 		// update _abs_offset based on distribution
-		switch(_anchor_distribution) {
-		case Distribution::ABSOLUTE:
-			if (anchor.from_end) {
-				anchor._abs_offset = get_rope_length() - anchor.offset;
-			}else{
-				anchor._abs_offset = anchor.offset;
-			}
-			break;
-		case Distribution::RELATIVE:
-			if (idx > 0) {
-				anchor._abs_offset = _anchors[idx].offset + _anchors[idx - 1]._abs_offset;
-			} else {
-				anchor._abs_offset = anchor.offset;
-			}
-			break;
-		case Distribution::UNIFORM:
-			anchor._abs_offset = get_rope_length() * (float(idx) / float(_anchors.size() - 1));
-			anchor.offset = anchor._abs_offset;
-			break;
-		case Distribution::SCALAR:
-			anchor._abs_offset = get_rope_length() * anchor.offset;
-			break;
-		case Distribution::REAL:
-			// Cumulative straight-line distance between consecutive anchor origins.
-			if (idx == 0) {
-				anchor._abs_offset = 0.0f;
-			} else {
-				anchor._abs_offset = _anchors[idx - 1]._abs_offset
-						+ _anchors[idx - 1].transform.origin.distance_to(anchor.transform.origin);
-			}
-			break;
+		switch (_anchor_distribution) {
+			case Distribution::ABSOLUTE:
+				if (anchor.from_end) {
+					anchor._abs_offset = get_rope_length() - anchor.offset;
+				} else {
+					anchor._abs_offset = anchor.offset;
+				}
+				break;
+			case Distribution::RELATIVE:
+				if (idx > 0) {
+					anchor._abs_offset = _anchors[idx].offset + _anchors[idx - 1]._abs_offset;
+				} else {
+					anchor._abs_offset = anchor.offset;
+				}
+				break;
+			case Distribution::UNIFORM:
+				anchor._abs_offset = get_rope_length() * (float(idx) / float(_anchors.size() - 1));
+				anchor.offset = anchor._abs_offset;
+				break;
+			case Distribution::SCALAR:
+				anchor._abs_offset = get_rope_length() * anchor.offset;
+				break;
+			case Distribution::REAL:
+				// Cumulative straight-line distance between consecutive anchor origins.
+				if (idx == 0) {
+					anchor._abs_offset = 0.0f;
+				} else {
+					anchor._abs_offset = _anchors[idx - 1]._abs_offset + _anchors[idx - 1].transform.origin.distance_to(anchor.transform.origin);
+				}
+				break;
 		}
 	}
 
 	// sort anchors by _abs_offset
-	if( _anchor_distribution == Distribution::ABSOLUTE || _anchor_distribution == Distribution::SCALAR ) {
+	if (_anchor_distribution == Distribution::ABSOLUTE || _anchor_distribution == Distribution::SCALAR) {
 		_anchors.sort();
 	}
 
@@ -1113,9 +1117,9 @@ void Rope::_rebuild_anchors() {
 			// only set the anchor index if it hasn't been set yet
 			if (_particles[particle_idx].anchor_idx == -1) {
 				_particles[particle_idx].anchor_idx = idx;
-			
-			// except for the last anchor, always overwrite the anchor index
-			} else if (idx == count-1 ) {
+
+				// except for the last anchor, always overwrite the anchor index
+			} else if (idx == count - 1) {
 				_particles[particle_idx].anchor_idx = idx;
 			}
 		}
@@ -1128,7 +1132,6 @@ int Rope::_get_index_for_position(float position) const {
 	// round to nearest particle index
 	return Math::clamp((int)Math::round(last * position), 0, last);
 }
-
 
 // Update the particle positions based upon the current anchor transforms
 void Rope::_internal_update_anchors() {
@@ -1145,7 +1148,7 @@ void Rope::_internal_update_anchors() {
 			Transform3D xform = get_anchor_transform(particle.anchor_idx);
 			particle.pos_cur = xform.origin;
 			particle.pos_prev = xform.origin;
-		
+
 		} else {
 			// stale anchor, clear index
 			particle.anchor_idx = -1;
@@ -1155,7 +1158,7 @@ void Rope::_internal_update_anchors() {
 
 bool Rope::_is_anchor_free(int anchor_idx, int anchor_count) const {
 	// index out of range? default to free
-	if(anchor_idx < 0 || anchor_idx >= anchor_count) {
+	if (anchor_idx < 0 || anchor_idx >= anchor_count) {
 		return true;
 	}
 	return get_anchor_behavior(anchor_idx) == AnchorBehavior::FREE;
@@ -1163,7 +1166,7 @@ bool Rope::_is_anchor_free(int anchor_idx, int anchor_count) const {
 
 bool Rope::_is_anchor_fixed(int anchor_idx, int anchor_count) const {
 	// index out of range? not fixed
-	if(anchor_idx < 0 || anchor_idx >= anchor_count) {
+	if (anchor_idx < 0 || anchor_idx >= anchor_count) {
 		return false;
 	}
 	auto behavior = get_anchor_behavior(anchor_idx);
@@ -1172,7 +1175,7 @@ bool Rope::_is_anchor_fixed(int anchor_idx, int anchor_count) const {
 
 bool Rope::_is_anchor_moving(int anchor_idx, int anchor_count) const {
 	// index out of range? not moving
-	if(anchor_idx < 0 || anchor_idx >= anchor_count) {
+	if (anchor_idx < 0 || anchor_idx >= anchor_count) {
 		return false;
 	}
 	auto behavior = get_anchor_behavior(anchor_idx);
@@ -1181,7 +1184,7 @@ bool Rope::_is_anchor_moving(int anchor_idx, int anchor_count) const {
 
 bool Rope::_is_rope_sliding(int anchor_idx, int anchor_count) const {
 	// index out of range? not sliding
-	if(anchor_idx < 0 || anchor_idx >= anchor_count) {
+	if (anchor_idx < 0 || anchor_idx >= anchor_count) {
 		return false;
 	}
 	auto behavior = get_anchor_behavior(anchor_idx);
@@ -1607,7 +1610,6 @@ void Rope::_draw_rope() {
 	if (_appearance.is_valid()) {
 		const int att_count = _appearance->get_attachment_count();
 		if (att_count > 0) {
-
 			// Default path: use appearance distribution to compute frame index.
 			const RopeAppearance::Distribution att_dist = (RopeAppearance::Distribution)_appearance->get_attachment_distribution();
 			float cumulative_offset = 0.0f;
@@ -1729,7 +1731,7 @@ void Rope::_update_physics(float delta, int iterations) {
 
 	for (int i = 0; i < iterations; i++) {
 		_apply_forces();
-		
+
 		_apply_constraints();
 		_verlet_process(delta);
 
@@ -1765,10 +1767,9 @@ void Rope::_apply_anchor_forces(Particle &p_particle, int p_anchor_idx, const Ve
 	}
 }
 
-
 void Rope::_stiff_rope(int iterations) {
 	SCOPED_TIMER(_stiff_rope);
-	
+
 	// calculate the maximum allowed rope length
 	const float max_segment_length = _get_average_segment_length();
 	const float stiffness = Math::clamp(_stiffness, 0.0f, 2.0f);
@@ -1911,7 +1912,7 @@ void Rope::_verlet_process(float delta) {
 	int count = get_anchor_count();
 	for (Particle &p : _particles) {
 		// is this point fixed in space?
-		if(_is_anchor_fixed(p.anchor_idx, count)) {
+		if (_is_anchor_fixed(p.anchor_idx, count)) {
 			p.pos_cur = get_anchor_transform(p.anchor_idx).origin;
 			p.pos_prev = p.pos_cur;
 			p.accel = Vector3();
@@ -2096,12 +2097,12 @@ bool Rope::_is_jolt_3d() const {
 void Rope::_update_collision_shapes() {
 	SCOPED_TIMER(_update_collision_shapes);
 
-	if (_is_jolt_3d()){
+	if (_is_jolt_3d()) {
 		ERR_PRINT_ONCE("_update_collision_shapes: Disabling JoltPhysics3D for performance reasons.");
 		return;
 	}
 
-	if (_collision_layer==0 && _collision_mask==0)
+	if (_collision_layer == 0 && _collision_mask == 0)
 		return;
 
 	auto ps = PhysicsServer3D::get_singleton();
