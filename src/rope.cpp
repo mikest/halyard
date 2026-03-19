@@ -152,7 +152,7 @@ void Rope::_bind_methods() {
 	GDVIRTUAL_BIND(_update_attachments)
 	ClassDB::bind_method(D_METHOD("_get_attachment_local_transform", "attach_idx"),
 			&Rope::_get_attachment_local_transform);
-	GDVIRTUAL_BIND(_get_attachment_local_transform)
+	GDVIRTUAL_BIND(_get_attachment_local_transform, "attach_idx")
 
 	// Main Properties
 	EXPORT_PROPERTY(Variant::FLOAT, rope_length, Rope);

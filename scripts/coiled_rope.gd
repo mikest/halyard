@@ -6,7 +6,7 @@ class_name CoiledRope
 	set(val):
 		clockwise = val
 		_dirty = true
-@export_range(0.1,10,0.01) var radius :float = 0.125:
+@export_range(0.1, 10, 0.01) var radius: float = 0.125:
 	set(val):
 		radius = val
 		_dirty = true
@@ -20,11 +20,10 @@ class_name CoiledRope
 @export var debug: bool = false
 
 ## What ratio of the rope is coiled.
-@export_range(0,1,0.001) var coiled := 0.5:
+@export_range(0, 1, 0.001) var coiled := 0.5:
 		set(val):
 			coiled = val
-			#_update_behaviors()
-			_update_anchors()
+			_anchor_dirty = true
 
 @export var drum_anchor: RopeAnchor
 @export var chain_guide: RopeAnchor
@@ -39,6 +38,9 @@ var _turns: PackedFloat32Array
 # positions and turn need to be rebuilt
 var _dirty: bool = true
 
+# anchors need to be rebuilt
+var _anchor_dirty: bool = true
+
 func _ready() -> void:
 	#anchor_count = _get_anchor_count()
 	pass
@@ -50,8 +52,12 @@ func _process(delta: float) -> void:
 	# rebuild positions for coils when the parameters change
 	if _dirty:
 		_rebuild_coil_positions()
-		_update_anchors()
+		_anchor_dirty = true
 		_dirty = false
+	
+	if _anchor_dirty:
+		_update_anchors()
+		_anchor_dirty = false
 	pass
 
 
@@ -72,22 +78,22 @@ func _rebuild_coil_positions():
 		var offset_per_turn := get_rope_width() * 0.6
 		
 		# how many anchors in a turn
-		var layer : int = floor(turn / turns_per_layer)
+		var layer: int = floor(turn / turns_per_layer)
 		var layer_radius := radius + offset_per_layer * layer
 		var layer_circumfrence := TAU * layer_radius
 		
 		var anchors_per_turn := layer_circumfrence * get_particles_per_meter()
 
-		var turn_dir := -1.0 if int(layer) % 2==0 else 1.0
+		var turn_dir := -1.0 if int(layer) % 2 == 0 else 1.0
 		
 		var layer_turn := wrapf(turn, 0, turns_per_layer)
-		var turn_x_offset := 0 if turn_dir<0 else (-offset_per_turn * turns_per_layer)
+		var turn_x_offset := 0 if turn_dir < 0 else (-offset_per_turn * turns_per_layer)
 		var x := layer_turn * offset_per_turn * turn_dir + float(turn_x_offset)
 		var y := layer_radius + offset_per_layer * layer
 		
 		#offset_turns = wrapf(coiled * rope_length, 0, layer_radius*TAU)
 		
-		var axis := Vector3(1,0,0)
+		var axis := Vector3(1, 0, 0)
 		var xform: Transform3D
 		xform = xform.translated_local(Vector3(x, y, 0))
 		xform = xform.rotated(axis, turn * TAU * (-1 if clockwise else 1))
@@ -133,7 +139,7 @@ func _update_behaviors():
 func _update_anchors():
 	clear_anchors()
 	var coil_count := _get_coil_anchor_count()
-	var pos_count := coil_count #_positions.size()
+	var pos_count := coil_count # _positions.size()
 	var total_count := pos_count
 	if drum_anchor: total_count += 1
 	if chain_guide: total_count += 1
@@ -151,29 +157,29 @@ func _update_anchors():
 			set_anchor_offset(idx, 0)
 			start += 1
 		
-		elif idx >= start and idx < start+pos_count:
+		elif idx >= start and idx < start + pos_count:
 			# transform
 			var xform := global_transform
 			var start_xform := global_transform
 			if idx < _positions.size():
 				xform = Transform3D(Basis(), _positions[idx])
-				var turn_idx = clamp(coil_count-1, 0, _turns.size()-1)
-				xform = xform.rotated(Vector3(1,0,0), (-_turns[turn_idx] + offset_turns) * TAU * (-1 if clockwise else 1))
+				var turn_idx = clamp(coil_count - 1, 0, _turns.size() - 1)
+				xform = xform.rotated(Vector3(1, 0, 0), (-_turns[turn_idx] + offset_turns) * TAU * (-1 if clockwise else 1))
 				xform = start_xform * xform
 			set_anchor_transform(idx, xform)
 			var dist := 1.0 / get_particles_per_meter()
 			set_anchor_offset(idx, dist)
 			total_dist += dist
 			
-		elif idx == start+pos_count and chain_guide:
+		elif idx == start + pos_count and chain_guide:
 			set_anchor_nodepath(idx, get_path_to(chain_guide))
-			var prev := get_anchor_transform(idx-1).origin
+			var prev := get_anchor_transform(idx - 1).origin
 			var cur := get_anchor_transform(idx).origin
 			var dist := prev.distance_to(cur)
 			set_anchor_offset(idx, dist)
 			total_dist += dist
 			
-		elif idx == start+pos_count+1 and anchor_tow:
+		elif idx == start + pos_count + 1 and anchor_tow:
 			set_anchor_nodepath(idx, get_path_to(anchor_tow))
 			set_anchor_offset(idx, rope_length - total_dist)
 	

@@ -1,13 +1,13 @@
 #pragma once
 
 #include <godot_cpp/classes/os.hpp>
+#include <godot_cpp/classes/performance.hpp>
 #include <godot_cpp/classes/time.hpp>
 #include <godot_cpp/variant/packed_vector3_array.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
-#include <godot_cpp/classes/performance.hpp>
 
 // Enabled/disable performance testing data collection
-#define PERFORMANCE_TESTING 1
+#define PERFORMANCE_TESTING 0
 
 using namespace godot;
 namespace halyard {
