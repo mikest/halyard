@@ -29,6 +29,8 @@ private:
     bool _clockwise = false;            // winding direction of the coil
 	float _turns_per_layer = 4.0f;      // number of turns for each wound layer.
 
+	mutable float _exit_angle = 0.0f;     // cached angle at which the rope exits the coil. in the YZ plane.
+
 	// Cached coil positions, rebuilt lazily when properties change.
 	mutable PackedVector3Array _positions;
 	mutable bool _dirty = true;
@@ -49,8 +51,11 @@ public:
 	PROPERTY_GET_SET(bool, clockwise, { _dirty = true; })
 	PROPERTY_GET_SET(float, turns_per_layer, { _dirty = true; })
 
+	// Angle in the YZ plane at which the rope exits the coil (readonly, computed on rebuild).
+	PROPERTY_GET(float, exit_angle)
+
 	// Returns the number of coil positions generated from the current properties.
-	int get_particle_count(int p_idx = 0) const override;
+	int get_particle_count() const override;
 
 	// Returns the coil position at the given index in local space.
 	Vector3 get_particle_position(int p_idx = 0) const override;

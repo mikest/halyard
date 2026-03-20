@@ -48,8 +48,8 @@ public:
 	RigidBody3D *get_parent_rigid_body() const;
 
 	// returns the number of positions this anchor provides. Minimum is 1.
-	GDVIRTUAL1RC(int, get_particle_count, int);
-	virtual int get_particle_count(int idx=0) const;
+	GDVIRTUAL0RC(int, get_particle_count);
+	virtual int get_particle_count() const;
 
 	// returns the position of the anchor in local space.
 	GDVIRTUAL1RC(Vector3, get_particle_position, int);

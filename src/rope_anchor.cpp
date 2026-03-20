@@ -13,10 +13,10 @@ void RopeAnchor::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_parent_rigid_body"), &RopeAnchor::get_parent_rigid_body);
 	ClassDB::bind_method(D_METHOD("apply_force", "force"), &RopeAnchor::apply_force);
 
-	ClassDB::bind_method(D_METHOD("get_anchor_position_count", "idx"), &RopeAnchor::get_particle_count);
-	ClassDB::bind_method(D_METHOD("get_anchor_position", "idx"), &RopeAnchor::get_particle_position);
+	ClassDB::bind_method(D_METHOD("get_particle_count"), &RopeAnchor::get_particle_count);
+	ClassDB::bind_method(D_METHOD("get_particle_position", "idx"), &RopeAnchor::get_particle_position);
 
-	GDVIRTUAL_BIND(get_particle_count, "idx");
+	GDVIRTUAL_BIND(get_particle_count);
 	GDVIRTUAL_BIND(get_particle_position, "idx");
 }
 
@@ -28,11 +28,11 @@ RigidBody3D *RopeAnchor::get_parent_rigid_body() const {
 	return Object::cast_to<RigidBody3D>(parent);
 }
 
-int RopeAnchor::get_particle_count(int p_idx) const {
+int RopeAnchor::get_particle_count() const {
 	// allow subclasses to override the count via GDScript/GDExtension
 	if (GDVIRTUAL_IS_OVERRIDDEN(get_particle_count)) {
 		int count = 1;
-		GDVIRTUAL_CALL(get_particle_count, p_idx, count);
+		GDVIRTUAL_CALL(get_particle_count, count);
 		return MAX(1, count);
 	}
 	// base anchor always provides exactly one position

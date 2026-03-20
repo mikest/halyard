@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://ddppwbtkh0t2f"]
 
-[ext_resource type="Script" uid="uid://dnnxtqukra31q" path="res://addons/halyard/scripts/coiled_rope.gd" id="1_3qe50"]
+[ext_resource type="Script" uid="uid://b4v8hend8d1bj" path="res://addons/halyard/tests/coil_test.gd" id="1_ebii4"]
 [ext_resource type="ArrayMesh" uid="uid://j3u082cbuveh" path="res://addons/halyard/assets/chain-link.res" id="1_gn44e"]
 [ext_resource type="Script" uid="uid://bpo84j3idh1wu" path="res://addons/halyard/tests/draggable.gd" id="3_ebii4"]
 [ext_resource type="PackedScene" uid="uid://cn1vm8lpn0kby" path="res://addons/halyard/tests/base.tscn" id="3_sjw63"]
@@ -23,35 +23,45 @@ ring_segments = 8
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_x6pmj"]
 
-[node name="CoilTest" type="Node3D" unique_id=653013393]
+[node name="CoilTest" type="Node3D" unique_id=653013393 node_paths=PackedStringArray("chain", "drum", "coil", "guide", "hook")]
+script = ExtResource("1_ebii4")
+coiled_length = 5.293221538221313
+chain = NodePath("ChainCoil/Rope")
+drum = NodePath("ChainCoil/CoiledAnchor/Drum")
+coil = NodePath("ChainCoil/CoiledAnchor")
+guide = NodePath("ChainCoil/ChainHole")
+hook = NodePath("Ball/Towing")
+tension = 0.85
 
 [node name="ChainCoil" type="RigidBody3D" parent="." unique_id=146080418]
+axis_lock_linear_y = true
 script = ExtResource("3_ebii4")
 metadata/_edit_group_ = true
 
-[node name="CoiledRope" type="Rope" parent="ChainCoil" unique_id=1194387720 node_paths=PackedStringArray("drum_anchor", "chain_guide", "anchor_tow")]
-rope_length = 12.0
-particles_per_meter = 16.0
+[node name="Rope" type="Rope" parent="ChainCoil" unique_id=1330940123]
+rope_length = 20.0
+particles_per_meter = 12.0
 appearance = SubResource("RopeAppearance_xlb8c")
-anchor_distribution = 1
-anchor_count = 128
+anchor_count = 4
 preprocess_time = 10.0
 stiffness_iterations = 20
 stiffness = 1.9
 tension_force_scale = 10.0
 collision_layer = 0
 collision_mask = 0
+anchors/0/offset = 0.0
+anchors/0/from = 0
+anchors/0/node_path = NodePath("../CoiledAnchor/Drum")
+anchors/1/offset = 0.2
+anchors/1/from = 0
+anchors/1/node_path = NodePath("../CoiledAnchor")
+anchors/2/offset = 6.7028575
+anchors/2/from = 0
+anchors/2/node_path = NodePath("../ChainHole")
+anchors/3/offset = 0.0
+anchors/3/from = 1
+anchors/3/node_path = NodePath("../../Ball/Towing")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
-script = ExtResource("1_3qe50")
-clockwise = true
-radius = 0.1
-turns_per_layer = 6.0
-offset_turns = 0.063
-coiled = 0.655
-drum_anchor = NodePath("../Drum")
-chain_guide = NodePath("../ChainHole")
-anchor_tow = NodePath("../../Ball/Towing")
-metadata/_custom_type_script = "uid://dnnxtqukra31q"
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="ChainCoil" unique_id=581810402]
 shape = SubResource("BoxShape3D_ebii4")
@@ -59,12 +69,20 @@ shape = SubResource("BoxShape3D_ebii4")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="ChainCoil" unique_id=1985509003]
 mesh = SubResource("BoxMesh_x6pmj")
 
-[node name="Drum" type="RopeAnchor" parent="ChainCoil" unique_id=1088114845]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3895323, 0.18710685, -1.100424)
+[node name="CoiledAnchor" type="CoiledAnchor" parent="ChainCoil" unique_id=365617806]
+coiled_length = 5.3520617
+radius = 0.2
+turns_per_layer = 6.0
+rope_width = 0.15
+particles_per_meter = 12.0
+transform = Transform3D(-1, 1.5099579e-07, -3.3227528e-16, 1.5054846e-07, 0.99703735, 0.07691847, 1.1614367e-08, 0.07691847, -0.99703735, -0.25, 0.5, 0)
+
+[node name="Drum" type="RopeAnchor" parent="ChainCoil/CoiledAnchor" unique_id=1088114845]
+transform = Transform3D(-1, -2.1741165e-08, 8.467618e-08, 8.7422784e-08, -0.24868996, 0.9685832, -1.0323297e-14, 0.9685832, 0.24868996, 0, 0, 0)
 
 [node name="ChainHole" type="RopeAnchor" parent="ChainCoil" unique_id=1102286583]
 behavior = 2
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, -1)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, -1.5375831)
 metadata/_edit_group_ = true
 
 [node name="MeshInstance3D2" type="MeshInstance3D" parent="ChainCoil/ChainHole" unique_id=586892486]
