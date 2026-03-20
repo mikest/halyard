@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<class name="CoiledAnchor" inherits="RopeAnchor" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+    <brief_description>
+		A [RopeAnchor] that generates positions arranged in a coil/helix pattern.
+	</brief_description>
+    <description>
+		CoiledAnchor produces a series of anchor positions wound in a helix around the local X axis. It is useful for representing rope wound around a drum, winch, or spool. The coil geometry is controlled by [member radius], [member turns_per_layer], and [member clockwise]. The number of generated positions depends on [member coiled] (the length of rope that is coiled) and [member particles_per_meter].
+	</description>
+    <tutorials>
+    </tutorials>
+    <methods>
+    </methods>
+    <members>
+        <member name="clockwise" type="bool" setter="set_clockwise" getter="get_clockwise" default="false">
+			If [code]true[/code], the coil winds clockwise when viewed from the positive X axis. Otherwise it winds counter-clockwise.
+		</member>
+        <member name="radius" type="float" setter="set_radius" getter="get_radius" default="0.125">
+			The radius of the first layer of the coil, in meters.
+		</member>
+        <member name="turns_per_layer" type="float" setter="set_turns_per_layer" getter="get_turns_per_layer" default="2.0">
+			The number of full turns that fit in each layer before the coil advances to the next layer.
+		</member>
+        <member name="offset_turns" type="float" setter="set_offset_turns" getter="get_offset_turns" default="0.0">
+			An angular offset applied to each coil turn, in turns.
+		</member>
+        <member name="coiled" type="float" setter="set_coiled" getter="get_coiled" default="0.0">
+			The length of rope (in meters) that the coil represents. Together with [member particles_per_meter] this determines how many anchor positions are generated.
+		</member>
+        <member name="particles_per_meter" type="float" setter="set_particles_per_meter" getter="get_particles_per_meter" default="10.0">
+			The number of anchor positions to generate per meter of coiled rope.
+		</member>
+        <member name="rope_width" type="float" setter="set_rope_width" getter="get_rope_width" default="0.01">
+			The width of the rope, used to compute layer and turn spacing within the coil.
+		</member>
+    </members>
+</class>

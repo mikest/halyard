@@ -9,40 +9,68 @@
 rope_lod = 1
 link_mesh = ExtResource("1_gn44e")
 
+[sub_resource type="BoxShape3D" id="BoxShape3D_ebii4"]
+size = Vector3(1, 0.5, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_x6pmj"]
+size = Vector3(1, 0.5, 1)
+
+[sub_resource type="TorusMesh" id="TorusMesh_ebii4"]
+inner_radius = 0.125
+outer_radius = 0.25
+rings = 16
+ring_segments = 8
+
 [sub_resource type="SphereShape3D" id="SphereShape3D_x6pmj"]
 
 [node name="CoilTest" type="Node3D" unique_id=653013393]
 
-[node name="CoiledRope" type="Rope" parent="." unique_id=1194387720 node_paths=PackedStringArray("drum_anchor", "chain_guide", "anchor_tow")]
+[node name="ChainCoil" type="RigidBody3D" parent="." unique_id=146080418]
+script = ExtResource("3_ebii4")
+metadata/_edit_group_ = true
+
+[node name="CoiledRope" type="Rope" parent="ChainCoil" unique_id=1194387720 node_paths=PackedStringArray("drum_anchor", "chain_guide", "anchor_tow")]
 rope_length = 12.0
 particles_per_meter = 16.0
 appearance = SubResource("RopeAppearance_xlb8c")
 anchor_distribution = 1
-anchor_count = 125
+anchor_count = 128
 preprocess_time = 10.0
 stiffness_iterations = 20
 stiffness = 1.9
 tension_force_scale = 10.0
 collision_layer = 0
 collision_mask = 0
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5163033, 0, -1.005949)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 script = ExtResource("1_3qe50")
 clockwise = true
 radius = 0.1
 turns_per_layer = 6.0
 offset_turns = 0.063
-coiled = 0.636
+coiled = 0.655
 drum_anchor = NodePath("../Drum")
 chain_guide = NodePath("../ChainHole")
-anchor_tow = NodePath("../Ball/Towing")
+anchor_tow = NodePath("../../Ball/Towing")
 metadata/_custom_type_script = "uid://dnnxtqukra31q"
 
-[node name="Drum" type="RopeAnchor" parent="." unique_id=1088114845]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ChainCoil" unique_id=581810402]
+shape = SubResource("BoxShape3D_ebii4")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="ChainCoil" unique_id=1985509003]
+mesh = SubResource("BoxMesh_x6pmj")
+
+[node name="Drum" type="RopeAnchor" parent="ChainCoil" unique_id=1088114845]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.3895323, 0.18710685, -1.100424)
 
-[node name="ChainHole" type="RopeAnchor" parent="." unique_id=1102286583]
+[node name="ChainHole" type="RopeAnchor" parent="ChainCoil" unique_id=1102286583]
 behavior = 2
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.95653313, 0.005342126, -1.7220974)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, -1)
+metadata/_edit_group_ = true
+
+[node name="MeshInstance3D2" type="MeshInstance3D" parent="ChainCoil/ChainHole" unique_id=586892486]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 0, 0)
+mesh = SubResource("TorusMesh_ebii4")
+skeleton = NodePath("../..")
 
 [node name="Ball" type="RigidBody3D" parent="." unique_id=1657036312]
 unique_name_in_owner = true

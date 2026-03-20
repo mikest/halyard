@@ -146,6 +146,9 @@ void Rope::_bind_methods() {
 	// Anchor virtuals
 	ClassDB::bind_method(D_METHOD("_notify_anchors_changed"), &Rope::_notify_anchors_changed);
 	GDVIRTUAL_BIND(_update_anchors)
+	ClassDB::bind_method(D_METHOD("_get_anchor_local_transform", "anchor_idx"),
+			&Rope::_get_anchor_local_transform);
+	GDVIRTUAL_BIND(_get_anchor_local_transform, "anchor_idx")
 
 	// Attachment virtuals
 	ClassDB::bind_method(D_METHOD("_notify_attachments_changed"), &Rope::_notify_attachments_changed);
@@ -209,7 +212,7 @@ void Rope::_bind_methods() {
 	EXPORT_PROPERTY(Variant::FLOAT, damping_factor, Rope);
 }
 
-#pragma region Lifecycle
+#pragma region Runtime
 
 void Rope::_notification(int p_what) {
 	double delta = Engine::get_singleton()->is_in_physics_frame() ? get_physics_process_delta_time() : get_process_delta_time();
@@ -364,6 +367,10 @@ void Rope::_internal_physics_process(double delta) {
 	_simulation_delta = 0.0;
 }
 
+#pragma endregion
+
+#pragma region Instancing
+
 void Rope::_set_instances_visible(bool p_visible) {
 	auto rs = RenderingServer::get_singleton();
 	ERR_FAIL_NULL_MSG(rs, "RenderingServer missing");
@@ -410,6 +417,10 @@ void Rope::_rebuild_instances() {
 		}
 	}
 }
+
+#pragma endregion
+
+#pragma region Rope Rebuilding
 
 Vector3 _small_offset(float d) {
 	float x = rand() % 2 ? -1.0 : 1.0;
@@ -709,7 +720,7 @@ uint64_t Rope::get_particle_count_for_length() const {
 
 #pragma endregion
 
-#pragma region Subclassing
+#pragma region Anchor Subclassing
 void Rope::_notify_anchors_changed() {
 	if (!GDVIRTUAL_IS_OVERRIDDEN(_update_anchors)) {
 		notify_property_list_changed();
@@ -725,6 +736,18 @@ void Rope::_update_anchors() const {
 		GDVIRTUAL_CALL(_update_anchors);
 	}
 }
+
+Transform3D Rope::_get_anchor_local_transform(int attach_idx) const {
+	Transform3D xform;
+	if (GDVIRTUAL_IS_OVERRIDDEN(_get_anchor_local_transform)) {
+		GDVIRTUAL_CALL(_get_anchor_local_transform, attach_idx, xform);
+	}
+	return xform;
+}
+
+#pragma endregion
+
+#pragma region Attachment Subclassing
 
 void Rope::_notify_attachments_changed() {
 	if (_appearance.is_valid()) {
@@ -749,7 +772,7 @@ Transform3D Rope::_get_attachment_local_transform(int attach_idx) const {
 
 #pragma endregion
 
-#pragma region Anchors
+#pragma region Anchors Property List
 
 // Build up a dynamic list of properties for each element in the position vector.
 void Rope::_get_property_list(List<PropertyInfo> *p_list) const {
@@ -860,6 +883,10 @@ bool Rope::_get(const StringName &p_name, Variant &r_property) const {
 	return false;
 }
 
+#pragma endregion
+
+#pragma region Anchors Properties
+
 void Rope::set_anchor_count(int count) {
 	ERR_FAIL_COND(count < 0);
 	if (_anchors.size() != count) {
@@ -963,8 +990,15 @@ Transform3D Rope::get_anchor_transform(int idx) const {
 	ERR_FAIL_INDEX_V(idx, (int)_anchors.size(), Transform3D());
 
 	// use the node transform if available
-	if (is_inside_tree() && _anchors[idx].node) {
+	if (_anchors[idx].node) {
 		return _anchors[idx].node->get_global_transform();
+	}
+
+	// if subclassing has been overridden, use the virtual method instead of the stored transform
+	if (GDVIRTUAL_IS_OVERRIDDEN(_get_anchor_local_transform)) {
+		Transform3D local_xform;
+		GDVIRTUAL_CALL(_get_anchor_local_transform, idx, local_xform);
+		return get_global_transform() * local_xform;
 	}
 
 	return _anchors[idx].transform;
@@ -1033,6 +1067,10 @@ void Rope::set_anchor_distribution(int val) {
 int Rope::get_anchor_distribution() const {
 	return (int)_anchor_distribution;
 }
+
+#pragma endregion
+
+#pragma region Anchors Rebuilding
 
 void Rope::_rebuild_anchors() {
 	SCOPED_TIMER(_rebuild_anchors);
@@ -1138,16 +1176,41 @@ void Rope::_internal_update_anchors() {
 	SCOPED_TIMER(_internal_update_anchors);
 
 	int anchor_count = get_anchor_count();
-	for (auto &particle : _particles) {
+	for (int idx = 0; idx < _particles.size(); idx++) {
+		auto &particle = _particles[idx];
+
 		if (particle.anchor_idx >= 0 && particle.anchor_idx < anchor_count) {
 			// Skip FREE anchors — they don't constrain particle position
 			if (_is_anchor_free(particle.anchor_idx, anchor_count)) {
 				continue;
 			}
-			// Update transform from node if present
-			Transform3D xform = get_anchor_transform(particle.anchor_idx);
-			particle.pos_cur = xform.origin;
-			particle.pos_prev = xform.origin;
+
+			// if the anchor particle count > 1, fill until we hit the next anchor or run out of particles
+			RopeAnchor *anchor = Object::cast_to<RopeAnchor>(get_node_or_null(get_anchor_nodepath(particle.anchor_idx)));
+			if ( anchor ) {
+				int count = anchor->get_particle_count();
+				int part_idx = 0;
+				Transform3D xform = get_anchor_transform(particle.anchor_idx);
+				while ( count > 0 && idx < _particles.size() ) {
+					Vector3 offset = anchor->get_particle_position(part_idx);
+					_particles[idx].pos_cur = xform.xform(offset);
+					_particles[idx].pos_prev = _particles[idx].pos_cur;
+					count--;
+					idx++;
+					part_idx++;
+
+					// if the next particle is already anchored, break to avoid overwriting it
+					if (idx < _particles.size() && _particles[idx].anchor_idx != -1) {
+						break;
+					}	
+				}
+			}
+			else {
+				// Update transform from node if present
+				Transform3D xform = get_anchor_transform(particle.anchor_idx);
+				particle.pos_cur = xform.origin;
+				particle.pos_prev = xform.origin;
+			}
 
 		} else {
 			// stale anchor, clear index
@@ -1665,7 +1728,7 @@ bool Rope::_pop_is_dirty() {
 
 #pragma endregion
 
-#pragma region Physics
+#pragma region Physics Collision
 
 void Rope::_clear_physics_shapes() {
 	auto ps = PhysicsServer3D::get_singleton();
@@ -1709,6 +1772,38 @@ void Rope::_rebuild_physics_shapes() {
 		_particles[particle_count - 1].shape = RID();
 }
 
+
+bool Rope::_is_jolt_3d() const {
+	String engine_name = ProjectSettings::get_singleton()->get("physics/3d/physics_engine");
+	return engine_name == "JoltPhysics3D";
+}
+
+// this moves our collision shapes into their new positions
+void Rope::_update_collision_shapes() {
+	SCOPED_TIMER(_update_collision_shapes);
+
+	if (_is_jolt_3d()) {
+		ERR_PRINT_ONCE("_update_collision_shapes: Disabling JoltPhysics3D for performance reasons.");
+		return;
+	}
+
+	if (_collision_layer == 0 && _collision_mask == 0)
+		return;
+
+	auto ps = PhysicsServer3D::get_singleton();
+
+	// update the shape positions1
+	int index = 0;
+	int count = ps->body_get_shape_count(_physics_body);
+	DEV_ASSERT(count == _links.size());
+
+	for (int idx = 0; idx < count; idx++) {
+		// update the shape transform to match the link position
+		// NOTE: This is *expensive* to update
+		ps->body_set_shape_transform(_physics_body, idx, _links[idx]);
+	}
+}
+
 int Rope::get_collision_layer() const { return _collision_layer; }
 
 void Rope::set_collision_layer(int layer) {
@@ -1725,6 +1820,65 @@ void Rope::set_collision_mask(int mask) {
 	_collision_mask = mask;
 	PhysicsServer3D::get_singleton()->body_set_collision_mask(_physics_body, mask);
 }
+
+// NOTE: We do *not* use the collider shapes for collision detection of the rope
+// instead we cast rays in the direction of travel and model the particles
+// as points. This has trade offs, but its significantly faster than a pin_joint + capsule chain.
+void Rope::_apply_constraints() {
+	// ray cast from the previous position to the current position
+	// if we hit something, move the particle to the hit position
+	Ref<World3D> w3d = get_world_3d();
+	ERR_FAIL_NULL(w3d);
+
+	auto ps = PhysicsServer3D::get_singleton();
+	PhysicsDirectSpaceState3D *dss = ps->space_get_direct_state(w3d->get_space());
+	ERR_FAIL_NULL(dss);
+
+	// set up the raycast parameters
+	if (_collision_mask) {
+		// Reuse member ray query to avoid allocation every frame
+		_ray_cast->set_collision_mask(_collision_mask);
+
+		float friction = (1.0 - Math::clamp(get_friction(), 0.0f, 1.0f));
+		float radius = get_rope_width() * 0.5f;
+		int anchor_count = get_anchor_count();
+		for (Particle &p : _particles) {
+			// fixed points don't move
+			if (_is_anchor_fixed(p.anchor_idx, anchor_count))
+				continue;
+
+			Vector3 from = p.pos_prev;
+			Vector3 to = p.pos_cur;
+			Vector3 direction = to - from;
+
+			float length = direction.length();
+			if (length < CMP_EPSILON)
+				continue;
+
+			_ray_cast->set_from(from);
+			_ray_cast->set_to(to);
+
+			Dictionary result = dss->intersect_ray(_ray_cast);
+			if (!result.is_empty()) {
+				// move the particle to the hit position
+				Vector3 position = result["position"];
+				Vector3 normal = result["normal"];
+				Vector3 contact = position + normal * CMP_EPSILON;
+
+				// // reflect the acceleration and the final position across the normal at the reflection point
+				p.accel = p.accel.bounce(normal) * friction;
+				p.pos_cur = ((p.pos_cur - contact) * friction).bounce(normal) + contact;
+
+				// TODO: figure out sphere contact point and reflect from there instead.
+				// p.pos_cur = reflect_sphere(p.pos_prev, p.pos_cur, normal, contact, radius);
+			}
+		}
+	}
+}
+
+#pragma endregion
+
+#pragma region Physics Update
 
 void Rope::_update_physics(float delta, int iterations) {
 	SCOPED_TIMER(_update_physics);
@@ -1913,9 +2067,6 @@ void Rope::_verlet_process(float delta) {
 	for (Particle &p : _particles) {
 		// is this point fixed in space?
 		if (_is_anchor_fixed(p.anchor_idx, count)) {
-			p.pos_cur = get_anchor_transform(p.anchor_idx).origin;
-			p.pos_prev = p.pos_cur;
-			p.accel = Vector3();
 			continue;
 		}
 
@@ -2030,92 +2181,6 @@ void Rope::_apply_forces() {
 		}
 
 		p.accel = total_acceleration;
-	}
-}
-
-// NOTE: We do *not* use the collider shapes for collision detection of the rope
-// instead we cast rays in the direction of travel and model the particles
-// as points. This has trade offs, but its significantly faster than a pin_joint + capsule chain.
-void Rope::_apply_constraints() {
-	// ray cast from the previous position to the current position
-	// if we hit something, move the particle to the hit position
-	Ref<World3D> w3d = get_world_3d();
-	ERR_FAIL_NULL(w3d);
-
-	auto ps = PhysicsServer3D::get_singleton();
-	PhysicsDirectSpaceState3D *dss = ps->space_get_direct_state(w3d->get_space());
-	ERR_FAIL_NULL(dss);
-
-	// set up the raycast parameters
-	if (_collision_mask) {
-		// Reuse member ray query to avoid allocation every frame
-		_ray_cast->set_collision_mask(_collision_mask);
-
-		float friction = (1.0 - Math::clamp(get_friction(), 0.0f, 1.0f));
-		float radius = get_rope_width() * 0.5f;
-		int anchor_count = get_anchor_count();
-		for (Particle &p : _particles) {
-			// fixed points don't move
-			if (_is_anchor_fixed(p.anchor_idx, anchor_count))
-				continue;
-
-			Vector3 from = p.pos_prev;
-			Vector3 to = p.pos_cur;
-			Vector3 direction = to - from;
-
-			float length = direction.length();
-			if (length < CMP_EPSILON)
-				continue;
-
-			_ray_cast->set_from(from);
-			_ray_cast->set_to(to);
-
-			Dictionary result = dss->intersect_ray(_ray_cast);
-			if (!result.is_empty()) {
-				// move the particle to the hit position
-				Vector3 position = result["position"];
-				Vector3 normal = result["normal"];
-				Vector3 contact = position + normal * CMP_EPSILON;
-
-				// // reflect the acceleration and the final position across the normal at the reflection point
-				p.accel = p.accel.bounce(normal) * friction;
-				p.pos_cur = ((p.pos_cur - contact) * friction).bounce(normal) + contact;
-
-				// TODO: figure out sphere contact point and reflect from there instead.
-				// p.pos_cur = reflect_sphere(p.pos_prev, p.pos_cur, normal, contact, radius);
-			}
-		}
-	}
-}
-
-bool Rope::_is_jolt_3d() const {
-	String engine_name = ProjectSettings::get_singleton()->get("physics/3d/physics_engine");
-	return engine_name == "JoltPhysics3D";
-}
-
-// this moves our collision shapes into their new positions
-void Rope::_update_collision_shapes() {
-	SCOPED_TIMER(_update_collision_shapes);
-
-	if (_is_jolt_3d()) {
-		ERR_PRINT_ONCE("_update_collision_shapes: Disabling JoltPhysics3D for performance reasons.");
-		return;
-	}
-
-	if (_collision_layer == 0 && _collision_mask == 0)
-		return;
-
-	auto ps = PhysicsServer3D::get_singleton();
-
-	// update the shape positions1
-	int index = 0;
-	int count = ps->body_get_shape_count(_physics_body);
-	DEV_ASSERT(count == _links.size());
-
-	for (int idx = 0; idx < count; idx++) {
-		// update the shape transform to match the link position
-		// NOTE: This is *expensive* to update
-		ps->body_set_shape_transform(_physics_body, idx, _links[idx]);
 	}
 }
 

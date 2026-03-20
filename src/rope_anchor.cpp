@@ -12,6 +12,12 @@ void RopeAnchor::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("get_parent_rigid_body"), &RopeAnchor::get_parent_rigid_body);
 	ClassDB::bind_method(D_METHOD("apply_force", "force"), &RopeAnchor::apply_force);
+
+	ClassDB::bind_method(D_METHOD("get_anchor_position_count", "idx"), &RopeAnchor::get_particle_count);
+	ClassDB::bind_method(D_METHOD("get_anchor_position", "idx"), &RopeAnchor::get_particle_position);
+
+	GDVIRTUAL_BIND(get_particle_count, "idx");
+	GDVIRTUAL_BIND(get_particle_position, "idx");
 }
 
 RigidBody3D *RopeAnchor::get_parent_rigid_body() const {
@@ -20,6 +26,28 @@ RigidBody3D *RopeAnchor::get_parent_rigid_body() const {
 		return nullptr;
 	}
 	return Object::cast_to<RigidBody3D>(parent);
+}
+
+int RopeAnchor::get_particle_count(int p_idx) const {
+	// allow subclasses to override the count via GDScript/GDExtension
+	if (GDVIRTUAL_IS_OVERRIDDEN(get_particle_count)) {
+		int count = 1;
+		GDVIRTUAL_CALL(get_particle_count, p_idx, count);
+		return MAX(1, count);
+	}
+	// base anchor always provides exactly one position
+	return 1;
+}
+
+Vector3 RopeAnchor::get_particle_position(int p_idx) const {
+	// allow subclasses to override the position via GDScript/GDExtension
+	if (GDVIRTUAL_IS_OVERRIDDEN(get_particle_position)) {
+		Vector3 pos;
+		GDVIRTUAL_CALL(get_particle_position, p_idx, pos);
+		return pos;
+	}
+	// default: the anchor sits at this node's local origin
+	return Vector3();
 }
 
 void RopeAnchor::apply_force(const Vector3 &p_force) {
@@ -31,3 +59,5 @@ void RopeAnchor::apply_force(const Vector3 &p_force) {
 	// convert this anchor's global position to a global offset from the body's origin
 	body->apply_force(p_force, get_global_position() - body->get_global_position());
 }
+
+

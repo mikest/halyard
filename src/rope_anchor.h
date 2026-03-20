@@ -14,6 +14,7 @@ has been set as a child of that object.
 #include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/classes/rigid_body3d.hpp>
 #include <godot_cpp/core/binder_common.hpp>
+#include <godot_cpp/core/gdvirtual.gen.inc>
 
 using namespace godot;
 
@@ -25,7 +26,8 @@ enum AnchorBehavior {
 	SLIDING = 3, // If parent is a RigidBody, rope travels through like guided, and pulls on parent. (Towing and guided.)
 };
 
-// A node that serves as an anchor point on a Rope.
+// A node that serves as a list of anchor positions for a section of rope.
+// Each anchor position shares the same behavior.
 // When parented to a RigidBody3D, it can apply forces at its position.
 class RopeAnchor : public Node3D {
 	GDCLASS(RopeAnchor, Node3D)
@@ -45,7 +47,13 @@ public:
 	// Returns the parent node if it is a RigidBody3D, otherwise nullptr.
 	RigidBody3D *get_parent_rigid_body() const;
 
-	// RopePulley *get_parent_rope_pulley() const;
+	// returns the number of positions this anchor provides. Minimum is 1.
+	GDVIRTUAL1RC(int, get_particle_count, int);
+	virtual int get_particle_count(int idx=0) const;
+
+	// returns the position of the anchor in local space.
+	GDVIRTUAL1RC(Vector3, get_particle_position, int);
+	virtual Vector3 get_particle_position(int idx=0) const;
 
 	// Applies a force to the parent RigidBody3D at this anchor's global position.
 	void apply_force(const Vector3 &p_force);

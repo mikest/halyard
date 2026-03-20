@@ -324,6 +324,9 @@ public:
 	GDVIRTUAL0C(_update_anchors);
 	void _update_anchors() const;
 
+	GDVIRTUAL1RC(Transform3D, _get_anchor_local_transform, int);
+	Transform3D _get_anchor_local_transform(int anchor_idx) const;
+
 	GDVIRTUAL0C(_update_attachments);
 	void _update_attachments() const;
 
