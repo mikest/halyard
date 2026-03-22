@@ -7,9 +7,11 @@
 
 [sub_resource type="RopeAppearance" id="RopeAppearance_nksku"]
 rope_lod = 1
-particles_per_meter = 6.0
 link_mesh = ExtResource("1_5qxvb")
-end_attachment = NodePath("../rope-endcap")
+attachment_count = 1
+attachments/0/offset = 0.0
+attachments/0/from = 1
+attachments/0/node_path = NodePath("rope-endcap")
 
 [node name="Node3D" type="Node3D" unique_id=422886374]
 
@@ -17,12 +19,12 @@ end_attachment = NodePath("../rope-endcap")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -10, 0)
 
 [node name="Rope" type="Rope" parent="." unique_id=2059140967]
-rope_length = 2.6322126
+rope_length = 7.498843
 rope_width = 0.25
 particles_per_meter = 6.0
+appearance = SubResource("RopeAppearance_nksku")
 grow_from = 1
 anchor_count = 1
-appearance = SubResource("RopeAppearance_nksku")
 preprocess_time = 0.0
 stiffness_iterations = 10
 stiffness = 1.8
@@ -31,31 +33,29 @@ collision_mask = 0
 apply_damping = false
 anchors/0/offset = 0.0
 anchors/0/from = 0
-anchors/0/node_path = NodePath("")
-anchors/0/behavior = 0
-anchors/0/position = Vector3(0, -0.236, 0)
+anchors/0/node_path = NodePath("../StartAnchor")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.236, 0)
 script = ExtResource("2_pmwqi")
 grow_length = 10.0
 grow_speed = 3.0
 
-[node name="Marker3D" type="Marker3D" parent="." unique_id=434205517]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+[node name="rope-endcap" parent="Rope" unique_id=383005952 instance=ExtResource("2_of4qs")]
+transform = Transform3D(0.1152477, -0.07675031, -0.20815225, -0.0159143, -0.23681866, 0.07850897, -0.22127971, -0.022941522, -0.11405692, -0.62888724, 0.083983436, 0.74198645)
 
-[node name="rope-endcap" parent="." unique_id=383005952 instance=ExtResource("2_of4qs")]
-transform = Transform3D(-0.24975376, 0.0033785799, 0.010566333, -0.0027654874, -0.24956776, 0.014432042, 0.010743104, 0.0143009415, 0.24935931, -0.1719206, -3.040627, 0.23363222)
+[node name="StartAnchor" type="RopeAnchor" parent="." unique_id=692660331]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
 
 [node name="Label3D" type="Label3D" parent="." unique_id=1991364270]
 unique_name_in_owner = true
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0)
-text = "stretch: 0.351854
-0 (0.0, -0.236, 0.0)
-1 (0.048818, -0.38637, 0.07381)
-2 (0.009668, -0.560858, 0.047635)
+text = "stretch: -0.756876
+0 (0.0, 2.0, 0.0)
+1 (-0.012062, 1.851474, 0.08029)
+2 (0.092975, 1.724101, 0.114246)
 ...
-15 (-0.124212, -2.707219, 0.266471)
-16 (-0.17427, -2.867083, 0.223688)
-17 (-0.171921, -3.040627, 0.233632)
+38 (-0.490216, 0.142485, 0.700526)
+39 (-0.57601, 0.01114, 0.757792)
+40 (-0.628887, -0.152017, 0.741986)
 "
 horizontal_alignment = 0
 

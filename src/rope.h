@@ -51,6 +51,7 @@ public:
 private:
 	Ref<RopeMesh> _rope_mesh;
 	RID _physics_body;
+	bool _is_jolt = false;
 	LocalVector<RID> _instances;
 	LiquidArea *_liquid_area = nullptr;
 
@@ -161,25 +162,29 @@ private:
 	int _preprocess_time = 1.0;
 	bool _jitter_initial_position = true;
 
-	int _collision_layer = 1;
-	int _collision_mask = 1;
+	// collision.
+	int _collision_layer = 0;
+	int _collision_mask = 0;
 
-	// forces
+	// wind
 	bool _apply_wind = false;
 	float _wind_scale = 20.0;
 	Vector3 _wind = Vector3(1, 0, 0);
 	Ref<FastNoiseLite> _wind_noise = nullptr;
 
+	// gravity
 	bool _apply_gravity = true;
 	Vector3 _gravity = Vector3(0, -9.8, 0);
 	float _gravity_scale = 1.0;
 
-	bool _apply_damping = true;
-	float _damping_factor = 100.0;
-
+	// buoyancy
 	bool _apply_buoyancy = false;
 	float _buoyancy_scale = 1.0; // float on surface
 	float _submerged_drag = 100.0; // crazy high drag when submerged
+
+	// damping
+	bool _apply_damping = true;
+	float _damping_factor = 100.0;
 
 protected:
 	static void _bind_methods();

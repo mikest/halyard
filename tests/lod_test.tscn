@@ -1,22 +1,19 @@
 [gd_scene format=3 uid="uid://5x0v0fpy5m4g"]
 
-[ext_resource type="Texture2D" uid="uid://cacfut71tgp5v" path="res://addons/halyard/assets/four-ply-rope.png" id="1_ise2c"]
+[ext_resource type="Texture2D" uid="uid://dlhnxxyov3dea" path="res://addons/halyard/assets/three-ply-rope.png" id="1_ise2c"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ooc0l"]
 albedo_texture = ExtResource("1_ise2c")
 
-[sub_resource type="RopeAppearance" id="RopeAppearance_cwtjs"]
-rope_lod = 1
+[sub_resource type="RopeAppearance" id="RopeAppearance_4c22c"]
+rope_sides = 12
 material = SubResource("StandardMaterial3D_ooc0l")
 
 [sub_resource type="RopeAppearance" id="RopeAppearance_ise2c"]
 rope_sides = 64
-rope_lod = 1
 material = SubResource("StandardMaterial3D_ooc0l")
 
 [sub_resource type="RopeAppearance" id="RopeAppearance_ooc0l"]
-rope_sides = 3
-rope_lod = 1
 material = SubResource("StandardMaterial3D_ooc0l")
 
 [sub_resource type="BoxOccluder3D" id="BoxOccluder3D_cwtjs"]
@@ -26,39 +23,39 @@ size = Vector3(9, 10.906478, 1)
 
 [node name="Rope_Default" type="Rope" parent="." unique_id=1706896806]
 rope_width = 0.25
+appearance = SubResource("RopeAppearance_4c22c")
 anchor_count = 1
-appearance = SubResource("RopeAppearance_cwtjs")
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath("")
 anchors/0/behavior = 0
 anchors/0/position = Vector3(1.1664596, 0, 0.07818252)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.1664596, 0, 0.07818252)
-custom_aabb = AABB(-0.12500942, -4.1721096, -0.125, 0.25001192, 4.2971096, 0.25000307)
+custom_aabb = AABB(-0.12505066, -4.1721096, -0.12516268, 0.25005066, 4.2971096, 0.25016266)
 
 [node name="Rope_MaxSides" type="Rope" parent="." unique_id=128619775]
 rope_width = 0.25
-anchor_count = 1
 appearance = SubResource("RopeAppearance_ise2c")
+anchor_count = 1
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath("")
 anchors/0/behavior = 0
 anchors/0/position = Vector3(1.1664596, 0, 0.81526095)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.1664596, 0, 0.81526095)
-custom_aabb = AABB(-0.12501061, -4.17211, -0.12502658, 0.2500131, 4.29711, 0.25002658)
+custom_aabb = AABB(-0.125, -4.1721096, -0.125, 0.25005722, 4.2971096, 0.2500937)
 
 [node name="Rope_MinSides" type="Rope" parent="." unique_id=1412897919]
 rope_width = 0.25
-anchor_count = 1
 appearance = SubResource("RopeAppearance_ooc0l")
+anchor_count = 1
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath("")
 anchors/0/behavior = 0
 anchors/0/position = Vector3(1.1664596, 0, -0.87713116)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.1664596, 0, -0.87713116)
-custom_aabb = AABB(-0.12503779, -4.1721096, -0.125, 0.2500378, 4.2971096, 0.2500168)
+custom_aabb = AABB(-0.1251924, -4.1721096, -0.12507981, 0.2501924, 4.2971096, 0.2500798)
 
 [node name="OccluderInstance3D" type="OccluderInstance3D" parent="." unique_id=211317972]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.70252705, -1.4621964, 4.374258)

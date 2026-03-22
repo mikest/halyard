@@ -50,6 +50,15 @@ Rope::Rope() {
 
 	// disable scaling, we should never be scaled
 	set_disable_scale(true);
+
+	// test for jolt engine. we have to disable collision shapes when using jolt because they are too expensive to update every frame due to:
+	// https://github.com/godotengine/godot/issues/117737
+	auto physics_engine = ProjectSettings::get_singleton()->get_setting("physics/3d/physics_engine");
+	if (physics_engine == "Jolt Physics") {
+		_is_jolt = true;
+	} else {
+		_is_jolt = false;
+	}
 }
 
 Rope::Rope(const Rope &other) {
@@ -187,7 +196,13 @@ void Rope::_bind_methods() {
 	EXPORT_PROPERTY_RANGED(Variant::FLOAT, friction, Rope, "0.0,1.0,0.01");
 	EXPORT_PROPERTY_RANGED(Variant::FLOAT, tension_force_scale, Rope, "0.0,10.0,0.1");
 	EXPORT_PROPERTY(Variant::FLOAT, max_tension_force, Rope);
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "collision_layer", PROPERTY_HINT_LAYERS_3D_PHYSICS), "set_collision_layer", "get_collision_layer");
+
+	// special case the layer to disabled if Jolt Physics is in use.
+	auto physics_engine = ProjectSettings::get_singleton()->get_setting("physics/3d/physics_engine");
+	bool _is_jolt = (physics_engine == "Jolt Physics");
+	int usage = (_is_jolt ? PROPERTY_USAGE_READ_ONLY : 0) |  PROPERTY_USAGE_DEFAULT;
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "collision_layer", PROPERTY_HINT_LAYERS_3D_PHYSICS, "", usage), "set_collision_layer", "get_collision_layer");
+
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "collision_mask", PROPERTY_HINT_LAYERS_3D_PHYSICS), "set_collision_mask", "get_collision_mask");
 
 	// Buoyancy
@@ -1720,6 +1735,11 @@ void Rope::_clear_physics_shapes() {
 }
 
 void Rope::_rebuild_physics_shapes() {
+	if( _is_jolt ) {
+		ERR_PRINT_ONCE("Halyard: Jolt Physics is enabled. Disabling CollisionShape building for Performance.");
+		return;
+	}
+
 	auto ps = PhysicsServer3D::get_singleton();
 	int particle_count = get_particle_count_for_length();
 
@@ -1752,6 +1772,10 @@ void Rope::_rebuild_physics_shapes() {
 
 // this moves our collision shapes into their new positions
 void Rope::_update_collision_shapes() {
+	if( _is_jolt ) {
+		return;
+	}
+
 	SCOPED_TIMER(_update_collision_shapes);
 
 	if (_collision_layer == 0 && _collision_mask == 0)
