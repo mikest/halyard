@@ -114,6 +114,7 @@ void Rope::_bind_methods() {
 	// internal
 	ClassDB::bind_method(D_METHOD("_anchor_for_particle", "particle_idx"), &Rope::_anchor_for_particle);
 	ClassDB::bind_method(D_METHOD("_particle_for_anchor", "anchor_idx"), &Rope::_particle_for_anchor);
+	ClassDB::bind_method(D_METHOD("_particle_stretch", "particle_idx"), &Rope::_particle_stretch);
 
 	// anchors
 	ClassDB::bind_method(D_METHOD("set_anchor_count", "count"), &Rope::set_anchor_count);
@@ -1213,6 +1214,14 @@ int Rope::_anchor_for_particle(int p_particle_idx) const {
 	return _particles[p_particle_idx].anchor_idx;
 }
 
+float Rope::_particle_stretch(int particle_idx) const {
+	if (particle_idx < 0 || particle_idx >= (int)_particles.size() - 1) {
+		return -1.0;
+	}
+	
+	return _particles[particle_idx].stretch;
+}
+
 #pragma endregion
 
 #pragma region Frame Calculations
@@ -1463,20 +1472,30 @@ void Rope::_calculate_links_for_particles(LocalVector<Transform3D> &links) const
 			Vector3 pt2 = _particles[idx + 1].pos_cur;
 			Vector3 dir = (pt2 - pt);
 			float dist = dir.length();
-			dir.normalize();
+			if (dist > 0.0) {
+				dir.normalize();
 
-			// xform is at the midpoint between particles
-			Transform3D xform(Basis(), pt + dir * dist / 2.0);
-			xform.basis.rotate_to_align(Vector3(0, 1, 0), dir);
+				// xform is at the midpoint between particles
+				Transform3D xform(Basis(), pt + dir * dist / 2.0);
+				xform.basis.rotate_to_align(Vector3(0, 1, 0), dir);
 
-			// every other frame is rotated along the tangent 90deg
-			// so that the links alternate
-			if (idx % 2)
-				xform = xform.rotated_local(Vector3(0, 1, 0), Math_PI / 2.0);
+				// every other frame is rotated along the tangent 90deg
+				// so that the links alternate
+				if (idx % 2)
+					xform = xform.rotated_local(Vector3(0, 1, 0), Math_PI / 2.0);
 
-			// push back the unscaled xform
-			// xform.orthogonalize();  ...doubles this functions time
-			links.push_back(xform);
+				// push back the unscaled xform
+				// ...doubles this functions time but we can get tiny scale artifacts from the rotation
+				// which will cause problems with jolt over time in certain edge conditions.
+				// xform.orthogonalize();
+				links.push_back(xform);
+			} else {
+				// zero length link... either because the points are too close or coincidentally overlapping.
+				// just push back the xform for the starting particle. There's no orientation we can align to,
+				// but at least it will be in the right place if the particles separate in the next frame.
+				Transform3D xform(Basis(), pt);
+				links.push_back(xform);
+			}
 		}
 	}
 }
@@ -1701,13 +1720,12 @@ void Rope::_clear_physics_shapes() {
 }
 
 void Rope::_rebuild_physics_shapes() {
-	if (_is_jolt_3d()) {
-		ERR_PRINT_ONCE("_rebuild_physics_shapes: Disabling JoltPhysics3D for performance reasons.");
-		return;
-	}
-
 	auto ps = PhysicsServer3D::get_singleton();
 	int particle_count = get_particle_count_for_length();
+
+	// update links
+	_calculate_links_for_particles(_links);
+	DEV_ASSERT(_links.size() == (particle_count - 1));
 
 	Dictionary capsule;
 	float radius = get_rope_width() * 0.5f;
@@ -1722,7 +1740,7 @@ void Rope::_rebuild_physics_shapes() {
 		RID shape = ps->capsule_shape_create();
 		ps->shape_set_data(shape, capsule);
 		ps->shape_set_margin(shape, radius / 10.0);
-		ps->body_add_shape(_physics_body, shape, Transform3D());
+		ps->body_add_shape(_physics_body, shape, _links[idx]);
 		_particles[idx].shape = shape;
 	}
 
@@ -1732,19 +1750,9 @@ void Rope::_rebuild_physics_shapes() {
 }
 
 
-bool Rope::_is_jolt_3d() const {
-	String engine_name = ProjectSettings::get_singleton()->get("physics/3d/physics_engine");
-	return engine_name == "JoltPhysics3D";
-}
-
 // this moves our collision shapes into their new positions
 void Rope::_update_collision_shapes() {
 	SCOPED_TIMER(_update_collision_shapes);
-
-	if (_is_jolt_3d()) {
-		ERR_PRINT_ONCE("_update_collision_shapes: Disabling JoltPhysics3D for performance reasons.");
-		return;
-	}
 
 	if (_collision_layer == 0 && _collision_mask == 0)
 		return;
@@ -1752,7 +1760,6 @@ void Rope::_update_collision_shapes() {
 	auto ps = PhysicsServer3D::get_singleton();
 
 	// update the shape positions1
-	int index = 0;
 	int count = ps->body_get_shape_count(_physics_body);
 	DEV_ASSERT(count == _links.size());
 
@@ -1815,25 +1822,25 @@ void Rope::_apply_constraints() {
 				Vector3 direction = to - from;
 
 				float length = direction.length();
-				if (length < CMP_EPSILON)
-					continue;
+				if (length >= CMP_EPSILON) {
 
-				_ray_cast->set_from(from);
-				_ray_cast->set_to(to);
+					_ray_cast->set_from(from);
+					_ray_cast->set_to(to);
 
-				Dictionary result = dss->intersect_ray(_ray_cast);
-				if (!result.is_empty()) {
-					// move the particle to the hit position
-					Vector3 position = result["position"];
-					Vector3 normal = result["normal"];
-					Vector3 contact = position + normal * CMP_EPSILON;
+					Dictionary result = dss->intersect_ray(_ray_cast);
+					if (!result.is_empty()) {
+						// move the particle to the hit position
+						Vector3 position = result["position"];
+						Vector3 normal = result["normal"];
+						Vector3 contact = position + normal * CMP_EPSILON;
 
-					// // reflect the acceleration and the final position across the normal at the reflection point
-					particle.accel = particle.accel.bounce(normal) * friction;
-					particle.pos_cur = ((particle.pos_cur - contact) * friction).bounce(normal) + contact;
+						// // reflect the acceleration and the final position across the normal at the reflection point
+						particle.accel = particle.accel.bounce(normal) * friction;
+						particle.pos_cur = ((particle.pos_cur - contact) * friction).bounce(normal) + contact;
 
-					// TODO: figure out sphere contact point and reflect from there instead.
-					// particle.pos_cur = reflect_sphere(particle.pos_prev, particle.pos_cur, normal, contact, radius);
+						// TODO: figure out sphere contact point and reflect from there instead.
+						// particle.pos_cur = reflect_sphere(particle.pos_prev, particle.pos_cur, normal, contact, radius);
+					}
 				}
 			}
 
@@ -1860,7 +1867,7 @@ void Rope::_update_physics(float delta, int iterations) {
 		_verlet_process(delta);
 
 		_stiff_rope(_stiffness_iterations);
-		// _balance_tension();
+		_balance_tension();
 
 		// now that everything has moved, recalc link positions
 		_calculate_links_for_particles(_links);
@@ -1869,7 +1876,7 @@ void Rope::_update_physics(float delta, int iterations) {
 }
 
 
-// Update the particle positions based upon the current anchor transforms
+// Update the particle positions & behaviors based upon the current anchor layout
 void Rope::_internal_update_anchors() {
 	SCOPED_TIMER(_internal_update_anchors);
 
@@ -1880,10 +1887,9 @@ void Rope::_internal_update_anchors() {
 	}
 
 	// index counters
-	int anchor_idx = 0;
 	int anchor_count = _anchors.size();
+	int anchor_idx = 0;
 	int particle_idx = 0;
-	int particle_count = _particles.size();
 	int anchor_part_idx = 0;
 	int anchor_part_count = 0;
 	Transform3D xform;
@@ -2025,32 +2031,22 @@ void Rope::_balance_tension() {
 
 	int anchor_count = get_anchor_count();
 
-	// need a minimum of 3 particles and anchors to balance tension
+	// need a minimum of 3 particles and 3 anchors to balance tension
 	if (_particles.size() < 3 || anchor_count < 3) {
 		return;
 	}
 
-	// build a mapping from anchor index to particle index
-	LocalVector<int64_t> anchor_to_particle;
-	anchor_to_particle.resize(anchor_count);
-	for (uint64_t idx = 0; idx < anchor_to_particle.size(); idx++) {
-		anchor_to_particle[idx] = -1;
-	}
-	for (int64_t idx = 0; idx < (int64_t)_particles.size(); idx++) {
-		int64_t ai = _particles[idx].anchor_idx;
-		if (ai >= 0 && ai < (int64_t)anchor_count) {
-			anchor_to_particle[ai] = idx;
-		}
-	}
-
 	// iterate over mid-anchors only (skip start and end)
+	float segment_length = _get_average_segment_length();
+	float tension_speed = segment_length * 0.5f;
+	float tolerance = segment_length * 0.25f;
 	for (uint64_t anchor_idx = 1; anchor_idx < anchor_count - 1; anchor_idx++) {
 		// only balance GUIDED and SLIDING anchors — these allow the rope to slide through
 		if (!_is_rope_sliding(anchor_idx, anchor_count)) {
 			continue;
 		}
 
-		int64_t idx = anchor_to_particle[anchor_idx];
+		int64_t idx = _anchors[anchor_idx].particle_idx;
 		if (idx < 1 || idx >= (int64_t)_particles.size() - 1) {
 			continue;
 		}
@@ -2063,41 +2059,21 @@ void Rope::_balance_tension() {
 
 		// require the imbalance to exceed a fraction of segment length before shifting,
 		// this prevents oscillation when the two sides are nearly balanced.
-		float tolerance = _get_average_segment_length(); // * 0.5f;
 		if (stretch_diff < tolerance) {
 			continue;
 		}
 
-		// determine bounds — can't slide past neighboring anchors
-		int64_t min_idx = anchor_to_particle[anchor_idx - 1] + 1;
-		int64_t max_idx = anchor_to_particle[anchor_idx + 1] - 1;
+		// move the abs_offset in the direction of lower stretch
+		float direction = (left_stretch > right_stretch) ? 1.0f : -1.0f;
+		float offset_change = direction * tension_speed;
+		float new_offset = get_anchor_abs_offset(anchor_idx) + offset_change;
 
-		// determine shift direction: move toward the slack side to feed rope to the taut side
-		int64_t new_idx = idx;
-		if (left_stretch > right_stretch) {
-			// left side is tighter — feed rope left by sliding the anchor point right
-			new_idx = idx + 1;
-		} else if (right_stretch > left_stretch) {
-			// right side is tighter — feed rope right by sliding the anchor point left
-			new_idx = idx - 1;
-		}
+		// get previous and next anchor offsets to clamp within
+		float prev_offset = get_anchor_abs_offset(anchor_idx - 1);
+		float next_offset = get_anchor_abs_offset(anchor_idx + 1);
+		new_offset = Math::clamp(new_offset, prev_offset + segment_length, next_offset - segment_length);
 
-		// clamp to valid range
-		new_idx = Math::clamp(new_idx, min_idx, max_idx);
-
-		if (new_idx != idx && new_idx >= 0 && new_idx < (int64_t)_particles.size()) {
-			// move the anchor binding to the new particle
-			_particles[idx].anchor_idx = -1;
-			_particles[new_idx].anchor_idx = anchor_idx;
-
-			// snap the new particle to the anchor position and reset verlet state
-			Transform3D xform = get_anchor_transform(anchor_idx);
-			_particles[new_idx].pos_cur = xform.origin;
-			_particles[new_idx].pos_prev = xform.origin;
-
-			// update the mapping for subsequent iterations
-			anchor_to_particle[anchor_idx] = new_idx;
-		}
+		_anchors[anchor_idx]._abs_offset = new_offset;
 	}
 }
 

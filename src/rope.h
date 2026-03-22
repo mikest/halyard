@@ -221,6 +221,7 @@ protected:
 	int _get_particle_for_offset(float abs_offset) const;
 	int _particle_for_anchor(int anchor_idx) const;
 	int _anchor_for_particle(int particle_idx) const;
+	float _particle_stretch(int particle_idx) const;
 
 	// Physics
 	void _rebuild_rope();
@@ -237,7 +238,6 @@ protected:
 	void _verlet_process(float delta);
 	void _apply_forces();
 	void _apply_constraints();
-	bool _is_jolt_3d() const;
 	void _update_collision_shapes();
 
 	void _clear_physics_shapes();

@@ -7,7 +7,7 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 // Enabled/disable performance testing data collection
-#define PERFORMANCE_TESTING 0
+#define PERFORMANCE_TESTING 1
 
 using namespace godot;
 namespace halyard {
@@ -44,7 +44,7 @@ inline float calculate_full_submerged_depth(const godot::PackedVector3Array &pro
 }
 
 #if PERFORMANCE_TESTING
-
+static int _performance_test_depth = 0;
 struct TimerStats {
 	uint64_t call_count = 0;
 	uint64_t total_usec = 0;
@@ -79,6 +79,7 @@ public:
 	inline ScopedTimer(const char *name, TimerStats *stats) :
 			_name(name), _stats(stats) {
 		_start_usec = Time::get_singleton()->get_ticks_usec();
+		_performance_test_depth ++;
 	}
 
 	inline ~ScopedTimer() {
@@ -89,9 +90,20 @@ public:
 		// Only print every 1000 calls
 		if (_stats->call_count % 1000 == 0) {
 			double avg = _stats->get_average_usec();
-			UtilityFunctions::print(_name, ": ", avg, " usec over ", _stats->call_count, " calls");
+			String indent;
+			for( int i=0; i<_performance_test_depth-1; i++ )
+				indent += "  ";
+			Dictionary params;
+			params["indent"] = indent;
+			params["name"] = _name;
+			params["avg"] = avg;
+
+			String out = String("{indent}{avg} usec {name}").format(params);
+			UtilityFunctions::print(out);
+
 			_stats->reset();
 		}
+		_performance_test_depth --;
 	}
 };
 #define SCOPED_TIMER(name)                           \

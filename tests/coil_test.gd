@@ -67,7 +67,7 @@ func _process(delta: float) -> void:
 	if not Engine.is_editor_hint():
 		_lfo = wrapf(_lfo + delta/3.0, 0, TAU)
 		var wave := sin(_lfo)
-		coil.coiled_length = wave * 5 + 10
+		coiled_length = wave * 5 + 10
 	
 	if _debug:
 		for idx in chain.anchor_count:
@@ -81,3 +81,9 @@ func _process(delta: float) -> void:
 					var loc := xform * anchor.get_particle_position(pos)
 					DebugDraw3D.draw_text(loc, str(pos), 8, color)
 					DebugDraw3D.draw_square(loc, 0.025, color)
+		
+		var particles := chain.get_particle_positions()
+		for idx in particles.size():
+			var stretch := chain._particle_stretch(idx)
+			var loc := particles[idx]
+			DebugDraw3D.draw_text(loc + Vector3(1,0,0), str(snappedf(stretch, 0.01)), 16, Color(stretch,0,1))
