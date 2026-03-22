@@ -34,3 +34,7 @@
 #define EXPORT_PROPERTY_READONLY(m_type, m_property, m_class)                          \
 	ClassDB::bind_method(D_METHOD(STR(get_##m_property)), &m_class::get_##m_property); \
 	ADD_PROPERTY(PropertyInfo(m_type, #m_property, PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY | PROPERTY_USAGE_EDITOR), "", STR(get_##m_property))
+
+#define EXPORT_PROPERTY_READONLY_HINT(m_type, m_property, m_class, m_hint)                          \
+	ClassDB::bind_method(D_METHOD(STR(get_##m_property)), &m_class::get_##m_property); \
+	ADD_PROPERTY(PropertyInfo(m_type, #m_property, PROPERTY_HINT_NONE, m_hint, PROPERTY_USAGE_READ_ONLY | PROPERTY_USAGE_EDITOR), "", STR(get_##m_property))

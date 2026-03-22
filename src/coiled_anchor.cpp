@@ -10,7 +10,7 @@ void CoiledAnchor::_bind_methods() {
 	EXPORT_PROPERTY_RANGED(Variant::FLOAT, rope_width, CoiledAnchor, "0.01,10,0.01");
 	EXPORT_PROPERTY_RANGED(Variant::FLOAT, particles_per_meter, CoiledAnchor, "1,100,0.1");
 	EXPORT_PROPERTY(Variant::BOOL, clockwise, CoiledAnchor);
-	EXPORT_PROPERTY_READONLY(Variant::FLOAT, exit_angle, CoiledAnchor);
+	EXPORT_PROPERTY_READONLY_HINT(Variant::FLOAT, exit_angle, CoiledAnchor, "radians_as_degrees");
 }
 
 #pragma region Coil Generation
@@ -71,10 +71,7 @@ void CoiledAnchor::_rebuild_coil_positions() const {
 
 	// compute exit angle in the YZ plane from the final accumulated turn
 	const float tau = Math_TAU;
-	float final_angle = Math::fmod(turn * tau * (_clockwise ? -1.0f : 1.0f), tau);
-	if (final_angle < 0.0f) {
-		final_angle += tau;
-	}
+	float final_angle = turn * tau * (_clockwise ? -1.0f : 1.0f);
 	_exit_angle = final_angle;
 
 	_dirty = false;

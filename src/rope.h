@@ -65,6 +65,8 @@ private:
 		NodePath node_path = "";
 		float _abs_offset = 0.0; // Absolute offset along the rope, calculated from start
 
+		int64_t particle_idx = -1; // The index of the particle this anchor is attached to, calculated on rebuild.
+
 		Anchor() = default;
 		Anchor(float p, Transform3D t, AnchorBehavior b = AnchorBehavior::ANCHORED, RigidBody3D *rb = nullptr, Node3D *n = nullptr) :
 				offset(p), transform(t), behavior(b), rigid_body(rb), node(n) {}
@@ -75,6 +77,11 @@ private:
 
 		bool operator==(const Anchor &other) const {
 			return offset == other.offset && transform == other.transform && behavior == other.behavior && rigid_body == other.rigid_body && node == other.node;
+		}
+
+		// cast to RopeAnchor if possible, otherwise return nullptr
+		RopeAnchor *operator()() {
+			return Object::cast_to<RopeAnchor>(node);
 		}
 	};
 
@@ -90,11 +97,17 @@ private:
 
 		int64_t anchor_idx = -1;
 		float stretch = 0.0;
+		int behavior = FREE;
 
 		RID shape;
 
 		Particle() = default;
 		~Particle() = default;
+
+		void set_position(const Vector3 &position) {
+			pos_cur = position;
+			pos_prev = position;
+		}
 	};
 
 	// internal state
@@ -179,8 +192,6 @@ protected:
 	float get_current_rope_length() const;
 	float _get_average_segment_length() const;
 
-	int _get_index_for_position(float position) const;
-
 	// Anchors Property List
 	void _get_property_list(List<PropertyInfo> *p_list) const;
 	bool _set(const StringName &p_name, const Variant &p_property);
@@ -188,11 +199,22 @@ protected:
 
 	// Anchors
 	void _internal_update_anchors();
+	void _update_particles_for_anchor(int anchor_idx);
+
+	RopeAnchor *_get_rope_anchor(int anchor_idx) const;
 
 	bool _is_anchor_free(int anchor_idx, int anchor_count) const;
 	bool _is_anchor_fixed(int anchor_idx, int anchor_count) const;	// ANCHORED || GUIDED
 	bool _is_anchor_moving(int anchor_idx, int anchor_count) const;	// SLIDING || TOWING
 	bool _is_rope_sliding(int anchor_idx, int anchor_count) const;	// SLIDING || GUIDED
+
+	// Cross-reference utilities between particles and anchors.
+	int _get_particle_for_offset(float position) const;
+	int _particle_for_anchor(int anchor_idx) const;
+	int _anchor_for_particle(int particle_idx) const;
+
+	// Anchor/Particle traversal
+	int _next_particle(int particle_idx) const;
 
 	// Physics
 	void _rebuild_rope();
@@ -299,6 +321,10 @@ public:
 
 	// Get the computed absolute offset from start of rope for the given anchor index.
 	float get_anchor_abs_offset(int idx) const;
+
+	// Accessors for particle counts and positions.
+	int get_anchor_particle_count(int anchor_idx) const;
+	Vector3 get_anchor_particle_position(int anchor_idx, int particle_idx) const;
 
 	// Anchor distribution mode
 	void set_anchor_distribution(int val);
