@@ -15,6 +15,11 @@ void CoiledAnchor::_bind_methods() {
 
 #pragma region Coil Generation
 
+void CoiledAnchor::_notify_anchor_changed() {
+	_dirty = true;
+	RopeAnchor::_notify_anchor_changed();
+}
+
 // Rebuild the cached coil positions from current properties.
 // Ported from CoiledRope.gd _rebuild_coil_positions().
 void CoiledAnchor::_rebuild_coil_positions() const {

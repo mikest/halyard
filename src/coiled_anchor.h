@@ -39,17 +39,18 @@ private:
 
 protected:
 	static void _bind_methods();
+	void _notify_anchor_changed() override;
 
 public:
 	CoiledAnchor() = default;
 	virtual ~CoiledAnchor() override = default;
 
-    PROPERTY_GET_SET(float, rope_width, { _dirty = true; })
-	PROPERTY_GET_SET(float, particles_per_meter, { _dirty = true; })
-    PROPERTY_GET_SET(float, coiled_length, { _dirty = true; })
-    PROPERTY_GET_SET(float, radius, { _dirty = true; })
-	PROPERTY_GET_SET(bool, clockwise, { _dirty = true; })
-	PROPERTY_GET_SET(float, turns_per_layer, { _dirty = true; })
+    PROPERTY_GET_SET(float, rope_width, { _notify_anchor_changed(); })
+	PROPERTY_GET_SET(float, particles_per_meter, { _notify_anchor_changed(); })
+    PROPERTY_GET_SET(float, coiled_length, { _notify_anchor_changed(); })
+    PROPERTY_GET_SET(float, radius, { _notify_anchor_changed(); })
+	PROPERTY_GET_SET(bool, clockwise, { _notify_anchor_changed(); })
+	PROPERTY_GET_SET(float, turns_per_layer, { _notify_anchor_changed(); })
 
 	// Angle in the YZ plane at which the rope exits the coil (readonly, computed on rebuild).
 	PROPERTY_GET(float, exit_angle)

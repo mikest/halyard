@@ -76,7 +76,11 @@ private:
 		}
 
 		bool operator==(const Anchor &other) const {
-			return offset == other.offset && transform == other.transform && behavior == other.behavior && rigid_body == other.rigid_body && node == other.node;
+			return offset == other.offset && \
+				transform == other.transform && \
+				behavior == other.behavior && \
+				rigid_body == other.rigid_body && \
+				node == other.node;
 		}
 
 		// cast to RopeAnchor if possible, otherwise return nullptr
@@ -108,6 +112,11 @@ private:
 			pos_cur = position;
 			pos_prev = position;
 		}
+
+		bool is_free() const { return behavior == FREE; }
+		bool is_fixed() const { return behavior == ANCHORED || behavior == GUIDED; }
+		bool is_moving() const { return behavior == SLIDING || behavior == TOWING; }
+		bool is_sliding() const { return behavior == SLIDING || behavior == GUIDED; }
 	};
 
 	// internal state
@@ -209,12 +218,9 @@ protected:
 	bool _is_rope_sliding(int anchor_idx, int anchor_count) const;	// SLIDING || GUIDED
 
 	// Cross-reference utilities between particles and anchors.
-	int _get_particle_for_offset(float position) const;
+	int _get_particle_for_offset(float abs_offset) const;
 	int _particle_for_anchor(int anchor_idx) const;
 	int _anchor_for_particle(int particle_idx) const;
-
-	// Anchor/Particle traversal
-	int _next_particle(int particle_idx) const;
 
 	// Physics
 	void _rebuild_rope();
@@ -349,9 +355,6 @@ public:
 	// Subclasses can override these to provide dynamic anchor lists after a _notify_anchors_changed
 	GDVIRTUAL0C(_update_anchors);
 	void _update_anchors() const;
-
-	GDVIRTUAL1RC(Transform3D, _get_anchor_local_transform, int);
-	Transform3D _get_anchor_local_transform(int anchor_idx) const;
 
 	GDVIRTUAL0C(_update_attachments);
 	void _update_attachments() const;

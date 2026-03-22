@@ -152,9 +152,6 @@ void Rope::_bind_methods() {
 	// Anchor virtuals
 	ClassDB::bind_method(D_METHOD("_notify_anchors_changed"), &Rope::_notify_anchors_changed);
 	GDVIRTUAL_BIND(_update_anchors)
-	ClassDB::bind_method(D_METHOD("_get_anchor_local_transform", "anchor_idx"),
-			&Rope::_get_anchor_local_transform);
-	GDVIRTUAL_BIND(_get_anchor_local_transform, "anchor_idx")
 
 	// Attachment virtuals
 	ClassDB::bind_method(D_METHOD("_notify_attachments_changed"), &Rope::_notify_attachments_changed);
@@ -351,7 +348,9 @@ void Rope::_internal_physics_process(double delta) {
 
 	if (_anchors_dirty) {
 		_update_anchors();
-		_queue_rope_rebuild();
+		_rebuild_anchors();
+
+		// _queue_rope_rebuild();
 		_anchors_dirty = false;
 	}
 
@@ -510,15 +509,9 @@ void Rope::_rebuild_rope() {
 		else
 			_particles.push_back(particle);
 
+		// integrate while adding particles to help stabilize rope as it grows
 		_stiff_rope(1);
 	}
-
-#if DEBUG_INITIAL_POS
-	print_line("Rebuild Rope:");
-	for (auto &p : _particles) {
-		print_line(p.pos_cur);
-	}
-#endif
 
 	// shrink
 	if (particle_count > 0) {
@@ -527,13 +520,15 @@ void Rope::_rebuild_rope() {
 				_particles.remove_at(0);
 			else
 				_particles.remove_at(_particles.size() - 1);
+			
+			// integrate while adding particles to help stabilize rope as it shrinks
+			_stiff_rope(1);
 		}
 	}
 
-	_clear_physics_shapes();
+	// initial rebuilds
 	_rebuild_physics_shapes();
 	_rebuild_instances();
-
 	_rebuild_anchors();
 
 	// only run preprocess on the first build
@@ -543,7 +538,6 @@ void Rope::_rebuild_rope() {
 		_update_physics(preprocess_delta, preprocess_iterations);
 	}
 
-	_compute_particle_normals();
 	_queue_redraw();
 	_is_rebuilding = false;
 }
@@ -736,14 +730,6 @@ void Rope::_update_anchors() const {
 	if (GDVIRTUAL_IS_OVERRIDDEN(_update_anchors)) {
 		GDVIRTUAL_CALL(_update_anchors);
 	}
-}
-
-Transform3D Rope::_get_anchor_local_transform(int attach_idx) const {
-	Transform3D xform;
-	if (GDVIRTUAL_IS_OVERRIDDEN(_get_anchor_local_transform)) {
-		GDVIRTUAL_CALL(_get_anchor_local_transform, attach_idx, xform);
-	}
-	return xform;
 }
 
 #pragma endregion
@@ -995,13 +981,6 @@ Transform3D Rope::get_anchor_transform(int idx) const {
 		return _anchors[idx].node->get_global_transform();
 	}
 
-	// if subclassing has been overridden, use the virtual method instead of the stored transform
-	if (GDVIRTUAL_IS_OVERRIDDEN(_get_anchor_local_transform)) {
-		Transform3D local_xform;
-		GDVIRTUAL_CALL(_get_anchor_local_transform, idx, local_xform);
-		return get_global_transform() * local_xform;
-	}
-
 	return _anchors[idx].transform;
 }
 
@@ -1093,16 +1072,12 @@ int Rope::get_anchor_distribution() const {
 
 #pragma region Anchors Rebuilding
 
+// Update anchor fields, and especially abs_offset.
 void Rope::_rebuild_anchors() {
 	SCOPED_TIMER(_rebuild_anchors);
 
 	// exit early if not inside tree
 	ERR_FAIL_COND(!is_inside_tree());
-
-	// clear anchor indexs for all particles
-	for (auto &particle : _particles) {
-		particle.anchor_idx = -1;
-	}
 
 	// update the settings from the current scene
 	for (int idx = 0; idx < _anchors.size(); idx++) {
@@ -1165,25 +1140,6 @@ void Rope::_rebuild_anchors() {
 	// sort anchors by _abs_offset
 	if (_anchor_distribution == Distribution::ABSOLUTE || _anchor_distribution == Distribution::SCALAR) {
 		_anchors.sort();
-	}
-
-	// after sorting, update anchor/particle indexes
-	int anchor_count = get_anchor_count();
-	for (int anchor_idx = 0; anchor_idx < anchor_count; anchor_idx++) {
-		// set the particle index for this anchor based on its position along the rope
-		auto &anchor = _anchors[anchor_idx];
-		anchor.particle_idx = _get_particle_for_offset(anchor._abs_offset);
-
-		if (anchor.particle_idx < _particles.size()) {
-			// only set the anchor index if it hasn't been set yet
-			if (_particles[anchor.particle_idx].anchor_idx == -1) {
-				_particles[anchor.particle_idx].anchor_idx = anchor_idx;
-
-				// except for the last anchor, always overwrite the anchor index
-			} else if (anchor_idx == anchor_count - 1) {
-				_particles[anchor.particle_idx].anchor_idx = anchor_idx;
-			}
-		}
 	}
 }
 
@@ -1255,42 +1211,6 @@ int Rope::_anchor_for_particle(int p_particle_idx) const {
 		return -1;
 	}
 	return _particles[p_particle_idx].anchor_idx;
-}
-
-// Return the next particle index after the given anchor, or -1 if there isn't one
-int Rope::_next_particle(int particle_idx) const {
-	if (INVALID_PARTICLE_IDX(particle_idx)) {
-		return -1;
-	}
-
-	// current particle
-	int next_idx = -1;
-	const Particle &particle = _particles[particle_idx];
-
-	// no anchor? just return the next particle
-	if (INVALID_ANCHOR_IDX(particle.anchor_idx)) {
-		next_idx = particle_idx + 1;
-	
-	// has anchor
-	} else {
-		// next particle after the last anchored particle in this particles anchor
-		int last_anchor_idx = particle_idx + get_anchor_particle_count(particle.anchor_idx)-1;
-
-		// check if there is another anchor after this one
-		int next_anchor = particle.anchor_idx + 1;
-		if(next_anchor < _anchors.size()) {
-			int next_anchor_idx = _anchors[next_anchor].particle_idx;
-
-			// next_idx is clipped by this anchor
-			next_idx = MIN(last_anchor_idx+1, next_anchor_idx);
-		} else {
-			// no more anchors, just go to the next particle after the last anchored one
-			next_idx = last_anchor_idx + 1;
-		}
-	}
-
-	// range check
-	return VALID_PARTICLE_IDX(next_idx) ? next_idx : -1;
 }
 
 #pragma endregion
@@ -1888,7 +1808,7 @@ void Rope::_apply_constraints() {
 			auto &particle = _particles[particle_idx];
 
 			// only move non-fixed particles
-			if (_is_anchor_fixed(particle.anchor_idx, anchor_count) == false) {
+			if (particle.is_fixed() == false) {
 
 				Vector3 from = particle.pos_prev;
 				Vector3 to = particle.pos_cur;
@@ -1918,7 +1838,7 @@ void Rope::_apply_constraints() {
 			}
 
 			// advance
-			particle_idx = _next_particle(particle_idx);
+			particle_idx ++;
 		}
 	}
 }
@@ -1930,6 +1850,7 @@ void Rope::_apply_constraints() {
 void Rope::_update_physics(float delta, int iterations) {
 	SCOPED_TIMER(_update_physics);
 
+	// update anchor transforms and behaviors
 	_internal_update_anchors();
 
 	for (int i = 0; i < iterations; i++) {
@@ -1947,56 +1868,70 @@ void Rope::_update_physics(float delta, int iterations) {
 	}
 }
 
-// update one or more particle positions with information from the anchor
-void Rope::_update_particles_for_anchor(int anchor_idx) {
-	// skip FREE anchors — they don't constrain particle position
-	if (_is_anchor_free(anchor_idx, get_anchor_count())) {
-		return;
-	}
-
-	// starting particle index
-	int particle_idx = _particle_for_anchor(anchor_idx);
-	if (!VALID_PARTICLE_IDX(particle_idx)) {
-		return;	// invalid index, exit
-	}
-
-	// if the anchor is a RopeAnchor with particle_count > 1, fill consecutive particles
-	RopeAnchor *rope_anchor = _get_rope_anchor(anchor_idx);
-	if (rope_anchor) {
-		int anchor_part_count = rope_anchor->get_particle_count();
-		int anchor_part_idx = 0;
-		Transform3D xform = get_anchor_transform(anchor_idx);
-
-		// loop through and set particle positions until we've filled the count for this anchor, or we hit another anchored particle
-		while (anchor_part_idx < anchor_part_count && particle_idx < (int)_particles.size()) {
-			Vector3 offset = rope_anchor->get_particle_position(anchor_part_idx);
-			_particles[particle_idx].set_position(xform.xform(offset));
-	
-			// advance
-			particle_idx++;
-			anchor_part_idx++;
-
-			// if the next particle is already anchored, break to avoid overwriting it
-			if (particle_idx < (int)_particles.size() && \
-				_particles[particle_idx].anchor_idx != -1 && \
-				_particles[particle_idx].anchor_idx != anchor_idx) {
-				break;
-			}
-		}
-	} else if (VALID_PARTICLE_IDX(particle_idx)) {
-		// not an anchor? just update from transform
-		Transform3D xform = get_anchor_transform(anchor_idx);
-		_particles[particle_idx].set_position(xform.origin);
-	}
-}
 
 // Update the particle positions based upon the current anchor transforms
 void Rope::_internal_update_anchors() {
 	SCOPED_TIMER(_internal_update_anchors);
 
-	int anchor_count = get_anchor_count();
-	for (int anchor_idx = 0; anchor_idx < anchor_count; anchor_idx++) {
-		_update_particles_for_anchor(anchor_idx);
+	// default all particles to no anchor
+	for(Particle &p : _particles) {
+		p.anchor_idx = -1;
+		p.behavior = FREE;
+	}
+
+	// index counters
+	int anchor_idx = 0;
+	int anchor_count = _anchors.size();
+	int particle_idx = 0;
+	int particle_count = _particles.size();
+	int anchor_part_idx = 0;
+	int anchor_part_count = 0;
+	Transform3D xform;
+	int behavior = FREE;
+
+	// now fill particles for anchors. if anchors overlap they will span multiple particles.
+	while(VALID_ANCHOR_IDX(anchor_idx)) {
+		// first in part?
+		if (anchor_part_count == 0) {
+			anchor_part_count = get_anchor_particle_count(anchor_idx);
+			anchor_part_idx = 0;
+
+			// set base particle index from the absolute offset
+			float abs_offset = get_anchor_abs_offset(anchor_idx);
+			particle_idx = _get_particle_for_offset(abs_offset);
+
+			// update index back in anchor
+			_anchors[anchor_idx].particle_idx = particle_idx;
+		}
+
+		// update particle if index is valid
+		if (VALID_PARTICLE_IDX(particle_idx)) {
+			if (anchor_part_idx == 0) {
+				xform = get_anchor_transform(anchor_idx);
+				behavior = get_anchor_behavior(anchor_idx);
+				_particles[particle_idx].anchor_idx = anchor_idx;
+			} else {
+				_particles[particle_idx].anchor_idx = -1;
+			}
+
+			// fix the particle position if not free
+			if (behavior != FREE) {
+				Vector3 pos = get_anchor_particle_position(anchor_idx, anchor_part_idx);
+				_particles[particle_idx].set_position(xform.xform(pos));
+			}
+			_particles[particle_idx].behavior = behavior;
+		}
+
+		// move to the next particle and anchor
+		particle_idx++;
+		anchor_part_idx++;
+		if (anchor_part_idx >= anchor_part_count) {
+			anchor_idx++;
+
+			// reset anchor part for next anchor
+			anchor_part_count = 0;
+			anchor_part_idx = 0;
+		}
 	}
 }
 
@@ -2055,12 +1990,12 @@ void Rope::_stiff_rope(int iterations) {
 			p0.stretch = stretch;
 
 			// only anchored and guided anchors stay put
-			bool anchored_0 = !_is_anchor_free(p0.anchor_idx, anchor_count);
-			bool anchored_1 = !_is_anchor_free(p1.anchor_idx, anchor_count);
+			bool anchored_0 = !p0.is_free();
+			bool anchored_1 = !p1.is_free();
 
 			// if both are attached skip
 			if (anchored_0 && anchored_1) {
-				continue;
+				// no-op
 
 				// if either particle is attached, only move the other one
 			} else if (anchored_0) {
@@ -2078,7 +2013,7 @@ void Rope::_stiff_rope(int iterations) {
 				p1.pos_cur -= half_stretch;
 			}
 
-			particle_idx++; // = _next_particle(particle_idx);
+			particle_idx++;
 		}
 	}
 }
@@ -2175,13 +2110,13 @@ void Rope::_verlet_process(float delta) {
 		auto &particle = _particles[particle_idx];
 
 		// is this point not fixed in space?
-		if (_is_anchor_fixed(particle.anchor_idx, anchor_count) == false) {
+		if (particle.is_fixed() == false) {
 			Vector3 position_current_copy = particle.pos_cur;
 			particle.pos_cur = (2.0 * particle.pos_cur) - particle.pos_prev + (delta * delta * particle.accel);
 			particle.pos_prev = position_current_copy;
 		}
 
-		particle_idx = _next_particle(particle_idx);
+		particle_idx++;
 	}
 }
 
@@ -2215,7 +2150,7 @@ void Rope::_apply_forces() {
 		auto &particle = _particles[particle_idx];
 
 		// forces act only on unattached
-		if (_is_anchor_fixed(particle.anchor_idx, anchor_count) == false) {
+		if (particle.is_fixed() == false) {
 
 			float submerged_ratio = 0.0f;
 			Vector3 total_acceleration = Vector3(0, 0, 0);
@@ -2288,13 +2223,12 @@ void Rope::_apply_forces() {
 				Vector3 drag = -_damping_factor * velocity.length() * velocity;
 				total_acceleration += drag;
 			}
-			
 
 			particle.accel = total_acceleration;
 		}
 
 		// advance
-		particle_idx = _next_particle(particle_idx);
+		particle_idx ++;
 	}
 }
 

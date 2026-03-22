@@ -25,7 +25,7 @@ ring_segments = 8
 
 [node name="CoilTest" type="Node3D" unique_id=653013393 node_paths=PackedStringArray("chain", "drum", "coil", "guide", "hook")]
 script = ExtResource("1_ebii4")
-coiled_length = 10.29
+coiled_length = 14.74
 chain = NodePath("ChainCoil/Rope")
 drum = NodePath("ChainCoil/CoiledAnchor/Drum")
 coil = NodePath("ChainCoil/CoiledAnchor")
@@ -57,7 +57,7 @@ anchors/0/node_path = NodePath("../CoiledAnchor/Drum")
 anchors/1/offset = 0.2
 anchors/1/from = 0
 anchors/1/node_path = NodePath("../CoiledAnchor")
-anchors/2/offset = 11.703483
+anchors/2/offset = 16.37845
 anchors/2/from = 0
 anchors/2/node_path = NodePath("../ChainHole")
 anchors/3/offset = 0.0
@@ -72,12 +72,12 @@ shape = SubResource("BoxShape3D_ebii4")
 mesh = SubResource("BoxMesh_x6pmj")
 
 [node name="CoiledAnchor" type="CoiledAnchor" parent="ChainCoil" unique_id=365617806]
-coiled_length = 10.29
+coiled_length = 10.08
 radius = 0.2
 turns_per_layer = 6.0
 rope_width = 0.15
 particles_per_meter = 12.0
-transform = Transform3D(-1, -8.530982e-08, -1.3595984e-07, 1.3595988e-07, -0.90042126, -0.43501812, -8.530988e-08, -0.43501812, 0.90042126, -0.25, 0.5, 0)
+transform = Transform3D(-1, 1.2354342e-07, 1.484792e-07, -1.484793e-07, -0.9833334, -0.18180837, 1.2354347e-07, -0.18180837, 0.9833334, -0.25, 0.5, 0)
 
 [node name="Drum" type="RopeAnchor" parent="ChainCoil/CoiledAnchor" unique_id=1088114845]
 transform = Transform3D(-1, -2.1741165e-08, 8.467618e-08, 8.7422784e-08, -0.24868996, 0.9685832, -1.0323297e-14, 0.9685832, 0.24868996, 0, 0, 0)
@@ -116,3 +116,5 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 
 [node name="TestBase" parent="." unique_id=2029226043 instance=ExtResource("3_sjw63")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -10, 0)
+
+[connection signal="anchor_changed" from="ChainCoil/CoiledAnchor" to="ChainCoil/Rope" method="_notify_anchors_changed"]

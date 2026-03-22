@@ -3,6 +3,8 @@
 #include "rope_anchor.h"
 
 void RopeAnchor::_bind_methods() {
+	ADD_SIGNAL(MethodInfo("anchor_changed"));
+
 	EXPORT_PROPERTY_ENUM(behavior, "Free:-1,Anchored,Towing,Guided,Sliding", RopeAnchor);
 	BIND_ENUM_CONSTANT(FREE);
 	BIND_ENUM_CONSTANT(ANCHORED); // Rope can't move anchor.
@@ -48,6 +50,10 @@ Vector3 RopeAnchor::get_particle_position(int p_idx) const {
 	}
 	// default: the anchor sits at this node's local origin
 	return Vector3();
+}
+
+void RopeAnchor::_notify_anchor_changed() {
+	emit_signal("anchor_changed");
 }
 
 void RopeAnchor::apply_force(const Vector3 &p_force) {

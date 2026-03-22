@@ -60,7 +60,7 @@ func _process(delta: float) -> void:
 		coil.coiled_length = coiled_length
 		chain.set_anchor_offset(2, coil.radius + coiled_length + guide_dist)
 	
-	var exit_angle := wrapf(coil.exit_angle + PI/2.0, -PI, PI)
+	var exit_angle := wrapf(coil.exit_angle - (PI + deg_to_rad(45)), -PI, PI)
 	coil.rotation.x = lerp_angle(coil.rotation.x, exit_angle, delta*20)
 	
 	# modulate the coiled_length with an LFO
