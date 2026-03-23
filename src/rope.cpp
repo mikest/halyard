@@ -19,6 +19,7 @@
 #include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
+#include "dd3d_cpp_api.hpp"
 #include "halyard_utils.h"
 
 #define BEHAVIOR_HINT "Free:-1,Anchored:0,Towing:1,Guided:2,Sliding:3"
@@ -232,6 +233,11 @@ void Rope::_bind_methods() {
 	ADD_GROUP("Damping", "");
 	EXPORT_PROPERTY(Variant::BOOL, apply_damping, Rope);
 	EXPORT_PROPERTY(Variant::FLOAT, damping_factor, Rope);
+
+	// Debug
+	ADD_GROUP("Debug", "");
+	EXPORT_PROPERTY(Variant::BOOL, debug, Rope);
+	EXPORT_PROPERTY(Variant::COLOR, debug_color, Rope);
 }
 
 #pragma region Runtime
@@ -2030,12 +2036,12 @@ void Rope::_prepare_physics_server() {
 	// no-op for now
 }
 
-void Rope::_apply_anchor_forces(Particle &p_particle, int p_anchor_idx, const Vector3 &tension) {
+void Rope::_apply_anchor_forces(Particle &p_particle, int p_anchor_idx, const Vector3 &tension, bool draw_debug) {
 	// apply reaction force to p0's attached anchor (tension pulls it toward p1)
 	if (_is_anchor_moving(p_anchor_idx, _anchors.size()) && _anchors[p_anchor_idx].rigid_body_id != 0) {
 		// Rope pulls on the rigid body associated with the anchor.
 		RigidBody3D *rigid_body = get_anchor_rigidbody(p_anchor_idx);
-		if (rigid_body != nullptr) {
+		if (rigid_body != nullptr && _max_tension_force > 0.0f) {
 			Vector3 applied_force = tension * rigid_body->get_mass();
 			float force_magnitude = applied_force.length();
 			if (force_magnitude > _max_tension_force) {
@@ -2045,6 +2051,19 @@ void Rope::_apply_anchor_forces(Particle &p_particle, int p_anchor_idx, const Ve
 			// apply force at anchor position
 			// NOTE: is pos_cur in global space? do transform if necessary
 			rigid_body->apply_force(applied_force, p_particle.pos_cur - rigid_body->get_global_position());
+
+			// draw tension
+			if (draw_debug && _debug) {
+				Vector3 global_pos = p_particle.pos_cur;
+
+				float length = applied_force.length() / _max_tension_force;
+				Color low(0, 0, 1), high(1, 0, 0);
+				Color color = low.lerp(high, length);
+				DebugDraw3D::draw_arrow_ray(global_pos, applied_force.normalized(), 0.5 + length, color, 0.1f);
+
+				String label = String::num(Math::snapped(tension.length(), 0.01));
+				DebugDraw3D::draw_text(global_pos + Vector3(0, 0.25, 0), label, 16, color);
+			}
 		}
 	}
 }
@@ -2084,6 +2103,9 @@ void Rope::_stiff_rope(int iterations) {
 			bool anchored_0 = !p0.is_free();
 			bool anchored_1 = !p1.is_free();
 
+			// only debug_draw last iteration
+			bool draw_debug = (j == iterations - 1) && _debug;
+
 			// if both are attached skip
 			if (anchored_0 && anchored_1) {
 				// no-op
@@ -2091,11 +2113,11 @@ void Rope::_stiff_rope(int iterations) {
 				// if either particle is attached, only move the other one
 			} else if (anchored_0) {
 				p1.pos_cur -= direction * stretch;
-				_apply_anchor_forces(p0, p0.anchor_idx, tension);
+				_apply_anchor_forces(p0, p0.anchor_idx, tension, draw_debug);
 
 			} else if (anchored_1) {
 				p0.pos_cur += direction * stretch;
-				_apply_anchor_forces(p1, p1.anchor_idx, -tension);
+				_apply_anchor_forces(p1, p1.anchor_idx, -tension, draw_debug);
 
 				// neither are attached, half stretch
 			} else {

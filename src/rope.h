@@ -192,6 +192,9 @@ private:
 	bool _apply_damping = true;
 	float _damping_factor = 100.0;
 
+	bool _debug = false;
+	Color _debug_color = Color(1, 1, 0);
+
 protected:
 	static void _bind_methods();
 
@@ -242,7 +245,7 @@ protected:
 
 	void _update_physics(float delta, int iterations);
 	void _apply_chain_constraint(int from_idx);
-	void _apply_anchor_forces(Particle &p_particle, int p_anchor_idx, const Vector3 &tension);
+	void _apply_anchor_forces(Particle &p_particle, int p_anchor_idx, const Vector3 &tension, bool draw_debug = false);
 
 	void _stiff_rope(int interations);
 	void _balance_tension();
@@ -426,6 +429,9 @@ public:
 
 	PROPERTY_GET_SET(bool, apply_damping, {})
 	PROPERTY_GET_SET(float, damping_factor, {})
+
+	PROPERTY_GET_SET(bool, debug, {})
+	PROPERTY_GET_SET(Color, debug_color, {})
 };
 
 VARIANT_ENUM_CAST(Rope::From);

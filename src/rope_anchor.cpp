@@ -24,11 +24,7 @@ void RopeAnchor::_bind_methods() {
 }
 
 RigidBody3D *RopeAnchor::get_parent_rigid_body() const {
-	Node *parent = get_parent();
-	if (parent == nullptr) {
-		return nullptr;
-	}
-	return Object::cast_to<RigidBody3D>(parent);
+	return Object::cast_to<RigidBody3D>(get_parent());
 }
 
 int RopeAnchor::get_particle_count() const {
@@ -66,5 +62,3 @@ void RopeAnchor::apply_force(const Vector3 &p_force) {
 	// convert this anchor's global position to a global offset from the body's origin
 	body->apply_force(p_force, get_global_position() - body->get_global_position());
 }
-
-
