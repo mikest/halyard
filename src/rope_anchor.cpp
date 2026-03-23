@@ -6,6 +6,7 @@ void RopeAnchor::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("anchor_changed"));
 
 	EXPORT_PROPERTY_ENUM(behavior, "Free:-1,Anchored,Towing,Guided,Sliding", RopeAnchor);
+	EXPORT_PROPERTY_RANGED(Variant::FLOAT, friction, RopeAnchor, "0.0,1.0,0.01");
 	BIND_ENUM_CONSTANT(FREE);
 	BIND_ENUM_CONSTANT(ANCHORED); // Rope can't move anchor.
 	BIND_ENUM_CONSTANT(TOWING); // Rope pulls on rigid body at this point

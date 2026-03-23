@@ -86,6 +86,7 @@ const char OFFSET_KEY[] = "offset";
 const char FROM_KEY[] = "from";
 const char NODE_PATH_KEY[] = "node_path";
 const char BEHAVIOR_KEY[] = "behavior";
+const char FRICTION_KEY[] = "friction";
 const char POSITION_KEY[] = "position";
 
 void Rope::_bind_methods() {
@@ -137,6 +138,8 @@ void Rope::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_anchor_nodepath", "idx"), &Rope::get_anchor_nodepath);
 	ClassDB::bind_method(D_METHOD("set_anchor_behavior", "idx", "behavior"), &Rope::set_anchor_behavior);
 	ClassDB::bind_method(D_METHOD("get_anchor_behavior", "idx"), &Rope::get_anchor_behavior);
+	ClassDB::bind_method(D_METHOD("set_anchor_friction", "idx", "friction"), &Rope::set_anchor_friction);
+	ClassDB::bind_method(D_METHOD("get_anchor_friction", "idx"), &Rope::get_anchor_friction);
 	ClassDB::bind_method(D_METHOD("set_anchor_transform", "idx", "transform"), &Rope::set_anchor_transform);
 	ClassDB::bind_method(D_METHOD("get_anchor_transform", "idx"), &Rope::get_anchor_transform);
 	ClassDB::bind_method(D_METHOD("get_anchor_abs_offset", "idx"), &Rope::get_anchor_abs_offset);
@@ -807,16 +810,25 @@ void Rope::_get_property_list(List<PropertyInfo> *p_list) const {
 
 		// if node_path points to a RopeAnchor, hide the behavior property
 		NodePath node_path = _anchors[i].node_path;
-		Rope *as_rope = Object::cast_to<Rope>(get_node_or_null(node_path));
-		RopeAnchor *as_anchor = Object::cast_to<RopeAnchor>(get_node_or_null(node_path));
-		RigidBody3D *as_rigid = Object::cast_to<RigidBody3D>(get_node_or_null(node_path));
+		Node *node = get_node_or_null(node_path);
+		Rope *as_rope = Object::cast_to<Rope>(node);
+		RopeAnchor *as_anchor = Object::cast_to<RopeAnchor>(node);
+		RigidBody3D *as_rigid = Object::cast_to<RigidBody3D>(node);
 
-		usage = is_inside_tree() && (as_anchor || as_rope)
+		// hide behavior if we can get it from anchor
+		usage = (as_anchor || as_rope)
 				? PROPERTY_USAGE_NONE
 				: PROPERTY_USAGE_DEFAULT;
 		p_list->push_back(PropertyInfo(Variant::INT, path + BEHAVIOR_KEY, PROPERTY_HINT_ENUM, BEHAVIOR_HINT, usage));
 
-		usage = is_inside_tree() && Object::cast_to<Node3D>(get_node_or_null(node_path))
+		// hide friction if we can get it from anchor
+		usage = as_anchor
+				? PROPERTY_USAGE_NONE
+				: PROPERTY_USAGE_DEFAULT;
+		p_list->push_back(PropertyInfo(Variant::FLOAT, path + FRICTION_KEY, PROPERTY_HINT_RANGE, "0.0,1.0,0.01", usage));
+
+		// hide position if we can get it from node3d
+		usage = Object::cast_to<Node3D>(node)
 				? PROPERTY_USAGE_NONE
 				: PROPERTY_USAGE_DEFAULT;
 		p_list->push_back(PropertyInfo(Variant::VECTOR3, path + POSITION_KEY, PROPERTY_HINT_NONE, "suffix:m", usage));
@@ -843,6 +855,8 @@ bool Rope::_set(const StringName &p_name, const Variant &p_property) {
 			set_anchor_nodepath(which, (NodePath)p_property);
 		} else if (what == BEHAVIOR_KEY) {
 			set_anchor_behavior(which, (AnchorBehavior)(int)p_property);
+		} else if (what == FRICTION_KEY) {
+			set_anchor_friction(which, (float)p_property);
 		} else if (what == POSITION_KEY) {
 			Vector3 pos = (Vector3)p_property;
 			set_anchor_transform(which, Transform3D(Basis(), pos));
@@ -875,6 +889,8 @@ bool Rope::_get(const StringName &p_name, Variant &r_property) const {
 			r_property = (NodePath)get_anchor_nodepath(which);
 		} else if (what == BEHAVIOR_KEY) {
 			r_property = (int)get_anchor_behavior(which);
+		} else if (what == FRICTION_KEY) {
+			r_property = get_anchor_friction(which);
 		} else if (what == POSITION_KEY) {
 			r_property = get_anchor_transform(which).origin;
 		} else {
@@ -974,11 +990,30 @@ AnchorBehavior Rope::get_anchor_behavior(int idx) const {
 
 	// use the node transform if available
 	RopeAnchor *anchor = Object::cast_to<RopeAnchor>(_anchors[idx].node);
-	if (is_inside_tree() && _anchors[idx].node && anchor) {
+	if (anchor) {
 		return (AnchorBehavior)anchor->get_behavior();
 	}
 
 	return _anchors[idx].behavior;
+}
+
+void Rope::set_anchor_friction(int idx, float friction) {
+	ERR_FAIL_INDEX(idx, (int)_anchors.size());
+	if (_anchors[idx].friction != friction) {
+		_anchors[idx].friction = friction;
+		_notify_anchors_changed();
+	}
+}
+
+float Rope::get_anchor_friction(int idx) const {
+	ERR_FAIL_INDEX_V(idx, (int)_anchors.size(), 0.5f);
+
+	RopeAnchor *anchor = Object::cast_to<RopeAnchor>(_anchors[idx].node);
+	if (anchor) {
+		return anchor->get_friction();
+	}
+
+	return _anchors[idx].friction;
 }
 
 void Rope::set_anchor_transform(int idx, const Transform3D &transform) {
@@ -2062,14 +2097,14 @@ void Rope::_balance_tension() {
 
 	// iterate over mid-anchors only (skip start and end)
 	float segment_length = _get_average_segment_length();
-	float tension_speed = segment_length * 0.5f;
-	float tolerance = segment_length * 0.25f;
+	float tolerance = segment_length * 0.25f;		// NOTE: what to set this to? This seems mostly okay...
 	for (uint64_t anchor_idx = 1; anchor_idx < anchor_count - 1; anchor_idx++) {
 		// only balance GUIDED and SLIDING anchors — these allow the rope to slide through
 		if (!_is_rope_sliding(anchor_idx, anchor_count)) {
 			continue;
 		}
 
+		// particle for anchor out of range, skip
 		int64_t idx = _anchors[anchor_idx].particle_idx;
 		if (idx < 1 || idx >= (int64_t)_particles.size() - 1) {
 			continue;
@@ -2088,15 +2123,17 @@ void Rope::_balance_tension() {
 		}
 
 		// move the abs_offset in the direction of lower stretch
+		float tension_speed = segment_length * (1.0 - get_anchor_friction(anchor_idx));
 		float direction = (left_stretch > right_stretch) ? 1.0f : -1.0f;
 		float offset_change = direction * tension_speed;
-		float new_offset = get_anchor_abs_offset(anchor_idx) + offset_change;
+		float cur_offset = get_anchor_abs_offset(anchor_idx);
 
 		// get previous and next anchor offsets to clamp within
-		float prev_offset = get_anchor_abs_offset(anchor_idx - 1);
-		float next_offset = get_anchor_abs_offset(anchor_idx + 1);
-		new_offset = Math::clamp(new_offset, prev_offset + segment_length, next_offset - segment_length);
+		float prev_offset = get_anchor_abs_offset(anchor_idx - 1) + (segment_length*2);
+		float next_offset = get_anchor_abs_offset(anchor_idx + 1) - (segment_length*2);
+		float new_offset = Math::clamp(cur_offset + offset_change, prev_offset, next_offset);
 
+		// ...and slide the anchor offset. particle_idx will get update on next _internal_update_anchors call
 		_anchors[anchor_idx]._abs_offset = new_offset;
 	}
 }

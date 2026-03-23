@@ -36,7 +36,8 @@ func _ready() -> void:
 	chain.set_anchor_offset(1, coil.radius)
 	
 	chain.set_anchor_nodepath(2, chain.get_path_to(guide))
-	chain.set_anchor_offset(2, coil.radius + coiled_length + 1.0)
+	
+	chain.set_anchor_offset(2, coil.radius + coiled_length)
 	coil.coiled_length = coiled_length
 	
 	chain.set_anchor_nodepath(3, chain.get_path_to(hook))
@@ -46,28 +47,36 @@ func _ready() -> void:
 	DebugDraw3D.scoped_config().set_thickness(0.001).set_center_brightness(0.6)
 
 
+func _dist_from_coil_to_guide() -> float:
+	var count := coil.get_particle_count()
+	var last_pos := coil.get_particle_position(count-1)
+	var global_pos := coil.to_global(last_pos)
+	var guide_dist := global_pos.distance_to(guide.global_position) * tension
+	return guide_dist
+
+
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 var _lfo: float = 0.0
 func _process(delta: float) -> void:
 	if _dirty:
 		_dirty = false
 		
-		var count := coil.get_particle_count()
-		var last_pos := coil.get_particle_position(count-1)
-		var global_pos := coil.to_global(last_pos)
+		var guide_dist := _dist_from_coil_to_guide()
+		var max_coiled_length := chain.rope_length - (guide_dist + coil.radius)
+		coil.coiled_length = min(coiled_length, max_coiled_length)
+		chain.set_anchor_offset(2, coil.radius + coil.coiled_length + guide_dist)
 		
-		var guide_dist := global_pos.distance_to(guide.global_position) * tension
-		coil.coiled_length = coiled_length
-		chain.set_anchor_offset(2, coil.radius + coiled_length + guide_dist)
+		chain.set_anchor_from(3, Rope.End)
+		chain.set_anchor_offset(3, 0.0)
 	
-	var exit_angle := wrapf(coil.exit_angle - (PI + deg_to_rad(45)), -PI, PI)
+	var exit_angle := coil.exit_angle - (PI - deg_to_rad(45))
 	coil.rotation.x = lerp_angle(coil.rotation.x, exit_angle, delta*20)
 	
 	# modulate the coiled_length with an LFO
 	if not Engine.is_editor_hint():
 		_lfo = wrapf(_lfo + delta/3.0, 0, TAU)
 		var wave := sin(_lfo)
-		coiled_length = wave * 5 + 10
+		coiled_length = lerp(1.0, chain.rope_length * 0.5, abs(wave))
 	
 	if _debug:
 		for idx in chain.anchor_count:

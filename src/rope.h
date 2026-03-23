@@ -61,6 +61,7 @@ private:
 		bool from_end = false;	// Distance is measured from end instead of start.
 		Transform3D transform = Transform3D(); // The transform of the anchor in world space
 		AnchorBehavior behavior = AnchorBehavior::ANCHORED;
+		float friction = 0.5f; // How much this anchor resists sliding when behavior is GUIDED or SLIDING.
 		RigidBody3D *rigid_body = nullptr; // RigidBody to apply forces to
 		Node3D *node = nullptr; // If using a node for an anchor, transform and behavior may be derrived from it.
 		NodePath node_path = "";
@@ -329,6 +330,10 @@ public:
 	// Set anchor behavior
 	void set_anchor_behavior(int idx, AnchorBehavior behavior);
 	AnchorBehavior get_anchor_behavior(int idx) const;
+
+	// Get anchor friction
+	void set_anchor_friction(int idx, float friction);
+	float get_anchor_friction(int idx) const;
 
 	// Get the computed absolute offset from start of rope for the given anchor index.
 	float get_anchor_abs_offset(int idx) const;

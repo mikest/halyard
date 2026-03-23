@@ -34,6 +34,7 @@ class RopeAnchor : public Node3D {
 
 private:
 	int _behavior = ANCHORED;
+	float _friction = 0.5f;
 
 protected:
 	static void _bind_methods();
@@ -44,6 +45,7 @@ public:
 	virtual ~RopeAnchor() override = default;
 
 	PROPERTY_GET_SET(int, behavior, { _notify_anchor_changed(); })
+	PROPERTY_GET_SET(float, friction, { _notify_anchor_changed(); })
 
 	// Returns the parent node if it is a RigidBody3D, otherwise nullptr.
 	RigidBody3D *get_parent_rigid_body() const;
