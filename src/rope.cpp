@@ -203,7 +203,7 @@ void Rope::_bind_methods() {
 	// special case the layer to disabled if Jolt Physics is in use.
 	auto physics_engine = ProjectSettings::get_singleton()->get_setting("physics/3d/physics_engine");
 	bool _is_jolt = (physics_engine == "Jolt Physics");
-	int usage = (_is_jolt ? PROPERTY_USAGE_READ_ONLY : 0) |  PROPERTY_USAGE_DEFAULT;
+	int usage = (_is_jolt ? PROPERTY_USAGE_READ_ONLY : 0) | PROPERTY_USAGE_DEFAULT;
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "collision_layer", PROPERTY_HINT_LAYERS_3D_PHYSICS, "", usage), "set_collision_layer", "get_collision_layer");
 
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "collision_mask", PROPERTY_HINT_LAYERS_3D_PHYSICS), "set_collision_mask", "get_collision_mask");
@@ -243,9 +243,10 @@ void Rope::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_ENTER_TREE: {
 			if (Engine::get_singleton()->is_editor_hint() == false) {
-				if (_liquid_area == nullptr) {
+				if (_liquid_area_id == 0) {
 					SceneTree *tree = get_tree();
-					_liquid_area = LiquidArea::get_liquid_area(tree);
+					auto *found = LiquidArea::get_liquid_area(tree);
+					_liquid_area_id = found ? found->get_instance_id() : 0;
 				}
 			}
 			notify_property_list_changed();
@@ -315,7 +316,7 @@ void Rope::_notification(int p_what) {
 		} break;
 
 		case NOTIFICATION_EXIT_TREE: {
-			_liquid_area = nullptr;
+			_liquid_area_id = 0;
 		} break;
 	}
 }
@@ -379,7 +380,7 @@ void Rope::_internal_physics_process(double delta) {
 
 	if (_particles.size() >= 2) {
 		_update_physics(float(simulation_step), _simulate ? 1 : 0);
-		if(_simulate)
+		if (_simulate)
 			_queue_redraw();
 	}
 
@@ -539,7 +540,7 @@ void Rope::_rebuild_rope() {
 				_particles.remove_at(0);
 			else
 				_particles.remove_at(_particles.size() - 1);
-			
+
 			// integrate while adding particles to help stabilize rope as it shrinks
 			_stiff_rope(1);
 		}
@@ -651,12 +652,12 @@ Ref<ArrayMesh> Rope::get_baked_mesh() const {
 }
 
 void Rope::set_liquid_area(LiquidArea *liquid_area) {
-	_liquid_area = liquid_area;
+	_liquid_area_id = liquid_area ? liquid_area->get_instance_id() : 0;
 	_queue_redraw();
 }
 
 LiquidArea *Rope::get_liquid_area() const {
-	return _liquid_area;
+	return Object::cast_to<LiquidArea>(ObjectDB::get_instance(_liquid_area_id));
 }
 
 float Rope::get_current_rope_length() const {
@@ -957,15 +958,27 @@ void Rope::set_anchor_nodepath(int idx, const NodePath &path) {
 	}
 
 	if (is_inside_tree()) {
-		_anchors[idx].node = Object::cast_to<Node3D>(get_node_or_null(path));
-		if (_anchors[idx].node) {
-			_anchors[idx].transform = _anchors[idx].node->get_global_transform();
-			_anchors[idx].rigid_body = Object::cast_to<RigidBody3D>(_anchors[idx].node->get_parent());
+		Node3D *node = Object::cast_to<Node3D>(get_node_or_null(path));
+		if (node) {
+			_anchors[idx].node_id = node->get_instance_id();
 
-			RopeAnchor *anchor = Object::cast_to<RopeAnchor>(_anchors[idx].node);
+			_anchors[idx].transform = node->get_global_transform();
+			RigidBody3D *rigid_body = Object::cast_to<RigidBody3D>(node->get_parent());
+			if (rigid_body) {
+				_anchors[idx].rigid_body_id = rigid_body->get_instance_id();
+			} else {
+				_anchors[idx].rigid_body_id = 0;
+			}
+
+			RopeAnchor *anchor = Object::cast_to<RopeAnchor>(node);
 			if (anchor) {
 				_anchors[idx].behavior = (AnchorBehavior)anchor->get_behavior();
 			}
+
+		} else {
+			// not found? clear both
+			_anchors[idx].node_id = 0;
+			_anchors[idx].rigid_body_id = 0;
 		}
 	}
 
@@ -989,7 +1002,7 @@ AnchorBehavior Rope::get_anchor_behavior(int idx) const {
 	ERR_FAIL_INDEX_V(idx, (int)_anchors.size(), AnchorBehavior::ANCHORED);
 
 	// use the node transform if available
-	RopeAnchor *anchor = Object::cast_to<RopeAnchor>(_anchors[idx].node);
+	RopeAnchor *anchor = Object::cast_to<RopeAnchor>(_anchors[idx].get_node());
 	if (anchor) {
 		return (AnchorBehavior)anchor->get_behavior();
 	}
@@ -1008,7 +1021,7 @@ void Rope::set_anchor_friction(int idx, float friction) {
 float Rope::get_anchor_friction(int idx) const {
 	ERR_FAIL_INDEX_V(idx, (int)_anchors.size(), 0.5f);
 
-	RopeAnchor *anchor = Object::cast_to<RopeAnchor>(_anchors[idx].node);
+	RopeAnchor *anchor = Object::cast_to<RopeAnchor>(_anchors[idx].get_node());
 	if (anchor) {
 		return anchor->get_friction();
 	}
@@ -1028,8 +1041,9 @@ Transform3D Rope::get_anchor_transform(int idx) const {
 	ERR_FAIL_INDEX_V(idx, (int)_anchors.size(), Transform3D());
 
 	// use the node transform if available
-	if (_anchors[idx].node) {
-		return _anchors[idx].node->get_global_transform();
+	Node3D *node = Object::cast_to<Node3D>(_anchors[idx].get_node());
+	if (node) {
+		return node->get_global_transform();
 	}
 
 	return _anchors[idx].transform;
@@ -1037,15 +1051,25 @@ Transform3D Rope::get_anchor_transform(int idx) const {
 
 void Rope::set_anchor_rigidbody(int idx, RigidBody3D *body) {
 	ERR_FAIL_INDEX(idx, (int)_anchors.size());
-	if (_anchors[idx].rigid_body != body) {
-		_anchors[idx].rigid_body = body;
+
+	if (body == nullptr && _anchors[idx].rigid_body_id != 0) {
+		_anchors[idx].rigid_body_id = 0;
 		_notify_anchors_changed();
+		return;
+	}
+
+	uint64_t current_id = body->get_instance_id();
+	if (_anchors[idx].rigid_body_id != current_id) {
+		_anchors[idx].rigid_body_id = current_id;
+		_notify_anchors_changed();
+	} else {
+		return;
 	}
 }
 
 RigidBody3D *Rope::get_anchor_rigidbody(int idx) const {
 	ERR_FAIL_INDEX_V(idx, (int)_anchors.size(), nullptr);
-	return _anchors[idx].rigid_body;
+	return Object::cast_to<RigidBody3D>(_anchors[idx].get_rigid_body());
 }
 
 float Rope::get_anchor_abs_offset(int idx) const {
@@ -1133,22 +1157,29 @@ void Rope::_rebuild_anchors() {
 	// update the settings from the current scene
 	for (int idx = 0; idx < _anchors.size(); idx++) {
 		auto &anchor = _anchors[idx];
-		anchor.node = Object::cast_to<Node3D>(get_node_or_null(anchor.node_path));
-		if (anchor.node) {
+		Node3D *node = Object::cast_to<Node3D>(get_node_or_null(anchor.node_path));
+		if (node) {
+			anchor.node_id = node->get_instance_id();
+
 			// if we have a node, set transform from that
-			anchor.transform = anchor.node->get_global_transform();
+			anchor.transform = node->get_global_transform();
 
 			// if parent is a RigidBody3D, set that.
-			anchor.rigid_body = Object::cast_to<RigidBody3D>(anchor.node->get_parent());
+			RigidBody3D *rigid_body = Object::cast_to<RigidBody3D>(node->get_parent());
+			if (rigid_body) {
+				anchor.rigid_body_id = rigid_body->get_instance_id();
+			} else {
+				anchor.rigid_body_id = 0;
+			}
 
 			// if node is a RigidBody3D, set that instead.
-			RigidBody3D *self_rigid_body = Object::cast_to<RigidBody3D>(anchor.node);
+			RigidBody3D *self_rigid_body = Object::cast_to<RigidBody3D>(node);
 			if (self_rigid_body) {
-				anchor.rigid_body = self_rigid_body;
+				anchor.rigid_body_id = self_rigid_body->get_instance_id();
 			}
 
 			// if node is an anchor, set behavior from it.
-			RopeAnchor *anchor_obj = Object::cast_to<RopeAnchor>(anchor.node);
+			RopeAnchor *anchor_obj = Object::cast_to<RopeAnchor>(node);
 			if (anchor_obj) {
 				anchor.behavior = (AnchorBehavior)anchor_obj->get_behavior();
 			}
@@ -1211,7 +1242,7 @@ RopeAnchor *Rope::_get_rope_anchor(int anchor_idx) const {
 	if (anchor_idx < 0 || anchor_idx >= (int)_anchors.size()) {
 		return nullptr;
 	}
-	return _anchors[anchor_idx].node ? Object::cast_to<RopeAnchor>(_anchors[anchor_idx].node) : nullptr;
+	return Object::cast_to<RopeAnchor>(_anchors[anchor_idx].get_node());
 }
 
 bool Rope::_is_anchor_free(int anchor_idx, int anchor_count) const {
@@ -1249,7 +1280,6 @@ bool Rope::_is_rope_sliding(int anchor_idx, int anchor_count) const {
 	return behavior == AnchorBehavior::SLIDING || behavior == AnchorBehavior::GUIDED;
 }
 
-
 int Rope::_particle_for_anchor(int p_anchor_idx) const {
 	if (p_anchor_idx < 0 || p_anchor_idx >= (int)_anchors.size()) {
 		return -1;
@@ -1268,7 +1298,7 @@ float Rope::_particle_stretch(int particle_idx) const {
 	if (particle_idx < 0 || particle_idx >= (int)_particles.size() - 1) {
 		return -1.0;
 	}
-	
+
 	return _particles[particle_idx].stretch;
 }
 
@@ -1770,7 +1800,7 @@ void Rope::_clear_physics_shapes() {
 }
 
 void Rope::_rebuild_physics_shapes() {
-	if( _is_jolt ) {
+	if (_is_jolt) {
 		ERR_PRINT_ONCE("Halyard: Jolt Physics is enabled. Disabling CollisionShape building for Performance.");
 		return;
 	}
@@ -1804,10 +1834,9 @@ void Rope::_rebuild_physics_shapes() {
 		_particles[particle_count - 1].shape = RID();
 }
 
-
 // this moves our collision shapes into their new positions
 void Rope::_update_collision_shapes() {
-	if( _is_jolt ) {
+	if (_is_jolt) {
 		return;
 	}
 
@@ -1866,23 +1895,21 @@ void Rope::_apply_constraints() {
 
 		float friction = (1.0 - Math::clamp(get_friction(), 0.0f, 1.0f));
 		float radius = get_rope_width() * 0.5f;
-		
+
 		int anchor_count = get_anchor_count();
-		
+
 		int particle_idx = 0;
-		while(VALID_PARTICLE_IDX(particle_idx)) {
+		while (VALID_PARTICLE_IDX(particle_idx)) {
 			auto &particle = _particles[particle_idx];
 
 			// only move non-fixed particles
 			if (particle.is_fixed() == false) {
-
 				Vector3 from = particle.pos_prev;
 				Vector3 to = particle.pos_cur;
 				Vector3 direction = to - from;
 
 				float length = direction.length();
 				if (length >= CMP_EPSILON) {
-
 					_ray_cast->set_from(from);
 					_ray_cast->set_to(to);
 
@@ -1904,7 +1931,7 @@ void Rope::_apply_constraints() {
 			}
 
 			// advance
-			particle_idx ++;
+			particle_idx++;
 		}
 	}
 }
@@ -1934,13 +1961,12 @@ void Rope::_update_physics(float delta, int iterations) {
 	}
 }
 
-
 // Update the particle positions & behaviors based upon the current anchor layout
 void Rope::_internal_update_anchors() {
 	SCOPED_TIMER(_internal_update_anchors);
 
 	// default all particles to no anchor
-	for(Particle &p : _particles) {
+	for (Particle &p : _particles) {
 		p.anchor_idx = -1;
 		p.behavior = FREE;
 	}
@@ -1955,7 +1981,7 @@ void Rope::_internal_update_anchors() {
 	int behavior = FREE;
 
 	// now fill particles for anchors. if anchors overlap they will span multiple particles.
-	while(VALID_ANCHOR_IDX(anchor_idx)) {
+	while (VALID_ANCHOR_IDX(anchor_idx)) {
 		// first in part?
 		if (anchor_part_count == 0) {
 			anchor_part_count = get_anchor_particle_count(anchor_idx);
@@ -2006,7 +2032,7 @@ void Rope::_prepare_physics_server() {
 
 void Rope::_apply_anchor_forces(Particle &p_particle, int p_anchor_idx, const Vector3 &tension) {
 	// apply reaction force to p0's attached anchor (tension pulls it toward p1)
-	if (_is_anchor_moving(p_anchor_idx, _anchors.size()) && _anchors[p_anchor_idx].rigid_body != nullptr) {
+	if (_is_anchor_moving(p_anchor_idx, _anchors.size()) && _anchors[p_anchor_idx].rigid_body_id != 0) {
 		// Rope pulls on the rigid body associated with the anchor.
 		RigidBody3D *rigid_body = get_anchor_rigidbody(p_anchor_idx);
 		if (rigid_body != nullptr) {
@@ -2097,7 +2123,7 @@ void Rope::_balance_tension() {
 
 	// iterate over mid-anchors only (skip start and end)
 	float segment_length = _get_average_segment_length();
-	float tolerance = segment_length * 0.25f;		// NOTE: what to set this to? This seems mostly okay...
+	float tolerance = segment_length * 0.25f; // NOTE: what to set this to? This seems mostly okay...
 	for (uint64_t anchor_idx = 1; anchor_idx < anchor_count - 1; anchor_idx++) {
 		// only balance GUIDED and SLIDING anchors — these allow the rope to slide through
 		if (!_is_rope_sliding(anchor_idx, anchor_count)) {
@@ -2129,8 +2155,8 @@ void Rope::_balance_tension() {
 		float cur_offset = get_anchor_abs_offset(anchor_idx);
 
 		// get previous and next anchor offsets to clamp within
-		float prev_offset = get_anchor_abs_offset(anchor_idx - 1) + (segment_length*2);
-		float next_offset = get_anchor_abs_offset(anchor_idx + 1) - (segment_length*2);
+		float prev_offset = get_anchor_abs_offset(anchor_idx - 1) + (segment_length * 2);
+		float next_offset = get_anchor_abs_offset(anchor_idx + 1) - (segment_length * 2);
 		float new_offset = Math::clamp(cur_offset + offset_change, prev_offset, next_offset);
 
 		// ...and slide the anchor offset. particle_idx will get update on next _internal_update_anchors call
@@ -2143,7 +2169,7 @@ void Rope::_verlet_process(float delta) {
 	int anchor_count = get_anchor_count();
 
 	int particle_idx = 0;
-	while(VALID_PARTICLE_IDX(particle_idx)) {
+	while (VALID_PARTICLE_IDX(particle_idx)) {
 		auto &particle = _particles[particle_idx];
 
 		// is this point not fixed in space?
@@ -2179,16 +2205,16 @@ void Rope::_apply_forces() {
 	float rope_radius = rope_width * 0.5f;
 	Vector3 gravity_scaled = _gravity * _gravity_scale;
 	float pi_r_squared = Math_PI * rope_radius * rope_radius;
+	LiquidArea *liquid_area = get_liquid_area();
 
 	int anchor_count = get_anchor_count();
 
 	int particle_idx = 0;
-	while(VALID_PARTICLE_IDX(particle_idx)) {
+	while (VALID_PARTICLE_IDX(particle_idx)) {
 		auto &particle = _particles[particle_idx];
 
 		// forces act only on unattached
 		if (particle.is_fixed() == false) {
-
 			float submerged_ratio = 0.0f;
 			Vector3 total_acceleration = Vector3(0, 0, 0);
 			Vector3 velocity = particle.pos_cur - particle.pos_prev;
@@ -2199,12 +2225,12 @@ void Rope::_apply_forces() {
 
 			// Because gravity is "unit mass" in verlet, we simulate buoyancy here
 			// based on the submerged volume of the rope segment with buoyancy forces as a ratio.
-			if (_apply_buoyancy && _liquid_area) {
+			if (_apply_buoyancy && liquid_area) {
 				Vector3 probe = particle.pos_cur;
 
 				// Get wave transform at this position
 				Transform3D wave_xform = Transform3D(Basis(), probe);
-				wave_xform = _liquid_area->get_liquid_transform(probe);
+				wave_xform = liquid_area->get_liquid_transform(probe);
 
 				// Calculate depths.
 				float wave_depth = probe.y - wave_xform.origin.y;
@@ -2238,7 +2264,7 @@ void Rope::_apply_forces() {
 					//        = drag_coefficient * current_velocity - drag_coefficient * velocity
 					// First term: water current pushes the object
 					// Second term: drag slows down motion through water
-					Vector3 current_velocity = _liquid_area->get_liquid_velocity();
+					Vector3 current_velocity = liquid_area->get_liquid_velocity();
 					Vector3 current_force = current_velocity * CLAMP(_submerged_drag, 0.0, 10.0) * submerged_ratio; // clamped drag range. this is a fudge at the moment because we're not using real mass properties.
 					Vector3 drag_force = -velocity * _submerged_drag * submerged_ratio;
 
@@ -2265,7 +2291,7 @@ void Rope::_apply_forces() {
 		}
 
 		// advance
-		particle_idx ++;
+		particle_idx++;
 	}
 }
 

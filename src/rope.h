@@ -30,17 +30,16 @@ class RopeAnchorsBase;
 class RopeAppearance;
 class LiquidArea;
 
-
 class Rope : public GeometryInstance3D {
 	GDCLASS(Rope, GeometryInstance3D)
 
 public:
 	enum Distribution {
-		ABSOLUTE=0,  // Distance is measured from the start or end of the rope.
-		RELATIVE,    // Distance is a relative offset from previous anchor. Offsets can be negative.
-		UNIFORM,     // Anchors are distributed uniformly along the rope. Offsets are ignored.
-		SCALAR,      // Distance is a scalar multiple of the rope length, where 0=start and 1=end
-		REAL,		 // Distance is auto calculated from the initial anchor transforms.
+		ABSOLUTE = 0, // Distance is measured from the start or end of the rope.
+		RELATIVE, // Distance is a relative offset from previous anchor. Offsets can be negative.
+		UNIFORM, // Anchors are distributed uniformly along the rope. Offsets are ignored.
+		SCALAR, // Distance is a scalar multiple of the rope length, where 0=start and 1=end
+		REAL, // Distance is auto calculated from the initial anchor transforms.
 	};
 
 	enum From {
@@ -53,41 +52,47 @@ private:
 	RID _physics_body;
 	bool _is_jolt = false;
 	LocalVector<RID> _instances;
-	LiquidArea *_liquid_area = nullptr;
+	uint64_t _liquid_area_id = 0;
 
 	// Anchor point along the rope.
 	struct Anchor {
 		float offset = 0.0; // Distance in meters along rope. positive from start.
-		bool from_end = false;	// Distance is measured from end instead of start.
+		bool from_end = false; // Distance is measured from end instead of start.
 		Transform3D transform = Transform3D(); // The transform of the anchor in world space
 		AnchorBehavior behavior = AnchorBehavior::ANCHORED;
 		float friction = 0.5f; // How much this anchor resists sliding when behavior is GUIDED or SLIDING.
-		RigidBody3D *rigid_body = nullptr; // RigidBody to apply forces to
-		Node3D *node = nullptr; // If using a node for an anchor, transform and behavior may be derrived from it.
+		uint64_t rigid_body_id = 0; // RigidBody to apply forces to
+		uint64_t node_id = 0; // Unique ID for this anchor, used for tracking across updates.
 		NodePath node_path = "";
 		float _abs_offset = 0.0; // Absolute offset along the rope, calculated from start
 
 		int64_t particle_idx = -1; // The index of the particle this anchor is attached to, calculated on rebuild.
 
 		Anchor() = default;
-		Anchor(float p, Transform3D t, AnchorBehavior b = AnchorBehavior::ANCHORED, RigidBody3D *rb = nullptr, Node3D *n = nullptr) :
-				offset(p), transform(t), behavior(b), rigid_body(rb), node(n) {}
+		Anchor(float p, Transform3D t, AnchorBehavior b = AnchorBehavior::ANCHORED,
+				RigidBody3D *rb = nullptr, Node3D *n = nullptr) {
+			rigid_body_id = rb ? rb->get_instance_id() : 0;
+			node_id = n ? n->get_instance_id() : 0;
+		}
 
 		bool operator<(const Anchor &other) const {
 			return _abs_offset < other._abs_offset;
 		}
 
 		bool operator==(const Anchor &other) const {
-			return offset == other.offset && \
-				transform == other.transform && \
-				behavior == other.behavior && \
-				rigid_body == other.rigid_body && \
-				node == other.node;
+			return offset == other.offset &&
+					transform == other.transform &&
+					behavior == other.behavior &&
+					rigid_body_id == other.rigid_body_id &&
+					node_id == other.node_id;
 		}
 
-		// cast to RopeAnchor if possible, otherwise return nullptr
-		RopeAnchor *operator()() {
-			return Object::cast_to<RopeAnchor>(node);
+		Node3D *get_node() const {
+			return Object::cast_to<Node3D>(ObjectDB::get_instance(node_id));
+		}
+
+		RigidBody3D *get_rigid_body() const {
+			return Object::cast_to<RigidBody3D>(ObjectDB::get_instance(rigid_body_id));
 		}
 	};
 
@@ -130,7 +135,7 @@ private:
 	LocalVector<Transform3D> _links; // the transforms for the points between each particle, always N-1 in count.
 	bool _rebuild = true;
 	bool _is_rebuilding = false;
-	
+
 	bool _rope_dirty = true;
 	bool _anchors_dirty = true;
 	bool _attachments_dirty = true;
@@ -219,9 +224,9 @@ protected:
 	RopeAnchor *_get_rope_anchor(int anchor_idx) const;
 
 	bool _is_anchor_free(int anchor_idx, int anchor_count) const;
-	bool _is_anchor_fixed(int anchor_idx, int anchor_count) const;	// ANCHORED || GUIDED
-	bool _is_anchor_moving(int anchor_idx, int anchor_count) const;	// SLIDING || TOWING
-	bool _is_rope_sliding(int anchor_idx, int anchor_count) const;	// SLIDING || GUIDED
+	bool _is_anchor_fixed(int anchor_idx, int anchor_count) const; // ANCHORED || GUIDED
+	bool _is_anchor_moving(int anchor_idx, int anchor_count) const; // SLIDING || TOWING
+	bool _is_rope_sliding(int anchor_idx, int anchor_count) const; // SLIDING || GUIDED
 
 	// Cross-reference utilities between particles and anchors.
 	int _get_particle_for_offset(float abs_offset) const;
@@ -263,7 +268,6 @@ protected:
 	void _on_appearance_changed();
 
 public:
-
 	Rope();
 	Rope(const Rope &other);
 	virtual ~Rope() override;
@@ -292,11 +296,11 @@ public:
 #pragma region Properties
 	// length of rope in meters
 	PROPERTY_GET_SET(float, rope_length, _queue_rope_rebuild())
-	
+
 	// rope diameter
 	void set_rope_width(float val);
 	float get_rope_width() const;
-	
+
 	// number of particles per meter in simulation
 	void set_particles_per_meter(float val);
 	float get_particles_per_meter() const;
@@ -326,7 +330,7 @@ public:
 	// Set transform
 	void set_anchor_transform(int idx, const Transform3D &transform);
 	Transform3D get_anchor_transform(int idx) const;
-	
+
 	// Set anchor behavior
 	void set_anchor_behavior(int idx, AnchorBehavior behavior);
 	AnchorBehavior get_anchor_behavior(int idx) const;
@@ -345,10 +349,10 @@ public:
 	// Anchor distribution mode
 	void set_anchor_distribution(int val);
 	int get_anchor_distribution() const;
-	
+
 	// Get the anchor rigidbody
 	void set_anchor_rigidbody(int idx, RigidBody3D *body);
-	RigidBody3D* get_anchor_rigidbody(int idx) const;
+	RigidBody3D *get_anchor_rigidbody(int idx) const;
 #pragma endregion
 
 #pragma region Attachments

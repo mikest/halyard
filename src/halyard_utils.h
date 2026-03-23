@@ -7,7 +7,7 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 // Enabled/disable performance testing data collection
-#define PERFORMANCE_TESTING 1
+#define PERFORMANCE_TESTING 0
 
 using namespace godot;
 namespace halyard {
@@ -79,7 +79,7 @@ public:
 	inline ScopedTimer(const char *name, TimerStats *stats) :
 			_name(name), _stats(stats) {
 		_start_usec = Time::get_singleton()->get_ticks_usec();
-		_performance_test_depth ++;
+		_performance_test_depth++;
 	}
 
 	inline ~ScopedTimer() {
@@ -91,7 +91,7 @@ public:
 		if (_stats->call_count % 1000 == 0) {
 			double avg = _stats->get_average_usec();
 			String indent;
-			for( int i=0; i<_performance_test_depth-1; i++ )
+			for (int i = 0; i < _performance_test_depth - 1; i++)
 				indent += "  ";
 			Dictionary params;
 			params["indent"] = indent;
@@ -103,7 +103,7 @@ public:
 
 			_stats->reset();
 		}
-		_performance_test_depth --;
+		_performance_test_depth--;
 	}
 };
 #define SCOPED_TIMER(name)                           \
