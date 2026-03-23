@@ -13,28 +13,88 @@
 #include <godot_cpp/classes/wrapped.hpp>
 #include <godot_cpp/core/binder_common.hpp>
 #include <godot_cpp/core/gdvirtual.gen.inc>
+#include <godot_cpp/templates/hash_map.hpp>
 #include <godot_cpp/templates/local_vector.hpp>
 #include <godot_cpp/templates/pair.hpp>
 #include <godot_cpp/variant/typed_array.hpp>
 #include <godot_cpp/variant/variant.hpp>
 
 #include "property_utils.h"
+#include "rope_anchor.h"
 #include "rope_mesh.h"
 
 using namespace godot;
 
+class RopeAnchor;
 class RopeAnchorsBase;
-class RopeAttachmentsBase;
 class RopeAppearance;
 class LiquidArea;
 
 class Rope : public GeometryInstance3D {
 	GDCLASS(Rope, GeometryInstance3D)
 
+public:
+	enum Distribution {
+		ABSOLUTE = 0, // Distance is measured from the start or end of the rope.
+		RELATIVE, // Distance is a relative offset from previous anchor. Offsets can be negative.
+		UNIFORM, // Anchors are distributed uniformly along the rope. Offsets are ignored.
+		SCALAR, // Distance is a scalar multiple of the rope length, where 0=start and 1=end
+		REAL, // Distance is auto calculated from the initial anchor transforms.
+	};
+
+	enum From {
+		Start = 0,
+		End = 1,
+	};
+
+private:
 	Ref<RopeMesh> _rope_mesh;
 	RID _physics_body;
+	bool _is_jolt = false;
 	LocalVector<RID> _instances;
-	LiquidArea *_liquid_area = nullptr;
+	uint64_t _liquid_area_id = 0;
+
+	// Anchor point along the rope.
+	struct Anchor {
+		float offset = 0.0; // Distance in meters along rope. positive from start.
+		bool from_end = false; // Distance is measured from end instead of start.
+		Transform3D transform = Transform3D(); // The transform of the anchor in world space
+		AnchorBehavior behavior = AnchorBehavior::ANCHORED;
+		float friction = 0.5f; // How much this anchor resists sliding when behavior is GUIDED or SLIDING.
+		uint64_t rigid_body_id = 0; // RigidBody to apply forces to
+		uint64_t node_id = 0; // Unique ID for this anchor, used for tracking across updates.
+		NodePath node_path = "";
+		float _abs_offset = 0.0; // Absolute offset along the rope, calculated from start
+
+		int64_t particle_idx = -1; // The index of the particle this anchor is attached to, calculated on rebuild.
+
+		Anchor() = default;
+		Anchor(float p, Transform3D t, AnchorBehavior b = AnchorBehavior::ANCHORED,
+				RigidBody3D *rb = nullptr, Node3D *n = nullptr) {
+			rigid_body_id = rb ? rb->get_instance_id() : 0;
+			node_id = n ? n->get_instance_id() : 0;
+		}
+
+		bool operator<(const Anchor &other) const {
+			return _abs_offset < other._abs_offset;
+		}
+
+		bool operator==(const Anchor &other) const {
+			return offset == other.offset &&
+					transform == other.transform &&
+					behavior == other.behavior &&
+					rigid_body_id == other.rigid_body_id &&
+					node_id == other.node_id;
+		}
+
+		Node3D *get_node() const {
+			return Object::cast_to<Node3D>(ObjectDB::get_instance(node_id));
+		}
+
+		RigidBody3D *get_rigid_body() const {
+			return Object::cast_to<RigidBody3D>(ObjectDB::get_instance(rigid_body_id));
+		}
+	};
 
 	// Rope particle, segments connect between particles.
 	struct Particle {
@@ -46,19 +106,40 @@ class Rope : public GeometryInstance3D {
 		Vector3 N = Vector3(0, 0, 0);
 		Vector3 B = Vector3(0, 0, 0);
 
-		bool attached = false;
+		int64_t anchor_idx = -1;
+		float stretch = 0.0;
+		int behavior = FREE;
+
 		RID shape;
 
 		Particle() = default;
 		~Particle() = default;
+
+		void set_position(const Vector3 &position) {
+			pos_cur = position;
+			pos_prev = position;
+		}
+
+		bool is_free() const { return behavior == FREE; }
+		bool is_fixed() const { return behavior == ANCHORED || behavior == GUIDED; }
+		bool is_moving() const { return behavior == SLIDING || behavior == TOWING; }
+		bool is_sliding() const { return behavior == SLIDING || behavior == GUIDED; }
 	};
 
 	// internal state
+
+	Distribution _anchor_distribution = Distribution::ABSOLUTE;
+	LocalVector<Anchor> _anchors;
 	LocalVector<Particle> _particles; // the individual points in the simulation
 	LocalVector<Transform3D> _frames; // the transform frame for each LOD point along the rope
 	LocalVector<Transform3D> _links; // the transforms for the points between each particle, always N-1 in count.
 	bool _rebuild = true;
-	bool _dirty = true;
+	bool _is_rebuilding = false;
+
+	bool _rope_dirty = true;
+	bool _anchors_dirty = true;
+	bool _attachments_dirty = true;
+
 	double _time = 0.0;
 	double _simulation_delta = 0.0;
 
@@ -69,6 +150,8 @@ class Rope : public GeometryInstance3D {
 
 	// rope geometry
 	float _rope_length = 4.0;
+	float _rope_width = 0.125;
+	float _particles_per_meter = 2.0;
 	int _grow_from = Start;
 	Ref<RopeAppearance> _appearance;
 
@@ -78,35 +161,39 @@ class Rope : public GeometryInstance3D {
 	int _stiffness_iterations = 2;
 	float _stiffness = 0.9;
 	float _friction = 0.5;
+	float _tension_force_scale = 1.0; // Multiplier for forces applied to attached bodies
+	float _max_tension_force = 1000.0; // Maximum force magnitude to prevent instability
 
 	// initial simulation
 	int _preprocess_time = 1.0;
 	bool _jitter_initial_position = true;
 
-	int _collision_layer = 1;
-	int _collision_mask = 1;
+	// collision.
+	int _collision_layer = 0;
+	int _collision_mask = 0;
 
-	// attachments
-	NodePath _start_anchor = ".";
-	Ref<RopeAnchorsBase> _anchors;
-	NodePath _end_anchor;
-
-	// forces
+	// wind
 	bool _apply_wind = false;
 	float _wind_scale = 20.0;
 	Vector3 _wind = Vector3(1, 0, 0);
 	Ref<FastNoiseLite> _wind_noise = nullptr;
 
+	// gravity
 	bool _apply_gravity = true;
 	Vector3 _gravity = Vector3(0, -9.8, 0);
 	float _gravity_scale = 1.0;
 
-	bool _apply_damping = true;
-	float _damping_factor = 100.0;
-
+	// buoyancy
 	bool _apply_buoyancy = false;
 	float _buoyancy_scale = 1.0; // float on surface
 	float _submerged_drag = 100.0; // crazy high drag when submerged
+
+	// damping
+	bool _apply_damping = true;
+	float _damping_factor = 100.0;
+
+	bool _debug = false;
+	Color _debug_color = Color(1, 1, 0);
 
 protected:
 	static void _bind_methods();
@@ -128,21 +215,40 @@ protected:
 	float get_current_rope_length() const;
 	float _get_average_segment_length() const;
 
-	int _get_index_for_position(float position) const;
+	// Anchors Property List
+	void _get_property_list(List<PropertyInfo> *p_list) const;
+	bool _set(const StringName &p_name, const Variant &p_property);
+	bool _get(const StringName &p_name, Variant &r_property) const;
 
 	// Anchors
-	void _update_anchors();
-	void _update_anchor(NodePath &anchor, float position);
-	bool _get_node_transform(const NodePath &path, Transform3D &xform) const;
+	void _internal_update_anchors();
+	void _update_particles_for_anchor(int anchor_idx);
+
+	RopeAnchor *_get_rope_anchor(int anchor_idx) const;
+
+	bool _is_anchor_free(int anchor_idx, int anchor_count) const;
+	bool _is_anchor_fixed(int anchor_idx, int anchor_count) const; // ANCHORED || GUIDED
+	bool _is_anchor_moving(int anchor_idx, int anchor_count) const; // SLIDING || TOWING
+	bool _is_rope_sliding(int anchor_idx, int anchor_count) const; // SLIDING || GUIDED
+
+	// Cross-reference utilities between particles and anchors.
+	int _get_particle_for_offset(float abs_offset) const;
+	int _particle_for_anchor(int anchor_idx) const;
+	int _anchor_for_particle(int particle_idx) const;
+	float _particle_stretch(int particle_idx) const;
 
 	// Physics
 	void _rebuild_rope();
+	void _rebuild_anchors();
 	void _queue_rope_rebuild();
 	bool _pop_rebuild();
 
 	void _update_physics(float delta, int iterations);
 	void _apply_chain_constraint(int from_idx);
+	void _apply_anchor_forces(Particle &p_particle, int p_anchor_idx, const Vector3 &tension, bool draw_debug = false);
+
 	void _stiff_rope(int interations);
+	void _balance_tension();
 	void _verlet_process(float delta);
 	void _apply_forces();
 	void _apply_constraints();
@@ -165,11 +271,6 @@ protected:
 	void _on_appearance_changed();
 
 public:
-	enum From {
-		Start = 0,
-		End = 1,
-	};
-
 	Rope();
 	Rope(const Rope &other);
 	virtual ~Rope() override;
@@ -195,62 +296,102 @@ public:
 	Transform3D get_link(int index) const;
 	TypedArray<Transform3D> get_all_links() const;
 
-	// subclassing callbacks
-
-	// These index ranges do not include the special cased start/end nodes.
-	GDVIRTUAL0RC(int, _get_anchor_count);
-	virtual int _get_anchor_count() const;
-
-	GDVIRTUAL0RC(int, _get_attachment_count);
-	virtual int _get_attachment_count() const;
-
-	// Return the position of the anchor along the rope in the range [-1, 0..1]
-	// If the position is -1, the anchor is disabled.
-	GDVIRTUAL1RC(float, _get_anchor_position, int);
-	virtual float _get_anchor_position(int idx) const;
-
-	GDVIRTUAL1RC(Transform3D, _get_anchor_transform, int);
-	virtual Transform3D _get_anchor_transform(int idx) const;
-
-	// Return the position of the attachment along the rope in the range [-1, 0..1]
-	// If the position is -1, the attachment is unattached.
-	GDVIRTUAL1RC(float, _get_attachment_position, int);
-	virtual float _get_attachment_position(int idx) const;
-
-	GDVIRTUAL1RC(NodePath, _get_attachment_nodepath, int);
-	virtual NodePath _get_attachment_nodepath(int idx) const;
-
-	GDVIRTUAL1RC(Transform3D, _get_attachment_transform, int);
-	Transform3D _get_attachment_transform(int idx) const;
-
-	// Exported Properties
+#pragma region Properties
+	// length of rope in meters
 	PROPERTY_GET_SET(float, rope_length, _queue_rope_rebuild())
+
+	// rope diameter
+	void set_rope_width(float val);
+	float get_rope_width() const;
+
+	// number of particles per meter in simulation
+	void set_particles_per_meter(float val);
+	float get_particles_per_meter() const;
+
 	PROPERTY_GET_SET(int, grow_from, {})
+	PROPERTY_GET_SET(bool, jitter_initial_position, {})
+#pragma endregion
+
+#pragma region Anchors
+	// Anchor management
+	void set_anchor_count(int count);
+	int get_anchor_count() const;
+	void clear_anchors();
+
+	// Offset from start or end of rope
+	void set_anchor_offset(int idx, float offset);
+	float get_anchor_offset(int idx) const;
+
+	// Change the end the offset will calculate from
+	void set_anchor_from(int idx, int from);
+	int get_anchor_from(int idx) const;
+
+	// This will also set the transform, rigidbody, (and behavior if the node is a RopeAnchor)
+	void set_anchor_nodepath(int idx, const NodePath &path);
+	NodePath get_anchor_nodepath(int idx) const;
+
+	// Set transform
+	void set_anchor_transform(int idx, const Transform3D &transform);
+	Transform3D get_anchor_transform(int idx) const;
+
+	// Set anchor behavior
+	void set_anchor_behavior(int idx, AnchorBehavior behavior);
+	AnchorBehavior get_anchor_behavior(int idx) const;
+
+	// Get anchor friction
+	void set_anchor_friction(int idx, float friction);
+	float get_anchor_friction(int idx) const;
+
+	// Get the computed absolute offset from start of rope for the given anchor index.
+	float get_anchor_abs_offset(int idx) const;
+
+	// Accessors for particle counts and positions.
+	int get_anchor_particle_count(int anchor_idx) const;
+	Vector3 get_anchor_particle_position(int anchor_idx, int particle_idx) const;
+
+	// Anchor distribution mode
+	void set_anchor_distribution(int val);
+	int get_anchor_distribution() const;
+
+	// Get the anchor rigidbody
+	void set_anchor_rigidbody(int idx, RigidBody3D *body);
+	RigidBody3D *get_anchor_rigidbody(int idx) const;
+#pragma endregion
+
+#pragma region Attachments
+	// int get_attachment_count(int idx) const;
+	// float get_attachment_position(int idx) const;
+	// NodePath get_attachment_nodepath(int idx) const;
+	// Transform3D get_attachment_transform(int idx) const;
+#pragma endregion
+
+#pragma region Subclassing
+	void _notify_anchors_changed();
+	void _notify_attachments_changed();
+
+	// Subclasses can override these to provide dynamic anchor lists after a _notify_anchors_changed
+	GDVIRTUAL0C(_update_anchors);
+	void _update_anchors() const;
+
+	GDVIRTUAL0C(_update_attachments);
+	void _update_attachments() const;
+
+	GDVIRTUAL1RC(Transform3D, _get_attachment_local_transform, int);
+	Transform3D _get_attachment_local_transform(int attach_idx) const;
+#pragma endregion
 
 	Ref<RopeAppearance> get_appearance() const;
 	void set_appearance(const Ref<RopeAppearance> &val);
 
-	// anchors
-	PROPERTY_GET_SET(NodePath, start_anchor, _queue_redraw())
-	PROPERTY_GET_SET(NodePath, end_anchor, _queue_redraw())
-
-	void set_anchors(const Ref<RopeAnchorsBase> &);
-	Ref<RopeAnchorsBase> get_anchors() const;
-
 	// appearance passthrough accessors
 #define APPEARENCE_ACCESSOR(m_type, m_name, m_default) \
 	m_type get_##m_name() const;
-	APPEARENCE_ACCESSOR(float, rope_width, 0.125)
 	int get_rope_sides() const;
 	APPEARENCE_ACCESSOR(float, rope_twist, 1.0)
 	APPEARENCE_ACCESSOR(int, rope_lod, 2)
 	APPEARENCE_ACCESSOR(Ref<Material>, material, nullptr)
-	APPEARENCE_ACCESSOR(NodePath, start_attachment, NodePath())
 	APPEARENCE_ACCESSOR(float, start_offset, 0.0)
-	APPEARENCE_ACCESSOR(NodePath, end_attachment, NodePath())
 	APPEARENCE_ACCESSOR(float, end_offset, 0.0)
-	APPEARENCE_ACCESSOR(Ref<RopeAttachmentsBase>, attachments, nullptr)
-	APPEARENCE_ACCESSOR(float, particles_per_meter, 2.0)
 #undef APPEARENCE_ACCESSOR
 
 	// simulation parameters
@@ -259,10 +400,11 @@ public:
 	PROPERTY_GET_SET(int, stiffness_iterations, {})
 	PROPERTY_GET_SET(float, stiffness, {})
 	PROPERTY_GET_SET(float, friction, {})
+	PROPERTY_GET_SET(float, tension_force_scale, {})
+	PROPERTY_GET_SET(float, max_tension_force, {})
 
 	// initial simulation
 	PROPERTY_GET_SET(float, preprocess_time, {})
-	PROPERTY_GET_SET(bool, jitter_initial_position, {})
 
 	int get_collision_layer() const;
 	void set_collision_layer(int layer);
@@ -287,6 +429,10 @@ public:
 
 	PROPERTY_GET_SET(bool, apply_damping, {})
 	PROPERTY_GET_SET(float, damping_factor, {})
+
+	PROPERTY_GET_SET(bool, debug, {})
+	PROPERTY_GET_SET(Color, debug_color, {})
 };
 
 VARIANT_ENUM_CAST(Rope::From);
+VARIANT_ENUM_CAST(Rope::Distribution);

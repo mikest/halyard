@@ -1,4 +1,4 @@
-[gd_scene load_steps=3 format=3 uid="uid://cdaegd7eyvro7"]
+[gd_scene format=3 uid="uid://cdaegd7eyvro7"]
 
 [ext_resource type="Script" uid="uid://bcdcm8n1fxhb2" path="res://addons/halyard/tests/stiffness_test.gd" id="1_e1fi5"]
 
@@ -7,79 +7,104 @@ rope_width = 0.125
 rope_lod = 8
 particles_per_meter = 10.0
 
-[node name="StiffnessTest" type="Node3D"]
+[node name="StiffnessTest" type="Node3D" unique_id=598514539]
 
-[node name="Node3D" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1579379, 0)
+[node name="Node3D" type="Node3D" parent="." unique_id=634887611]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.24111904, 0)
 script = ExtResource("1_e1fi5")
 
-[node name="Rope" type="Rope" parent="Node3D"]
+[node name="Rope" type="Rope" parent="Node3D" unique_id=133843186]
 rope_length = 2.0
-end_anchor = NodePath("Label3D")
+particles_per_meter = 10.0
+anchor_count = 1
 appearance = SubResource("RopeAppearance_pcr4g")
 stiffness = 1.0
+anchors/0/offset = 0.0
+anchors/0/from = 0
+anchors/0/node_path = NodePath(".")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0)
+custom_aabb = AABB(-0.0625, -2.004749, -0.14151564, 0.35371804, 2.067249, 0.65198493)
 
-[node name="Label3D" type="Label3D" parent="Node3D/Rope"]
+[node name="Label3D" type="Label3D" parent="Node3D/Rope" unique_id=520122757]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 0)
 billboard = 1
 text = "Stiffness: 1.0
 Iterations: 2"
 vertical_alignment = 2
 
-[node name="Rope2" type="Rope" parent="Node3D"]
+[node name="Rope2" type="Rope" parent="Node3D" unique_id=977216414]
 rope_length = 2.0
-end_anchor = NodePath("Label3D")
+particles_per_meter = 10.0
+anchor_count = 1
 appearance = SubResource("RopeAppearance_pcr4g")
 stiffness_iterations = 10
 stiffness = 1.0
+anchors/0/offset = 0.0
+anchors/0/from = 0
+anchors/0/node_path = NodePath(".")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1)
+custom_aabb = AABB(-0.0625, -0.59625626, -0.64355373, 0.89999485, 0.65875626, 0.8366982)
 
-[node name="Label3D" type="Label3D" parent="Node3D/Rope2"]
+[node name="Label3D" type="Label3D" parent="Node3D/Rope2" unique_id=653629553]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 0)
 billboard = 1
 text = "Stiffness: 1.0
 Iterations: 10"
 vertical_alignment = 2
 
-[node name="Rope3" type="Rope" parent="Node3D"]
+[node name="Rope3" type="Rope" parent="Node3D" unique_id=1950546988]
 rope_length = 2.0
-end_anchor = NodePath("Label3D")
+particles_per_meter = 10.0
+anchor_count = 1
 appearance = SubResource("RopeAppearance_pcr4g")
 stiffness_iterations = 10
 stiffness = 1.8
+anchors/0/offset = 0.0
+anchors/0/from = 0
+anchors/0/node_path = NodePath(".")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 3)
+custom_aabb = AABB(-0.0625, -1.7594692, -0.14425373, 0.58330667, 1.8219692, 0.520139)
 
-[node name="Label3D" type="Label3D" parent="Node3D/Rope3"]
+[node name="Label3D" type="Label3D" parent="Node3D/Rope3" unique_id=996303367]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 0)
 billboard = 1
 text = "Stiffness: 1.8
 Iterations: 10"
 vertical_alignment = 2
 
-[node name="Rope4" type="Rope" parent="Node3D"]
+[node name="Rope4" type="Rope" parent="Node3D" unique_id=2057226503]
 rope_length = 2.0
-end_anchor = NodePath("Label3D")
+particles_per_meter = 10.0
+anchor_count = 1
 appearance = SubResource("RopeAppearance_pcr4g")
 stiffness = 0.5
+anchors/0/offset = 0.0
+anchors/0/from = 0
+anchors/0/node_path = NodePath(".")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, -1)
+custom_aabb = AABB(-0.18922251, -2.6000361, -0.43859053, 0.33840615, 2.6625361, 0.7550009)
 
-[node name="Label3D" type="Label3D" parent="Node3D/Rope4"]
+[node name="Label3D" type="Label3D" parent="Node3D/Rope4" unique_id=1839053040]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 0)
 billboard = 1
 text = "Stiffness: 0.5
 Iterations: 2"
 vertical_alignment = 2
 
-[node name="Rope5" type="Rope" parent="Node3D"]
+[node name="Rope5" type="Rope" parent="Node3D" unique_id=828103803]
 rope_length = 2.0
-end_anchor = NodePath("Label3D")
+particles_per_meter = 10.0
+anchor_count = 1
 appearance = SubResource("RopeAppearance_pcr4g")
 stiffness_iterations = 5
 stiffness = 1.8
+anchors/0/offset = 0.0
+anchors/0/from = 0
+anchors/0/node_path = NodePath(".")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 2)
+custom_aabb = AABB(-0.33199912, -1.9238559, -0.4951688, 0.4066401, 1.9863559, 0.5576688)
 
-[node name="Label3D" type="Label3D" parent="Node3D/Rope5"]
+[node name="Label3D" type="Label3D" parent="Node3D/Rope5" unique_id=1003593747]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 0)
 billboard = 1
 text = "Stiffness: 1.8

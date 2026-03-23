@@ -4,6 +4,7 @@ compatibility_minimum = "4.3"
 
 [icons]
 Rope = "./icons/Rope.svg"
+RopeAnchor = "./icons/RopeAnchor.svg"
 RopePositions = "./icons/RopePositions.svg"
 RopeAppearance = "./icons/RopeAppearance.svg"
 RopeAnchorPositions = "./icons/RopePositions.svg"

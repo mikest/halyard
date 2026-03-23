@@ -478,8 +478,8 @@ Color WaveSampler::_sample_image(const Ref<Image> &p_image, const Vector2 &uv, c
 	}
 
 	// Handle wrapping (fract in GLSL)
-	float u = Math::fmod(uv.x, 1.0f);
-	float v = Math::fmod(uv.y, 1.0f);
+	float u = Math::fmod((float)uv.x, 1.0f);
+	float v = Math::fmod((float)uv.y, 1.0f);
 	if (u < 0.0f)
 		u += 1.0f;
 	if (v < 0.0f)

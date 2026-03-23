@@ -87,7 +87,7 @@ Transform3D LiquidArea::get_liquid_transform(const Vector3 &global_point) const 
 
 	update_transforms_for_points(points, ret_val);
 
-	return ret_val.size() > 0 ? ret_val[0] : get_global_transform();
+	return ret_val.size() > 0 ? (Transform3D)ret_val[0] : get_global_transform();
 }
 
 void LiquidArea::update_transforms_for_points(const PackedVector3Array &global_points,
@@ -98,7 +98,13 @@ void LiquidArea::update_transforms_for_points(const PackedVector3Array &global_p
 
 		// accumulate all sampled transforms
 		if (_show_debug) {
+			int xform_count = r_transforms.size();
 			int point_count = global_points.size();
+			if (xform_count != point_count) {
+				ERR_PRINT_ONCE("update_transforms_for_points: returned transform count does not match point count.");
+				return;
+			}
+
 			for (int i = 0; i < point_count; i++) {
 				Transform3D area_transform = r_transforms[i];
 				const_cast<LiquidArea *>(this)->_sampled_transforms.append(area_transform);
