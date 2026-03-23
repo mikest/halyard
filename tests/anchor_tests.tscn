@@ -9,7 +9,6 @@ albedo_color = Color(1, 0, 0, 1)
 [sub_resource type="RopeAppearance" id="RopeAppearance_1jhvu"]
 rope_sides = 64
 rope_lod = 4
-particles_per_meter = 4.0
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mcmdf"]
 albedo_color = Color(0, 0.75, 1, 1)
@@ -21,6 +20,7 @@ anchor_count = 5
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath(".")
+anchors/0/friction = 0.5
 anchors/1/offset = 1.0
 anchors/1/from = 0
 anchors/1/node_path = NodePath("Anchor1")
@@ -33,6 +33,7 @@ anchors/3/node_path = NodePath("Anchor3")
 anchors/4/offset = 0.0
 anchors/4/from = 1
 anchors/4/node_path = NodePath("EndAnchor")
+custom_aabb = AABB(-0.0625, -0.49542186, -0.06537922, 2.125, 0.5579219, 0.12912999)
 
 [node name="Anchor1" type="RopeAnchor" parent="RelaxedRope" unique_id=1554653868]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0, 0)
@@ -50,11 +51,10 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
 rope_length = 1.0
 anchor_count = 5
 stiffness = 0.1
-collision_layer = 0
-collision_mask = 0
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath(".")
+anchors/0/friction = 0.5
 anchors/1/offset = 0.25
 anchors/1/from = 0
 anchors/1/node_path = NodePath("Anchor1")
@@ -68,6 +68,7 @@ anchors/4/offset = 1.0
 anchors/4/from = 0
 anchors/4/node_path = NodePath("EndAnchor")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1)
+custom_aabb = AABB(-0.0625, -0.0625, -0.0625, 2.125, 0.125, 0.125)
 
 [node name="Anchor1" type="RopeAnchor" parent="StretchedRope" unique_id=795935098]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0, 0)
@@ -83,11 +84,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
 
 [node name="RelaxedRope2" type="Rope" parent="." unique_id=2104671561]
 rope_width = 0.25
-anchor_count = 5
 appearance = SubResource("RopeAppearance_mcmdf")
+anchor_count = 5
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath(".")
+anchors/0/friction = 0.5
 anchors/1/offset = 1.0
 anchors/1/from = 0
 anchors/1/node_path = NodePath("Anchor1")
@@ -102,6 +104,7 @@ anchors/4/from = 1
 anchors/4/node_path = NodePath("EndAnchor")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.75)
 material_override = SubResource("StandardMaterial3D_ntxkk")
+custom_aabb = AABB(-0.125, -0.5579219, -0.12840271, 2.25, 0.6829219, 0.2551955)
 
 [node name="Anchor1" type="RopeAnchor" parent="RelaxedRope2" unique_id=1437596562]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0, 0)
@@ -118,14 +121,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
 [node name="StretchedRope2" type="Rope" parent="." unique_id=604185530]
 rope_length = 1.0
 rope_width = 0.25
-anchor_count = 5
 appearance = SubResource("RopeAppearance_mcmdf")
+anchor_count = 5
 stiffness = 0.1
-collision_layer = 0
-collision_mask = 0
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath(".")
+anchors/0/friction = 0.5
 anchors/1/offset = 0.25
 anchors/1/from = 0
 anchors/1/node_path = NodePath("Anchor1")
@@ -140,6 +142,7 @@ anchors/4/from = 1
 anchors/4/node_path = NodePath("EndAnchor")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2.75)
 material_override = SubResource("StandardMaterial3D_ntxkk")
+custom_aabb = AABB(-0.125, -0.125, -0.125, 2.25, 0.25, 0.25)
 
 [node name="Anchor1" type="RopeAnchor" parent="StretchedRope2" unique_id=216134491]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0, 0)
@@ -156,11 +159,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
 [node name="GuidedRope3" type="Rope" parent="." unique_id=1461179854]
 rope_width = 0.25
 particles_per_meter = 4.0
-anchor_count = 5
 appearance = SubResource("RopeAppearance_1jhvu")
+anchor_count = 5
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath(".")
+anchors/0/friction = 0.5
 anchors/1/offset = 1.0
 anchors/1/from = 0
 anchors/1/node_path = NodePath("Guided1")
@@ -175,6 +179,7 @@ anchors/4/from = 1
 anchors/4/node_path = NodePath("EndAnchor")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3.75)
 material_override = SubResource("StandardMaterial3D_mcmdf")
+custom_aabb = AABB(-0.125, -0.63941467, -0.12532735, 2.25, 0.76441467, 0.25085807)
 
 [node name="Guided1" type="RopeAnchor" parent="GuidedRope3" unique_id=2035063579]
 behavior = 2
@@ -195,14 +200,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
 rope_length = 1.0
 rope_width = 0.25
 particles_per_meter = 4.0
-anchor_count = 5
 appearance = SubResource("RopeAppearance_1jhvu")
+anchor_count = 5
 stiffness = 0.1
-collision_layer = 0
-collision_mask = 0
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath(".")
+anchors/0/friction = 0.5
 anchors/1/offset = 0.25
 anchors/1/from = 0
 anchors/1/node_path = NodePath("Anchor1")
@@ -217,6 +221,7 @@ anchors/4/from = 0
 anchors/4/node_path = NodePath("EndAnchor")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 4.75)
 material_override = SubResource("StandardMaterial3D_mcmdf")
+custom_aabb = AABB(-0.125, -0.125, -0.125, 2.25, 0.25, 0.25)
 
 [node name="Anchor1" type="RopeAnchor" parent="StretchedRope3" unique_id=941607]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0, 0)
@@ -234,38 +239,38 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
 rope_length = 1.0
 rope_width = 0.25
 particles_per_meter = 4.0
-anchor_count = 1
 appearance = SubResource("RopeAppearance_1jhvu")
+anchor_count = 1
 stiffness = 0.1
-collision_layer = 0
-collision_mask = 0
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath("")
 anchors/0/behavior = 0
+anchors/0/friction = 0.5
 anchors/0/position = Vector3(0, 0, 5.75)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 5.75)
 material_override = SubResource("StandardMaterial3D_mcmdf")
+custom_aabb = AABB(-0.125, -1.3284907, -0.125, 0.25469247, 1.4534907, 0.25212717)
 
 [node name="EndAnchored" type="Rope" parent="." unique_id=2023291037]
 rope_length = 1.0
 rope_width = 0.25
 particles_per_meter = 4.0
-anchor_count = 2
 appearance = SubResource("RopeAppearance_1jhvu")
+anchor_count = 2
 stiffness = 0.1
-collision_layer = 0
-collision_mask = 0
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath("")
 anchors/0/behavior = -1
+anchors/0/friction = 0.5
 anchors/0/position = Vector3(0, 0, 6.75)
 anchors/1/offset = 0.0
 anchors/1/from = 1
 anchors/1/node_path = NodePath("EndAnchor")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 6.75)
 material_override = SubResource("StandardMaterial3D_mcmdf")
+custom_aabb = AABB(-0.125, -1.330793, -0.125, 2.300904, 1.455793, 0.2916608)
 
 [node name="EndAnchor" type="RopeAnchor" parent="EndAnchored" unique_id=166810736]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
