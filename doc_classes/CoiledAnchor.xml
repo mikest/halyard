@@ -1,37 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<class name="CoiledAnchor" inherits="RopeAnchor" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
-    <brief_description>
+<class name="CoiledAnchor" inherits="RopeAnchor"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
 		A [RopeAnchor] that generates positions arranged in a coil/helix pattern.
 	</brief_description>
-    <description>
-		CoiledAnchor produces a series of anchor positions wound in a helix around the local X axis. It is useful for representing rope wound around a drum, winch, or spool. The coil geometry is controlled by [member radius], [member turns_per_layer], and [member clockwise]. The number of generated positions depends on [member coiled] (the length of rope that is coiled) and [member particles_per_meter].
+	<description>
+		[CoiledAnchor] produces a series of anchor positions wound in a helix around the local X axis. It is useful for representing rope wound around a drum, winch, or spool.
+		The coil winds outward in layers as more rope is added. Each layer reverses direction so that the rope winds back across the drum before starting the next layer, matching real-world spooling behavior. Layer radius grows by [code]rope_width * 0.25[/code] per layer and turns advance by [code]rope_width * 0.6[/code] per turn.
+		The total number of anchor positions is [code]int(coiled_length * particles_per_meter)[/code]. This should match the [member Rope.particles_per_meter] of the rope that references this anchor so that particle spacing is consistent.
+		After each rebuild, [member exit_angle] is updated with the angle (in the YZ plane, in radians) at which the rope exits the coil at the outermost position.
 	</description>
-    <tutorials>
-    </tutorials>
-    <methods>
-    </methods>
-    <members>
-        <member name="clockwise" type="bool" setter="set_clockwise" getter="get_clockwise" default="false">
-			If [code]true[/code], the coil winds clockwise when viewed from the positive X axis. Otherwise it winds counter-clockwise.
+	<tutorials>
+	</tutorials>
+	<methods>
+	</methods>
+	<members>
+		<member name="clockwise" type="bool" setter="set_clockwise" getter="get_clockwise"
+			default="false">
+			When [code]true[/code], the coil winds clockwise around the local X axis when viewed from the positive X direction. When [code]false[/code], it winds counter-clockwise.
 		</member>
-        <member name="radius" type="float" setter="set_radius" getter="get_radius" default="0.125">
-			The radius of the first layer of the coil, in meters.
+		<member name="coiled_length" type="float" setter="set_coiled_length"
+			getter="get_coiled_length" default="1.0">
+			The length of rope in meters represented by the coil. Together with [member particles_per_meter] this determines how many anchor positions are generated: [code]int(coiled_length * particles_per_meter)[/code].
 		</member>
-        <member name="turns_per_layer" type="float" setter="set_turns_per_layer" getter="get_turns_per_layer" default="2.0">
-			The number of full turns that fit in each layer before the coil advances to the next layer.
+		<member name="exit_angle" type="float" setter="" getter="get_exit_angle" default="0.0">
+			Read-only. The angle in radians (in the local YZ plane) at which the rope exits the outermost coil position. Computed automatically when the coil is rebuilt.
 		</member>
-        <member name="offset_turns" type="float" setter="set_offset_turns" getter="get_offset_turns" default="0.0">
-			An angular offset applied to each coil turn, in turns.
+		<member name="particles_per_meter" type="float" setter="set_particles_per_meter"
+			getter="get_particles_per_meter" default="2.0">
+			Number of anchor positions to generate per meter of [member coiled_length]. Should match the [member Rope.particles_per_meter] of the rope referencing this anchor to keep particle spacing consistent.
 		</member>
-        <member name="coiled" type="float" setter="set_coiled" getter="get_coiled" default="0.0">
-			The length of rope (in meters) that the coil represents. Together with [member particles_per_meter] this determines how many anchor positions are generated.
+		<member name="radius" type="float" setter="set_radius" getter="get_radius" default="0.25">
+			Radius of the innermost (first) layer of the coil, in meters. Each subsequent layer adds [code]rope_width * 0.25[/code] to the radius.
 		</member>
-        <member name="particles_per_meter" type="float" setter="set_particles_per_meter" getter="get_particles_per_meter" default="10.0">
-			The number of anchor positions to generate per meter of coiled rope.
+		<member name="rope_width" type="float" setter="set_rope_width" getter="get_rope_width"
+			default="0.125">
+			Width of the rope in meters. Used to compute inter-turn spacing ([code]rope_width * 0.6[/code]) and inter-layer radius growth ([code]rope_width * 0.25[/code]). Should match [member Rope.rope_width] of the rope referencing this anchor.
 		</member>
-        <member name="rope_width" type="float" setter="set_rope_width" getter="get_rope_width" default="0.01">
-			The width of the rope, used to compute layer and turn spacing within the coil.
+		<member name="turns_per_layer" type="float" setter="set_turns_per_layer"
+			getter="get_turns_per_layer" default="4.0">
+			Number of full turns that fit on each layer before the coil steps outward to the next layer. Lower values create wider, flatter coils; higher values create taller, denser coils.
 		</member>
-    </members>
+	</members>
 </class>

@@ -14,26 +14,19 @@ A high-performance, cross-platform rope & buoyancy simulation library. For all y
 - Automatic force feedback to attached RigidBody3D objects for realistic physics interactions.
 - Tunable force scaling and clamping for stability control.
 - Limitted collision detection and response.
-	- Bodies can collide with rope, modelled as a capsule chain.
+	- Bodies can collide with rope, modelled as a capsule chain (GodotPhysics3D only).
 	- Rope can collide with bodies, but is modelled as points.
-- Apply forces to an anchor with the _PullRope_ class.
 - Dynamically resize rope length for creating hoists.
 - Render rope as a mesh tube or as individual chain links.
 - Endcap and attachment support for rope details.
 - LOD scaling of generated rope mesh.
 - Smoothing of generated rope curve.
-- TODO:
-	- ~~External RigidBodies can apply forces to ropes~~
-	- ~~Ropes can be infinitely stiff, like in metal chains~~
-	- ~~PullRopes can transfer forces through anchors~~
-	- ~~Ropes preserve their orientation through anchors~~
-	- ~~Rope positions can specify their own Basis~~
 
 The attachment system can used to create complicated rigging arrangements like cargo nets, spider webs and ratlines.
 The anchors can be used to create the illusion of pulleys.
 
-### Buoyancy
 
+### Buoyancy
 ![Screenshot](screenshots/boat_hull.png)
 
 - Custom liquid heightmap sampling
@@ -43,16 +36,19 @@ The anchors can be used to create the illusion of pulleys.
 - Built-in Rope buoyancy.
 - Optional Auto-calculation of mass properties.
 
+
 ### Classes
-- <img src="icons/Buoyancy.svg" width=24/> Buoyancy - A component that makes its parent RigidBody3D float.
-- <img src="icons/CharacterBuoyancy.svg" width=24/> CharacterBuoyancy - A component that makes its parent CharacterBody3D float.
-- <img src="icons/LiquidArea.svg" width=24/> LiquidArea - An abstract representation of a liquid surface. Some assembly required.
 - <img src="icons/Rope.svg" width=24/> Rope - A virtual rope that can react to gravity, wind and waves.
+- <img src="icons/RopeAnchor.svg" width=24/> RopeAnchor - An anchor point that attaches, guides, or tows via a rope.
+- <img src="icons/RopeAnchor.svg" width=24/> CoiledAnchor - A RopeAnchor that generates coil/helix positions, for modelling rope wound around a drum or winch.
 - <img src="icons/RopeAppearance.svg" width=24/> RopeAppearance - A resource for describing the look of a Rope and its Attachments.
-- <img src="icons/RopePositions.svg" width=24/> RopeAnchorPositions - A resource for describing the location of rope anchors.
+
+- <img src="icons/RigidBuoyancy.svg" width=24/> RigidBuoyancy - A component that makes its parent RigidBody3D float.
+- <img src="icons/CharacterBuoyancy.svg" width=24/> CharacterBuoyancy - A component that makes its parent CharacterBody3D float.
+- <img src="icons/LiquidArea.svg" width=24/> LiquidArea - An abstract representation of a liquid surface. Some assembly required...
+
 
 ## Installation
-
 0. Install the build tools for your platform, same as you would for building godot.
 	See: https://docs.godotengine.org/en/stable/contributing/development/compiling/introduction_to_the_buildsystem.html
 
@@ -74,51 +70,26 @@ The anchors can be used to create the illusion of pulleys.
 	```
 4. Reload your project.
 
-## Basic Usage
 
+## Basic Usage
 1. Import the library into your project.
 	- NOTE: On 4.3 you may encounter errors related to SVG images on the first load. It should succeed on the second load.
 	- NOTE: On OSX you will have to work through explicitly allowing the dylibs to open.
 	- NOTE: One Windows you may also need to do this.
 	- You can avoid this by building from source. The repo is designed to be checked out directly into your addons folder for this reason.
+	- Jolt Physics has some caveats around collisions.
 2. Open the example scene and look around.
 2. Create a rope instance and configure its parameters.
 3. Attach rope ends to objects or positions. Rope details will be scaled to rope width, so model your attachments at 1:1 for a 1m thick rope.
 
+
 ## Rope Force Feedback
-
-Ropes automatically apply tension forces to attached RigidBody3D objects, enabling realistic physics interactions:
-
-```gdscript
-# Attach rope to a physics body
-$Rope.start_anchor = get_path_to($RigidBody3D)
-$Rope.end_anchor = get_path_to($AnotherRigidBody3D)
-
-# Tune force behavior
-$Rope.tension_force_scale = 1.0  # Force multiplier (0.0 = disabled, 1.0 = default, 5.0 = very strong)
-$Rope.max_tension_force = 1000.0  # Maximum force in Newtons to prevent instability
-```
-
-### Tuning Guidelines
-
-**For weak/soft ropes (elastic behavior):**
-- `tension_force_scale = 0.1 - 0.5`
-- `stiffness = 0.5 - 0.7`
-
-**For strong/rigid ropes (chain-like behavior):**
-- `tension_force_scale = 2.0 - 5.0`
-- `stiffness = 0.9 - 1.2`
-- `max_tension_force = 5000+` (for heavy objects)
-
-**Troubleshooting:**
-- Bodies flying apart? Lower `max_tension_force` or `tension_force_scale`
-- Rope too weak? Increase `tension_force_scale` or `max_tension_force`
-- Unstable simulation? Increase `stiffness_iterations` (default: 2)
+Ropes automatically apply tension forces to attached `RigidBody3D` objects through `RopeAnchor`s, enabling realistic physics interactions.
 
 See `FAQ.md` for more troubleshooting tips.
 
-## Demo
 
+## Demo
 See `example.tscn` for an example of using this library to generate ship _ratlines_.
 
 You can also find a variety of tests that demonstrate different capabilities in the `tests folder.
@@ -130,42 +101,42 @@ Some examples:
 - `attachment_test.tscn`: Various attachment behaviors.
 - `buoyancy_test.tscn`: Various buoyancy examples.
 - `chain_test.tscn`: Testing out chain link rendering.
-- `pull_test.tscn`: Test out the `PullRope` class with an offset anchor on a RigidBody
+- `coil_test.tscn`: Test out the `CoiledAnchor` class for modelling rope on a drum.
+- `pull_test.tscn`: Test out an offset anchor on a RigidBody.
 - `stretch_test.tscn`: Test out stretching behaviors
-- `swing_test.tscn`: Test out a pair of PullRopes pulling on a RigidBody3D.
+- `swing_test.tscn`: Test out a pair of anchors pulling on a RigidBody3D.
 - `vine_test.tscn`: Test out chaining ropes together in branching structures.
-- `web_test.tscn`: Test out weaving multiple ropes together with shared anchor and attachment resources.
+- `web_test.tscn`: Test out weaving multiple ropes together with shared anchor and attachment 
+resources.
+- others...
+
 
 ## Documentation
-
 - API reference: See the built in documentation for the classes.
 - Build instructions: See `SConstruct`
 
-## Roadmap
-
+### Roadmap
 Here's some things I'd like to add to this library in the fullness of time.
 
-### Rope
-- ✅ Force feedback to attached RigidBody3D objects
-- Implement pulleys and force transfer between ends. Remove PullRope.
+#### Rope
 - Rope uses real mass properties
 - Full bidirectional collision support
 - Rope twist torque.
 - Optional torque application at attachment offset points
 
-### Buoyancy
+#### Buoyancy
 - Use compute shader for buoyancy mesh volume integrator.
 - Clean up Ocean wandering clipmap and use compute shader for liquid sampling.
 - Heightmap & current vector map for ocean so we can stick to the rivers and the lakes that we're used to.
 
-## Wind/Sails
+#### Wind/Sails
 - Softbody sail pattern generator.
 - Wind/Sail force applicator.
 
-## Contributing
 
+## Contributing
 Pull requests and issues are welcome! Please see `CONTRIBUTING.md` for guidelines.
 
-## License
 
+## License
 This project is licensed under the MIT License. See `LICENSE.md` for details.

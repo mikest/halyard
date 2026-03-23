@@ -2,43 +2,76 @@
 <class name="RopeAnchor" inherits="Node3D" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
     <brief_description>
-		An anchor point for a Rope that can apply forces to a parent RigidBody3D.
+		An anchor point on a [Rope] that can optionally apply tension forces to a parent [RigidBody3D].
 	</brief_description>
     <description>
-		RopeAnchor is a Node3D that serves as an attachment point on a Rope. When parented to a RigidBody3D, it can apply tension forces at its position in the body's local coordinate space. The [member behavior] property controls how the anchor interacts with the rope.
+		[RopeAnchor] is a [Node3D] that serves as an attachment point along a [Rope]. Place it in the scene and assign its [NodePath] to one of the rope's anchor slots to make that section of rope follow the node's transform.
+		When parented to a [RigidBody3D], the [constant TOWING] and [constant SLIDING] behaviors enable the rope to apply tension forces back to the body using [method apply_force].
+		Subclasses can override [method get_particle_count] and [method get_particle_position] to provide multiple positions from a single anchor node, for example to represent a coiled drum or a pulley with multiple contact points.
+		Emits [signal anchor_changed] whenever a property that affects the anchor's geometry or behavior changes.
 	</description>
     <tutorials>
     </tutorials>
     <methods>
+        <method name="apply_force">
+            <return type="void" />
+            <param index="0" name="force" type="Vector3" />
+            <description>
+				Applies [param force] to the parent [RigidBody3D] at this anchor's global position. The offset from the body's origin is computed automatically. Has no effect if the parent is not a [RigidBody3D].
+			</description>
+        </method>
         <method name="get_parent_rigid_body" qualifiers="const">
             <return type="RigidBody3D" />
             <description>
 				Returns the parent node if it is a [RigidBody3D], otherwise returns [code]null[/code].
 			</description>
         </method>
-        <method name="apply_force">
-            <return type="void" />
-            <param index="0" name="force" type="Vector3" />
+        <method name="get_particle_count" qualifiers="virtual const">
+            <return type="int" />
             <description>
-				Applies a force to the parent [RigidBody3D] at this anchor's global position. The position is automatically converted to a global offset from the body's origin.
+				Returns the number of anchor positions this node provides. The base implementation always returns [code]1[/code]. Override in a subclass to supply multiple positions (e.g. for a coiled rope section). The rope uses the returned count to call [method get_particle_position] for each index.
+			</description>
+        </method>
+        <method name="get_particle_position" qualifiers="virtual const">
+            <return type="Vector3" />
+            <param index="0" name="idx" type="int" />
+            <description>
+				Returns the local-space position of the anchor at index [param idx]. The base implementation returns [code]Vector3(0, 0, 0)[/code] (the node's local origin). Override in a subclass to return a different position per index.
 			</description>
         </method>
     </methods>
     <members>
         <member name="behavior" type="int" setter="set_behavior" getter="get_behavior"
-            enum="RopeAnchor.Behavior" default="0">
-			The behavior mode of this anchor. See [enum Behavior] for available modes.
+            enum="AnchorBehavior" default="0">
+			Controls how the rope interacts with this anchor. See [enum AnchorBehavior] for available modes.
+		</member>
+        <member name="friction" type="float" setter="set_friction" getter="get_friction"
+            default="0.5">
+			Friction coefficient for this anchor. [code]0.0[/code] allows the rope to slide freely; [code]1.0[/code] makes it stick. Only used when [member behavior] is [constant GUIDED] or [constant SLIDING].
 		</member>
     </members>
+    <signals>
+        <signal name="anchor_changed">
+            <description>
+				Emitted whenever a property that affects the anchor's geometry or behavior changes, such as [member behavior] or [member friction].
+			</description>
+        </signal>
+    </signals>
     <constants>
-        <constant name="ANCHORED" value="0" enum="Behavior">
-			The rope cannot move this anchor point.
+        <constant name="FREE" value="-1" enum="AnchorBehavior">
+			The rope is unattached to this anchor. The anchor is ignored by the rope simulation.
 		</constant>
-        <constant name="TOWING" value="1" enum="Behavior">
-			The rope pulls on the parent rigid body at this point.
+        <constant name="ANCHORED" value="0" enum="AnchorBehavior">
+			The rope is fixed to this anchor and cannot slide through it. The anchor does not move.
 		</constant>
-        <constant name="GUIDED" value="2" enum="Behavior">
-			The rope travels freely through this point, but the rope cannot move the anchor.
+        <constant name="TOWING" value="1" enum="AnchorBehavior">
+			The rope is fixed to this anchor and pulls on its parent [RigidBody3D] via tension forces. Acts like [constant ANCHORED] if the parent is not a [RigidBody3D].
+		</constant>
+        <constant name="GUIDED" value="2" enum="AnchorBehavior">
+			The rope slides freely through this anchor (like a fairlead or ring). The anchor does not move, but the rope's speed through the point is controlled by [member friction].
+		</constant>
+        <constant name="SLIDING" value="3" enum="AnchorBehavior">
+			The rope slides through this anchor and also pulls on its parent [RigidBody3D] at the contact point. Combines [constant GUIDED] sliding behavior with [constant TOWING] force feedback.
 		</constant>
     </constants>
 </class>
