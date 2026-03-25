@@ -28,18 +28,16 @@ ring_segments = 8
 
 [node name="CoilTest" type="Node3D" unique_id=653013393 node_paths=PackedStringArray("chain", "drum", "coil", "guide", "hook")]
 script = ExtResource("1_ebii4")
-coiled_length = 0.0
+coiled_length = 3.7
 chain = NodePath("ChainCoil/Rope")
 drum = NodePath("ChainCoil/CoiledAnchor/Drum")
 coil = NodePath("ChainCoil/CoiledAnchor")
 guide = NodePath("RigidBody3D/ChainHole")
 hook = NodePath("Ball/Towing")
-tension = 0.85
 
 [node name="ChainCoil" type="RigidBody3D" parent="." unique_id=146080418]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.343)
-collision_layer = 0
-collision_mask = 7
+collision_mask = 0
 axis_lock_linear_y = true
 linear_damp = 1.0
 script = ExtResource("3_ebii4")
@@ -54,7 +52,6 @@ preprocess_time = 10.0
 stiffness_iterations = 20
 stiffness = 1.9
 tension_force_scale = 10.0
-collision_mask = 1
 collision_margin = 0.006
 anchors/0/offset = 0.0
 anchors/0/from = 0
@@ -62,7 +59,7 @@ anchors/0/node_path = NodePath("../CoiledAnchor/Drum")
 anchors/1/offset = 0.2
 anchors/1/from = 0
 anchors/1/node_path = NodePath("../CoiledAnchor")
-anchors/2/offset = 1.4820039
+anchors/2/offset = 5.224313
 anchors/2/from = 0
 anchors/2/node_path = NodePath("../../RigidBody3D/ChainHole")
 anchors/3/offset = 0.0
@@ -77,21 +74,20 @@ shape = SubResource("BoxShape3D_ebii4")
 mesh = SubResource("BoxMesh_x6pmj")
 
 [node name="CoiledAnchor" type="CoiledAnchor" parent="ChainCoil" unique_id=365617806]
-coiled_length = 0.0
+coiled_length = 3.7
 radius = 0.2
 turns_per_layer = 6.0
 rope_width = 0.15
 particles_per_meter = 12.0
 clockwise = true
-transform = Transform3D(-1, 4.4224834e-08, -1.0676823e-07, -1.06770116e-07, -0.7070941, 0.70709455, -4.4225615e-08, 0.70709455, 0.7070941, -0.25, 0.5, 0)
+transform = Transform3D(-1, 5.4369074e-09, 4.0153637e-08, 4.015433e-08, 0.2659255, 0.96397555, -5.4370304e-09, 0.96397555, -0.2659255, -0.25, 0.5, 0)
 
 [node name="Drum" type="RopeAnchor" parent="ChainCoil/CoiledAnchor" unique_id=1088114845]
 transform = Transform3D(-1, -2.1741165e-08, 8.467618e-08, 8.7422784e-08, -0.24868996, 0.9685832, -1.0323297e-14, 0.9685832, 0.24868996, 0, 0, 0)
 
 [node name="RigidBody3D" type="RigidBody3D" parent="." unique_id=1940158957]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.3841858e-07, 0.6283982, 0.13882363)
-collision_layer = 0
-collision_mask = 7
+collision_mask = 6
 gravity_scale = 0.0
 linear_damp = 2.0
 angular_damp = 2.0
@@ -116,6 +112,7 @@ skeleton = NodePath("../../ChainCoil")
 unique_name_in_owner = true
 transform = Transform3D(0.717835, 0, -0.696214, 0, 1, 0, 0.696214, 0, 0.717835, 1.3906288, -1.7488518, 3.689354)
 collision_layer = 4
+collision_mask = 3
 mass = 10.0
 linear_damp = 0.1
 angular_damp = 1.0

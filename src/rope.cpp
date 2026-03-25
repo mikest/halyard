@@ -29,6 +29,9 @@
 // dump initial conditions for debugging stretch grow directions.
 #define DEBUG_INITIAL_POS false
 
+// collision_layer support doesn't work yet
+#define ENABLE_COLLISION_LAYER false
+
 // Basis indexes
 const int X = 0;
 const int Y = 1;
@@ -152,8 +155,10 @@ void Rope::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_appearance"), &Rope::get_appearance);
 
 	// simulation
+#if ENABLE_COLLISION_LAYER
 	ClassDB::bind_method(D_METHOD("set_collision_layer", "collision_layer"), &Rope::set_collision_layer);
 	ClassDB::bind_method(D_METHOD("get_collision_layer"), &Rope::get_collision_layer);
+#endif
 
 	ClassDB::bind_method(D_METHOD("set_collision_mask", "collision_mask"), &Rope::set_collision_mask);
 	ClassDB::bind_method(D_METHOD("get_collision_mask"), &Rope::get_collision_mask);
@@ -205,7 +210,9 @@ void Rope::_bind_methods() {
 	EXPORT_PROPERTY_RANGED(Variant::FLOAT, tension_force_scale, Rope, "0.0,10.0,0.1");
 	EXPORT_PROPERTY(Variant::FLOAT, max_tension_force, Rope);
 
+#if ENABLE_COLLISION_LAYER
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "collision_layer", PROPERTY_HINT_LAYERS_3D_PHYSICS), "set_collision_layer", "get_collision_layer");
+#endif
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "collision_mask", PROPERTY_HINT_LAYERS_3D_PHYSICS), "set_collision_mask", "get_collision_mask");
 
 	EXPORT_PROPERTY_RANGED(Variant::FLOAT, collision_margin, Rope, "0.0,0.1,0.001");
@@ -477,12 +484,13 @@ void Rope::_rebuild_link_shape() {
 	// clear exclusion list and re-add all links with new shape
 	_exclusion_list.clear();
 
+#if ENABLE_COLLISION_LAYER
 	for (int idx = 0; idx < _links.size(); idx++) {
 		auto &link = _links[idx];
 		ps->body_add_shape(link.physics_body, _link_shape, Transform3D());
-
 		_exclusion_list.append(link.physics_body);
 	}
+#endif
 
 	if (_ray_cast.is_valid())
 		_ray_cast->set_exclude(_exclusion_list);
@@ -517,6 +525,7 @@ void Rope::_rebuild_links() {
 			_calculate_links_for_particles();
 
 			for (auto &link : _links) {
+#if ENABLE_COLLISION_LAYER
 				// create physics body
 				link.physics_body = ps->body_create();
 				if (link.physics_body.is_valid()) {
@@ -531,6 +540,7 @@ void Rope::_rebuild_links() {
 					ps->body_attach_object_instance_id(link.physics_body, get_instance_id());
 					// shape is set by _rebuild_link_shape.
 				}
+#endif
 
 				// have mesh? set it
 				if (mesh.is_valid()) {
@@ -554,9 +564,11 @@ void Rope::_update_links() {
 	auto ps = PhysicsServer3D::get_singleton();
 
 	for (const auto &link : _links) {
+#if ENABLE_COLLISION_LAYER
 		if (link.physics_body.is_valid()) {
 			ps->body_set_state(link.physics_body, PhysicsServer3D::BODY_STATE_TRANSFORM, link.xform);
 		}
+#endif
 
 		if (link.mesh_instance.is_valid()) {
 			rs->instance_set_transform(link.mesh_instance, link.xform);
@@ -1861,11 +1873,14 @@ void Rope::_draw_rope() {
 		// N-1 chain links per particles
 		Vector3 scale_vec(diameter, diameter, diameter);
 		for (auto &link : _links) {
-			// physics does run in editor.
 			Transform3D xform = link.xform;
+
+#if ENABLE_COLLISION_LAYER
+			// physics does not run in editor.
 			if (!is_editor && link.physics_body.is_valid()) {
 				xform = ps->body_get_state(link.physics_body, PhysicsServer3D::BODY_STATE_TRANSFORM);
 			}
+#endif
 
 			// xform.orthonormalize();
 			if (link.mesh_instance.is_valid()) {
@@ -1970,10 +1985,14 @@ void Rope::set_collision_layer(int layer) {
 	if (layer != _collision_layer) {
 		_collision_layer = layer;
 
+#if ENABLE_COLLISION_LAYER
 		auto ps = PhysicsServer3D::get_singleton();
 		for (auto &link : _links) {
-			ps->body_set_collision_layer(link.physics_body, _collision_layer);
+			if (link.physics_body.is_valid()) {
+				ps->body_set_collision_layer(link.physics_body, _collision_layer);
+			}
 		}
+#endif
 	}
 }
 
@@ -1982,11 +2001,17 @@ int Rope::get_collision_mask() const { return _collision_mask; }
 void Rope::set_collision_mask(int mask) {
 	if (mask != _collision_mask) {
 		_collision_mask = mask;
+		_ray_cast->set_collision_mask(_collision_mask);
+		_shape_cast->set_collision_mask(_collision_mask);
 
+#if ENABLE_COLLISION_LAYER
 		auto ps = PhysicsServer3D::get_singleton();
 		for (auto &link : _links) {
-			ps->body_set_collision_mask(link.physics_body, _collision_mask);
+			if (link.physics_body.is_valid()) {
+				ps->body_set_collision_mask(link.physics_body, _collision_mask);
+			}
 		}
+#endif
 	}
 }
 
@@ -2012,10 +2037,6 @@ void Rope::_apply_constraints() {
 		if (_collision_use_shape_cast) {
 			_collision_shape->set_radius(shape_radius);
 			_shape_cast->set_margin(_collision_margin);
-			_shape_cast->set_collision_mask(_collision_mask);
-		} else {
-			// Reuse member ray query to avoid allocation every frame
-			_ray_cast->set_collision_mask(_collision_mask);
 		}
 
 		int anchor_count = get_anchor_count();
@@ -2111,7 +2132,7 @@ void Rope::_update_physics(float delta, int iterations) {
 		_apply_forces();
 
 		// turn this off when using physics bodies.
-		// _apply_constraints();
+		_apply_constraints();
 		_verlet_process(delta);
 
 		_stiff_rope(_stiffness_iterations);
