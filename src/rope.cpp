@@ -29,6 +29,9 @@
 // dump initial conditions for debugging stretch grow directions.
 #define DEBUG_INITIAL_POS false
 
+// collision_layer support doesn't work yet
+#define ENABLE_COLLISION_LAYER false
+
 // Basis indexes
 const int X = 0;
 const int Y = 1;
@@ -37,15 +40,6 @@ const int Z = 2;
 Rope::Rope() {
 	_rope_mesh.instantiate();
 	set_base(_rope_mesh->get_rid());
-
-#if ENABLED_COLLISION_LAYER
-	auto ps = PhysicsServer3D::get_singleton();
-	_physics_body = ps->body_create();
-	ps->body_set_mode(_physics_body, PhysicsServer3D::BODY_MODE_STATIC);
-
-	// exclude self
-	_exclusion_list.append(_physics_body);
-#endif
 
 	// Initialize cached objects for reuse
 	_ray_cast.instantiate();
@@ -63,17 +57,6 @@ Rope::Rope() {
 
 	// disable scaling, we should never be scaled
 	set_disable_scale(true);
-
-#if ENABLED_COLLISION_LAYER
-	// test for jolt engine. we have to disable collision shapes when using jolt because they are too expensive to update every frame due to:
-	// https://github.com/godotengine/godot/issues/117737
-	auto physics_engine = ProjectSettings::get_singleton()->get_setting("physics/3d/physics_engine");
-	if (physics_engine == "Jolt Physics") {
-		_is_jolt = true;
-	} else {
-		_is_jolt = false;
-	}
-#endif
 }
 
 Rope::Rope(const Rope &other) {
@@ -83,11 +66,11 @@ Rope::~Rope() {
 	if (_appearance != nullptr)
 		_appearance->disconnect("changed", Callable(this, "_on_appearance_changed"));
 
-	_clear_instances();
+	_clear_links();
 
-#if ENABLED_COLLISION_LAYER
-	PhysicsServer3D::get_singleton()->free_rid(_physics_body);
-#endif
+	if (_link_shape.is_valid()) {
+		PhysicsServer3D::get_singleton()->free_rid(_link_shape);
+	}
 }
 
 #if 1 // Array binding is not included in GDExtension, so replicate the calls here.
@@ -172,7 +155,7 @@ void Rope::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_appearance"), &Rope::get_appearance);
 
 	// simulation
-#if ENABLED_COLLISION_LAYER
+#if ENABLE_COLLISION_LAYER
 	ClassDB::bind_method(D_METHOD("set_collision_layer", "collision_layer"), &Rope::set_collision_layer);
 	ClassDB::bind_method(D_METHOD("get_collision_layer"), &Rope::get_collision_layer);
 #endif
@@ -227,14 +210,9 @@ void Rope::_bind_methods() {
 	EXPORT_PROPERTY_RANGED(Variant::FLOAT, tension_force_scale, Rope, "0.0,10.0,0.1");
 	EXPORT_PROPERTY(Variant::FLOAT, max_tension_force, Rope);
 
-#if ENABLED_COLLISION_LAYER
-	// special case the layer to disabled if Jolt Physics is in use.
-	auto physics_engine = ProjectSettings::get_singleton()->get_setting("physics/3d/physics_engine");
-	bool _is_jolt = (physics_engine == "Jolt Physics");
-	int usage = (_is_jolt ? PROPERTY_USAGE_READ_ONLY : 0) | PROPERTY_USAGE_DEFAULT;
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "collision_layer", PROPERTY_HINT_LAYERS_3D_PHYSICS, "", usage), "set_collision_layer", "get_collision_layer");
+#if ENABLE_COLLISION_LAYER
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "collision_layer", PROPERTY_HINT_LAYERS_3D_PHYSICS), "set_collision_layer", "get_collision_layer");
 #endif
-
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "collision_mask", PROPERTY_HINT_LAYERS_3D_PHYSICS), "set_collision_mask", "get_collision_mask");
 
 	EXPORT_PROPERTY_RANGED(Variant::FLOAT, collision_margin, Rope, "0.0,0.1,0.001");
@@ -294,46 +272,18 @@ void Rope::_notification(int p_what) {
 		} break;
 
 		case NOTIFICATION_ENTER_WORLD: {
-			Ref<World3D> w3d = get_world_3d();
-			auto ps = PhysicsServer3D::get_singleton();
-			auto rs = RenderingServer::get_singleton();
-			ERR_FAIL_NULL(w3d);
-
-			if (w3d.is_valid() && rs && ps) {
-				RID space = w3d->get_space();
-#if ENABLED_COLLISION_LAYER
-				ps->body_set_space(_physics_body, space);
-#endif
-
-				RID scenario = w3d->get_scenario();
-				for (auto instance : _instances) {
-					rs->instance_set_scenario(instance, scenario);
-					rs->instance_set_visible(instance, visible);
-				}
-			}
-
+			_internal_enter_world();
 		} break;
-		case NOTIFICATION_EXIT_WORLD: {
-			auto ps = PhysicsServer3D::get_singleton();
-			auto rs = RenderingServer::get_singleton();
-			if (ps && rs) {
-#if ENABLED_COLLISION_LAYER
-				ps->body_set_space(_physics_body, RID());
-#endif
-				for (auto instance : _instances) {
-					rs->instance_set_scenario(instance, RID());
-					rs->instance_attach_skeleton(instance, RID());
-					rs->instance_set_visible(instance, visible);
-				}
-			}
 
+		case NOTIFICATION_EXIT_WORLD: {
+			_internal_exit_world();
 		} break;
 
 		case NOTIFICATION_TRANSFORM_CHANGED: {
 		} break;
 
 		case NOTIFICATION_VISIBILITY_CHANGED: {
-			_set_instances_visible(visible);
+			_set_links_visible(visible);
 		} break;
 
 			// case NOTIFICATION_DISABLED: {
@@ -363,6 +313,48 @@ void Rope::_notification(int p_what) {
 		case NOTIFICATION_EXIT_TREE: {
 			_liquid_area_id = 0;
 		} break;
+	}
+}
+
+void Rope::_internal_enter_world() {
+	Ref<World3D> w3d = get_world_3d();
+	auto ps = PhysicsServer3D::get_singleton();
+	auto rs = RenderingServer::get_singleton();
+	ERR_FAIL_NULL(w3d);
+
+	if (w3d.is_valid() && rs && ps) {
+		RID space = w3d->get_space();
+		RID scenario = w3d->get_scenario();
+		bool visible = is_visible_in_tree();
+
+		for (auto link : _links) {
+			if (link.physics_body.is_valid()) {
+				ps->body_set_space(link.physics_body, space);
+				ps->body_set_state(link.physics_body, PhysicsServer3D::BODY_STATE_TRANSFORM, link.xform);
+			}
+			if (link.mesh_instance.is_valid()) {
+				rs->instance_set_scenario(link.mesh_instance, scenario);
+				rs->instance_set_visible(link.mesh_instance, visible);
+				rs->instance_set_transform(link.mesh_instance, link.xform);
+			}
+		}
+	}
+}
+
+void Rope::_internal_exit_world() {
+	auto ps = PhysicsServer3D::get_singleton();
+	auto rs = RenderingServer::get_singleton();
+	bool visible = is_visible_in_tree();
+
+	for (auto link : _links) {
+		if (link.physics_body.is_valid()) {
+			ps->body_set_space(link.physics_body, RID());
+		}
+		if (link.mesh_instance.is_valid()) {
+			rs->instance_set_scenario(link.mesh_instance, RID());
+			rs->instance_set_visible(link.mesh_instance, visible);
+			// rs->instance_attach_skeleton(instance, RID());
+		}
 	}
 }
 
@@ -438,49 +430,148 @@ void Rope::_internal_physics_process(double delta) {
 
 #pragma region Instancing
 
-void Rope::_set_instances_visible(bool p_visible) {
+void Rope::_set_links_visible(bool p_visible) {
 	auto rs = RenderingServer::get_singleton();
-	ERR_FAIL_NULL_MSG(rs, "RenderingServer missing");
 
-	for (auto &rid : _instances) {
-		rs->instance_set_visible(rid, p_visible);
+	for (auto &link : _links) {
+		if (link.mesh_instance.is_valid())
+			rs->instance_set_visible(link.mesh_instance, p_visible);
 	}
 }
 
-void Rope::_clear_instances() {
+void Rope::_clear_links() {
 	auto rs = RenderingServer::get_singleton();
-	ERR_FAIL_NULL_MSG(rs, "RenderingServer missing");
+	auto ps = PhysicsServer3D::get_singleton();
 
-	for (auto &rid : _instances) {
-		rs->free_rid(rid);
+	for (auto &link : _links) {
+		if (link.mesh_instance.is_valid()) {
+			rs->free_rid(link.mesh_instance);
+			link.mesh_instance = RID();
+		}
+
+		if (link.physics_body.is_valid()) {
+			ps->free_rid(link.physics_body);
+			link.physics_body = RID();
+		}
 	}
-	_instances.clear();
+
+	_links.clear();
 }
 
-void Rope::_rebuild_instances() {
+void Rope::_rebuild_link_shape() {
+	auto ps = PhysicsServer3D::get_singleton();
+	int particle_count = get_particle_count_for_length();
+	DEV_ASSERT(_links.size() == (particle_count - 1));
+
+	// free old shape
+	if (_link_shape.is_valid()) {
+		ps->free_rid(_link_shape);
+		_link_shape = RID();
+	}
+
+	// as capsules
+	Dictionary capsule;
+	float radius = get_rope_width() * 0.5f;
+	float height = Math::max(get_rope_length() / (particle_count - 1), radius * 2.0f);
+	capsule["radius"] = radius;
+	capsule["height"] = height + radius * 2;
+
+	// physics shape
+	_link_shape = ps->capsule_shape_create();
+	ps->shape_set_data(_link_shape, capsule);
+	ps->shape_set_margin(_link_shape, radius / 10.0);
+
+	// clear exclusion list and re-add all links with new shape
+	_exclusion_list.clear();
+
+#if ENABLE_COLLISION_LAYER
+	for (int idx = 0; idx < _links.size(); idx++) {
+		auto &link = _links[idx];
+		ps->body_add_shape(link.physics_body, _link_shape, Transform3D());
+		_exclusion_list.append(link.physics_body);
+	}
+#endif
+
+	if (_ray_cast.is_valid())
+		_ray_cast->set_exclude(_exclusion_list);
+}
+
+void Rope::_rebuild_links() {
 	auto rs = RenderingServer::get_singleton();
+	auto ps = PhysicsServer3D::get_singleton();
 	Ref<World3D> w3d = get_world_3d();
 	ERR_FAIL_NULL_MSG(rs, "RenderingServer missing");
 	ERR_FAIL_NULL_MSG(w3d, "World3D missing");
 
 	if (rs && w3d.is_valid()) {
-		// only rebuild instances if we have an appearance
-		if (_appearance.is_valid()) {
-			auto scenario = w3d->get_scenario();
-			auto mesh = _appearance->get_array_mesh();
-			if (scenario.is_valid() && mesh.is_valid()) {
-				// create one instance for each gap between particles
-				// this will be one less than the particle count
-				auto count = _particles.size() - 1;
-				for (int idx = 0; idx < count; idx++) {
-					RID instance = rs->instance_create2(mesh->get_rid(), scenario);
-					if (instance.is_valid()) {
-						_instances.push_back(instance);
-						rs->instance_attach_object_instance_id(instance, get_instance_id());
-						rs->instance_set_visible(instance, is_visible_in_tree());
+		auto scenario = w3d->get_scenario();
+		if (scenario.is_valid()) {
+			RID space = w3d->get_space();
+
+			RID mesh;
+			if (_appearance.is_valid()) {
+				auto mesh_ref = _appearance->get_array_mesh();
+				mesh = mesh_ref.is_valid() ? mesh_ref->get_rid() : RID();
+			}
+
+			// clear old links
+			_clear_links();
+
+			// create one instance for each gap between particles
+			// this will be one less than the particle count
+			auto count = _particles.size() - 1;
+			_links.resize(count);
+
+			_calculate_links_for_particles();
+
+			for (auto &link : _links) {
+#if ENABLE_COLLISION_LAYER
+				// create physics body
+				link.physics_body = ps->body_create();
+				if (link.physics_body.is_valid()) {
+					ps->body_set_mode(link.physics_body, PhysicsServer3D::BODY_MODE_KINEMATIC);
+					ps->body_set_space(link.physics_body, space);
+
+					ps->body_set_collision_layer(link.physics_body, _collision_layer);
+					ps->body_set_collision_mask(link.physics_body, _collision_mask);
+
+					ps->body_set_state(link.physics_body, PhysicsServer3D::BODY_STATE_TRANSFORM, link.xform);
+
+					ps->body_attach_object_instance_id(link.physics_body, get_instance_id());
+					// shape is set by _rebuild_link_shape.
+				}
+#endif
+
+				// have mesh? set it
+				if (mesh.is_valid()) {
+					link.mesh_instance = rs->instance_create2(mesh, scenario);
+					if (link.mesh_instance.is_valid()) {
+						rs->instance_attach_object_instance_id(link.mesh_instance, get_instance_id());
+						rs->instance_set_visible(link.mesh_instance, is_visible_in_tree());
+						rs->instance_set_transform(link.mesh_instance, link.xform);
 					}
 				}
 			}
+
+			// rebuild the shapes
+			_rebuild_link_shape();
+		}
+	}
+}
+
+void Rope::_update_links() {
+	auto rs = RenderingServer::get_singleton();
+	auto ps = PhysicsServer3D::get_singleton();
+
+	for (const auto &link : _links) {
+#if ENABLE_COLLISION_LAYER
+		if (link.physics_body.is_valid()) {
+			ps->body_set_state(link.physics_body, PhysicsServer3D::BODY_STATE_TRANSFORM, link.xform);
+		}
+#endif
+
+		if (link.mesh_instance.is_valid()) {
+			rs->instance_set_transform(link.mesh_instance, link.xform);
 		}
 	}
 }
@@ -501,8 +592,7 @@ void Rope::_rebuild_rope() {
 	_is_rebuilding = true;
 
 	// free previous shapes
-	_clear_physics_shapes();
-	_clear_instances();
+	_clear_links();
 	_frames.clear();
 
 	auto global_position = get_global_position();
@@ -593,8 +683,7 @@ void Rope::_rebuild_rope() {
 	}
 
 	// initial rebuilds
-	_rebuild_physics_shapes();
-	_rebuild_instances();
+	_rebuild_links();
 	_rebuild_anchors();
 
 	// only run preprocess on the first build
@@ -752,13 +841,13 @@ Transform3D Rope::get_link(int index) const {
 	if (index < 0 || index >= _links.size())
 		return Transform3D();
 
-	return _links[index];
+	return _links[index].xform;
 }
 
 TypedArray<Transform3D> Rope::get_all_links() const {
 	TypedArray<Transform3D> array;
 	for (const auto &link : _links)
-		array.push_back(link);
+		array.push_back(link.xform);
 	return array;
 }
 
@@ -1616,10 +1705,11 @@ void Rope::_calculate_frames_for_particles(LocalVector<Transform3D> &frames) con
 }
 
 // calculate the transforms for each link so they can be used for both chains and capsule positioning
-void Rope::_calculate_links_for_particles(LocalVector<Transform3D> &links) const {
+void Rope::_calculate_links_for_particles() {
 	SCOPED_TIMER(_calculate_links_for_particles);
 
-	links.clear();
+	DEV_ASSERT(_particles.size() >= 2);
+	DEV_ASSERT(_links.size() == _particles.size() - 1);
 
 	// need at least two particles to make a link
 	if (_particles.size() >= 2) {
@@ -1646,13 +1736,12 @@ void Rope::_calculate_links_for_particles(LocalVector<Transform3D> &links) const
 				// ...doubles this functions time but we can get tiny scale artifacts from the rotation
 				// which will cause problems with jolt over time in certain edge conditions.
 				// xform.orthogonalize();
-				links.push_back(xform);
+				_links[idx].xform = xform;
 			} else {
 				// zero length link... either because the points are too close or coincidentally overlapping.
 				// just push back the xform for the starting particle. There's no orientation we can align to,
 				// but at least it will be in the right place if the particles separate in the next frame.
-				Transform3D xform(Basis(), pt);
-				links.push_back(xform);
+				_links[idx].xform = Transform3D(Basis(), pt);
 			}
 		}
 	}
@@ -1773,21 +1862,31 @@ void Rope::_draw_rope() {
 	const int last_frame = _frames.size() - 1;
 
 	// move the link instances if present
-	bool has_chain = _instances.size() == _particles.size() - 1 && _instances.size() == _links.size();
+	bool has_chain = _appearance.is_valid() && _appearance->get_array_mesh().is_valid();
 	if (has_chain) {
 		auto rs = RenderingServer::get_singleton();
+		auto ps = PhysicsServer3D::get_singleton();
 		ERR_FAIL_NULL_MSG(rs, "RenderingServer missing");
 
+		bool is_editor = Engine::get_singleton()->is_editor_hint();
+
 		// N-1 chain links per particles
-		auto count = _links.size();
 		Vector3 scale_vec(diameter, diameter, diameter);
-		for (int idx = 0; idx < count; idx++) {
-			RID instance = _instances[idx];
-			Transform3D xform = _links[idx];
+		for (auto &link : _links) {
+			Transform3D xform = link.xform;
+
+#if ENABLE_COLLISION_LAYER
+			// physics does not run in editor.
+			if (!is_editor && link.physics_body.is_valid()) {
+				xform = ps->body_get_state(link.physics_body, PhysicsServer3D::BODY_STATE_TRANSFORM);
+			}
+#endif
 
 			// xform.orthonormalize();
-			xform.scale_basis(scale_vec);
-			rs->instance_set_transform(instance, xform);
+			if (link.mesh_instance.is_valid()) {
+				xform.scale_basis(scale_vec);
+				rs->instance_set_transform(link.mesh_instance, xform);
+			}
 		}
 
 		// clear mesh if previous we weren't rendering chain links
@@ -1880,109 +1979,40 @@ bool Rope::_pop_is_dirty() {
 
 #pragma region Physics Collision
 
-void Rope::_clear_physics_shapes() {
-#if ENABLED_COLLISION_LAYER
-	auto ps = PhysicsServer3D::get_singleton();
-	ps->body_clear_shapes(_physics_body);
-	for (Particle &p : _particles) {
-		if (p.shape.is_valid()) {
-			ps->free_rid(p.shape);
-			p.shape = RID();
-		}
-	}
-#endif
-}
-
-void Rope::_rebuild_physics_shapes() {
-#if ENABLED_COLLISION_LAYER
-	if (_is_jolt) {
-		ERR_PRINT_ONCE("Halyard: Jolt Physics is enabled. Disabling CollisionShape building for Performance.");
-		return;
-	}
-
-	auto ps = PhysicsServer3D::get_singleton();
-	int particle_count = get_particle_count_for_length();
-
-	// update links
-	_calculate_links_for_particles(_links);
-	DEV_ASSERT(_links.size() == (particle_count - 1));
-
-	Dictionary capsule;
-	float radius = get_rope_width() * 0.5f;
-	float height = Math::max(get_rope_length() / (particle_count - 1), radius * 2.0f);
-	capsule["radius"] = radius;
-	capsule["height"] = height + radius * 2;
-
-	// create N-1 capsule colliders
-	ps->body_set_enable_continuous_collision_detection(_physics_body, true);
-	for (int idx = 0; idx < particle_count - 1; idx++) {
-		// physics shape
-		RID shape = ps->capsule_shape_create();
-		ps->shape_set_data(shape, capsule);
-		ps->shape_set_margin(shape, radius / 10.0);
-		ps->body_add_shape(_physics_body, shape, _links[idx]);
-		_particles[idx].shape = shape;
-	}
-
-	// clear shape from last particle
-	if (particle_count)
-		_particles[particle_count - 1].shape = RID();
-#else
-	for (auto &particle : _particles) {
-		particle.shape = RID();
-	}
-#endif
-}
-
-// this moves our collision shapes into their new positions
-void Rope::_update_collision_shapes() {
-#if ENABLED_COLLISION_LAYER
-	if (_is_jolt) {
-		return;
-	}
-
-	SCOPED_TIMER(_update_collision_shapes);
-	if (_collision_layer == 0 && _collision_mask == 0)
-		return;
-
-	auto ps = PhysicsServer3D::get_singleton();
-
-	// update the shape positions1
-	int count = ps->body_get_shape_count(_physics_body);
-	DEV_ASSERT(count == _links.size());
-
-	for (int idx = 0; idx < count; idx++) {
-		// update the shape transform to match the link position
-		// NOTE: This is *expensive* to update
-		ps->body_set_shape_transform(_physics_body, idx, _links[idx]);
-	}
-#else
-	// no-op if we don't have a collision layer
-#endif
-}
-
-#if ENABLED_COLLISION_LAYER
 int Rope::get_collision_layer() const { return _collision_layer; }
 
 void Rope::set_collision_layer(int layer) {
-	_collision_layer = layer;
+	if (layer != _collision_layer) {
+		_collision_layer = layer;
 
-	auto ps = PhysicsServer3D::get_singleton();
-	ERR_FAIL_NULL(ps);
-	ps->body_set_collision_layer(_physics_body, layer);
-}
+#if ENABLE_COLLISION_LAYER
+		auto ps = PhysicsServer3D::get_singleton();
+		for (auto &link : _links) {
+			if (link.physics_body.is_valid()) {
+				ps->body_set_collision_layer(link.physics_body, _collision_layer);
+			}
+		}
 #endif
+	}
+}
 
 int Rope::get_collision_mask() const { return _collision_mask; }
 
 void Rope::set_collision_mask(int mask) {
-	_collision_mask = mask;
+	if (mask != _collision_mask) {
+		_collision_mask = mask;
+		_ray_cast->set_collision_mask(_collision_mask);
+		_shape_cast->set_collision_mask(_collision_mask);
 
-#if ENABLED_COLLISION_LAYER
-	PhysicsServer3D::get_singleton()->body_set_collision_mask(_physics_body, mask);
-#else
-	// no-op if we don't have a collision layer
+#if ENABLE_COLLISION_LAYER
+		auto ps = PhysicsServer3D::get_singleton();
+		for (auto &link : _links) {
+			if (link.physics_body.is_valid()) {
+				ps->body_set_collision_mask(link.physics_body, _collision_mask);
+			}
+		}
 #endif
+	}
 }
 
 // NOTE: We do *not* use the collider shapes for collision detection of the rope
@@ -2007,10 +2037,6 @@ void Rope::_apply_constraints() {
 		if (_collision_use_shape_cast) {
 			_collision_shape->set_radius(shape_radius);
 			_shape_cast->set_margin(_collision_margin);
-			_shape_cast->set_collision_mask(_collision_mask);
-		} else {
-			// Reuse member ray query to avoid allocation every frame
-			_ray_cast->set_collision_mask(_collision_mask);
 		}
 
 		int anchor_count = get_anchor_count();
@@ -2105,6 +2131,7 @@ void Rope::_update_physics(float delta, int iterations) {
 	for (int i = 0; i < iterations; i++) {
 		_apply_forces();
 
+		// turn this off when using physics bodies.
 		_apply_constraints();
 		_verlet_process(delta);
 
@@ -2112,8 +2139,8 @@ void Rope::_update_physics(float delta, int iterations) {
 		_balance_tension();
 
 		// now that everything has moved, recalc link positions
-		_calculate_links_for_particles(_links);
-		_update_collision_shapes();
+		_calculate_links_for_particles();
+		_update_links();
 	}
 }
 
