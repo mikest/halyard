@@ -42,12 +42,22 @@ Rope::Rope() {
 	_physics_body = ps->body_create();
 	ps->body_set_mode(_physics_body, PhysicsServer3D::BODY_MODE_STATIC);
 
+	// exclude self
+	_exclusion_list.append(_physics_body);
+
 	// Initialize cached objects for reuse
 	_ray_cast.instantiate();
-	_exclusion_list.append(_physics_body); // exclude self
 	_ray_cast->set_exclude(_exclusion_list);
 	_ray_cast->set_collide_with_areas(false);
 	_ray_cast->set_collide_with_bodies(true);
+
+	_collision_shape.instantiate();
+
+	_shape_cast.instantiate();
+	_shape_cast->set_shape(_collision_shape);
+	_shape_cast->set_exclude(_exclusion_list);
+	_shape_cast->set_collide_with_areas(false);
+	_shape_cast->set_collide_with_bodies(true);
 
 	// disable scaling, we should never be scaled
 	set_disable_scale(true);
@@ -126,6 +136,11 @@ void Rope::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_anchor_for_particle", "particle_idx"), &Rope::_anchor_for_particle);
 	ClassDB::bind_method(D_METHOD("_particle_for_anchor", "anchor_idx"), &Rope::_particle_for_anchor);
 	ClassDB::bind_method(D_METHOD("_particle_stretch", "particle_idx"), &Rope::_particle_stretch);
+	ClassDB::bind_method(D_METHOD("_rebuild_rope"), &Rope::_rebuild_rope);
+
+	ClassDB::bind_method(D_METHOD("_set_initial_pos", "initial_pos"), &Rope::_set_initial_pos);
+	ClassDB::bind_method(D_METHOD("_get_initial_pos"), &Rope::_get_initial_pos);
+	ClassDB::bind_method(D_METHOD("_bake_initial_pos"), &Rope::_bake_initial_pos);
 
 	// anchors
 	ClassDB::bind_method(D_METHOD("set_anchor_count", "count"), &Rope::set_anchor_count);
@@ -156,6 +171,9 @@ void Rope::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_collision_mask", "collision_mask"), &Rope::set_collision_mask);
 	ClassDB::bind_method(D_METHOD("get_collision_mask"), &Rope::get_collision_mask);
+
+	ClassDB::bind_method(D_METHOD("set_collision_margin", "collision_margin"), &Rope::set_collision_margin);
+	ClassDB::bind_method(D_METHOD("get_collision_margin"), &Rope::get_collision_margin);
 
 	ClassDB::bind_method(D_METHOD("set_liquid_area", "liquid_area"), &Rope::set_liquid_area);
 	ClassDB::bind_method(D_METHOD("get_liquid_area"), &Rope::get_liquid_area);
@@ -209,6 +227,9 @@ void Rope::_bind_methods() {
 
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "collision_mask", PROPERTY_HINT_LAYERS_3D_PHYSICS), "set_collision_mask", "get_collision_mask");
 
+	EXPORT_PROPERTY_RANGED(Variant::FLOAT, collision_margin, Rope, "0.0,0.1,0.001");
+	EXPORT_PROPERTY(Variant::BOOL, collision_use_shape_cast, Rope);
+
 	// Buoyancy
 	ADD_GROUP("Buoyancy", "");
 	EXPORT_PROPERTY(Variant::BOOL, apply_buoyancy, Rope);
@@ -238,6 +259,10 @@ void Rope::_bind_methods() {
 	ADD_GROUP("Debug", "");
 	EXPORT_PROPERTY(Variant::BOOL, debug, Rope);
 	EXPORT_PROPERTY(Variant::COLOR, debug_color, Rope);
+	EXPORT_PROPERTY(Variant::BOOL, debug_collision, Rope);
+
+	// Storage-only property hidden from the editor, persists initial particle positions across scene saves.
+	ADD_PROPERTY(PropertyInfo(Variant::PACKED_VECTOR3_ARRAY, "initial_pos", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_STORAGE | PROPERTY_USAGE_INTERNAL), "_set_initial_pos", "_get_initial_pos");
 }
 
 #pragma region Runtime
@@ -356,6 +381,7 @@ void Rope::_internal_process(double delta) {
 		set_global_transform(Transform3D(Basis(), get_global_position()));
 
 		_draw_rope();
+		_debug_draw_rope();
 	}
 }
 
@@ -559,9 +585,17 @@ void Rope::_rebuild_rope() {
 
 	// only run preprocess on the first build
 	if (previous_count == 0) {
-		const float preprocess_delta = 1.0 / _simulation_rate;
-		const int preprocess_iterations = Math::max(int(_simulation_rate * _preprocess_time), 1);
-		_update_physics(preprocess_delta, preprocess_iterations);
+		if (_particles.size() == _initial_pos.size()) {
+			for (int i = 0; i < _particles.size(); i++) {
+				_particles[i].pos_cur = to_global(_initial_pos[i]);
+				_particles[i].pos_prev = _particles[i].pos_cur;
+				_particles[i].accel = Vector3();
+			}
+		} else {
+			const float preprocess_delta = 1.0 / _simulation_rate;
+			const int preprocess_iterations = Math::max(int(_simulation_rate * _preprocess_time), 1);
+			_update_physics(preprocess_delta, preprocess_iterations);
+		}
 	}
 
 	_queue_redraw();
@@ -577,6 +611,14 @@ bool Rope::_pop_rebuild() {
 	bool should_rebuild = _rebuild;
 	_rebuild = false;
 	return should_rebuild;
+}
+
+void Rope::_bake_initial_pos() {
+	_initial_pos.clear();
+	// convert world-space particle positions to local space for storage.
+	for (const auto &particle : _particles) {
+		_initial_pos.push_back(to_local(particle.pos_cur));
+	}
 }
 
 #pragma endregion
@@ -731,6 +773,22 @@ TypedArray<Vector3> Rope::get_particle_positions() const {
 	for (const auto &particle : _particles)
 		array.push_back(particle.pos_cur);
 	return array;
+}
+
+PackedVector3Array Rope::_get_initial_pos() const {
+	PackedVector3Array result;
+	result.resize(_initial_pos.size());
+	for (uint32_t idx = 0; idx < _initial_pos.size(); idx++) {
+		result[idx] = _initial_pos[idx];
+	}
+	return result;
+}
+
+void Rope::_set_initial_pos(const PackedVector3Array &val) {
+	_initial_pos.resize(val.size());
+	for (int idx = 0; idx < val.size(); idx++) {
+		_initial_pos[idx] = val[idx];
+	}
 }
 
 uint64_t Rope::get_particle_count_for_length() const {
@@ -1780,6 +1838,20 @@ void Rope::_draw_rope() {
 	update_gizmos();
 }
 
+void Rope::_debug_draw_rope() {
+	// draw the _initial_pos of the rope in the editor
+	if (Engine::get_singleton()->is_editor_hint()) {
+		// draw the initial_pos
+		PackedVector3Array line_path;
+		for (const auto &pos : _initial_pos) {
+			line_path.push_back(to_global(pos));
+		}
+		auto config = DebugDraw3D::new_scoped_config();
+		config->set_thickness(0.01);
+		DebugDraw3D::draw_line_path(line_path, Color(0, 1, 1));
+	}
+}
+
 void Rope::_queue_redraw() {
 	_rope_dirty = true;
 }
@@ -1885,8 +1957,8 @@ void Rope::set_collision_mask(int mask) {
 // instead we cast rays in the direction of travel and model the particles
 // as points. This has trade offs, but its significantly faster than a pin_joint + capsule chain.
 void Rope::_apply_constraints() {
-	// ray cast from the previous position to the current position
-	// if we hit something, move the particle to the hit position
+	SCOPED_TIMER(_apply_constraints);
+
 	Ref<World3D> w3d = get_world_3d();
 	ERR_FAIL_NULL(w3d);
 
@@ -1896,42 +1968,88 @@ void Rope::_apply_constraints() {
 
 	// set up the raycast parameters
 	if (_collision_mask) {
-		// Reuse member ray query to avoid allocation every frame
-		_ray_cast->set_collision_mask(_collision_mask);
-
 		float friction = (1.0 - Math::clamp(get_friction(), 0.0f, 1.0f));
 		float radius = get_rope_width() * 0.5f;
 
-		int anchor_count = get_anchor_count();
+		float shape_radius = radius / 2.0f;
+		if (_collision_use_shape_cast) {
+			_collision_shape->set_radius(shape_radius);
+			_shape_cast->set_margin(_collision_margin);
+			_shape_cast->set_collision_mask(_collision_mask);
+		} else {
+			// Reuse member ray query to avoid allocation every frame
+			_ray_cast->set_collision_mask(_collision_mask);
+		}
 
+		int anchor_count = get_anchor_count();
 		int particle_idx = 0;
 		while (VALID_PARTICLE_IDX(particle_idx)) {
 			auto &particle = _particles[particle_idx];
 
 			// only move non-fixed particles
 			if (particle.is_fixed() == false) {
-				Vector3 from = particle.pos_prev;
-				Vector3 to = particle.pos_cur;
-				Vector3 direction = to - from;
-
+				Vector3 direction = particle.pos_cur - particle.pos_prev;
 				float length = direction.length();
+				direction.normalize();
+
 				if (length >= CMP_EPSILON) {
-					_ray_cast->set_from(from);
-					_ray_cast->set_to(to);
+					Vector3 margin_vec = direction * shape_radius;
+					Vector3 from = particle.pos_prev - margin_vec;
+					Vector3 to = particle.pos_cur;
+					Vector3 cast_motion = to - from;
+					Dictionary hit_result;
 
-					Dictionary result = dss->intersect_ray(_ray_cast);
-					if (!result.is_empty()) {
-						// move the particle to the hit position
-						Vector3 position = result["position"];
-						Vector3 normal = result["normal"];
-						Vector3 contact = position + normal * CMP_EPSILON;
+					// use shape cast for collision
+					if (_collision_use_shape_cast) {
+						Transform3D xform(Basis(), from);
+						_shape_cast->set_transform(xform);
+						_shape_cast->set_motion(cast_motion);
 
-						// // reflect the acceleration and the final position across the normal at the reflection point
+						// test motion first
+						PackedFloat32Array result = dss->cast_motion(_shape_cast);
+						float safe = result[0];
+						float unsafe = result[1];
+						if (unsafe < 1.0 || safe < 1.0) {
+							// query contact info at the unsafe position to get the collision normal
+							Vector3 unsafe_origin = from + cast_motion * unsafe;
+							Transform3D unsafe_xform(xform.basis, unsafe_origin);
+							_shape_cast->set_transform(unsafe_xform);
+							_shape_cast->set_motion(Vector3());
+							hit_result = dss->get_rest_info(_shape_cast);
+						}
+
+					} else {
+						// use ray cast for collision
+						_ray_cast->set_from(from);
+						_ray_cast->set_to(to);
+						hit_result = dss->intersect_ray(_ray_cast);
+					}
+
+					if (!hit_result.is_empty()) {
+						Vector3 normal = hit_result["normal"];
+						Vector3 contact;
+
+						// slightly different contact point for shape vs ray
+						if (_collision_use_shape_cast) {
+							contact = hit_result["point"];
+							contact += (normal * CMP_EPSILON);
+							contact += (normal * shape_radius);
+						} else {
+							contact = hit_result["position"];
+							contact += (normal * CMP_EPSILON);
+						}
+
+						// reflect acceleration across the contact normal
 						particle.accel = particle.accel.bounce(normal) * friction;
-						particle.pos_cur = ((particle.pos_cur - contact) * friction).bounce(normal) + contact;
+						Vector3 velocity = particle.pos_cur - contact;
 
-						// TODO: figure out sphere contact point and reflect from there instead.
-						// particle.pos_cur = reflect_sphere(particle.pos_prev, particle.pos_cur, normal, contact, radius);
+						particle.pos_prev = contact;
+						particle.pos_cur = contact + (velocity * friction).bounce(normal);
+
+						if (_debug_collision) {
+							DebugDraw3D::draw_square(contact, 0.005, Color(1, 1, 0, 0.1));
+							DebugDraw3D::draw_sphere(particle.pos_cur, shape_radius, Color(1, 1, 0));
+						}
 					}
 				}
 			}

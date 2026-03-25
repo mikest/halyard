@@ -25,6 +25,8 @@ class_name CameraOrbit
 @export var invert_yaw: bool = false
 ## Invert vertical (pitch) mouse direction.
 @export var invert_pitch: bool = false
+## Pan speed in world units per pixel.
+@export var pan_speed: float = 0.005
 #endregion
 
 
@@ -32,6 +34,7 @@ class_name CameraOrbit
 var _yaw: float = 0.0
 var _pitch: float = -30.0
 var _orbiting: bool = false
+var _panning: bool = false
 #endregion
 
 
@@ -59,7 +62,13 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mb: InputEventMouseButton = event as InputEventMouseButton
 		if mb.button_index == MOUSE_BUTTON_MIDDLE:
-			_orbiting = mb.pressed
+			# Shift + middle mouse = pan; plain middle mouse = orbit.
+			if mb.pressed:
+				_panning = mb.shift_pressed
+				_orbiting = not mb.shift_pressed
+			else:
+				_orbiting = false
+				_panning = false
 			get_viewport().set_input_as_handled()
 
 		# Zoom with scroll wheel.
@@ -97,6 +106,16 @@ func _unhandled_input(event: InputEvent) -> void:
 		_yaw += motion.relative.x * sensitivity * yaw_sign
 		_pitch += motion.relative.y * sensitivity * pitch_sign
 		_pitch = clampf(_pitch, min_pitch, max_pitch)
+		_apply_orbit()
+		get_viewport().set_input_as_handled()
+
+	# Pan the pivot while shift-orbiting.
+	if event is InputEventMouseMotion and _panning:
+		var motion := event as InputEventMouseMotion
+		# Pan in camera-local right and up directions so it matches the view.
+		var scale: float = orbit_distance * pan_speed
+		pivot -= global_transform.basis.x * motion.relative.x * scale
+		pivot += global_transform.basis.y * motion.relative.y * scale
 		_apply_orbit()
 		get_viewport().set_input_as_handled()
 #endregion

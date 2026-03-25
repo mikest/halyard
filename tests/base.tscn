@@ -18,6 +18,7 @@ transform = Transform3D(0.9102, -0.22145273, 0.34999245, 0, 0.8450473, 0.5346916
 script = ExtResource("1_xlo8d")
 min_pitch = 5.0
 invert_pitch = true
+pan_speed = null
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=2118271038]
 transform = Transform3D(1, 0, 0, 0, 0.4408167, 0.89759713, 0, -0.89759713, 0.4408167, 0, 12.021552, 6.9154296)

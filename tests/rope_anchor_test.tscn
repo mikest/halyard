@@ -9,7 +9,6 @@ albedo_texture = ExtResource("2_dpfuq")
 
 [sub_resource type="RopeAppearance" id="RopeAppearance_akaj0"]
 rope_lod = 4
-particles_per_meter = 4.0
 material = SubResource("StandardMaterial3D_gaj4q")
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_dpfuq"]
@@ -34,12 +33,11 @@ height = 4.0
 [node name="Rope" type="Rope" parent="." index="3" unique_id=540035405]
 rope_width = 0.25
 particles_per_meter = 4.0
-anchor_count = 3
 appearance = SubResource("RopeAppearance_akaj0")
+anchor_count = 3
 stiffness_iterations = 20
 stiffness = 1.5
 tension_force_scale = 2.0
-collision_layer = 0
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath("../Ball_A/BallRopeAnchor")
@@ -50,7 +48,7 @@ anchors/2/offset = 0.0
 anchors/2/from = 1
 anchors/2/node_path = NodePath("../Ball_B/BallRopeAnchor")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.88976383, 1.098501)
-custom_aabb = AABB(-0.18107581, -0.2196014, -3.3119395, 0.3060758, 1.4548376, 4.438672)
+custom_aabb = AABB(-0.18107581, -0.2223236, -3.3119395, 0.3060758, 1.4575598, 4.438672)
 
 [node name="Ball_A" type="RigidBody3D" parent="." index="4" unique_id=2139964475]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.056137323, 0.7866516, -2.0885003)
@@ -115,12 +113,11 @@ show_debug = true
 rope_length = 6.0
 rope_width = 0.25
 particles_per_meter = 4.0
-anchor_count = 3
 appearance = SubResource("RopeAppearance_akaj0")
+anchor_count = 3
 stiffness_iterations = 20
 stiffness = 1.8
 tension_force_scale = 2.0
-collision_layer = 0
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath("../Pole_A/RopeAnchor")
@@ -131,7 +128,7 @@ anchors/2/offset = 0.0
 anchors/2/from = 1
 anchors/2/node_path = NodePath("../Pole_B/RopeAnchor")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.88976383, 1.098501)
-custom_aabb = AABB(-0.125, -0.125, -4.223501, 4.325467, 3.3602362, 6.25)
+custom_aabb = AABB(-0.125, -0.125, -4.223501, 4.3254714, 3.3602362, 6.25)
 
 [node name="Pole_A" type="MeshInstance3D" parent="." index="8" unique_id=124229271]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 2, -3)
