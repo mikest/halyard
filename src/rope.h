@@ -10,12 +10,15 @@
 #include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/classes/physics_ray_query_parameters3d.hpp>
 #include <godot_cpp/classes/physics_server3d.hpp>
+#include <godot_cpp/classes/physics_shape_query_parameters3d.hpp>
+#include <godot_cpp/classes/sphere_shape3d.hpp>
 #include <godot_cpp/classes/wrapped.hpp>
 #include <godot_cpp/core/binder_common.hpp>
 #include <godot_cpp/core/gdvirtual.gen.inc>
 #include <godot_cpp/templates/hash_map.hpp>
 #include <godot_cpp/templates/local_vector.hpp>
 #include <godot_cpp/templates/pair.hpp>
+#include <godot_cpp/variant/callable.hpp>
 #include <godot_cpp/variant/typed_array.hpp>
 #include <godot_cpp/variant/variant.hpp>
 
@@ -127,7 +130,7 @@ private:
 	};
 
 	// internal state
-
+	LocalVector<Vector3> _initial_pos;
 	Distribution _anchor_distribution = Distribution::ABSOLUTE;
 	LocalVector<Anchor> _anchors;
 	LocalVector<Particle> _particles; // the individual points in the simulation
@@ -146,6 +149,8 @@ private:
 	// To avoid repeated heap allocations
 	// We store these as class members are reuse each physics frame
 	Ref<PhysicsRayQueryParameters3D> _ray_cast;
+	Ref<PhysicsShapeQueryParameters3D> _shape_cast;
+	Ref<SphereShape3D> _collision_shape;
 	TypedArray<RID> _exclusion_list;
 
 	// rope geometry
@@ -171,6 +176,8 @@ private:
 	// collision.
 	int _collision_layer = 0;
 	int _collision_mask = 0;
+	float _collision_margin = 0.001;
+	bool _collision_use_shape_cast = true;
 
 	// wind
 	bool _apply_wind = false;
@@ -194,6 +201,7 @@ private:
 
 	bool _debug = false;
 	Color _debug_color = Color(1, 1, 0);
+	bool _debug_collision = false;
 
 protected:
 	static void _bind_methods();
@@ -214,6 +222,8 @@ protected:
 
 	float get_current_rope_length() const;
 	float _get_average_segment_length() const;
+
+	// Initial poisitions
 
 	// Anchors Property List
 	void _get_property_list(List<PropertyInfo> *p_list) const;
@@ -262,6 +272,7 @@ protected:
 	void _update_aabb();
 	float _lod_factor() const;
 	void _draw_rope();
+	void _debug_draw_rope();
 	void _queue_redraw();
 	bool _pop_is_dirty();
 	void _set_instances_visible(bool p_visible);
@@ -310,6 +321,11 @@ public:
 
 	PROPERTY_GET_SET(int, grow_from, {})
 	PROPERTY_GET_SET(bool, jitter_initial_position, {})
+
+	// Storage for the initial particle positions used when rebuilding the rope for the first time.
+	PackedVector3Array _get_initial_pos() const;
+	void _set_initial_pos(const PackedVector3Array &val);
+	void _bake_initial_pos();
 #pragma endregion
 
 #pragma region Anchors
@@ -410,6 +426,8 @@ public:
 	void set_collision_layer(int layer);
 	int get_collision_mask() const;
 	void set_collision_mask(int mask);
+	PROPERTY_GET_SET(float, collision_margin, {})
+	PROPERTY_GET_SET(bool, collision_use_shape_cast, {})
 
 	// forces
 	PROPERTY_GET_SET(bool, apply_buoyancy, {});
@@ -432,6 +450,7 @@ public:
 
 	PROPERTY_GET_SET(bool, debug, {})
 	PROPERTY_GET_SET(Color, debug_color, {})
+	PROPERTY_GET_SET(bool, debug_collision, {})
 };
 
 VARIANT_ENUM_CAST(Rope::From);
