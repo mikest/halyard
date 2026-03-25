@@ -311,13 +311,14 @@
 			getter="get_buoyancy_scale" default="1.0">
 			Multiplier for the upward buoyancy force applied to submerged particles. A value of [code]1.0[/code] causes the rope to float at the surface. Requires [member apply_buoyancy] to be enabled.
 		</member>
-		<member name="collision_layer" type="int" setter="set_collision_layer"
+		<!--<member
+		name="collision_layer" type="int" setter="set_collision_layer"
 			getter="get_collision_layer" default="1">
-			The physics layers this rope's collision shapes occupy. Ignored when the Jolt Physics engine is active (collision shapes are disabled for performance).
-		</member>
+			The physics layers this rope's collision shapes occupy.
+		</member>-->
 		<member name="collision_mask" type="int" setter="set_collision_mask"
 			getter="get_collision_mask" default="1">
-			The physics layers this rope's collision shapes scan for colliders. Ignored when the Jolt Physics engine is active.
+			The physics layers this rope's collision shapes scan for colliders.
 		</member>
 		<member name="damping_factor" type="float" setter="set_damping_factor"
 			getter="get_damping_factor" default="100.0">

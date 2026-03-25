@@ -61,7 +61,7 @@ anchors/0/node_path = NodePath("../CoiledAnchor/Drum")
 anchors/1/offset = 0.2
 anchors/1/from = 0
 anchors/1/node_path = NodePath("../CoiledAnchor")
-anchors/2/offset = 3.827022
+anchors/2/offset = 3.9026089
 anchors/2/from = 0
 anchors/2/node_path = NodePath("../../RigidBody3D/ChainHole")
 anchors/3/offset = 0.0
@@ -82,13 +82,13 @@ turns_per_layer = 6.0
 rope_width = 0.15
 particles_per_meter = 12.0
 clockwise = true
-transform = Transform3D(-1, 8.7349235e-08, 1.3692473e-07, 1.3692714e-07, 0.90681154, 0.42149448, -8.735078e-08, 0.42149448, -0.90681154, -0.25, 0.5, 0)
+transform = Transform3D(-1, 8.734927e-08, -1.3692475e-07, -1.3692717e-07, -0.90681165, 0.42149428, -8.735081e-08, 0.42149428, 0.90681165, -0.25, 0.5, 0)
 
 [node name="Drum" type="RopeAnchor" parent="ChainCoil/CoiledAnchor" unique_id=1088114845]
 transform = Transform3D(-1, -2.1741165e-08, 8.467618e-08, 8.7422784e-08, -0.24868996, 0.9685832, -1.0323297e-14, 0.9685832, 0.24868996, 0, 0, 0)
 
 [node name="RigidBody3D" type="RigidBody3D" parent="." unique_id=1940158957]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.3841858e-07, 0.6283982, -0.06738719)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.3841858e-07, 0.17680684, -0.06738719)
 gravity_scale = 0.0
 linear_damp = 2.0
 angular_damp = 2.0

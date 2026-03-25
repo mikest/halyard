@@ -38,12 +38,14 @@ Rope::Rope() {
 	_rope_mesh.instantiate();
 	set_base(_rope_mesh->get_rid());
 
+#if ENABLED_COLLISION_LAYER
 	auto ps = PhysicsServer3D::get_singleton();
 	_physics_body = ps->body_create();
 	ps->body_set_mode(_physics_body, PhysicsServer3D::BODY_MODE_STATIC);
 
 	// exclude self
 	_exclusion_list.append(_physics_body);
+#endif
 
 	// Initialize cached objects for reuse
 	_ray_cast.instantiate();
@@ -62,6 +64,7 @@ Rope::Rope() {
 	// disable scaling, we should never be scaled
 	set_disable_scale(true);
 
+#if ENABLED_COLLISION_LAYER
 	// test for jolt engine. we have to disable collision shapes when using jolt because they are too expensive to update every frame due to:
 	// https://github.com/godotengine/godot/issues/117737
 	auto physics_engine = ProjectSettings::get_singleton()->get_setting("physics/3d/physics_engine");
@@ -70,6 +73,7 @@ Rope::Rope() {
 	} else {
 		_is_jolt = false;
 	}
+#endif
 }
 
 Rope::Rope(const Rope &other) {
@@ -81,7 +85,9 @@ Rope::~Rope() {
 
 	_clear_instances();
 
+#if ENABLED_COLLISION_LAYER
 	PhysicsServer3D::get_singleton()->free_rid(_physics_body);
+#endif
 }
 
 #if 1 // Array binding is not included in GDExtension, so replicate the calls here.
@@ -166,8 +172,10 @@ void Rope::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_appearance"), &Rope::get_appearance);
 
 	// simulation
+#if ENABLED_COLLISION_LAYER
 	ClassDB::bind_method(D_METHOD("set_collision_layer", "collision_layer"), &Rope::set_collision_layer);
 	ClassDB::bind_method(D_METHOD("get_collision_layer"), &Rope::get_collision_layer);
+#endif
 
 	ClassDB::bind_method(D_METHOD("set_collision_mask", "collision_mask"), &Rope::set_collision_mask);
 	ClassDB::bind_method(D_METHOD("get_collision_mask"), &Rope::get_collision_mask);
@@ -219,11 +227,13 @@ void Rope::_bind_methods() {
 	EXPORT_PROPERTY_RANGED(Variant::FLOAT, tension_force_scale, Rope, "0.0,10.0,0.1");
 	EXPORT_PROPERTY(Variant::FLOAT, max_tension_force, Rope);
 
+#if ENABLED_COLLISION_LAYER
 	// special case the layer to disabled if Jolt Physics is in use.
 	auto physics_engine = ProjectSettings::get_singleton()->get_setting("physics/3d/physics_engine");
 	bool _is_jolt = (physics_engine == "Jolt Physics");
 	int usage = (_is_jolt ? PROPERTY_USAGE_READ_ONLY : 0) | PROPERTY_USAGE_DEFAULT;
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "collision_layer", PROPERTY_HINT_LAYERS_3D_PHYSICS, "", usage), "set_collision_layer", "get_collision_layer");
+#endif
 
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "collision_mask", PROPERTY_HINT_LAYERS_3D_PHYSICS), "set_collision_mask", "get_collision_mask");
 
@@ -291,7 +301,9 @@ void Rope::_notification(int p_what) {
 
 			if (w3d.is_valid() && rs && ps) {
 				RID space = w3d->get_space();
+#if ENABLED_COLLISION_LAYER
 				ps->body_set_space(_physics_body, space);
+#endif
 
 				RID scenario = w3d->get_scenario();
 				for (auto instance : _instances) {
@@ -305,7 +317,9 @@ void Rope::_notification(int p_what) {
 			auto ps = PhysicsServer3D::get_singleton();
 			auto rs = RenderingServer::get_singleton();
 			if (ps && rs) {
+#if ENABLED_COLLISION_LAYER
 				ps->body_set_space(_physics_body, RID());
+#endif
 				for (auto instance : _instances) {
 					rs->instance_set_scenario(instance, RID());
 					rs->instance_attach_skeleton(instance, RID());
@@ -1867,6 +1881,7 @@ bool Rope::_pop_is_dirty() {
 #pragma region Physics Collision
 
 void Rope::_clear_physics_shapes() {
+#if ENABLED_COLLISION_LAYER
 	auto ps = PhysicsServer3D::get_singleton();
 	ps->body_clear_shapes(_physics_body);
 	for (Particle &p : _particles) {
@@ -1875,9 +1890,11 @@ void Rope::_clear_physics_shapes() {
 			p.shape = RID();
 		}
 	}
+#endif
 }
 
 void Rope::_rebuild_physics_shapes() {
+#if ENABLED_COLLISION_LAYER
 	if (_is_jolt) {
 		ERR_PRINT_ONCE("Halyard: Jolt Physics is enabled. Disabling CollisionShape building for Performance.");
 		return;
@@ -1910,16 +1927,21 @@ void Rope::_rebuild_physics_shapes() {
 	// clear shape from last particle
 	if (particle_count)
 		_particles[particle_count - 1].shape = RID();
+#else
+	for (auto &particle : _particles) {
+		particle.shape = RID();
+	}
+#endif
 }
 
 // this moves our collision shapes into their new positions
 void Rope::_update_collision_shapes() {
+#if ENABLED_COLLISION_LAYER
 	if (_is_jolt) {
 		return;
 	}
 
 	SCOPED_TIMER(_update_collision_shapes);
-
 	if (_collision_layer == 0 && _collision_mask == 0)
 		return;
 
@@ -1934,8 +1956,12 @@ void Rope::_update_collision_shapes() {
 		// NOTE: This is *expensive* to update
 		ps->body_set_shape_transform(_physics_body, idx, _links[idx]);
 	}
+#else
+	// no-op if we don't have a collision layer
+#endif
 }
 
+#if ENABLED_COLLISION_LAYER
 int Rope::get_collision_layer() const { return _collision_layer; }
 
 void Rope::set_collision_layer(int layer) {
@@ -1945,12 +1971,18 @@ void Rope::set_collision_layer(int layer) {
 	ERR_FAIL_NULL(ps);
 	ps->body_set_collision_layer(_physics_body, layer);
 }
+#endif
 
 int Rope::get_collision_mask() const { return _collision_mask; }
 
 void Rope::set_collision_mask(int mask) {
 	_collision_mask = mask;
+
+#if ENABLED_COLLISION_LAYER
 	PhysicsServer3D::get_singleton()->body_set_collision_mask(_physics_body, mask);
+#else
+	// no-op if we don't have a collision layer
+#endif
 }
 
 // NOTE: We do *not* use the collider shapes for collision detection of the rope
