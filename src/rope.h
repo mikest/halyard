@@ -26,6 +26,9 @@
 #include "rope_anchor.h"
 #include "rope_mesh.h"
 
+// This doesn't work correctly at the moment for various reasons.
+#define ENABLED_COLLISION_LAYER false
+
 using namespace godot;
 
 class RopeAnchor;
@@ -52,7 +55,9 @@ public:
 
 private:
 	Ref<RopeMesh> _rope_mesh;
+#if ENABLED_COLLISION_LAYER
 	RID _physics_body;
+#endif
 	bool _is_jolt = false;
 	LocalVector<RID> _instances;
 	uint64_t _liquid_area_id = 0;
@@ -174,7 +179,9 @@ private:
 	bool _jitter_initial_position = true;
 
 	// collision.
+#if ENABLED_COLLISION_LAYER
 	int _collision_layer = 0;
+#endif
 	int _collision_mask = 0;
 	float _collision_margin = 0.001;
 	bool _collision_use_shape_cast = true;
@@ -422,8 +429,10 @@ public:
 	// initial simulation
 	PROPERTY_GET_SET(float, preprocess_time, {})
 
+#if ENABLED_COLLISION_LAYER
 	int get_collision_layer() const;
 	void set_collision_layer(int layer);
+#endif
 	int get_collision_mask() const;
 	void set_collision_mask(int mask);
 	PROPERTY_GET_SET(float, collision_margin, {})
