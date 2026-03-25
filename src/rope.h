@@ -26,9 +26,6 @@
 #include "rope_anchor.h"
 #include "rope_mesh.h"
 
-// This doesn't work correctly at the moment for various reasons.
-#define ENABLED_COLLISION_LAYER false
-
 using namespace godot;
 
 class RopeAnchor;
@@ -55,11 +52,6 @@ public:
 
 private:
 	Ref<RopeMesh> _rope_mesh;
-#if ENABLED_COLLISION_LAYER
-	RID _physics_body;
-#endif
-	bool _is_jolt = false;
-	LocalVector<RID> _instances;
 	uint64_t _liquid_area_id = 0;
 
 	// Anchor point along the rope.
@@ -118,8 +110,6 @@ private:
 		float stretch = 0.0;
 		int behavior = FREE;
 
-		RID shape;
-
 		Particle() = default;
 		~Particle() = default;
 
@@ -134,13 +124,32 @@ private:
 		bool is_sliding() const { return behavior == SLIDING || behavior == GUIDED; }
 	};
 
+	struct Link {
+		Transform3D xform = Transform3D();
+		RID physics_body = RID(); // physics body instance
+		RID mesh_instance = RID(); // mesh instance, if using link mesh
+
+		Link() = default;
+		~Link() = default;
+	};
+
 	// internal state
 	LocalVector<Vector3> _initial_pos;
 	Distribution _anchor_distribution = Distribution::ABSOLUTE;
 	LocalVector<Anchor> _anchors;
 	LocalVector<Particle> _particles; // the individual points in the simulation
 	LocalVector<Transform3D> _frames; // the transform frame for each LOD point along the rope
-	LocalVector<Transform3D> _links; // the transforms for the points between each particle, always N-1 in count.
+
+	LocalVector<Link> _links; // the transforms for the points between each particle, always N-1 in count.
+	RID _link_shape = RID(); // base collision shape for all links
+
+	// To avoid repeated heap allocations
+	// We store these as class members are reuse each physics frame
+	Ref<PhysicsRayQueryParameters3D> _ray_cast;
+	Ref<PhysicsShapeQueryParameters3D> _shape_cast;
+	Ref<SphereShape3D> _collision_shape;
+	TypedArray<RID> _exclusion_list;
+
 	bool _rebuild = true;
 	bool _is_rebuilding = false;
 
@@ -150,13 +159,6 @@ private:
 
 	double _time = 0.0;
 	double _simulation_delta = 0.0;
-
-	// To avoid repeated heap allocations
-	// We store these as class members are reuse each physics frame
-	Ref<PhysicsRayQueryParameters3D> _ray_cast;
-	Ref<PhysicsShapeQueryParameters3D> _shape_cast;
-	Ref<SphereShape3D> _collision_shape;
-	TypedArray<RID> _exclusion_list;
 
 	// rope geometry
 	float _rope_length = 4.0;
@@ -179,9 +181,7 @@ private:
 	bool _jitter_initial_position = true;
 
 	// collision.
-#if ENABLED_COLLISION_LAYER
 	int _collision_layer = 0;
-#endif
 	int _collision_mask = 0;
 	float _collision_margin = 0.001;
 	bool _collision_use_shape_cast = true;
@@ -220,7 +220,7 @@ protected:
 	void _compute_parallel_transport(LocalVector<Transform3D> &frames) const;
 	void _compute_particle_normals();
 	void _calculate_frames_for_particles(LocalVector<Transform3D> &frames) const;
-	void _calculate_links_for_particles(LocalVector<Transform3D> &links) const;
+	void _calculate_links_for_particles();
 	PackedVector3Array _get_control_points_for_particle(int index) const;
 	Pair<Vector3, Vector3> _catmull_interpolate(const Vector3 &p0, const Vector3 &p1, const Vector3 &p2, const Vector3 &p3, float tension, float t) const;
 
@@ -282,9 +282,12 @@ protected:
 	void _debug_draw_rope();
 	void _queue_redraw();
 	bool _pop_is_dirty();
-	void _set_instances_visible(bool p_visible);
-	void _clear_instances();
-	void _rebuild_instances();
+
+	void _set_links_visible(bool p_visible);
+	void _clear_links();
+	void _rebuild_link_shape();
+	void _rebuild_links();
+	void _update_links();
 
 	void _on_appearance_changed();
 
@@ -293,6 +296,8 @@ public:
 	Rope(const Rope &other);
 	virtual ~Rope() override;
 
+	void _internal_enter_world();
+	void _internal_exit_world();
 	void _internal_ready();
 	void _internal_process(double delta);
 	void _internal_physics_process(double delta);
@@ -429,10 +434,8 @@ public:
 	// initial simulation
 	PROPERTY_GET_SET(float, preprocess_time, {})
 
-#if ENABLED_COLLISION_LAYER
 	int get_collision_layer() const;
 	void set_collision_layer(int layer);
-#endif
 	int get_collision_mask() const;
 	void set_collision_mask(int mask);
 	PROPERTY_GET_SET(float, collision_margin, {})
