@@ -24,12 +24,14 @@ class WrapAnchor : public RopeAnchor {
 private:
 	float _wrap_radius = 1.0f; // sweep radius from the X axis
 	float _wrap_length = 5.0f; // total arc length of the helix in meters
+	float _max_turns = 10.0f; // maximum number of helix turns
 	float _rope_width = 0.125f; // rope width; controls axial pitch per turn
 	float _particles_per_meter = 4.0f; // particle density along the arc
-	float _unevenness = 0.0f; // 0=even pitch, 1=saw-wave x advance over +/-turns/2*rope_width
+	float _unevenness = 0.0f; // 0=even pitch, 1=wobble the wrapping
 	float _turn_gap = 0.0f; // extra axial gap inserted between each full turn
 	bool _clockwise = false; // winding direction around +X
-	int _collision_mask = 0; // physics layers to ray-cast against
+	float _offset_angle = 0.0f; // starting angle offset in radians
+	int _collision_mask = 1; // physics layers to ray-cast against
 	bool _debug = false; // draw debug visualisation each frame
 
 	mutable PackedVector3Array _positions; // cached local-space positions
@@ -55,11 +57,13 @@ public:
 
 	PROPERTY_GET_SET(float, wrap_radius, { _notify_anchor_changed(); })
 	PROPERTY_GET_SET(float, wrap_length, { _notify_anchor_changed(); })
+	PROPERTY_GET_SET(float, max_turns, { _notify_anchor_changed(); })
 	PROPERTY_GET_SET(float, rope_width, { _notify_anchor_changed(); })
 	PROPERTY_GET_SET(float, particles_per_meter, { _notify_anchor_changed(); })
 	PROPERTY_GET_SET(float, unevenness, { _notify_anchor_changed(); })
 	PROPERTY_GET_SET(float, turn_gap, { _notify_anchor_changed(); })
 	PROPERTY_GET_SET(bool, clockwise, { _notify_anchor_changed(); })
+	PROPERTY_GET_SET(float, offset_angle, { _notify_anchor_changed(); })
 	PROPERTY_GET_SET(int, collision_mask, { _notify_anchor_changed(); })
 
 	// debug has a custom setter so it can toggle process on/off.

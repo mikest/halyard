@@ -14,12 +14,14 @@
 
 void WrapAnchor::_bind_methods() {
 	EXPORT_PROPERTY_RANGED(Variant::FLOAT, wrap_radius, WrapAnchor, "0.01,100,0.001");
-	EXPORT_PROPERTY_RANGED(Variant::FLOAT, wrap_length, WrapAnchor, "0.01,100,0.01");
+	EXPORT_PROPERTY_RANGED(Variant::FLOAT, wrap_length, WrapAnchor, "0.01,200,0.01");
+	EXPORT_PROPERTY_RANGED(Variant::FLOAT, max_turns, WrapAnchor, "0.1,100,0.1");
 	EXPORT_PROPERTY_RANGED(Variant::FLOAT, rope_width, WrapAnchor, "0.001,10,0.001");
 	EXPORT_PROPERTY_RANGED(Variant::FLOAT, particles_per_meter, WrapAnchor, "0.1,32,0.1");
 	EXPORT_PROPERTY_RANGED(Variant::FLOAT, unevenness, WrapAnchor, "0.0,1.0,0.01");
 	EXPORT_PROPERTY_RANGED(Variant::FLOAT, turn_gap, WrapAnchor, "-1.0,1.0,0.001");
 	EXPORT_PROPERTY(Variant::BOOL, clockwise, WrapAnchor);
+	EXPORT_PROPERTY_RANGED(Variant::FLOAT, offset_angle, WrapAnchor, "-360,360,0.1,radians_as_degrees");
 
 	ClassDB::bind_method(D_METHOD("set_collision_mask", "mask"), &WrapAnchor::set_collision_mask);
 	ClassDB::bind_method(D_METHOD("get_collision_mask"), &WrapAnchor::get_collision_mask);
@@ -89,36 +91,30 @@ void WrapAnchor::_notification(int p_what) {
 
 // Sweeps a helical path around the local +X axis, ray-casting radially inward
 // at each step to find surface contact points.  Results are stored in local space.
+// Wrapping stops when the accumulated real arc distance reaches _wrap_length
+// or the angular sweep reaches _max_turns, whichever comes first.
 void WrapAnchor::_rebuild_positions() const {
 	_positions.clear();
 
-	if (!is_inside_tree()) {
-		_dirty = false;
+	if (!is_inside_tree() || _collision_mask == 0) {
 		return;
 	}
 
 	Ref<World3D> world = get_world_3d();
 	if (world.is_null()) {
-		_dirty = false;
 		return;
 	}
 
 	PhysicsDirectSpaceState3D *dss = PhysicsServer3D::get_singleton()->space_get_direct_state(world->get_space());
 	if (dss == nullptr) {
-		_dirty = false;
 		return;
 	}
 
-	// total arc length of the helix
-	float arc_total = _wrap_length;
-	int count = MAX(1, static_cast<int>(Math::round(arc_total * _particles_per_meter)));
-	float min_spacing = (1.0f / _particles_per_meter);
+	// maximum theoretical particle count, will likely exit early due to the _wrap_length limit
+	float circumference = Math_TAU * _wrap_radius;
+	int count = MAX(2, static_cast<int>(Math::round(_max_turns * circumference * _particles_per_meter)));
+	float min_spacing = 1.0f / _particles_per_meter;
 
-	// derive turn count from arc length and circumference
-	float turns = _wrap_length / (Math_TAU * _wrap_radius);
-
-	// ray origin starts at the wrap radius
-	float outer_radius = _wrap_radius;
 	float winding_dir = _clockwise ? -1.0f : 1.0f;
 
 	Transform3D global_xform = get_global_transform();
@@ -131,15 +127,17 @@ void WrapAnchor::_rebuild_positions() const {
 	ray_query->set_collide_with_bodies(true);
 	ray_query->set_hit_from_inside(false);
 
+	// track accumulated real surface distance to enforce _wrap_length budget
+	float accumulated_length = 0.0f;
 	Vector3 prev_local;
 	bool has_prev = false;
 
 	for (int idx = 0; idx < count; idx++) {
 		float t = static_cast<float>(idx) / static_cast<float>(count);
-		float angle = t * turns * Math_TAU * winding_dir;
+		float angle = t * _max_turns * Math_TAU * winding_dir + _offset_angle;
 
 		// even pitch advances linearly, uneven is a sine wave
-		float x_even = (t * turns * _rope_width) + (t * turns * _turn_gap);
+		float x_even = t * _max_turns * (_rope_width + _turn_gap);
 		float phase = 2.0f * t - 1.0f;
 		float x_uneven = sin(phase * Math_PI) * x_even;
 		float x = Math::lerp(x_even, x_uneven, _unevenness);
@@ -151,7 +149,7 @@ void WrapAnchor::_rebuild_positions() const {
 		Vector3 local_pos;
 
 		if (_collision_mask != 0) {
-			// cast from outside the sweep radius inward toward the X axis at this x position
+			// cast from the helix point inward toward the X axis
 			Vector3 local_origin(x, _wrap_radius * cy, _wrap_radius * cz);
 			Vector3 local_target(x, 0.0f, 0.0f);
 
@@ -171,17 +169,14 @@ void WrapAnchor::_rebuild_positions() const {
 
 				// convert the world-space hit back to local space
 				local_pos = global_xform_inv.xform(contact);
-
 				if (_debug) {
 					// draw the ray for debug purposes
 					DebugDraw3D::draw_square(result["position"], 0.01, Color(1, 0, 1), .1);
 				}
 			} else {
-				// no hit: skip this point
+				// no hit: skip this step
 				continue;
 			}
-		} else {
-			local_pos = local_helix;
 		}
 
 		// de-duplicate: skip points that are too close to the previous accepted point
@@ -189,6 +184,16 @@ void WrapAnchor::_rebuild_positions() const {
 			continue;
 		}
 
+		// accumulate real arc distance and stop once the wrap_length budget is spent
+		if (has_prev) {
+			accumulated_length += local_pos.distance_to(prev_local);
+			if (accumulated_length >= _wrap_length) {
+				_positions.push_back(local_pos);
+				break;
+			}
+		}
+
+		// only add collision points.
 		_positions.push_back(local_pos);
 		prev_local = local_pos;
 		has_prev = true;
