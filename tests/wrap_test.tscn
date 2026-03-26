@@ -1,0 +1,97 @@
+[gd_scene format=3 uid="uid://xka5tl7mcugg"]
+
+[ext_resource type="PackedScene" uid="uid://cn1vm8lpn0kby" path="res://addons/halyard/tests/base.tscn" id="1_0j5eo"]
+[ext_resource type="Texture2D" uid="uid://dlhnxxyov3dea" path="res://addons/halyard/assets/three-ply-rope.png" id="2_xi8wr"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_y6xmp"]
+albedo_texture = ExtResource("2_xi8wr")
+
+[sub_resource type="RopeAppearance" id="RopeAppearance_305w5"]
+rope_lod = 4
+material = SubResource("StandardMaterial3D_y6xmp")
+attachment_distribution = 3
+attachment_count = 1
+attachments/0/offset = 0.5
+attachments/0/node_path = NodePath("HighWire")
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_4l8eq"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_xi8wr"]
+size = Vector3(0.5, 2, 0.5)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_y6xmp"]
+size = Vector3(0.5, 2, 0.5)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_xi8wr"]
+top_radius = 0.25
+bottom_radius = 0.25
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_y6xmp"]
+radius = 0.25
+
+[node name="Node3D" type="Node3D" unique_id=1467315991 groups=["world"]]
+
+[node name="TestBase" parent="." unique_id=2029226043 instance=ExtResource("1_0j5eo")]
+
+[node name="Rope" type="Rope" parent="." unique_id=1172114836]
+rope_length = 10.325
+rope_width = 0.1
+particles_per_meter = 6.0
+appearance = SubResource("RopeAppearance_305w5")
+anchor_count = 2
+stiffness_iterations = 20
+stiffness = 1.9
+collision_mask = 5
+apply_wind = true
+wind = Vector3(1, 0, 1)
+wind_noise = SubResource("FastNoiseLite_4l8eq")
+anchors/0/offset = 0.0
+anchors/0/from = 0
+anchors/0/node_path = NodePath("../StaticBody3D/WrapAnchor")
+anchors/1/offset = 3.0
+anchors/1/from = 1
+anchors/1/node_path = NodePath("../StaticBody3D2/WrapAnchor2")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5148482, 0)
+custom_aabb = AABB(-0.6606968, -0.38180715, -0.36051026, 2.8992043, 1.2433373, 0.8012576)
+
+[node name="HighWire" type="RopeAnchor" parent="Rope" unique_id=1824410263]
+transform = Transform3D(-0.010944605, -0.09353019, -0.03364994, 0.060971256, -0.033053473, 0.072041474, -0.078503005, -0.012632138, 0.0606441, 2.0283577, 0.37309933, -0.07635456)
+
+[node name="StaticBody3D" type="StaticBody3D" parent="." unique_id=932242444]
+transform = Transform3D(0.85404927, -0.055708073, 0.5172008, -0.16497572, 0.9139172, 0.37086165, -0.49333876, -0.40205967, 0.77133965, 1.8165789, 3.0474386, 4.7683716e-07)
+metadata/_edit_group_ = true
+
+[node name="WrapAnchor" type="WrapAnchor" parent="StaticBody3D" unique_id=459280541]
+wrap_radius = 1.407
+turns = 4.0
+unevenness = 1.0
+turn_gap = -0.052
+collision_mask = 5
+debug = true
+transform = Transform3D(-0.21046007, 0.72865105, -0.651747, -0.9478803, 0.011045627, 0.31843507, 0.23922685, 0.68479586, 0.6883493, -0.015671909, -0.014758825, 0.0045108795)
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="StaticBody3D" unique_id=1264075246]
+mesh = SubResource("BoxMesh_xi8wr")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D" unique_id=1426655981]
+shape = SubResource("BoxShape3D_y6xmp")
+
+[node name="StaticBody3D2" type="StaticBody3D" parent="." unique_id=1160891011]
+transform = Transform3D(-0.9594908, 0.0716093, -0.27248764, 0.058147147, 0.9966694, 0.05717385, 0.27567428, 0.039013397, -0.96045893, -0.28950524, 2.5148482, 0)
+metadata/_edit_group_ = true
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="StaticBody3D2" unique_id=1255781966]
+mesh = SubResource("CylinderMesh_xi8wr")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="StaticBody3D2" unique_id=346401300]
+shape = SubResource("CylinderShape3D_y6xmp")
+
+[node name="WrapAnchor2" type="WrapAnchor" parent="StaticBody3D2" unique_id=389906997]
+wrap_radius = 1.066
+rope_width = 0.1
+particles_per_meter = 5.0
+unevenness = 1.0
+turn_gap = -0.151
+collision_mask = 1
+debug = true
+transform = Transform3D(0.3653713, -0.9256667, 0.098209925, 0.8873059, 0.31443608, -0.33736888, 0.28141046, 0.21040693, 0.93623567, 0.02105695, -0.25505686, 0.027382493)
