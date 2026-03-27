@@ -18,8 +18,14 @@ func _process(delta: float):
 	rope_length = 3 + 3 * (sin(_phase) + 1)/2.0
 
 # Create a single anchor point that is always a fixed distance from the start
-func _get_anchor_count() -> int:
-	return 2
+func _update_anchors() -> void:
+	anchor_count = 2
+	for idx in anchor_count:
+		set_anchor_offset(idx, _get_anchor_abs_offset(idx))
+		set_anchor_transform(idx, _get_anchor_transform(idx))
+		set_anchor_behavior(idx, RopeAnchor.AnchorBehavior.ANCHORED)
+		set_anchor_nodepath(idx, "")
+
 
 func _get_anchor_abs_offset(idx: int) -> float:
 	if idx == 0:
@@ -29,30 +35,38 @@ func _get_anchor_abs_offset(idx: int) -> float:
 	var dist := (pos - global_position).length() + (idx* 0.1)
 	return dist * (1.0 - anchor_tension)
 
+
 func _get_anchor_transform(idx: int) -> Transform3D:
 	if idx == 0:
 		return global_transform
 		
 	return global_transform.translated(offset)
 
-func _get_anchor_behavior(idx: int) -> int:
-	return RopeAnchor.AnchorBehavior.ANCHORED
+
 
 # Use all the child nodes as attachments and distribute them evenly along the rope
-func _get_attachment_count() -> int:
-	return get_child_count()
+func _update_attachments() -> void:
+	if appearance:
+		appearance.attachment_count = get_child_count()
+		
+		var last := appearance.attachment_count - 1;
+		for idx in appearance.attachment_count:
+			var span := 3
+			var dist := (idx / last) * span;
+			appearance.set_attachment_offset(idx, rope_length - dist)
+			
+			var path := get_path_to(get_child(last - idx))
+			appearance.set_attachment_nodepath(idx, path)
 
-func _get_attachment_position(idx: int) -> float:
-	var total : float = get_child_count() - 1;
-	var span := 3
-	var dist := (idx / total) * span;
-	return 1.0 - (dist / rope_length);
-
-func _get_attachment_nodepath(idx: int) -> NodePath:
-	return get_path_to(get_child(idx))
-	
-func _get_attachment_transform(idx: int) -> Transform3D:
+func _get_attachment_local_transform(idx: int) -> Transform3D:
 	var xform: Transform3D
-	return xform.rotated_local(Vector3.UP, PI/3 * idx)
+	if appearance:
+		if idx == appearance.attachment_count - 1:
+			xform = xform.rotated_local(Vector3.RIGHT, PI)
+		else:
+			xform = xform.rotated_local(Vector3.UP, PI/3 * idx)
+		
+	return xform
+
 
 #endregion
