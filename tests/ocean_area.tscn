@@ -1,0 +1,47 @@
+[gd_scene format=3 uid="uid://n8ovcverwy8g"]
+
+[ext_resource type="Material" uid="uid://cruwbpf2bajdx" path="res://addons/halyard/shaders/wave_shader_material.tres" id="1_6eu5t"]
+
+[sub_resource type="WaveSampler" id="WaveSampler_ylavv"]
+material = ExtResource("1_6eu5t")
+details_corner_position = Vector3(-128, 1000, -128)
+details_texture_size = 256.0
+details_vertex_spacing = 0.25
+mix_sharpness = 0.25
+height = 1.5
+scale = 0.01
+speed = 0.02
+direction = Vector2(0.5, 1)
+normal_sample_range = 0.25
+normal_softness = 0.95000005
+max_height = 0.2
+
+[sub_resource type="Environment" id="Environment_ulrir"]
+background_mode = 1
+background_color = Color(0, 0, 0, 0)
+ambient_light_source = 1
+reflected_light_source = 1
+
+[node name="OceanArea" type="OceanArea" unique_id=1368996100 node_paths=PackedStringArray("clipmap_instance", "ocean_detailer")]
+wave_sampler = SubResource("WaveSampler_ylavv")
+clipmap_instance = NodePath("ClipMapInstance")
+ocean_detailer = NodePath("OceanDetailer")
+show_debug = true
+
+[node name="ClipMapInstance" type="ClipMapInstance" parent="." unique_id=1932321029]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.488229, 0, 15.372006)
+
+[node name="OceanDetailer" type="OceanDetailer" parent="." unique_id=1516782957]
+render_size = 256.0
+transparent_bg = true
+use_hdr_2d = true
+size = Vector2i(1024, 1024)
+
+[node name="OceanDetailerCamera" type="Camera3D" parent="OceanDetailer" unique_id=1313898618]
+transform = Transform3D(1, 0, 0, 0, -4.371139e-08, 1, 0, -1, -4.371139e-08, 0, 1000, 7)
+cull_mask = 262144
+environment = SubResource("Environment_ulrir")
+projection = 1
+current = true
+size = 256.0
+near = 0.1

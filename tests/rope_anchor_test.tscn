@@ -30,6 +30,9 @@ height = 4.0
 
 [node name="TestBase" unique_id=2029226043 instance=ExtResource("1_3jqx7")]
 
+[node name="Camera3D" parent="." index="0" unique_id=1498562229]
+pan_speed = 0.005
+
 [node name="Rope" type="Rope" parent="." index="3" unique_id=540035405]
 rope_width = 0.25
 particles_per_meter = 4.0

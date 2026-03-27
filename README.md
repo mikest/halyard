@@ -7,6 +7,7 @@ A high-performance, cross-platform rope & buoyancy simulation library. For all y
 
 ## Features
 
+
 ### Rope
 - Fast rope physics using Verlet integration.
 - Supports arbitrary rope attachment points and anchors for complex rigging.
@@ -37,15 +38,25 @@ The anchors can be used to create the illusion of pulleys.
 - Optional Auto-calculation of mass properties.
 
 
-### Classes
+### Rope Classes
 - <img src="icons/Rope.svg" width=24/> Rope - A virtual rope that can react to gravity, wind and waves.
+
 - <img src="icons/RopeAnchor.svg" width=24/> RopeAnchor - An anchor point that attaches, guides, or tows via a rope.
 - <img src="icons/RopeAnchor.svg" width=24/> CoiledAnchor - A RopeAnchor that generates coil/helix positions, for modelling rope wound around a drum or winch.
+- <img src="icons/RopeAnchor.svg" width=24/> WrapAnchor - A RopeAnchor that generates coil/helix positions wrapped around any CollisionObject3Ds.
+
 - <img src="icons/RopeAppearance.svg" width=24/> RopeAppearance - A resource for describing the look of a Rope and its Attachments.
+
+### Buoyancy Classes
 
 - <img src="icons/RigidBuoyancy.svg" width=24/> RigidBuoyancy - A component that makes its parent RigidBody3D float.
 - <img src="icons/CharacterBuoyancy.svg" width=24/> CharacterBuoyancy - A component that makes its parent CharacterBody3D float.
+- <img src="icons/BuoyancyMaterial.svg" width=24/> BuoyancyMaterial - A resource for defining buoyancy physics properties.
+
 - <img src="icons/LiquidArea.svg" width=24/> LiquidArea - An abstract representation of a liquid surface. Some assembly required...
+- <img src="icons/LiquidArea.svg" width=24/> OceanArea - A basic ocean rendering system. Uses ClipMap and OceanDetailer.
+- <img src="icons/ClipMapInstance.svg" width=24/> ClipMap - A wandering clipmap mesh that can be used for ocean rendering.
+- <img src="icons/OceanDetailer.svg" width=24/> OceanDetailer - A utility class for rendering dynamic ocean height map effects.
 
 
 ## Installation
@@ -78,9 +89,7 @@ The anchors can be used to create the illusion of pulleys.
 	- NOTE: One Windows you may also need to do this.
 	- You can avoid this by building from source. The repo is designed to be checked out directly into your addons folder for this reason.
 	- Jolt Physics has some caveats around collisions.
-2. Open the example scene and look around.
-2. Create a rope instance and configure its parameters.
-3. Attach rope ends to objects or positions. Rope details will be scaled to rope width, so model your attachments at 1:1 for a 1m thick rope.
+2. Open the example test scenes and look around.
 
 
 ## Rope Force Feedback
@@ -119,19 +128,22 @@ resources.
 Here's some things I'd like to add to this library in the fullness of time.
 
 #### Rope
-- Rope uses real mass properties
-- Full bidirectional collision support
+- Custom rope mesh generation
+- Rope uses real mass properties.
+- Full bidirectional collision support.
 - Rope twist torque.
-- Optional torque application at attachment offset points
+- Optional torque application at attachment offset points.
 
 #### Buoyancy
 - Use compute shader for buoyancy mesh volume integrator.
 - Clean up Ocean wandering clipmap and use compute shader for liquid sampling.
 - Heightmap & current vector map for ocean so we can stick to the rivers and the lakes that we're used to.
+- Integration w/ Terrain3D's ocean system.
 
 #### Wind/Sails
 - Softbody sail pattern generator.
 - Wind/Sail force applicator.
+- SailAnchor for attaching ropes to sails.
 
 
 ## Contributing
