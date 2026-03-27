@@ -35,8 +35,8 @@ private:
 	Ref<WaveSampler> _wave_sampler;
 
 	// Visual clipmap (optional - can be null if using GDScript visuals)
-	ClipMapInstance *_clipmap_instance = nullptr;
-	OceanDetailer *_ocean_detailer = nullptr;
+	uint64_t _clipmap_instance_id = 0;
+	uint64_t _ocean_detailer_id = 0;
 	OceanUpdate _ocean_update = OceanUpdate::CAMERA;
 
 	// Rendering properties
@@ -53,6 +53,10 @@ private:
 	float _get_current_time() const;
 	void _update_clipmap_position();
 	void _frame_post_draw();
+	void _internal_enter_tree();
+	void _internal_exit_tree();
+	void _internal_ready();
+	void _internal_process();
 
 protected:
 	static void _bind_methods();

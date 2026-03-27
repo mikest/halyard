@@ -60,9 +60,9 @@ anchors/0/node_path = NodePath("../CoiledAnchor/Drum")
 anchors/1/offset = 0.2
 anchors/1/from = 0
 anchors/1/node_path = NodePath("../CoiledAnchor")
-anchors/2/offset = 4.2320304
+anchors/2/offset = 4.23203
 anchors/2/from = 0
-anchors/2/node_path = NodePath("../../RigidBody3D/WrapAnchor")
+anchors/2/node_path = NodePath("../../RigidBody3D/ChainHole")
 anchors/3/offset = 0.0
 anchors/3/from = 1
 anchors/3/node_path = NodePath("../../Ball/Towing")
@@ -81,7 +81,7 @@ turns_per_layer = 6.0
 rope_width = 0.15
 particles_per_meter = 12.0
 clockwise = true
-transform = Transform3D(-1, 6.2873085e-08, -1.2261238e-07, -1.226145e-07, -0.81202495, 0.58359295, -6.28742e-08, 0.58359295, 0.81202495, -0.25, 0.5, 0)
+transform = Transform3D(-1, 6.287307e-08, -1.2261238e-07, -1.2261448e-07, -0.81202495, 0.583593, -6.287421e-08, 0.583593, 0.81202495, -0.25, 0.5, 0)
 
 [node name="Drum" type="RopeAnchor" parent="ChainCoil/CoiledAnchor" unique_id=1088114845]
 transform = Transform3D(-1, -2.1741165e-08, 8.467618e-08, 8.7422784e-08, -0.24868996, 0.9685832, -1.0323297e-14, 0.9685832, 0.24868996, 0, 0, 0)

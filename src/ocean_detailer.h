@@ -33,7 +33,7 @@ private:
 	float _render_size = 1024.0f;
 	float _reposition_rate = 0.1f; // How often to reposition (in seconds)
 	float _snap_step = 1.0f; // Grid snapping distance
-	Node3D *_follow_target = nullptr;
+	uint64_t _follow_target_id = 0;
 
 	// Tracking
 	Vector3 _last_follow_position = Vector3(0, 0, 0);

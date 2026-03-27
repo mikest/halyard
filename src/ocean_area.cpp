@@ -65,57 +65,85 @@ void OceanArea::_notification(int p_what) {
 
 	switch (p_what) {
 		case NOTIFICATION_ENTER_TREE:
-			if (rs->is_connected("frame_post_draw", Callable(this, "_frame_post_draw")) == false) {
-				rs->connect("frame_post_draw", Callable(this, "_frame_post_draw"));
-			}
+			_internal_enter_tree();
 			break;
 		case NOTIFICATION_READY:
-			set_process(true);
-
-			// Try to find a child clipmap instance in the scene if not already assigned
-			if (_clipmap_instance == nullptr) {
-				_clipmap_instance = Object::cast_to<ClipMapInstance>(get_node_or_null("ClipMapInstance"));
-			}
-			if (_ocean_detailer == nullptr) {
-				_ocean_detailer = Object::cast_to<OceanDetailer>(get_node_or_null("OceanDetailer"));
-			}
-			if (_wave_sampler.is_valid()) {
-				_wave_sampler->set_detail_map(_ocean_detailer ? (Ref<Texture2D>)_ocean_detailer->get_texture() : Ref<Texture2D>());
-				_wave_sampler->refresh_from_material();
-			}
+			_internal_ready();
 			break;
-		case NOTIFICATION_PROCESS:
-			// Update shader parameter for vertex scaling
-			if (_wave_sampler.is_valid()) {
-				Ref<ShaderMaterial> material = _wave_sampler->get_material();
-				if (material.is_valid()) {
-					material->set_shader_parameter("VertexScaling", _vertex_scaling);
-
-					// Only update at game time.
-					if (Engine::get_singleton()->is_editor_hint() == false) {
-						_wave_sampler->set_wave_time(static_cast<float>(Time::get_singleton()->get_ticks_msec()) / 1000.0f);
-					}
-
-					// ferry the detailer properties over to the sampler
-					_wave_sampler->set_details_texture_size(_ocean_detailer ? _ocean_detailer->get_detail_viewport_texture_size() : 128.0f);
-
-					_wave_sampler->set_details_corner_position(_ocean_detailer ? _ocean_detailer->get_detail_viewport_texture_corner_position() : Vector3(0, 0, 0));
-
-					_wave_sampler->set_details_vertex_spacing(_ocean_detailer ? _ocean_detailer->get_detail_viewport_vertex_spacing() : 1.0f);
-				}
-			}
-			// Update clipmap scaling
-			if (_clipmap_instance) {
-				_clipmap_instance->set_vertex_scaling(_vertex_scaling);
-			}
-			_update_clipmap_position();
-			break;
+		case NOTIFICATION_PROCESS: {
+			_internal_process();
+		} break;
 		case NOTIFICATION_EXIT_TREE:
-			if (rs->is_connected("frame_post_draw", Callable(this, "_frame_post_draw"))) {
-				rs->disconnect("frame_post_draw", Callable(this, "_frame_post_draw"));
-			}
+			_internal_exit_tree();
 			break;
 	}
+}
+
+void OceanArea::_internal_enter_tree() {
+	RenderingServer *rs = RenderingServer::get_singleton();
+	if (!rs->is_connected("frame_post_draw", Callable(this, "_frame_post_draw"))) {
+		rs->connect("frame_post_draw", Callable(this, "_frame_post_draw"));
+	}
+}
+
+void OceanArea::_internal_exit_tree() {
+	RenderingServer *rs = RenderingServer::get_singleton();
+	if (rs->is_connected("frame_post_draw", Callable(this, "_frame_post_draw"))) {
+		rs->disconnect("frame_post_draw", Callable(this, "_frame_post_draw"));
+	}
+}
+
+void OceanArea::_internal_ready() {
+	set_process(true);
+
+	// Try to find a child clipmap instance in the scene if not already assigned
+	if (_clipmap_instance_id == 0) {
+		ClipMapInstance *found = Object::cast_to<ClipMapInstance>(get_node_or_null("ClipMapInstance"));
+		if (found) {
+			_clipmap_instance_id = found->get_instance_id();
+		}
+	}
+
+	if (_ocean_detailer_id == 0) {
+		OceanDetailer *found = Object::cast_to<OceanDetailer>(get_node_or_null("OceanDetailer"));
+		if (found) {
+			_ocean_detailer_id = found->get_instance_id();
+		}
+	}
+
+	if (_wave_sampler.is_valid()) {
+		OceanDetailer *detailer = get_ocean_detailer();
+		_wave_sampler->set_detail_map(detailer ? (Ref<Texture2D>)detailer->get_texture() : Ref<Texture2D>());
+		_wave_sampler->refresh_from_material();
+	}
+}
+
+void OceanArea::_internal_process() {
+	// Update shader parameter for vertex scaling
+	if (_wave_sampler.is_valid()) {
+		Ref<ShaderMaterial> material = _wave_sampler->get_material();
+		if (material.is_valid()) {
+			material->set_shader_parameter("VertexScaling", _vertex_scaling);
+
+			// Only update at game time.
+			if (Engine::get_singleton()->is_editor_hint() == false) {
+				_wave_sampler->set_wave_time(static_cast<float>(Time::get_singleton()->get_ticks_msec()) / 1000.0f);
+			}
+
+			// ferry the detailer properties over to the sampler
+			OceanDetailer *detailer = get_ocean_detailer();
+			_wave_sampler->set_details_texture_size(detailer ? detailer->get_detail_viewport_texture_size() : 128.0f);
+			_wave_sampler->set_details_corner_position(detailer ? detailer->get_detail_viewport_texture_corner_position() : Vector3(0, 0, 0));
+			_wave_sampler->set_details_vertex_spacing(detailer ? detailer->get_detail_viewport_vertex_spacing() : 1.0f);
+		}
+	}
+
+	// Update clipmap scaling
+	if (ClipMapInstance *clipmap = get_clipmap_instance()) {
+		clipmap->set_vertex_scaling(_vertex_scaling);
+	}
+
+	_update_clipmap_position();
 }
 
 void OceanArea::set_wave_sampler(const Ref<WaveSampler> &p_sampler) {
@@ -127,22 +155,22 @@ Ref<WaveSampler> OceanArea::get_wave_sampler() const {
 }
 
 void OceanArea::set_clipmap_instance(ClipMapInstance *p_instance) {
-	_clipmap_instance = p_instance;
-	if (_clipmap_instance) {
-		_clipmap_instance->set_vertex_scaling(_vertex_scaling);
+	_clipmap_instance_id = p_instance ? p_instance->get_instance_id() : 0;
+	if (p_instance) {
+		p_instance->set_vertex_scaling(_vertex_scaling);
 	}
 }
 
 ClipMapInstance *OceanArea::get_clipmap_instance() const {
-	return _clipmap_instance;
+	return Object::cast_to<ClipMapInstance>(ObjectDB::get_instance(_clipmap_instance_id));
 }
 
 void OceanArea::set_ocean_detailer(OceanDetailer *p_instance) {
-	_ocean_detailer = p_instance;
+	_ocean_detailer_id = p_instance ? p_instance->get_instance_id() : 0;
 }
 
 OceanDetailer *OceanArea::get_ocean_detailer() const {
-	return _ocean_detailer;
+	return Object::cast_to<OceanDetailer>(ObjectDB::get_instance(_ocean_detailer_id));
 }
 
 void OceanArea::set_ocean_update(OceanUpdate p_mode) {
@@ -155,8 +183,8 @@ OceanArea::OceanUpdate OceanArea::get_ocean_update() const {
 
 void OceanArea::set_vertex_scaling(float p_scale) {
 	_vertex_scaling = p_scale;
-	if (_clipmap_instance) {
-		_clipmap_instance->set_vertex_scaling(_vertex_scaling);
+	if (ClipMapInstance *clipmap = get_clipmap_instance()) {
+		clipmap->set_vertex_scaling(_vertex_scaling);
 	}
 }
 
@@ -205,7 +233,8 @@ float OceanArea::get_tide_height() const {
 }
 
 void OceanArea::_update_clipmap_position() {
-	if (!_clipmap_instance || _ocean_update == DISABLED || !is_inside_tree()) {
+	ClipMapInstance *clipmap = get_clipmap_instance();
+	if (!clipmap || _ocean_update == DISABLED || !is_inside_tree()) {
 		return;
 	}
 
@@ -227,15 +256,15 @@ void OceanArea::_update_clipmap_position() {
 		world_pos = camera ? camera->get_global_position() : get_global_position();
 	}
 
-	if (_ocean_update == DETAILER_TARGET && _ocean_detailer) {
-		world_pos = _ocean_detailer->get_snapped_position();
+	if (OceanDetailer *detailer = get_ocean_detailer()) {
+		if (_ocean_update == DETAILER_TARGET) {
+			world_pos = detailer->get_snapped_position();
+		}
 	}
 
-	if (_clipmap_instance) {
-		// tidal height is controlled by the clipmap global position.
-		world_pos.y = get_tide_height();
-		_clipmap_instance->update_position(world_pos);
-	}
+	// tidal height is controlled by the clipmap global position.
+	world_pos.y = get_tide_height();
+	clipmap->update_position(world_pos);
 }
 
 float OceanArea::_get_current_time() const {
@@ -243,9 +272,10 @@ float OceanArea::_get_current_time() const {
 }
 
 Transform3D OceanArea::_get_wave_transform_at_position(const Vector3 &pos, float time) const {
-	ERR_FAIL_COND_V_MSG(!_clipmap_instance, Transform3D(), "ClipMapInstance not assigned");
+	ClipMapInstance *clipmap = get_clipmap_instance();
+	ERR_FAIL_COND_V_MSG(!clipmap, Transform3D(), "ClipMapInstance not assigned");
 
-	Transform3D global_xform = _clipmap_instance->get_global_transform();
+	Transform3D global_xform = clipmap->get_global_transform();
 	float base_y = global_xform.origin.y;
 
 	// If no wave sampler or invalid, return flat surface at tide height

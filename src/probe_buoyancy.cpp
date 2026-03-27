@@ -11,6 +11,7 @@
 
 #include "probe_buoyancy.h"
 #include "liquid_area.h"
+#include <godot_cpp/core/object.hpp>
 
 using namespace godot;
 using namespace halyard;
@@ -18,13 +19,14 @@ using namespace halyard;
 #pragma region Private Helpers
 
 void ProbeBuoyancy::_update_derived_properties() {
-	if (_liquid_area == nullptr || !_buoyancy_material.is_valid()) {
+	LiquidArea *liquid_area = get_liquid_area();
+	if (liquid_area == nullptr || !_buoyancy_material.is_valid()) {
 		_character_density = 1000.0f;
 		_character_volume = _mass / 1000.0f;
 		return;
 	}
 
-	float fluid_density = _liquid_area->get_density();
+	float fluid_density = liquid_area->get_density();
 	float buoyancy = _buoyancy_material->get_buoyancy();
 	_character_density = fluid_density / buoyancy;
 	_character_volume = _mass / _character_density;
@@ -45,12 +47,12 @@ const PackedVector3Array &ProbeBuoyancy::get_probes() const {
 }
 
 void ProbeBuoyancy::set_liquid_area(LiquidArea *p_liquid_area) {
-	_liquid_area = p_liquid_area;
+	_liquid_area_id = p_liquid_area ? p_liquid_area->get_instance_id() : 0;
 	_update_derived_properties();
 }
 
 LiquidArea *ProbeBuoyancy::get_liquid_area() const {
-	return _liquid_area;
+	return Object::cast_to<LiquidArea>(ObjectDB::get_instance(_liquid_area_id));
 }
 
 void ProbeBuoyancy::set_buoyancy_material(const Ref<BuoyancyMaterial> &p_material) {
@@ -115,7 +117,8 @@ float ProbeBuoyancy::get_full_submerged_depth() const {
 #pragma region Core Calculations
 
 void ProbeBuoyancy::update_transforms(const Transform3D &body_transform) {
-	if (_liquid_area == nullptr) {
+	LiquidArea *liquid_area = get_liquid_area();
+	if (liquid_area == nullptr) {
 		return;
 	}
 
@@ -128,7 +131,7 @@ void ProbeBuoyancy::update_transforms(const Transform3D &body_transform) {
 	_last_probe_transforms.resize(probe_count);
 
 	// Cache liquid surface height
-	const float liquid_y = _liquid_area->get_global_transform().origin.y;
+	const float liquid_y = liquid_area->get_global_transform().origin.y;
 
 	// Calculate full submerged depth for normalization
 	_full_submerged_depth = calculate_full_submerged_depth(_probes, body_transform);
@@ -146,7 +149,7 @@ void ProbeBuoyancy::update_transforms(const Transform3D &body_transform) {
 		// Get wave transform at this position
 		Transform3D wave_xform = Transform3D(Basis(), liquid_pos);
 		if (!_ignore_waves) {
-			wave_xform = _liquid_area->get_liquid_transform(liquid_pos);
+			wave_xform = liquid_area->get_liquid_transform(liquid_pos);
 		}
 
 		// Cache the transform
@@ -161,7 +164,8 @@ void ProbeBuoyancy::update_transforms(const Transform3D &body_transform) {
 }
 
 void ProbeBuoyancy::update_forces(const Transform3D &body_transform, const Vector3 &gravity) {
-	if (_liquid_area == nullptr) {
+	LiquidArea *liquid_area = get_liquid_area();
+	if (liquid_area == nullptr) {
 		// Clear forces if no liquid area
 		for (int i = 0; i < _forces.size(); ++i) {
 			_forces[i] = Vector3(0, 0, 0);
@@ -189,7 +193,7 @@ void ProbeBuoyancy::update_forces(const Transform3D &body_transform, const Vecto
 
 	// Pre-calculate constants
 	const float probe_ratio = 1.0f / probe_count;
-	const float fluid_density = _liquid_area->get_density();
+	const float fluid_density = liquid_area->get_density();
 
 	// Calculate forces for each probe
 	for (int idx = 0; idx < probe_count; ++idx) {
@@ -222,7 +226,7 @@ void ProbeBuoyancy::update_forces(const Transform3D &body_transform, const Vecto
 				linear_drag = CLAMP(linear_drag, Vector3(0, 0, 0), Vector3(1, 1, 1));
 
 				// get current in local space
-				Vector3 global_current_velocity = _liquid_area->get_liquid_velocity();
+				Vector3 global_current_velocity = liquid_area->get_liquid_velocity();
 				Vector3 local_current_velocity = body_transform.basis.xform_inv(global_current_velocity);
 
 				// calculate drag force in local space and transform to global
@@ -238,12 +242,13 @@ void ProbeBuoyancy::update_forces(const Transform3D &body_transform, const Vecto
 }
 
 int ProbeBuoyancy::get_submerged_count(const Transform3D &body_transform) const {
-	if (_liquid_area == nullptr || _probes.size() == 0) {
+	LiquidArea *liquid_area = get_liquid_area();
+	if (liquid_area == nullptr || _probes.size() == 0) {
 		return 0;
 	}
 
 	int count = 0;
-	const float liquid_y = _liquid_area->get_global_transform().origin.y;
+	const float liquid_y = liquid_area->get_global_transform().origin.y;
 
 	for (int idx = 0; idx < _probes.size(); ++idx) {
 		Vector3 probe = body_transform.xform(_probes[idx]);

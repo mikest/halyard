@@ -364,6 +364,7 @@ ClipMapInstance::ClipMapInstance() {
 }
 
 ClipMapInstance::~ClipMapInstance() {
+	_destroy_tiles();
 }
 
 void ClipMapInstance::_bind_methods() {

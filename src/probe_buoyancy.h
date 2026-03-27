@@ -26,7 +26,7 @@ class ProbeBuoyancy {
 private:
 	// Configuration
 	PackedVector3Array _probes;
-	LiquidArea *_liquid_area = nullptr;
+	uint64_t _liquid_area_id = 0;
 	Ref<BuoyancyMaterial> _buoyancy_material;
 	float _mass = 1.0f;
 	bool _ignore_waves = false;

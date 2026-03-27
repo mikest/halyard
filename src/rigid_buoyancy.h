@@ -38,8 +38,8 @@ class RigidBuoyancy : public Node, protected NodeDebug {
 
 private:
 	// Exported properties
-	LiquidArea *_liquid_area = nullptr;
-	CollisionShape3D *_collider = nullptr;
+	uint64_t _liquid_area_id = 0;
+	uint64_t _collider_id = 0;
 	BuoyancyMode _buoyancy_mode = BUOYANCY_COLLIDER;
 
 	bool _apply_forces = true;
@@ -76,6 +76,12 @@ protected:
 	static void _bind_methods();
 	void _notification(int p_what);
 	void _update_configuration_warnings();
+
+	void _internal_ready();
+	void _internal_enter_tree();
+	void _internal_exit_tree();
+	void _internal_process();
+	void _internal_physics_process();
 
 	// mark the statics as needing to be recalculated.
 	inline void _set_dirty() { _dirty = true; }
