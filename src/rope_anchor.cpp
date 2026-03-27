@@ -6,7 +6,8 @@ void RopeAnchor::_bind_methods() {
 	ADD_SIGNAL(MethodInfo("anchor_changed"));
 
 	EXPORT_PROPERTY_ENUM(behavior, "Free:-1,Anchored,Towing,Guided,Sliding", RopeAnchor);
-	EXPORT_PROPERTY_RANGED(Variant::FLOAT, friction, RopeAnchor, "0.0,1.0,0.01");
+	ClassDB::bind_method(D_METHOD("set_friction", "friction"), &RopeAnchor::set_friction);
+	ClassDB::bind_method(D_METHOD("get_friction"), &RopeAnchor::get_friction);
 	BIND_ENUM_CONSTANT(FREE);
 	BIND_ENUM_CONSTANT(ANCHORED); // Rope can't move anchor.
 	BIND_ENUM_CONSTANT(TOWING); // Rope pulls on rigid body at this point
@@ -50,7 +51,33 @@ Vector3 RopeAnchor::get_particle_position(int p_idx) const {
 }
 
 void RopeAnchor::_notify_anchor_changed() {
+	notify_property_list_changed();
 	emit_signal("anchor_changed");
+}
+
+void RopeAnchor::_get_property_list(List<PropertyInfo> *p_list) const {
+	ERR_FAIL_NULL(p_list);
+
+	// friction is only meaningful when the rope slides through this anchor
+	const bool show = (_behavior == GUIDED || _behavior == TOWING);
+	const uint32_t usage = show ? PROPERTY_USAGE_DEFAULT : PROPERTY_USAGE_NONE;
+	p_list->push_back(PropertyInfo(Variant::FLOAT, "friction", PROPERTY_HINT_RANGE, "0.0,1.0,0.01", usage));
+}
+
+bool RopeAnchor::_set(const StringName &p_name, const Variant &p_property) {
+	if (p_name == StringName("friction")) {
+		set_friction((float)p_property);
+		return true;
+	}
+	return false;
+}
+
+bool RopeAnchor::_get(const StringName &p_name, Variant &r_property) const {
+	if (p_name == StringName("friction")) {
+		r_property = _friction;
+		return true;
+	}
+	return false;
 }
 
 void RopeAnchor::apply_force(const Vector3 &p_force) {

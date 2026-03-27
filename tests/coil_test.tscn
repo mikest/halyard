@@ -115,6 +115,7 @@ wrap_length = 3.0
 max_turns = 1.1
 particles_per_meter = 12.0
 behavior = 2
+friction = 0.5
 transform = Transform3D(0.99993265, 0.011606157, 0, -0.011606157, 0.99993265, 0, 0, 0, 1, -0.1086314, -0.18245447, 0)
 
 [node name="Ball" type="RigidBody3D" parent="." unique_id=1657036312]
@@ -130,6 +131,7 @@ metadata/_edit_group_ = true
 
 [node name="Towing" type="RopeAnchor" parent="Ball" unique_id=1785101900]
 behavior = 1
+friction = 0.5
 transform = Transform3D(1, 0, -2.9802322e-08, 0, 1, 0, 2.9802322e-08, 0, 1, 0, 0, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Ball" unique_id=1812067470]

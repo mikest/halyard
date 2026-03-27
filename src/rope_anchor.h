@@ -40,6 +40,10 @@ protected:
 	static void _bind_methods();
 	virtual void _notify_anchor_changed();
 
+	void _get_property_list(List<PropertyInfo> *p_list) const;
+	bool _set(const StringName &p_name, const Variant &p_property);
+	bool _get(const StringName &p_name, Variant &r_property) const;
+
 public:
 	RopeAnchor() = default;
 	virtual ~RopeAnchor() override = default;
@@ -56,7 +60,7 @@ public:
 
 	// returns the position of the anchor in local space.
 	GDVIRTUAL1RC(Vector3, get_particle_position, int);
-	virtual Vector3 get_particle_position(int idx=0) const;
+	virtual Vector3 get_particle_position(int idx = 0) const;
 
 	// Applies a force to the parent RigidBody3D at this anchor's global position.
 	void apply_force(const Vector3 &p_force);
