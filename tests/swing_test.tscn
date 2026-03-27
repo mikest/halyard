@@ -4,62 +4,28 @@
 [ext_resource type="PackedScene" uid="uid://cn1vm8lpn0kby" path="res://addons/halyard/tests/base.tscn" id="1_u0cki"]
 [ext_resource type="Script" uid="uid://bpo84j3idh1wu" path="res://addons/halyard/tests/draggable.gd" id="2_u0cki"]
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_623gb"]
-albedo_color = Color(0.3155359, 0.25440636, 0.1698789, 1)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_ljxrd"]
-size = Vector3(1, 0.1, 0.5)
-
 [sub_resource type="RopeAppearance" id="RopeAppearance_623gb"]
 rope_lod = 1
 link_mesh = ExtResource("1_623gb")
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_623gb"]
 
+[sub_resource type="SphereShape3D" id="SphereShape3D_u0cki"]
+radius = 0.1
+
 [sub_resource type="RopeAppearance" id="RopeAppearance_u0cki"]
 link_mesh = ExtResource("1_623gb")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_623gb"]
+albedo_color = Color(0.3155359, 0.25440636, 0.1698789, 1)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ljxrd"]
+size = Vector3(1, 0.1, 0.5)
 
 [node name="Node3D" type="Node3D" unique_id=799067127]
 
 [node name="TestBase" parent="." unique_id=2029226043 instance=ExtResource("1_u0cki")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -5, 0)
-
-[node name="RigidBody3D" type="RigidBody3D" parent="." unique_id=798589509]
-mass = 5.0
-linear_damp = 0.1
-angular_damp = 1.0
-script = ExtResource("2_u0cki")
-
-[node name="CSGBox3D" type="CSGBox3D" parent="RigidBody3D" unique_id=1740387349]
-material_override = SubResource("StandardMaterial3D_623gb")
-size = Vector3(1, 0.1, 0.5)
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="RigidBody3D" unique_id=1239128758]
-shape = SubResource("BoxShape3D_ljxrd")
-
-[node name="BoardAnchor" type="RopeAnchor" parent="RigidBody3D" unique_id=96128840]
-behavior = 1
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.1, 0.25)
-
-[node name="BoardAnchor2" type="RopeAnchor" parent="RigidBody3D" unique_id=1810893255]
-behavior = 1
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.1, -0.25)
-
-[node name="BoardAnchor3" type="RopeAnchor" parent="RigidBody3D" unique_id=490902827]
-behavior = 1
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0.1, 0.25)
-
-[node name="BoardAnchor4" type="RopeAnchor" parent="RigidBody3D" unique_id=495718447]
-behavior = 1
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0.1, -0.25)
-
-[node name="Pivot" type="RopeAnchor" parent="RigidBody3D" unique_id=1265080110]
-behavior = 1
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0.5, 0)
-
-[node name="Pivot2" type="RopeAnchor" parent="RigidBody3D" unique_id=796461868]
-behavior = 1
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.5, 0)
 
 [node name="Rope" type="Rope" parent="." unique_id=1069029262]
 rope_length = 2.0
@@ -67,57 +33,63 @@ particles_per_meter = 16.0
 appearance = SubResource("RopeAppearance_623gb")
 anchor_count = 2
 stiffness_iterations = 25
-stiffness = 1.8
-tension_force_scale = 5.0
-max_tension_force = 10000.0
+stiffness = 1.9
+tension_force_scale = 10.0
 apply_wind = true
 wind = Vector3(0, 0, 1)
 wind_noise = SubResource("FastNoiseLite_623gb")
+initial_pos = PackedVector3Array(0, 0, 0, 0, -0.083066225, -0.055488586, 0, -0.14211988, -0.094973445, 0, -0.20113015, -0.1344719, 0, -0.26008463, -0.17398548, 0, -0.3189726, -0.2135154, 0, -0.37778473, -0.25306225, 0, -0.43651295, -0.2926268, 0, -0.49515104, -0.33220923, 0, -0.553694, -0.37180978, 0, -0.61213803, -0.41142857, 0, -0.67048025, -0.45106554, 0, -0.7287185, -0.4907207, 0, -0.7868514, -0.5303938, 0, -0.8448776, -0.57008463, 0, -0.90279603, -0.60979307, 0, -0.9606056, -0.64951885, 0, -1.0183053, -0.68926185, 0, -1.0758939, -0.729022, 0, -1.1333708, -0.7687993, 0, -1.1907358, -0.808594, 0, -1.2479901, -0.84840614, 0, -1.3051362, -0.888236, 0, -1.3621787, -0.92808366, 0, -1.4191244, -0.96794915, 0, -1.4759823, -1.007832, 0, -1.5327642, -1.0477316, 0, -1.5894833, -1.0876468, 0, -1.6461548, -1.1275761, 0, -1.7027948, -1.1675174, 0, -1.7594202, -1.2074687, 0, -1.8160472, -1.2474275, 0, -1.8402901, -1.2645342)
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath(".")
 anchors/0/friction = 0.5
 anchors/1/offset = 0.0
 anchors/1/from = 1
-anchors/1/node_path = NodePath("../RigidBody3D/Pivot")
+anchors/1/node_path = NodePath("../Link/Pivot")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 2.3375678, 1.2649236)
 
-[node name="EndAttach" type="RopeAnchor" parent="Rope" unique_id=1568853578]
-transform = Transform3D(-0.125, -1.0927847e-08, 0, 9.031721e-09, -0.103310846, -0.07036952, 6.1518985e-09, -0.07036952, 0.103310846, 0, -1.8375678, -1.2649236)
+[node name="Link" type="RigidBody3D" parent="." unique_id=1956375125]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0.5, 0)
 
-[node name="Rope" type="Rope" parent="Rope" unique_id=1441601189]
-rope_length = 0.3
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Link" unique_id=1186133557]
+shape = SubResource("SphereShape3D_u0cki")
+
+[node name="Pivot" type="RopeAnchor" parent="Link" unique_id=1265080110]
+behavior = 1
+
+[node name="ShortRopeA" type="Rope" parent="." unique_id=1441601189]
+rope_length = 0.4
 particles_per_meter = 20.0
 appearance = SubResource("RopeAppearance_u0cki")
 anchor_count = 2
-stiffness_iterations = 20
-stiffness = 1.8
+stiffness_iterations = 25
+stiffness = 1.5
 tension_force_scale = 2.0
-max_tension_force = 5000.0
+initial_pos = PackedVector3Array(0, -0.0027222335, 0, 0, -0.09484619, 0.043006625, 0, -0.16506973, 0.07579448, 0, -0.23528972, 0.10858549, 0, -0.30550656, 0.14137943, 0, -0.37572113, 0.17417568, 0, -0.44593456, 0.20697337, 0, -0.51614803, 0.23977154, 0, -0.5380448, 0.25)
 anchors/0/offset = 0.0
 anchors/0/from = 0
-anchors/0/node_path = NodePath("../EndAttach")
+anchors/0/node_path = NodePath("../Link/Pivot")
 anchors/1/offset = 0.0
 anchors/1/from = 1
-anchors/1/node_path = NodePath("../../RigidBody3D/BoardAnchor3")
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.8375678, -1.2649236)
+anchors/1/node_path = NodePath("../Plank/BoardAnchor3")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0.5, 0)
 
-[node name="Rope2" type="Rope" parent="Rope" unique_id=1946640421]
-rope_length = 0.3
+[node name="ShortRopeB" type="Rope" parent="." unique_id=1946640421]
+rope_length = 0.4
 particles_per_meter = 20.0
 appearance = SubResource("RopeAppearance_u0cki")
 anchor_count = 2
-stiffness_iterations = 20
-stiffness = 1.8
+stiffness_iterations = 25
+stiffness = 1.5
 tension_force_scale = 2.0
-max_tension_force = 5000.0
+initial_pos = PackedVector3Array(0, -0.0027222335, 0, 0, -0.09484619, -0.043006625, 0, -0.16506973, -0.07579448, 0, -0.23528972, -0.10858549, 0, -0.30550656, -0.14137943, 0, -0.37572113, -0.17417568, 0, -0.44593456, -0.20697337, 0, -0.51614803, -0.23977154, 0, -0.5380448, -0.25)
 anchors/0/offset = 0.0
 anchors/0/from = 0
-anchors/0/node_path = NodePath("../EndAttach")
+anchors/0/node_path = NodePath("../Link/Pivot")
 anchors/1/offset = 0.0
 anchors/1/from = 1
-anchors/1/node_path = NodePath("../../RigidBody3D/BoardAnchor4")
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.8375678, -1.2649236)
+anchors/1/node_path = NodePath("../Plank/BoardAnchor4")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0.5, 0)
 
 [node name="Rope2" type="Rope" parent="." unique_id=322160301]
 rope_length = 2.0
@@ -125,54 +97,90 @@ particles_per_meter = 16.0
 appearance = SubResource("RopeAppearance_623gb")
 anchor_count = 2
 stiffness_iterations = 25
-stiffness = 1.8
-tension_force_scale = 5.0
-max_tension_force = 10000.0
+stiffness = 1.9
+tension_force_scale = 10.0
 apply_wind = true
 wind = Vector3(0, 0, 1)
 wind_noise = SubResource("FastNoiseLite_623gb")
+initial_pos = PackedVector3Array(0, 0, 0, 0, -0.08324814, -0.055001855, 0, -0.14231062, -0.094074845, 0, -0.20132804, -0.13317657, 0, -0.26028824, -0.17231214, 0, -0.31918, -0.2114861, 0, -0.377995, -0.2507019, 0, -0.43672526, -0.2899624, 0, -0.49536467, -0.32926983, 0, -0.55390835, -0.36862558, 0, -0.6123525, -0.408031, 0, -0.6706946, -0.44748652, 0, -0.7289324, -0.48699248, 0, -0.78706443, -0.5265491, 0, -0.8450897, -0.56615627, 0, -0.90300727, -0.605814, 0, -0.9608159, -0.645522, 0, -1.0185148, -0.68528026, 0, -1.0761027, -0.72508883, 0, -1.1335788, -0.76494765, 0, -1.1909432, -0.80485684, 0, -1.2481966, -0.844816, 0, -1.3053416, -0.88482463, 0, -1.3623824, -0.92488134, 0, -1.4193255, -0.9649843, 0, -1.4761798, -1.0051305, 0, -1.5329567, -1.045316, 0, -1.5896692, -1.0855359, 0, -1.6463323, -1.1257844, 0, -1.7029619, -1.1660552, 0, -1.7595747, -1.2063413, 0, -1.8161871, -1.2466352, 0, -1.8402901, -1.2637904)
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath(".")
 anchors/0/friction = 0.5
 anchors/1/offset = 0.0
 anchors/1/from = 1
-anchors/1/node_path = NodePath("../RigidBody3D/Pivot2")
+anchors/1/node_path = NodePath("../Link2/Pivot2")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 2.3375678, 1.2649236)
 
-[node name="EndAttach" type="RopeAnchor" parent="Rope2" unique_id=1191845426]
-transform = Transform3D(-0.125, -1.0927847e-08, 0, 9.033784e-09, -0.10333445, -0.07033485, 6.148868e-09, -0.07033485, 0.10333445, 0, -1.8375678, -1.2649236)
+[node name="Link2" type="RigidBody3D" parent="." unique_id=1170886350]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.5, 0)
 
-[node name="Rope" type="Rope" parent="Rope2" unique_id=135006674]
-rope_length = 0.3
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Link2" unique_id=188965548]
+shape = SubResource("SphereShape3D_u0cki")
+
+[node name="Pivot2" type="RopeAnchor" parent="Link2" unique_id=796461868]
+behavior = 1
+
+[node name="ShortRopeA2" type="Rope" parent="." unique_id=135006674]
+rope_length = 0.4
 particles_per_meter = 20.0
 appearance = SubResource("RopeAppearance_u0cki")
 anchor_count = 2
-stiffness_iterations = 20
-stiffness = 1.8
+stiffness_iterations = 25
+stiffness = 1.5
 tension_force_scale = 2.0
-max_tension_force = 5000.0
+initial_pos = PackedVector3Array(0, -0.0027222335, 0, 0, -0.09484619, 0.043006625, 0, -0.16506973, 0.07579448, 0, -0.23528972, 0.10858549, 0, -0.30550656, 0.14137943, 0, -0.37572113, 0.17417568, 0, -0.44593456, 0.20697337, 0, -0.51614803, 0.23977154, 0, -0.5380448, 0.25)
 anchors/0/offset = 0.0
 anchors/0/from = 0
-anchors/0/node_path = NodePath("../EndAttach")
+anchors/0/node_path = NodePath("../Link2/Pivot2")
 anchors/1/offset = 0.0
 anchors/1/from = 1
-anchors/1/node_path = NodePath("../../RigidBody3D/BoardAnchor")
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.8375678, -1.2649236)
+anchors/1/node_path = NodePath("../Plank/BoardAnchor")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.5, 0)
 
-[node name="Rope2" type="Rope" parent="Rope2" unique_id=493453225]
-rope_length = 0.3
+[node name="ShortRopeB2" type="Rope" parent="." unique_id=493453225]
+rope_length = 0.4
 particles_per_meter = 20.0
 appearance = SubResource("RopeAppearance_u0cki")
 anchor_count = 2
-stiffness_iterations = 20
-stiffness = 1.8
+stiffness_iterations = 25
+stiffness = 1.5
 tension_force_scale = 2.0
-max_tension_force = 5000.0
+initial_pos = PackedVector3Array(0, -0.0027222335, 0, 0, -0.09484619, -0.043006625, 0, -0.16506973, -0.07579448, 0, -0.23528972, -0.10858549, 0, -0.30550656, -0.14137943, 0, -0.37572113, -0.17417568, 0, -0.44593456, -0.20697337, 0, -0.51614803, -0.23977154, 0, -0.5380448, -0.25)
 anchors/0/offset = 0.0
 anchors/0/from = 0
-anchors/0/node_path = NodePath("../EndAttach")
+anchors/0/node_path = NodePath("../Link2/Pivot2")
 anchors/1/offset = 0.0
 anchors/1/from = 1
-anchors/1/node_path = NodePath("../../RigidBody3D/BoardAnchor2")
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.8375678, -1.2649236)
+anchors/1/node_path = NodePath("../Plank/BoardAnchor2")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.5, 0)
+
+[node name="Plank" type="RigidBody3D" parent="." unique_id=798589509]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.13532257, 0)
+mass = 5.0
+linear_damp = 0.1
+angular_damp = 1.0
+script = ExtResource("2_u0cki")
+
+[node name="CSGBox3D" type="CSGBox3D" parent="Plank" unique_id=1740387349]
+material_override = SubResource("StandardMaterial3D_623gb")
+size = Vector3(1, 0.1, 0.5)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Plank" unique_id=1239128758]
+shape = SubResource("BoxShape3D_ljxrd")
+
+[node name="BoardAnchor" type="RopeAnchor" parent="Plank" unique_id=96128840]
+behavior = 1
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.1, 0.25)
+
+[node name="BoardAnchor2" type="RopeAnchor" parent="Plank" unique_id=1810893255]
+behavior = 1
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.1, -0.25)
+
+[node name="BoardAnchor3" type="RopeAnchor" parent="Plank" unique_id=490902827]
+behavior = 1
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0.1, 0.25)
+
+[node name="BoardAnchor4" type="RopeAnchor" parent="Plank" unique_id=495718447]
+behavior = 1
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0.1, -0.25)
