@@ -387,10 +387,9 @@ public:
 #pragma endregion
 
 #pragma region Attachments
-	// int get_attachment_count(int idx) const;
-	// float get_attachment_position(int idx) const;
-	// NodePath get_attachment_nodepath(int idx) const;
-	// Transform3D get_attachment_transform(int idx) const;
+
+	// Adds all children of the rope to the appearance as attachments.
+	void _set_attachments_from_children();
 #pragma endregion
 
 #pragma region Subclassing

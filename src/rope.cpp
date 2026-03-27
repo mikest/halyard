@@ -173,6 +173,8 @@ void Rope::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_notify_anchors_changed"), &Rope::_notify_anchors_changed);
 	GDVIRTUAL_BIND(_update_anchors)
 
+	ClassDB::bind_method(D_METHOD("_set_attachments_from_children"), &Rope::_set_attachments_from_children);
+
 	// Attachment virtuals
 	ClassDB::bind_method(D_METHOD("_notify_attachments_changed"), &Rope::_notify_attachments_changed);
 	GDVIRTUAL_BIND(_update_attachments)
@@ -783,6 +785,34 @@ void Rope::set_appearance(const Ref<RopeAppearance> &val) {
 		}
 
 		_queue_redraw();
+	}
+}
+
+void Rope::_set_attachments_from_children() {
+	// create an appearance if none is set
+	if (_appearance.is_null()) {
+		set_appearance(Ref<RopeAppearance>(memnew(RopeAppearance)));
+	}
+
+	const int child_count = get_child_count();
+	for (int idx = 0; idx < child_count; idx++) {
+		Node *child = get_child(idx);
+		const NodePath path = get_path_to(child);
+
+		// check if this child is already in the attachment list
+		const int att_count = _appearance->get_attachment_count();
+		bool already_added = false;
+		for (int att_idx = 0; att_idx < att_count; att_idx++) {
+			if (_appearance->get_attachment_nodepath(att_idx) == path) {
+				already_added = true;
+				break;
+			}
+		}
+
+		if (!already_added) {
+			_appearance->set_attachment_count(att_count + 1);
+			_appearance->set_attachment_nodepath(att_count, path);
+		}
 	}
 }
 
