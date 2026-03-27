@@ -11,6 +11,7 @@
 #include "rigid_buoyancy.h"
 #include "halyard_utils.h"
 #include "liquid_area.h"
+#include <godot_cpp/core/object.hpp>
 
 #include <godot_cpp/classes/box_shape3d.hpp>
 #include <godot_cpp/classes/capsule_shape3d.hpp>
@@ -60,10 +61,11 @@ PackedStringArray RigidBuoyancy::_get_configuration_warnings() const {
 	}
 
 	if (_buoyancy_mode == BUOYANCY_COLLIDER) {
-		if (_collider == nullptr) {
+		CollisionShape3D *collider = get_collider();
+		if (collider == nullptr) {
 			what.append("Missing collider.");
 		} else {
-			Ref<Shape3D> shape = _collider->get_shape();
+			Ref<Shape3D> shape = collider->get_shape();
 			if (!shape.is_valid()) {
 				what.append("Missing collider shape.");
 			} else {
@@ -96,109 +98,131 @@ void RigidBuoyancy::_notification(int p_what) {
 
 	switch (p_what) {
 		case NOTIFICATION_READY: {
-			_set_dirty();
-			set_process_internal(true);
-			set_physics_process_internal(true);
-
-			// if no buoyancy material is assigned a default one
-			if (Engine::get_singleton()->is_editor_hint() == false) {
-				if (!_buoyancy_material.is_valid()) {
-					_buoyancy_material.instantiate();
-				}
-			}
+			_internal_ready();
 		} break;
 
 		case NOTIFICATION_ENTER_TREE: {
-			// if (Engine::get_singleton()->is_editor_hint() == false) {
-			if (_liquid_area == nullptr) {
-				SceneTree *tree = get_tree();
-				_liquid_area = LiquidArea::get_liquid_area(tree);
-				_probe_buoyancy.set_liquid_area(_liquid_area);
-				_mesh_buoyancy.set_liquid_area(_liquid_area);
-			}
-			// }
+			_internal_enter_tree();
 		} break;
 
 		case NOTIFICATION_EXIT_TREE: {
-			_liquid_area = nullptr;
-			_probe_buoyancy.set_liquid_area(nullptr);
-			_mesh_buoyancy.set_liquid_area(nullptr);
+			_internal_exit_tree();
 		} break;
 
 		case NOTIFICATION_INTERNAL_PROCESS: {
-			if (_dirty && is_node_ready()) {
-				_update_statics();
-			}
-
-			if (Engine::get_singleton()->is_editor_hint() == true) {
-				if (_show_debug)
-					set_debug_mesh_dirty();
-			}
+			_internal_process();
 		} break;
 
 		case NOTIFICATION_INTERNAL_PHYSICS_PROCESS: {
-			//SCOPED_TIMER(RigidBuoyancy_INTERNAL_PHYSICS_PROCESS);
-
-			if (is_node_ready()) {
-				if (Engine::get_singleton()->is_editor_hint()) {
-					// update the probe transforms so we can see the sampled locations in the editor
-					if (_buoyancy_mode == BUOYANCY_PROBES) {
-						_update_last_probe_transforms();
-					} else {
-						// recalc dynamics
-						_update_dynamics();
-					}
-
-				} else {
-					// in game
-					RigidBody3D *body = Object::cast_to<RigidBody3D>(get_parent());
-					if (body && !body->is_freeze_enabled()) {
-						uint64_t time = Time::get_singleton()->get_ticks_usec();
-
-						// always update submerged state
-						if (_buoyancy_mode == BUOYANCY_PROBES) {
-							_update_last_probe_transforms();
-						} else {
-							// recalc dynamics
-							_update_dynamics();
-						}
-
-						// optionally apply them
-						if (_apply_forces) {
-							float delta = get_physics_process_delta_time();
-							if (_buoyancy_mode == BUOYANCY_PROBES) {
-								apply_buoyancy_probe_forces(body, delta);
-							} else {
-								apply_buoyancy_mesh_forces(body, delta);
-							}
-						}
-
-						// Check if submerged changed and emit signal. We track crossing the threshold in either direction.
-						float current_ratio = get_submerged_ratio();
-						bool was_submerged = _last_submerged_ratio > _submerged_threshold;
-						bool is_submerged = current_ratio > _submerged_threshold;
-						if (was_submerged != is_submerged) {
-							emit_signal("submerged_changed");
-						}
-						_last_submerged_ratio = current_ratio;
-
-						// update time taken
-						uint64_t elapsed = Time::get_singleton()->get_ticks_usec() - time;
-						_buoyancy_time = elapsed;
-					}
-				}
-			}
+			_internal_physics_process();
 		} break;
 	}
 }
 
 #pragma endregion
 
+void RigidBuoyancy::_internal_ready() {
+	_set_dirty();
+	set_process_internal(true);
+	set_physics_process_internal(true);
+
+	// if no buoyancy material is assigned a default one
+	if (Engine::get_singleton()->is_editor_hint() == false) {
+		if (!_buoyancy_material.is_valid()) {
+			_buoyancy_material.instantiate();
+		}
+	}
+}
+
+void RigidBuoyancy::_internal_enter_tree() {
+	// if (Engine::get_singleton()->is_editor_hint() == false) {
+	if (get_liquid_area() == nullptr) {
+		SceneTree *tree = get_tree();
+		LiquidArea *found = LiquidArea::get_liquid_area(tree);
+		_liquid_area_id = found ? found->get_instance_id() : 0;
+		_probe_buoyancy.set_liquid_area(found);
+		_mesh_buoyancy.set_liquid_area(found);
+	}
+	// }
+}
+
+void RigidBuoyancy::_internal_exit_tree() {
+	_liquid_area_id = 0;
+	_probe_buoyancy.set_liquid_area(nullptr);
+	_mesh_buoyancy.set_liquid_area(nullptr);
+}
+
+void RigidBuoyancy::_internal_process() {
+	if (_dirty && is_node_ready()) {
+		_update_statics();
+	}
+
+	if (Engine::get_singleton()->is_editor_hint() == true) {
+		if (_show_debug)
+			set_debug_mesh_dirty();
+	}
+}
+
+void RigidBuoyancy::_internal_physics_process() {
+	//SCOPED_TIMER(RigidBuoyancy_INTERNAL_PHYSICS_PROCESS);
+
+	if (is_node_ready()) {
+		if (Engine::get_singleton()->is_editor_hint()) {
+			// update the probe transforms so we can see the sampled locations in the editor
+			if (_buoyancy_mode == BUOYANCY_PROBES) {
+				_update_last_probe_transforms();
+			} else {
+				// recalc dynamics
+				_update_dynamics();
+			}
+
+		} else {
+			// in game
+			RigidBody3D *body = Object::cast_to<RigidBody3D>(get_parent());
+			if (body && !body->is_freeze_enabled()) {
+				uint64_t time = Time::get_singleton()->get_ticks_usec();
+
+				// always update submerged state
+				if (_buoyancy_mode == BUOYANCY_PROBES) {
+					_update_last_probe_transforms();
+				} else {
+					// recalc dynamics
+					_update_dynamics();
+				}
+
+				// optionally apply them
+				if (_apply_forces) {
+					float delta = get_physics_process_delta_time();
+					if (_buoyancy_mode == BUOYANCY_PROBES) {
+						apply_buoyancy_probe_forces(body, delta);
+					} else {
+						apply_buoyancy_mesh_forces(body, delta);
+					}
+				}
+
+				// Check if submerged changed and emit signal. We track crossing the threshold in either direction.
+				float current_ratio = get_submerged_ratio();
+				bool was_submerged = _last_submerged_ratio > _submerged_threshold;
+				bool is_submerged = current_ratio > _submerged_threshold;
+				if (was_submerged != is_submerged) {
+					emit_signal("submerged_changed");
+				}
+				_last_submerged_ratio = current_ratio;
+
+				// update time taken
+				uint64_t elapsed = Time::get_singleton()->get_ticks_usec() - time;
+				_buoyancy_time = elapsed;
+			}
+		}
+	}
+}
+
 #pragma region Properties
+
 void RigidBuoyancy::set_liquid_area(LiquidArea *p_area) {
-	_liquid_area = p_area;
-	_probe_buoyancy.set_liquid_area(_liquid_area);
-	_mesh_buoyancy.set_liquid_area(_liquid_area);
+	_liquid_area_id = p_area ? p_area->get_instance_id() : 0;
+	_probe_buoyancy.set_liquid_area(p_area);
+	_mesh_buoyancy.set_liquid_area(p_area);
 	_update_configuration_warnings();
 
 	_set_dirty();
@@ -206,12 +230,13 @@ void RigidBuoyancy::set_liquid_area(LiquidArea *p_area) {
 }
 
 LiquidArea *RigidBuoyancy::get_liquid_area() const {
-	return _liquid_area;
+	return Object::cast_to<LiquidArea>(ObjectDB::get_instance(_liquid_area_id));
 }
 
 void RigidBuoyancy::set_collider(CollisionShape3D *p_collider) {
-	if (_collider != p_collider) {
-		_collider = p_collider;
+	uint64_t new_id = p_collider ? p_collider->get_instance_id() : 0;
+	if (_collider_id != new_id) {
+		_collider_id = new_id;
 		_set_dirty();
 
 		_update_configuration_warnings();
@@ -221,7 +246,7 @@ void RigidBuoyancy::set_collider(CollisionShape3D *p_collider) {
 }
 
 CollisionShape3D *RigidBuoyancy::get_collider() const {
-	return _collider;
+	return Object::cast_to<CollisionShape3D>(ObjectDB::get_instance(_collider_id));
 }
 
 void RigidBuoyancy::set_buoyancy_material(const Ref<BuoyancyMaterial> &p_material) {
@@ -400,20 +425,21 @@ float RigidBuoyancy::_get_buoyancy_time() const {
 #pragma region Mesh Updates
 
 void RigidBuoyancy::_update_statics() {
-	if (_collider == nullptr)
+	CollisionShape3D *collider = get_collider();
+	if (collider == nullptr)
 		return;
 	if (_buoyancy_mode != BUOYANCY_COLLIDER)
 		return;
 
 	// if this is already a convex shape, use it directly
 	Ref<ArrayMesh> buoyancy_mesh;
-	Ref<ConvexPolygonShape3D> convex_shape = _collider->get_shape();
+	Ref<ConvexPolygonShape3D> convex_shape = collider->get_shape();
 	if (convex_shape.is_valid()) {
 		buoyancy_mesh = convex_shape->get_debug_mesh();
 
 		// otherwise, try to create a simplified convex shape from the existing shape's debug mesh
 	} else {
-		Ref<Shape3D> shape = _collider->get_shape();
+		Ref<Shape3D> shape = collider->get_shape();
 		if (shape.is_valid()) {
 			Ref<Mesh> mesh = shape->get_debug_mesh();
 
@@ -427,7 +453,7 @@ void RigidBuoyancy::_update_statics() {
 
 	// Delegate to MeshBuoyancy for volume and centroid calculations
 	_mesh_buoyancy.set_buoyancy_mesh(buoyancy_mesh);
-	_mesh_buoyancy.update_statics(_collider->get_transform());
+	_mesh_buoyancy.update_statics(collider->get_transform());
 
 	if (buoyancy_mesh.is_valid() && buoyancy_mesh->get_surface_count()) {
 		// Update mass from collider
@@ -454,12 +480,13 @@ void RigidBuoyancy::_update_statics() {
 }
 
 void RigidBuoyancy::_update_dynamics() {
-	if (_collider == nullptr)
+	CollisionShape3D *collider = get_collider();
+	if (collider == nullptr)
 		return;
 	if (_buoyancy_mode != BUOYANCY_COLLIDER)
 		return;
 
-	_mesh_buoyancy.update_dynamics(_collider->get_global_transform(), _collider->get_transform());
+	_mesh_buoyancy.update_dynamics(collider->get_global_transform(), collider->get_transform());
 	set_debug_mesh_dirty();
 }
 
@@ -501,7 +528,8 @@ void RigidBuoyancy::apply_buoyancy_mesh_forces(RigidBody3D *body, float delta) {
 		Vector3 one = Vector3(1, 1, 1);
 
 		// Drag acts on velocity relative to the water, not absolute velocity
-		Vector3 liquid_velocity = _liquid_area ? _liquid_area->get_liquid_velocity() : Vector3(0, 0, 0);
+		LiquidArea *liquid_area = get_liquid_area();
+		Vector3 liquid_velocity = liquid_area ? liquid_area->get_liquid_velocity() : Vector3(0, 0, 0);
 		Vector3 linear_velocity = PhysicsServer3D::get_singleton()->body_get_state(body->get_rid(), PhysicsServer3D::BODY_STATE_LINEAR_VELOCITY);
 		Vector3 relative_velocity = linear_velocity - liquid_velocity;
 
@@ -571,7 +599,8 @@ void RigidBuoyancy::apply_buoyancy_probe_forces(RigidBody3D *body, float delta) 
 	// Drag acts on velocity relative to the water, not absolute velocity
 	float submerged_ratio = _probe_buoyancy.get_submerged_ratio();
 	if (submerged_ratio > 0.0f) {
-		Vector3 current_velocity = _liquid_area ? _liquid_area->get_liquid_velocity() : Vector3(0, 0, 0);
+		LiquidArea *liquid_area = get_liquid_area();
+		Vector3 current_velocity = liquid_area ? liquid_area->get_liquid_velocity() : Vector3(0, 0, 0);
 		Vector3 linear_velocity = body->get_linear_velocity();
 		Vector3 relative_velocity = linear_velocity - current_velocity;
 
@@ -618,11 +647,12 @@ void RigidBuoyancy::_update_debug_mesh() {
 		Transform3D xform = Transform3D();
 
 		if (_buoyancy_mode == BUOYANCY_COLLIDER) {
-			if (!_collider || !_mesh_buoyancy.get_buoyancy_mesh().is_valid()) {
+			CollisionShape3D *collider = get_collider();
+			if (!collider || !_mesh_buoyancy.get_buoyancy_mesh().is_valid()) {
 				return;
 			}
 
-			xform = _collider->get_global_transform();
+			xform = collider->get_global_transform();
 
 			PackedVector3Array verts = _mesh_buoyancy.get_submerged_verts();
 			if (verts.size() == 0) {
@@ -714,7 +744,8 @@ void RigidBuoyancy::_update_debug_mesh() {
 		_add_marker_surface(get_center_of_mass(), true);
 
 		// try the collider first, and then the parent.
-		Node3D *mesh_parent = _collider;
+		CollisionShape3D *collider = get_collider();
+		Node3D *mesh_parent = collider;
 		if (mesh_parent == nullptr)
 			mesh_parent = Object::cast_to<Node3D>(get_parent());
 

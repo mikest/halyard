@@ -1,28 +1,21 @@
 [gd_scene format=3 uid="uid://c6pq3mg86lkun"]
 
-[ext_resource type="Script" uid="uid://ce7j4ynkxlei4" path="res://addons/halyard/scripts/distributed_attachments.gd" id="1_uix47"]
-
-[sub_resource type="RopeAttachmentsBase" id="RopeAttachmentsBase_18r7s"]
-script = ExtResource("1_uix47")
-include_start = true
-include_end = true
-
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_lks7b"]
 transparency = 1
 albedo_color = Color(1, 1, 1, 0.039215688)
 metallic = 1.0
 roughness = 0.3
 
+[sub_resource type="RopeAttachmentsBase" id="RopeAttachmentsBase_18r7s"]
+include_start = true
+include_end = true
+
 [sub_resource type="RopeAppearance" id="RopeAppearance_18r7s"]
-rope_width = 0.05
 rope_sides = 5
 material = SubResource("StandardMaterial3D_lks7b")
-attachments = SubResource("RopeAttachmentsBase_18r7s")
 
 [sub_resource type="RopeAppearance" id="RopeAppearance_lks7b"]
-rope_width = 0.05
 rope_sides = 5
-particles_per_meter = 12.0
 material = SubResource("StandardMaterial3D_lks7b")
 
 [node name="Node3D" type="Node3D" unique_id=465613053]
@@ -55,10 +48,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 0)
 
 [node name="SpokeThread" type="Rope" parent="." unique_id=576776611]
 rope_width = 0.05
-anchor_count = 3
 appearance = SubResource("RopeAppearance_18r7s")
-collision_layer = 0
-collision_mask = 0
+anchor_count = 3
 wind = Vector3(0, 0, 1)
 anchors/0/offset = 0.0
 anchors/0/from = 0
@@ -70,7 +61,7 @@ anchors/2/offset = 0.0
 anchors/2/from = 1
 anchors/2/node_path = NodePath("../Spoke/EndAnchor")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
-custom_aabb = AABB(-4.025, -0.4413015, -0.025, 4.05, 0.4663015, 0.05515926)
+custom_aabb = AABB(-4.025, -0.4413014, -0.025, 4.05, 0.4663014, 0.05515926)
 
 [node name="AttachmentA1" type="RopeAnchor" parent="SpokeThread" unique_id=1675756562]
 transform = Transform3D(-0.014662995, 0.04780155, -9.1238086e-05, 0.04780155, 0.0146627575, -0.00012370128, -9.150623e-05, -0.00012350306, -0.049999766, -0.48572314, -0.17306069, 0.0012549385)
@@ -95,10 +86,8 @@ transform = Transform3D(0.014400132, 0.04788139, 9.366998e-05, 0.047881406, -0.0
 
 [node name="SpokeThread2" type="Rope" parent="." unique_id=392590092]
 rope_width = 0.05
-anchor_count = 3
 appearance = SubResource("RopeAppearance_18r7s")
-collision_layer = 0
-collision_mask = 0
+anchor_count = 3
 wind = Vector3(0, 0, 1)
 anchors/0/offset = 0.0
 anchors/0/from = 0
@@ -110,7 +99,7 @@ anchors/2/offset = 0.0
 anchors/2/from = 1
 anchors/2/node_path = NodePath("../Spoke2/EndAnchor")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.99999994, 0, -1.7320509)
-custom_aabb = AABB(-2.0249999, -0.4413015, -0.025, 2.05, 0.4663015, 3.5141017)
+custom_aabb = AABB(-2.0249999, -0.4413014, -0.025, 2.05, 0.4663014, 3.5141017)
 
 [node name="AttachmentA1" type="RopeAnchor" parent="SpokeThread2" unique_id=1586182461]
 transform = Transform3D(-0.041162558, 0.023849508, -0.015389765, 0.02382456, 0.0142951375, -0.041569695, -0.015428359, -0.041555386, -0.023132568, -0.2433101, -0.16816616, 0.4239434)
@@ -135,10 +124,8 @@ transform = Transform3D(-0.03400909, 0.023990868, -0.027709564, 0.023475502, -0.
 
 [node name="SpokeThread3" type="Rope" parent="." unique_id=1284128650]
 rope_width = 0.05
-anchor_count = 2
 appearance = SubResource("RopeAppearance_18r7s")
-collision_layer = 0
-collision_mask = 0
+anchor_count = 2
 wind = Vector3(0, 0, 1)
 anchors/0/offset = 0.0
 anchors/0/from = 0
@@ -147,7 +134,7 @@ anchors/1/offset = 0.0
 anchors/1/from = 1
 anchors/1/node_path = NodePath("../Spoke3/EndAnchor")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.0000001, 0, -1.7320508)
-custom_aabb = AABB(-0.025, -0.44130147, -0.025, 2.0500002, 0.46630147, 3.5141015)
+custom_aabb = AABB(-0.025, -0.44130158, -0.025, 2.0500002, 0.4663016, 3.5141015)
 
 [node name="AttachmentA1" type="RopeAnchor" parent="SpokeThread3" unique_id=139265079]
 transform = Transform3D(-0.041269373, -0.023843843, 0.015109924, -0.023810988, 0.015029304, -0.041317757, 0.015161648, -0.041298803, -0.023759909, 0.24144375, -0.17785792, 0.4181931)
@@ -174,11 +161,9 @@ transform = Transform3D(-0.033943545, -0.023837348, 0.02792162, -0.02352573, -0.
 rope_length = 7.0
 rope_width = 0.05
 particles_per_meter = 12.0
+appearance = SubResource("RopeAppearance_lks7b")
 anchor_distribution = 2
 anchor_count = 7
-appearance = SubResource("RopeAppearance_lks7b")
-collision_layer = 0
-collision_mask = 0
 wind = Vector3(0, 0, 1)
 anchors/0/node_path = NodePath("../SpokeThread/AttachmentA1")
 anchors/1/node_path = NodePath("../SpokeThread2/AttachmentA1")
@@ -188,17 +173,15 @@ anchors/4/node_path = NodePath("../SpokeThread2/AttachmentC3")
 anchors/5/node_path = NodePath("../SpokeThread3/AttachmentC3")
 anchors/6/node_path = NodePath("../SpokeThread/AttachmentA1")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5171125, -0.17785737, -0.001491749)
-custom_aabb = AABB(-3.068025, -0.16685328, -1.3429198, 3.093025, 0.20557004, 2.6996467)
+custom_aabb = AABB(-3.068025, -0.16685376, -1.3429198, 3.093025, 0.20557064, 2.6996467)
 
 [node name="WeaveThread2" type="Rope" parent="." unique_id=1288742130]
 rope_length = 5.0
 rope_width = 0.05
 particles_per_meter = 12.0
+appearance = SubResource("RopeAppearance_lks7b")
 anchor_distribution = 2
 anchor_count = 7
-appearance = SubResource("RopeAppearance_lks7b")
-collision_layer = 0
-collision_mask = 0
 wind = Vector3(0, 0, 1)
 anchors/0/node_path = NodePath("../SpokeThread/AttachmentA2")
 anchors/1/node_path = NodePath("../SpokeThread2/AttachmentA2")
@@ -208,17 +191,15 @@ anchors/4/node_path = NodePath("../SpokeThread2/AttachmentC2")
 anchors/5/node_path = NodePath("../SpokeThread3/AttachmentC2")
 anchors/6/node_path = NodePath("../SpokeThread/AttachmentA2")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.0183424, -0.30938318, -0.0027959687)
-custom_aabb = AABB(-2.0670357, -0.10980754, -0.9092157, 2.0920355, 0.15057491, 1.8349261)
+custom_aabb = AABB(-2.0670357, -0.109804444, -0.9092156, 2.0920355, 0.15057181, 1.8349261)
 
 [node name="WeaveThread3" type="Rope" parent="." unique_id=1323187882]
 rope_length = 3.0
 rope_width = 0.05
 particles_per_meter = 12.0
+appearance = SubResource("RopeAppearance_lks7b")
 anchor_distribution = 2
 anchor_count = 7
-appearance = SubResource("RopeAppearance_lks7b")
-collision_layer = 0
-collision_mask = 0
 wind = Vector3(0, 0, 1)
 anchors/0/node_path = NodePath("../SpokeThread/AttachmentA3")
 anchors/1/node_path = NodePath("../SpokeThread2/AttachmentA3")
@@ -228,4 +209,4 @@ anchors/4/node_path = NodePath("../SpokeThread2/AttachmentC1")
 anchors/5/node_path = NodePath("../SpokeThread3/AttachmentC1")
 anchors/6/node_path = NodePath("../SpokeThread/AttachmentA3")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5089947, -0.3897115, -0.0036813782)
-custom_aabb = AABB(-1.0460896, -0.101399355, -0.46580046, 1.0710896, 0.13793235, 0.9499516)
+custom_aabb = AABB(-1.0460896, -0.101399474, -0.46580052, 1.0710896, 0.1379325, 0.94995165)

@@ -81,14 +81,17 @@ void OceanDetailer::_notification(int p_what) {
 
 		case NOTIFICATION_PROCESS: {
 			// Update position based on follow target
-			if (_follow_target != nullptr && _follow_target->is_inside_tree()) {
-				Vector3 target_pos = _follow_target->get_global_position();
-				float distance = _last_follow_position.distance_to(target_pos);
+			Node3D *target = get_follow_target();
+			if (target) {
+				if (target->is_inside_tree()) {
+					Vector3 target_pos = target->get_global_position();
+					float distance = _last_follow_position.distance_to(target_pos);
 
-				if (distance >= _snap_step) {
-					update_position(target_pos);
-					_last_follow_position = target_pos;
-					_global_shader_update();
+					if (distance >= _snap_step) {
+						update_position(target_pos);
+						_last_follow_position = target_pos;
+						_global_shader_update();
+					}
 				}
 			}
 		} break;
@@ -128,10 +131,10 @@ float OceanDetailer::get_snap_step() const {
 }
 
 void OceanDetailer::set_follow_target(Node3D *p_target) {
-	_follow_target = p_target;
-	if (_follow_target != nullptr) {
+	_follow_target_id = p_target ? p_target->get_instance_id() : 0;
+	if (p_target != nullptr) {
 		if (is_inside_tree()) {
-			_last_follow_position = _follow_target->get_global_position();
+			_last_follow_position = p_target->get_global_position();
 		} else {
 			_last_follow_position = Vector3(0, 0, 0);
 		}
@@ -139,7 +142,7 @@ void OceanDetailer::set_follow_target(Node3D *p_target) {
 }
 
 Node3D *OceanDetailer::get_follow_target() const {
-	return _follow_target;
+	return Object::cast_to<Node3D>(ObjectDB::get_instance(_follow_target_id));
 }
 
 Camera3D *OceanDetailer::get_camera() const {

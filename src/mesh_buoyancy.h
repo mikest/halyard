@@ -36,7 +36,7 @@ namespace halyard {
 class MeshBuoyancy {
 private:
 	// Configuration
-	LiquidArea *_liquid_area = nullptr;
+	uint64_t _liquid_area_id = 0;
 	Ref<ArrayMesh> _buoyancy_mesh;
 	Ref<BuoyancyMaterial> _buoyancy_material;
 	bool _ignore_waves = false;

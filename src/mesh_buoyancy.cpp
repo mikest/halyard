@@ -10,6 +10,7 @@
  */
 
 #include <godot_cpp/core/error_macros.hpp>
+#include <godot_cpp/core/object.hpp>
 
 #include "halyard_utils.h"
 #include "liquid_area.h"
@@ -21,11 +22,11 @@ using namespace halyard;
 #pragma region Accessors
 
 void MeshBuoyancy::set_liquid_area(LiquidArea *p_liquid_area) {
-	_liquid_area = p_liquid_area;
+	_liquid_area_id = p_liquid_area ? p_liquid_area->get_instance_id() : 0;
 }
 
 LiquidArea *MeshBuoyancy::get_liquid_area() const {
-	return _liquid_area;
+	return Object::cast_to<LiquidArea>(ObjectDB::get_instance(_liquid_area_id));
 }
 
 void MeshBuoyancy::set_buoyancy_mesh(const Ref<ArrayMesh> &p_mesh) {
@@ -304,12 +305,13 @@ void MeshBuoyancy::update_dynamics(const Transform3D &collider_global_transform,
 			xform = _depth_map[global_vertex];
 		} else {
 			// Cache miss, calculate
-			if (_liquid_area) {
+			LiquidArea *liquid_area = get_liquid_area();
+			if (liquid_area) {
 				if (_ignore_waves) {
-					float liquid_y = _liquid_area->get_global_transform().origin.y;
+					float liquid_y = liquid_area->get_global_transform().origin.y;
 					xform = Transform3D(Basis(), Vector3(global_vertex.x, liquid_y, global_vertex.z));
 				} else {
-					xform = _liquid_area->get_liquid_transform(global_vertex);
+					xform = liquid_area->get_liquid_transform(global_vertex);
 				}
 			}
 			// Update cache
@@ -358,14 +360,15 @@ void MeshBuoyancy::update_dynamics(const Transform3D &collider_global_transform,
 }
 
 void MeshBuoyancy::update_forces(const Transform3D &body_transform, const Vector3 &gravity) {
-	if (_liquid_area == nullptr || Math::is_zero_approx(_mesh_volume)) {
+	LiquidArea *liquid_area = get_liquid_area();
+	if (liquid_area == nullptr || Math::is_zero_approx(_mesh_volume)) {
 		_buoyancy_force = Vector3(0, 0, 0);
 		_force_position = body_transform.origin;
 		return;
 	}
 
 	if (_submerged_volume > 0.0f) {
-		float liquid_density = _liquid_area->get_density();
+		float liquid_density = liquid_area->get_density();
 		float ratio = _submerged_volume / _mesh_volume;
 
 		// Blend wave normal toward vertical based on submersion ratio
@@ -390,7 +393,7 @@ void MeshBuoyancy::update_forces(const Transform3D &body_transform, const Vector
 			linear_drag = CLAMP(linear_drag, Vector3(0, 0, 0), Vector3(1, 1, 1));
 
 			// get local velocity
-			Vector3 global_current_velocity = _liquid_area->get_liquid_velocity();
+			Vector3 global_current_velocity = liquid_area->get_liquid_velocity();
 			Vector3 local_current_velocity = body_transform.basis.xform_inv(global_current_velocity);
 
 			// do drag in local space and the convert force to global space

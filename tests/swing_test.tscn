@@ -11,17 +11,12 @@ albedo_color = Color(0.3155359, 0.25440636, 0.1698789, 1)
 size = Vector3(1, 0.1, 0.5)
 
 [sub_resource type="RopeAppearance" id="RopeAppearance_623gb"]
-rope_width = 0.125
 rope_lod = 1
-particles_per_meter = 16.0
 link_mesh = ExtResource("1_623gb")
-end_attachment = NodePath("EndAttach")
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_623gb"]
 
 [sub_resource type="RopeAppearance" id="RopeAppearance_u0cki"]
-rope_width = 0.125
-particles_per_meter = 20.0
 link_mesh = ExtResource("1_623gb")
 
 [node name="Node3D" type="Node3D" unique_id=799067127]
@@ -69,20 +64,19 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.5, 0)
 [node name="Rope" type="Rope" parent="." unique_id=1069029262]
 rope_length = 2.0
 particles_per_meter = 16.0
-anchor_count = 2
 appearance = SubResource("RopeAppearance_623gb")
+anchor_count = 2
 stiffness_iterations = 25
 stiffness = 1.8
 tension_force_scale = 5.0
 max_tension_force = 10000.0
-collision_layer = 0
-collision_mask = 0
 apply_wind = true
 wind = Vector3(0, 0, 1)
 wind_noise = SubResource("FastNoiseLite_623gb")
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath(".")
+anchors/0/friction = 0.5
 anchors/1/offset = 0.0
 anchors/1/from = 1
 anchors/1/node_path = NodePath("../RigidBody3D/Pivot")
@@ -94,14 +88,12 @@ transform = Transform3D(-0.125, -1.0927847e-08, 0, 9.031721e-09, -0.103310846, -
 [node name="Rope" type="Rope" parent="Rope" unique_id=1441601189]
 rope_length = 0.3
 particles_per_meter = 20.0
-anchor_count = 2
 appearance = SubResource("RopeAppearance_u0cki")
+anchor_count = 2
 stiffness_iterations = 20
 stiffness = 1.8
 tension_force_scale = 2.0
 max_tension_force = 5000.0
-collision_layer = 0
-collision_mask = 0
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath("../EndAttach")
@@ -113,14 +105,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.8375678, -1.2649236)
 [node name="Rope2" type="Rope" parent="Rope" unique_id=1946640421]
 rope_length = 0.3
 particles_per_meter = 20.0
-anchor_count = 2
 appearance = SubResource("RopeAppearance_u0cki")
+anchor_count = 2
 stiffness_iterations = 20
 stiffness = 1.8
 tension_force_scale = 2.0
 max_tension_force = 5000.0
-collision_layer = 0
-collision_mask = 0
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath("../EndAttach")
@@ -132,8 +122,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.8375678, -1.2649236)
 [node name="Rope2" type="Rope" parent="." unique_id=322160301]
 rope_length = 2.0
 particles_per_meter = 16.0
-anchor_count = 2
 appearance = SubResource("RopeAppearance_623gb")
+anchor_count = 2
 stiffness_iterations = 25
 stiffness = 1.8
 tension_force_scale = 5.0
@@ -144,6 +134,7 @@ wind_noise = SubResource("FastNoiseLite_623gb")
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath(".")
+anchors/0/friction = 0.5
 anchors/1/offset = 0.0
 anchors/1/from = 1
 anchors/1/node_path = NodePath("../RigidBody3D/Pivot2")
@@ -155,14 +146,12 @@ transform = Transform3D(-0.125, -1.0927847e-08, 0, 9.033784e-09, -0.10333445, -0
 [node name="Rope" type="Rope" parent="Rope2" unique_id=135006674]
 rope_length = 0.3
 particles_per_meter = 20.0
-anchor_count = 2
 appearance = SubResource("RopeAppearance_u0cki")
+anchor_count = 2
 stiffness_iterations = 20
 stiffness = 1.8
 tension_force_scale = 2.0
 max_tension_force = 5000.0
-collision_layer = 0
-collision_mask = 0
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath("../EndAttach")
@@ -174,14 +163,12 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.8375678, -1.2649236)
 [node name="Rope2" type="Rope" parent="Rope2" unique_id=493453225]
 rope_length = 0.3
 particles_per_meter = 20.0
-anchor_count = 2
 appearance = SubResource("RopeAppearance_u0cki")
+anchor_count = 2
 stiffness_iterations = 20
 stiffness = 1.8
 tension_force_scale = 2.0
 max_tension_force = 5000.0
-collision_layer = 0
-collision_mask = 0
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath("../EndAttach")
