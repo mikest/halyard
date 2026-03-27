@@ -163,9 +163,6 @@ void Rope::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_collision_mask", "collision_mask"), &Rope::set_collision_mask);
 	ClassDB::bind_method(D_METHOD("get_collision_mask"), &Rope::get_collision_mask);
 
-	ClassDB::bind_method(D_METHOD("set_collision_margin", "collision_margin"), &Rope::set_collision_margin);
-	ClassDB::bind_method(D_METHOD("get_collision_margin"), &Rope::get_collision_margin);
-
 	ClassDB::bind_method(D_METHOD("set_liquid_area", "liquid_area"), &Rope::set_liquid_area);
 	ClassDB::bind_method(D_METHOD("get_liquid_area"), &Rope::get_liquid_area);
 
@@ -2337,8 +2334,21 @@ void Rope::_balance_tension() {
 
 		// stretch of the segment to the left (idx-1 -> idx) is stored on _particles[idx-1]
 		// stretch of the segment to the right (idx -> idx+1) is stored on _particles[idx]
-		float left_stretch = _particles[idx - 1].stretch;
-		float right_stretch = _particles[idx].stretch;
+
+		// get previous and next anchor offsets
+		float prev_width = segment_length * (get_anchor_particle_count(anchor_idx - 1) + 1);
+		float prev_offset = get_anchor_abs_offset(anchor_idx - 1) + prev_width;
+
+		float next_width = segment_length * (get_anchor_particle_count(anchor_idx + 1) + 1);
+		float next_offset = get_anchor_abs_offset(anchor_idx + 1) - next_width;
+
+		// this will clamp to the ends for offset overuns
+		int prev_idx = _get_particle_for_offset(prev_offset);
+		int next_idx = _get_particle_for_offset(next_offset);
+
+		float left_stretch = _particles[prev_idx].stretch;
+		float right_stretch = _particles[next_idx].stretch;
+
 		float stretch_diff = Math::abs(left_stretch - right_stretch);
 
 		// require the imbalance to exceed a fraction of segment length before shifting,
@@ -2353,9 +2363,6 @@ void Rope::_balance_tension() {
 		float offset_change = direction * tension_speed;
 		float cur_offset = get_anchor_abs_offset(anchor_idx);
 
-		// get previous and next anchor offsets to clamp within
-		float prev_offset = get_anchor_abs_offset(anchor_idx - 1) + (segment_length * 2);
-		float next_offset = get_anchor_abs_offset(anchor_idx + 1) - (segment_length * 2);
 		float new_offset = Math::clamp(cur_offset + offset_change, prev_offset, next_offset);
 
 		// ...and slide the anchor offset. particle_idx will get update on next _internal_update_anchors call

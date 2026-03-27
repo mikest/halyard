@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<class name="WrapAnchor" inherits="RopeAnchor"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+    <brief_description>
+		A [RopeAnchor] that wraps a rope around geometry by ray-casting a helical sweep onto nearby surfaces.
+	</brief_description>
+    <description>
+		[WrapAnchor] generates anchor positions by sweeping a helix around the local +X axis at [member wrap_radius] and casting a ray from each helix point radially inward toward the X axis. Each ray that hits a physics body produces a contact point. The result is a series of local-space positions that conform to whatever geometry is inside the sweep.
+		Two budget parameters control how many positions are produced. [member max_turns] limits the helix length. [member wrap_length] limits the accumulated real rope length in meters. Generation stops as soon as either budget is exhausted.
+		The axial pitch per turn is [member rope_width] plus [member turn_gap]. Setting [member unevenness] above [code]0.0[/code] blends the linear pitch toward a sine-wave profile, which creates an uneven, organic wrapping pattern.
+		[b]Note:[/b] [member particles_per_meter] should match [member Rope.particles_per_meter] on the rope referencing this anchor to keep particle spacing consistent.
+	</description>
+    <tutorials>
+    </tutorials>
+    <methods>
+    </methods>
+    <members>
+        <member name="clockwise" type="bool" setter="set_clockwise" getter="get_clockwise"
+            default="false">
+			When [code]true[/code], the helix winds clockwise around the local +X axis when viewed from the positive X direction. When [code]false[/code], it winds counter-clockwise.
+		</member>
+        <member name="collision_mask" type="int" setter="set_collision_mask"
+            getter="get_collision_mask"
+            default="1">
+			Physics layers to ray-cast against when rebuilding positions. Only bodies on matching layers are considered. Set to [code]0[/code] to disable collision and produce no positions.
+		</member>
+        <member name="debug" type="bool" setter="set_debug" getter="get_debug"
+            default="false">
+			When [code]true[/code], draws the cached contact positions and the inward rays each frame using DebugDraw3D. Automatically enables per-frame processing while active.
+		</member>
+        <member name="max_turns" type="float" setter="set_max_turns" getter="get_max_turns"
+            default="10.0">
+			Maximum number of full helix turns in the angular sweep. Acts as an upper bound on how far around the +X axis the sweep travels. Generation also stops early if [member wrap_length] is reached first.
+		</member>
+        <member name="offset_angle" type="float" setter="set_offset_angle" getter="get_offset_angle"
+            default="0.0">
+			Starting angle of the helix sweep, in degrees. Rotates the entire wrapped path around the +X axis without changing the number of turns or the arc length.
+		</member>
+        <member name="particles_per_meter" type="float" setter="set_particles_per_meter"
+            getter="get_particles_per_meter"
+            default="4.0">
+			Number of ray-cast sample points tested per meter of helix circumference. Higher values reduce the chance of missing narrow geometry but increase the cost of each rebuild. Should match [member Rope.particles_per_meter] of the rope referencing this anchor.
+		</member>
+        <member name="rope_width" type="float" setter="set_rope_width" getter="get_rope_width"
+            default="0.125">
+			Width of the rope in meters. Determines the axial pitch between successive turns and the outward offset applied to each contact point along the surface normal. Should match [member Rope.rope_width] of the rope referencing this anchor.
+		</member>
+        <member name="turn_gap" type="float" setter="set_turn_gap" getter="get_turn_gap"
+            default="0.0">
+			Extra axial gap in meters added between each full turn, on top of [member rope_width]. Positive values space turns further apart; negative values compress them. The total axial pitch per turn is [code]rope_width + turn_gap[/code].
+		</member>
+        <member name="unevenness" type="float" setter="set_unevenness" getter="get_unevenness"
+            default="0.0">
+			Blends the axial pitch between a uniform linear profile ([code]0.0[/code]) and a sine-wave profile ([code]1.0[/code]). At [code]1.0[/code], contact points bunch toward the ends of the sweep and spread apart in the middle, simulating an organic or hand-wound rope.
+		</member>
+        <member name="wrap_length" type="float" setter="set_wrap_length" getter="get_wrap_length"
+            default="5.0">
+			Maximum total surface arc distance in meters. Generation stops once the accumulated real distance between accepted contact points reaches this value, or when [member max_turns] is exhausted, whichever comes first.
+		</member>
+        <member name="wrap_radius" type="float" setter="set_wrap_radius" getter="get_wrap_radius"
+            default="1.0">
+			Radius of the helix sweep from the local +X axis, in meters. Each ray is cast from this distance inward toward the axis. The radius should be large enough that the helix origin lies outside the geometry being wrapped.
+		</member>
+    </members>
+</class>

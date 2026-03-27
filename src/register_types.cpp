@@ -8,16 +8,17 @@
 #include "buoyancy_material.h"
 #include "character_buoyancy.h"
 #include "clip_map.h"
+#include "coiled_anchor.h"
 #include "liquid_area.h"
 #include "ocean_area.h"
 #include "ocean_detailer.h"
 #include "rigid_buoyancy.h"
 #include "rope.h"
-#include "coiled_anchor.h"
 #include "rope_anchor.h"
 #include "rope_appearance.h"
 #include "rope_mesh.h"
 #include "wave_sampler.h"
+#include "wrap_anchor.h"
 
 using namespace godot;
 
@@ -33,6 +34,7 @@ void initialize_gdextension_types(ModuleInitializationLevel p_level) {
 			ClassDB::register_class<Rope>();
 			ClassDB::register_class<RopeAnchor>();
 			ClassDB::register_class<CoiledAnchor>();
+			ClassDB::register_class<WrapAnchor>();
 			ClassDB::register_class<RopeMesh>();
 			ClassDB::register_class<RopeAppearance>();
 			ClassDB::register_class<CharacterBuoyancy>();
