@@ -3,27 +3,26 @@
 [ext_resource type="Script" uid="uid://bcdcm8n1fxhb2" path="res://addons/halyard/tests/stiffness_test.gd" id="1_e1fi5"]
 
 [sub_resource type="RopeAppearance" id="RopeAppearance_pcr4g"]
-rope_width = 0.125
 rope_lod = 8
-particles_per_meter = 10.0
 
 [node name="StiffnessTest" type="Node3D" unique_id=598514539]
 
 [node name="Node3D" type="Node3D" parent="." unique_id=634887611]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.24111904, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.12536588, 0)
 script = ExtResource("1_e1fi5")
 
 [node name="Rope" type="Rope" parent="Node3D" unique_id=133843186]
 rope_length = 2.0
 particles_per_meter = 10.0
-anchor_count = 1
 appearance = SubResource("RopeAppearance_pcr4g")
+anchor_count = 1
 stiffness = 1.0
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath(".")
+anchors/0/friction = 0.5
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0)
-custom_aabb = AABB(-0.0625, -2.004749, -0.14151564, 0.35371804, 2.067249, 0.65198493)
+custom_aabb = AABB(-0.0625, -2.3348444, -0.0625, 1.0483154, 2.4272108, 0.33493406)
 
 [node name="Label3D" type="Label3D" parent="Node3D/Rope" unique_id=520122757]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 0)
@@ -35,15 +34,16 @@ vertical_alignment = 2
 [node name="Rope2" type="Rope" parent="Node3D" unique_id=977216414]
 rope_length = 2.0
 particles_per_meter = 10.0
-anchor_count = 1
 appearance = SubResource("RopeAppearance_pcr4g")
+anchor_count = 1
 stiffness_iterations = 10
 stiffness = 1.0
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath(".")
+anchors/0/friction = 0.5
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1)
-custom_aabb = AABB(-0.0625, -0.59625626, -0.64355373, 0.89999485, 0.65875626, 0.8366982)
+custom_aabb = AABB(-0.0625, -1.3779898, -0.29052508, 0.74477994, 1.5300221, 0.7022213)
 
 [node name="Label3D" type="Label3D" parent="Node3D/Rope2" unique_id=653629553]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 0)
@@ -55,15 +55,16 @@ vertical_alignment = 2
 [node name="Rope3" type="Rope" parent="Node3D" unique_id=1950546988]
 rope_length = 2.0
 particles_per_meter = 10.0
-anchor_count = 1
 appearance = SubResource("RopeAppearance_pcr4g")
+anchor_count = 1
 stiffness_iterations = 10
 stiffness = 1.8
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath(".")
+anchors/0/friction = 0.5
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 3)
-custom_aabb = AABB(-0.0625, -1.7594692, -0.14425373, 0.58330667, 1.8219692, 0.520139)
+custom_aabb = AABB(-0.96363884, -1.2734774, -0.6661687, 1.0261388, 1.3658437, 0.8358314)
 
 [node name="Label3D" type="Label3D" parent="Node3D/Rope3" unique_id=996303367]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 0)
@@ -75,14 +76,15 @@ vertical_alignment = 2
 [node name="Rope4" type="Rope" parent="Node3D" unique_id=2057226503]
 rope_length = 2.0
 particles_per_meter = 10.0
-anchor_count = 1
 appearance = SubResource("RopeAppearance_pcr4g")
+anchor_count = 1
 stiffness = 0.5
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath(".")
+anchors/0/friction = 0.5
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, -1)
-custom_aabb = AABB(-0.18922251, -2.6000361, -0.43859053, 0.33840615, 2.6625361, 0.7550009)
+custom_aabb = AABB(-0.0625, -2.800517, -0.15700161, 0.32020056, 2.8928835, 0.47547787)
 
 [node name="Label3D" type="Label3D" parent="Node3D/Rope4" unique_id=1839053040]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 0)
@@ -94,15 +96,16 @@ vertical_alignment = 2
 [node name="Rope5" type="Rope" parent="Node3D" unique_id=828103803]
 rope_length = 2.0
 particles_per_meter = 10.0
-anchor_count = 1
 appearance = SubResource("RopeAppearance_pcr4g")
+anchor_count = 1
 stiffness_iterations = 5
 stiffness = 1.8
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath(".")
+anchors/0/friction = 0.5
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 2)
-custom_aabb = AABB(-0.33199912, -1.9238559, -0.4951688, 0.4066401, 1.9863559, 0.5576688)
+custom_aabb = AABB(-0.68477577, -1.1200969, -0.44692147, 0.84243757, 1.216411, 0.50942147)
 
 [node name="Label3D" type="Label3D" parent="Node3D/Rope5" unique_id=1003593747]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 0, 0)

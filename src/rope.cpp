@@ -285,18 +285,6 @@ void Rope::_notification(int p_what) {
 			_set_links_visible(visible);
 		} break;
 
-			// case NOTIFICATION_DISABLED: {
-			// 	if (is_inside_tree() && (disable_mode == DISABLE_MODE_REMOVE)) {
-			// 		_prepare_physics_server();
-			// 	}
-			// } break;
-
-			// case NOTIFICATION_ENABLED: {
-			// 	if (is_inside_tree() && (disable_mode == DISABLE_MODE_REMOVE)) {
-			// 		_prepare_physics_server();
-			// 	}
-			// } break;
-
 		case NOTIFICATION_READY: {
 			_internal_ready();
 		} break;

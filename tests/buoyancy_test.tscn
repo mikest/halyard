@@ -95,6 +95,7 @@ wrap_length = 8.0
 rope_width = 0.2
 offset_angle = 3.1415927
 behavior = 1
+friction = 0.5
 transform = Transform3D(-0.25881904, 0.9659258, 0, -0.9659258, -0.25881904, 0, 0, 0, 1, 0, 0, 0)
 
 [node name="Rope" type="Rope" parent="." unique_id=632552456]
@@ -114,7 +115,7 @@ anchors/0/node_path = NodePath("../Probe/WrapAnchor")
 anchors/1/offset = 5.0
 anchors/1/from = 1
 anchors/1/node_path = NodePath("../Collider/WrapAnchor")
-custom_aabb = AABB(-0.1, -4.7352624, -0.6864241, 8.982367, 4.9617352, 1.3694181)
+custom_aabb = AABB(-0.1, -4.7351456, -0.6868094, 8.982367, 4.9616175, 1.3698035)
 
 [node name="Collider" type="RigidBody3D" parent="." unique_id=2110375422]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.220772, 0, 0)
@@ -139,6 +140,7 @@ wrap_length = 8.0
 rope_width = 0.2
 offset_angle = 3.1415927
 behavior = 1
+friction = 0.5
 transform = Transform3D(0.25881907, 0.9659258, 0, -0.9659258, 0.25881907, 0, 0, 0, 1, 0, 0, 0)
 
 [node name="Label3D2" type="Label3D" parent="." unique_id=668776881]
@@ -185,7 +187,7 @@ anchors/1/offset = 0.0
 anchors/1/from = 1
 anchors/1/node_path = NodePath("Marker3D")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.7146287, 1.0919201, -3.9060822)
-custom_aabb = AABB(-0.1875, -3.0725062, -0.1875, 3.656139, 3.2600062, 0.55605936)
+custom_aabb = AABB(-0.1875, -3.072497, -0.1875, 3.656139, 3.259997, 0.55605936)
 
 [node name="Marker3D" type="RopeAnchor" parent="FloatingRope" unique_id=1886146255]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.281139, 0, 0.18105936)
