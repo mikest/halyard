@@ -23,13 +23,12 @@ void RopeMesh::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_rope_length"), &RopeMesh::get_rope_length);
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "rope_length", PROPERTY_HINT_RANGE, "0,1000,0.01,or_greater"), "set_rope_length", "get_rope_length");
 
-	ClassDB::bind_method(D_METHOD("set_rope_width", "rope_width"), &RopeMesh::set_rope_width);
-	ClassDB::bind_method(D_METHOD("get_rope_width"), &RopeMesh::get_rope_width);
-	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "rope_width", PROPERTY_HINT_RANGE, "0,10,0.001,or_greater"), "set_rope_width", "get_rope_width");
-
 	ClassDB::bind_method(D_METHOD("set_rope_twist", "rope_twist"), &RopeMesh::set_rope_twist);
 	ClassDB::bind_method(D_METHOD("get_rope_twist"), &RopeMesh::get_rope_twist);
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "rope_twist", PROPERTY_HINT_RANGE, "0,10,0.01,or_greater"), "set_rope_twist", "get_rope_twist");
+
+	ClassDB::bind_method(D_METHOD("_update_mesh_internal", "frames", "material"), &RopeMesh::_update_mesh_internal_bind);
+	GDVIRTUAL_BIND(_update_mesh, "frames", "material")
 }
 
 void RopeMesh::set_sides(int p_sides) {
@@ -56,14 +55,6 @@ float RopeMesh::get_rope_length() const {
 	return _rope_length;
 }
 
-void RopeMesh::set_rope_width(float p_rope_width) {
-	_rope_width = Math::max(p_rope_width, 0.0f);
-}
-
-float RopeMesh::get_rope_width() const {
-	return _rope_width;
-}
-
 void RopeMesh::set_rope_twist(float p_rope_twist) {
 	_rope_twist = p_rope_twist;
 }
@@ -76,7 +67,6 @@ void RopeMesh::clear_mesh() {
 	_sides = 0;
 	_radius = 0.0f;
 	_rope_length = 0.0f;
-	_rope_width = 0.0f;
 	_rope_twist = 1.0f;
 
 	_verts.clear();
@@ -105,7 +95,7 @@ void RopeMesh::_emit_tube(const LocalVector<Transform3D> &p_frames, PackedVector
 		total_length = 1.0;
 
 	// number of V repeats along the rope is based on rope width and twist factor
-	const float repeats = get_rope_length() / get_rope_width() * get_rope_twist();
+	const float repeats = get_rope_length() / (get_radius() * 2.0) * get_rope_twist();
 	float inv_total_length = 1.0f / total_length;
 	float inv_sides = 1.0f / float(_sides);
 
@@ -195,6 +185,28 @@ void RopeMesh::_emit_endcap(bool p_front, const Transform3D &p_frame, PackedVect
 			emit(j);
 		}
 	}
+}
+
+void RopeMesh::_update_mesh(const LocalVector<Transform3D> &p_frames, Ref<Material> p_material) {
+	if (GDVIRTUAL_IS_OVERRIDDEN(_update_mesh)) {
+		TypedArray<Transform3D> frames;
+		frames.resize(p_frames.size());
+		for (int idx = 0; idx < (int)p_frames.size(); idx++) {
+			frames[idx] = p_frames[idx];
+		}
+		GDVIRTUAL_CALL(_update_mesh, frames, p_material);
+	} else {
+		_update_mesh_internal(p_frames, p_material);
+	}
+}
+
+void RopeMesh::_update_mesh_internal_bind(const TypedArray<Transform3D> &p_frames, Ref<Material> p_material) {
+	LocalVector<Transform3D> frames;
+	frames.resize(p_frames.size());
+	for (int idx = 0; idx < p_frames.size(); idx++) {
+		frames[idx] = p_frames[idx];
+	}
+	_update_mesh_internal(frames, p_material);
 }
 
 void RopeMesh::_update_mesh_internal(const LocalVector<Transform3D> &p_frames, Ref<Material> p_material) {

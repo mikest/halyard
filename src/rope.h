@@ -306,6 +306,7 @@ public:
 	uint64_t get_particle_count() const;
 	uint64_t get_particle_count_for_length() const;
 	TypedArray<Vector3> get_particle_positions() const;
+	float get_particle_abs_offset(int p_particle_idx) const;
 
 	Ref<ArrayMesh> get_baked_mesh() const;
 
@@ -384,6 +385,9 @@ public:
 	// Get the anchor rigidbody
 	void set_anchor_rigidbody(int idx, RigidBody3D *body);
 	RigidBody3D *get_anchor_rigidbody(int idx) const;
+
+	// Insert a new anchor after the given index. If idx < 0, inserts at the beginning.
+	int insert_anchor_after(int p_after_idx);
 #pragma endregion
 
 #pragma region Attachments
@@ -405,6 +409,9 @@ public:
 
 	GDVIRTUAL1RC(Transform3D, _get_attachment_local_transform, int);
 	Transform3D _get_attachment_local_transform(int attach_idx) const;
+
+	// Called when a rope particle collides with a physics object.
+	GDVIRTUAL5(_handle_rope_collision, int, Vector3, CollisionObject3D *, Vector3, Vector3);
 #pragma endregion
 
 	Ref<RopeAppearance> get_appearance() const;

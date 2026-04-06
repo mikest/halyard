@@ -108,6 +108,7 @@ void Rope::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_all_rope_frames"), &Rope::get_all_rope_frames);
 
 	ClassDB::bind_method(D_METHOD("get_particle_positions"), &Rope::get_particle_positions);
+	ClassDB::bind_method(D_METHOD("get_particle_abs_offset", "particle_idx"), &Rope::get_particle_abs_offset);
 
 	ClassDB::bind_method(D_METHOD("get_link_count"), &Rope::get_rope_frame_count);
 	ClassDB::bind_method(D_METHOD("get_link", "index"), &Rope::get_rope_frame);
@@ -135,6 +136,7 @@ void Rope::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_anchor_count", "count"), &Rope::set_anchor_count);
 	ClassDB::bind_method(D_METHOD("get_anchor_count"), &Rope::get_anchor_count);
 	ClassDB::bind_method(D_METHOD("clear_anchors"), &Rope::clear_anchors);
+	ClassDB::bind_method(D_METHOD("insert_anchor_after", "after_idx"), &Rope::insert_anchor_after);
 	ClassDB::bind_method(D_METHOD("set_anchor_offset", "idx", "position"), &Rope::set_anchor_offset);
 	ClassDB::bind_method(D_METHOD("get_anchor_offset", "idx"), &Rope::get_anchor_offset);
 	ClassDB::bind_method(D_METHOD("set_anchor_from", "idx", "from"), &Rope::set_anchor_from);
@@ -181,6 +183,9 @@ void Rope::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("_get_attachment_local_transform", "attach_idx"),
 			&Rope::_get_attachment_local_transform);
 	GDVIRTUAL_BIND(_get_attachment_local_transform, "attach_idx")
+
+	// Collision virtual
+	GDVIRTUAL_BIND(_handle_rope_collision, "particle_index", "particle_origin", "collider", "contact", "normal")
 
 	// Main Properties
 	EXPORT_PROPERTY(Variant::FLOAT, rope_length, Rope);
@@ -810,7 +815,7 @@ uint64_t Rope::get_particle_count() const {
 
 Ref<ArrayMesh> Rope::get_baked_mesh() const {
 	if (_rope_mesh.is_valid()) {
-		_rope_mesh->_update_mesh_internal(_frames, get_material());
+		_rope_mesh->_update_mesh(_frames, get_material());
 		return _rope_mesh;
 	}
 
@@ -1104,6 +1109,59 @@ int Rope::get_anchor_count() const {
 void Rope::clear_anchors() {
 	_anchors.clear();
 	_notify_anchors_changed();
+}
+
+int Rope::insert_anchor_after(int p_after_idx) {
+	int insert_pos = (p_after_idx < 0) ? 0 : p_after_idx + 1;
+	insert_pos = Math::clamp(insert_pos, 0, (int)_anchors.size());
+
+	Anchor new_anchor;
+
+	// compute abs_offset as midpoint between neighbors
+	float prev_abs = 0.0f;
+	float next_abs = get_rope_length();
+
+	if (insert_pos > 0 && insert_pos <= (int)_anchors.size()) {
+		prev_abs = _anchors[insert_pos - 1]._abs_offset;
+	}
+	if (insert_pos < (int)_anchors.size()) {
+		next_abs = _anchors[insert_pos]._abs_offset;
+	}
+
+	float mid_abs = (prev_abs + next_abs) * 0.5f;
+	new_anchor._abs_offset = mid_abs;
+
+	// set offset based on current distribution mode
+	switch (_anchor_distribution) {
+		case Distribution::ABSOLUTE:
+			new_anchor.offset = mid_abs;
+			new_anchor.from_end = false;
+			break;
+		case Distribution::RELATIVE:
+			new_anchor.offset = mid_abs - prev_abs;
+			break;
+		case Distribution::UNIFORM:
+			// offset is recalculated during rebuild
+			new_anchor.offset = 0.0f;
+			break;
+		case Distribution::SCALAR:
+			new_anchor.offset = (get_rope_length() > 0.0f) ? mid_abs / get_rope_length() : 0.0f;
+			break;
+		case Distribution::REAL:
+			// offset is recalculated from transforms during rebuild
+			new_anchor.offset = 0.0f;
+			break;
+	}
+
+	_anchors.insert(insert_pos, new_anchor);
+
+	// for RELATIVE mode, update the next anchor's offset to preserve its abs position
+	if (_anchor_distribution == Distribution::RELATIVE && insert_pos + 1 < (int)_anchors.size()) {
+		_anchors[insert_pos + 1].offset = next_abs - mid_abs;
+	}
+
+	_notify_anchors_changed();
+	return insert_pos;
 }
 
 void Rope::set_anchor_offset(int idx, float offset) {
@@ -1482,6 +1540,11 @@ float Rope::_particle_stretch(int particle_idx) const {
 	}
 
 	return _particles[particle_idx].stretch;
+}
+
+float Rope::get_particle_abs_offset(int p_particle_idx) const {
+	ERR_FAIL_INDEX_V(p_particle_idx, (int)_particles.size(), 0.0f);
+	return (float)p_particle_idx / _particles_per_meter;
 }
 
 #pragma endregion
@@ -1912,11 +1975,10 @@ void Rope::_draw_rope() {
 		_rope_mesh->set_radius(radius);
 		_rope_mesh->set_sides(sides);
 		_rope_mesh->set_rope_length(get_rope_length());
-		_rope_mesh->set_rope_width(get_rope_width());
 		_rope_mesh->set_rope_twist(get_rope_twist());
 
 		// rebuild
-		_rope_mesh->_update_mesh_internal(_frames, get_material());
+		_rope_mesh->_update_mesh(_frames, get_material());
 	}
 
 	// attachments — route through virtual methods so subclasses can override
@@ -1977,6 +2039,35 @@ void Rope::_debug_draw_rope() {
 		auto config = DebugDraw3D::new_scoped_config();
 		config->set_thickness(0.01);
 		DebugDraw3D::draw_line_path(line_path, Color(0, 1, 1));
+	}
+
+	// draw anchors with labels
+	for (int idx = 0; idx < _anchors.size(); idx++) {
+		auto anchor = _anchors[idx];
+		Vector3 pos = get_anchor_transform(idx).origin;
+		DebugDraw3D::draw_line(pos, pos + Vector3(1, 1, 1), _debug_color);
+
+		String label;
+		switch (anchor.behavior) {
+			case AnchorBehavior::FREE:
+				label = "F";
+				break;
+			case AnchorBehavior::ANCHORED:
+				label = "A";
+				break;
+			case AnchorBehavior::SLIDING:
+				label = "S";
+				break;
+			case AnchorBehavior::TOWING:
+				label = "T";
+				break;
+			case AnchorBehavior::GUIDED:
+				label = "G";
+				break;
+		}
+		label += itos(idx);
+		label += ":" + itos(Math::snapped(anchor._abs_offset, 0.01));
+		DebugDraw3D::draw_text(pos + Vector3(1, 1.1, 1), label, 16, _debug_color);
 	}
 }
 
@@ -2118,6 +2209,19 @@ void Rope::_apply_constraints() {
 
 						particle.pos_prev = contact;
 						particle.pos_cur = contact + (velocity * friction).bounce(normal);
+
+						// notify subclasses of the collision
+						if (GDVIRTUAL_IS_OVERRIDDEN(_handle_rope_collision)) {
+							uint64_t collider_id = hit_result.get("collider_id", Variant(0));
+							if (collider_id != 0) {
+								// try to get the collider object from the id, but it may be null if the collider was removed since the collision was detected
+								Object *obj = ObjectDB::get_instance(collider_id);
+								if (obj) {
+									CollisionObject3D *collider = Object::cast_to<CollisionObject3D>(obj);
+									GDVIRTUAL_CALL(_handle_rope_collision, particle_idx, particle.pos_cur, collider, contact, normal);
+								}
+							}
+						}
 
 						if (_debug_collision) {
 							DebugDraw3D::draw_square(contact, 0.005, Color(1, 1, 0, 0.1));

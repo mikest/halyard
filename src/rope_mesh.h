@@ -6,6 +6,8 @@
 #pragma once
 
 #include <godot_cpp/classes/array_mesh.hpp>
+#include <godot_cpp/classes/material.hpp>
+#include <godot_cpp/core/gdvirtual.gen.inc>
 #include <godot_cpp/templates/local_vector.hpp>
 #include <godot_cpp/variant/packed_int32_array.hpp>
 #include <godot_cpp/variant/packed_vector2_array.hpp>
@@ -24,7 +26,6 @@ class RopeMesh : public ArrayMesh {
 	int _sides = 0;
 	float _radius = 0.0f;
 	float _rope_length = 0.0f;
-	float _rope_width = 0.0f;
 	float _rope_twist = 1.0f;
 
 	mutable PackedVector3Array _verts;
@@ -52,13 +53,15 @@ public:
 	void set_rope_length(float p_rope_length);
 	float get_rope_length() const;
 
-	void set_rope_width(float p_rope_width);
-	float get_rope_width() const;
-
 	void set_rope_twist(float p_rope_twist);
 	float get_rope_twist() const;
 
 	// rebuild the mesh with new frames
+	void _update_mesh(const LocalVector<Transform3D> &p_frames, Ref<Material> p_material);
+	GDVIRTUAL2(_update_mesh, TypedArray<Transform3D>, Ref<Material>);
+
 	void _update_mesh_internal(const LocalVector<Transform3D> &p_frames, Ref<Material> p_material);
+	void _update_mesh_internal_bind(const TypedArray<Transform3D> &p_frames, Ref<Material> p_material);
+
 	void clear_mesh();
 };
