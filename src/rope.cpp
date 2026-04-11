@@ -2030,7 +2030,7 @@ void Rope::_draw_rope() {
 
 void Rope::_debug_draw_rope() {
 	// draw the _initial_pos of the rope in the editor
-	if (Engine::get_singleton()->is_editor_hint()) {
+	if (Engine::get_singleton()->is_editor_hint() || _debug) {
 		// draw the initial_pos
 		PackedVector3Array line_path;
 		for (const auto &pos : _initial_pos) {
@@ -2039,35 +2039,35 @@ void Rope::_debug_draw_rope() {
 		auto config = DebugDraw3D::new_scoped_config();
 		config->set_thickness(0.01);
 		DebugDraw3D::draw_line_path(line_path, Color(0, 1, 1));
-	}
 
-	// draw anchors with labels
-	for (int idx = 0; idx < _anchors.size(); idx++) {
-		auto anchor = _anchors[idx];
-		Vector3 pos = get_anchor_transform(idx).origin;
-		DebugDraw3D::draw_line(pos, pos + Vector3(1, 1, 1), _debug_color);
+		// draw anchors with labels
+		for (int idx = 0; idx < _anchors.size(); idx++) {
+			auto anchor = _anchors[idx];
+			Vector3 pos = get_anchor_transform(idx).origin;
+			DebugDraw3D::draw_line(pos, pos + Vector3(1, 1, 1), _debug_color);
 
-		String label;
-		switch (anchor.behavior) {
-			case AnchorBehavior::FREE:
-				label = "F";
-				break;
-			case AnchorBehavior::ANCHORED:
-				label = "A";
-				break;
-			case AnchorBehavior::SLIDING:
-				label = "S";
-				break;
-			case AnchorBehavior::TOWING:
-				label = "T";
-				break;
-			case AnchorBehavior::GUIDED:
-				label = "G";
-				break;
+			String label;
+			switch (anchor.behavior) {
+				case AnchorBehavior::FREE:
+					label = "F";
+					break;
+				case AnchorBehavior::ANCHORED:
+					label = "A";
+					break;
+				case AnchorBehavior::SLIDING:
+					label = "S";
+					break;
+				case AnchorBehavior::TOWING:
+					label = "T";
+					break;
+				case AnchorBehavior::GUIDED:
+					label = "G";
+					break;
+			}
+			label += itos(idx);
+			label += ":" + itos(Math::snapped(anchor._abs_offset, 0.01));
+			DebugDraw3D::draw_text(pos + Vector3(1, 1.1, 1), label, 16, _debug_color);
 		}
-		label += itos(idx);
-		label += ":" + itos(Math::snapped(anchor._abs_offset, 0.01));
-		DebugDraw3D::draw_text(pos + Vector3(1, 1.1, 1), label, 16, _debug_color);
 	}
 }
 
