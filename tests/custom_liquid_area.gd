@@ -60,7 +60,8 @@ func update_transforms_for_points(global_points: PackedVector3Array, transforms:
 	transforms.resize(global_points.size());
 	
 	if not _normal or not _height:
-		return Transform3D.IDENTITY
+		for idx in transforms.size():
+			transforms[idx] = Transform3D.IDENTITY
 	
 	# sample the normal and height map to get the ocean surface
 	var img_width = _normal.get_width()
