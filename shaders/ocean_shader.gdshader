@@ -63,8 +63,10 @@ uniform sampler2D depth_texture : hint_depth_texture, repeat_disable, filter_nea
 group_uniforms Private;
 uniform float VertexScaling = 1.0;
 uniform float WaveTime = 0.0;
-
 varying float foamWeight;
+
+// Global wind parameters
+#include "wind.gdshaderinc"
 
 
 void vertex() {
@@ -285,13 +287,22 @@ void fragment() {
 		ALPHA = mix(ALPHA, 1.0, 0.9);
 	}
 
+	// global wind for foam direction
+	vec2 dir_2d = wind_direction(); // BaseWavesDirection
+
 	float wavesFoamWeight = pow(foamWeight  * FoamWeight, FoamWavesPower);
 	wavesFoamWeight += clamp(smoothstep(world_pos.z + FoamShorelineFade, world_pos.z, VERTEX.z), 0.0, 1.0);
 	//wavesFoamWeight = clamp(wavesFoamWeight, 0.0, 1.0);
 	vec2 foamPos = ((INV_VIEW_MATRIX * vec4(VERTEX, 1.0)).xz * FoamScale);
-	vec2 foamUV = foamPos + (normalize(BaseWavesDirection * -1.0) * WaveTime * FoamSpeed);
-	vec3 foamTexureA = texture(FoamTexture, foamPos + (normalize(BaseWavesDirection * -1.0) * WaveTime * FoamSpeed)).rgb;
-	vec3 foamTexureB = texture(FoamTexture, foamPos + (normalize(BaseWavesDirection * -0.5 + vec2(0.1, 0.3)) * WaveTime * FoamSpeed)).rgb;
+	
+	//vec2 foamUV = foamPos + (normalize(dir_2d * -1.0) * WaveTime * FoamSpeed);
+	//vec3 foamTexureA = texture(FoamTexture, foamPos + (normalize(dir_2d * -1.0) * WaveTime * FoamSpeed)).rgb;
+	//vec3 foamTexureB = texture(FoamTexture, foamPos + (normalize(dir_2d * -0.5 + vec2(0.1, 0.3)) * WaveTime * FoamSpeed)).rgb;
+	
+	vec2 foamUV = foamPos + (-1.0 * FoamSpeed) + WindScroll;
+	vec3 foamTexureA = texture(FoamTexture, foamPos + (-1.0 * FoamSpeed) + WindScroll).rgb;
+	vec3 foamTexureB = texture(FoamTexture, foamPos + (-0.5 * FoamSpeed + vec2(0.1, 0.3)) + WindScroll).rgb;
+	
 	wavesFoamWeight = max(foamTexureA.r, foamTexureB.r) * wavesFoamWeight;
 
 
