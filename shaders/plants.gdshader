@@ -20,11 +20,13 @@ uniform float roughness : hint_range(0.0, 1.0) = 1.0;
 uniform float metallic : hint_range(0.0, 1.0, 0.01) = 0.0;
 
 group_uniforms RedBranch;
+uniform float red_branch_gain: hint_range(-1.0, 1.0, 0.01) = 0.0;
 uniform float red_branch_lfo : hint_range(0.0, 10.0, 0.001) = 1.0;
 uniform float red_branch_wavelength : hint_range(0.0, 10.0, 0.001) = 1.0;
 uniform float red_branch_amplitude : hint_range(0.0, 10.0, 0.001) = 1.0;
 
 group_uniforms GreenLeaf;
+uniform float green_leaf_gain: hint_range(-1.0, 1.0, 0.01) = 0.0;
 uniform float green_leaf_lfo : hint_range(0.0, 10.0, 0.001) = 1.0;
 uniform float green_leaf_wavelength : hint_range(0.0, 10.0, 0.001) = 1.0;
 uniform float green_leaf_amplitude : hint_range(0.0, 10.0, 0.001) = 1.0;
@@ -77,7 +79,7 @@ void vertex() {
 		// Curling: progressive rotation where angle grows with height from base
         vec3 curl_axis = normalize(cross(vec3(0.0, 1.0, 0.0), dir));
         float d = max(VERTEX.y, 0.0);
-        float curl_angle = sin(red_phase) * COLOR.r * red_branch_amplitude * sway * d;
+        float curl_angle = sin(red_phase) * (COLOR.r + red_branch_gain) * red_branch_amplitude * sway * d;
         float rc = cos(curl_angle);
         float rs = sin(curl_angle);
         vec3 red_lfo = VERTEX * rc + cross(curl_axis, VERTEX) * rs + curl_axis * dot(curl_axis, VERTEX) * (1.0 - rc) - VERTEX;
@@ -88,7 +90,7 @@ void vertex() {
 		float green_phase = (radial_dist * PI / green_leaf_wavelength) + (TIME * green_leaf_lfo * strength);
 
 #if GREEN_LEAF_EFFECT!=LINEAR_TRANSLATE
-		float green_angle = sin(green_phase) * COLOR.g * green_leaf_amplitude * sway * radians(10.0);
+		float green_angle = sin(green_phase) * (COLOR.g + green_leaf_gain) * green_leaf_amplitude * sway * radians(10.0);
 		float gc = cos(green_angle);
 		float gs = sin(green_angle);
 #endif
