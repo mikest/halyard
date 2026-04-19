@@ -9,6 +9,9 @@ Is integrated with the global Wind properties.
 shader_type spatial;
 render_mode cull_disabled;
 
+uniform bool enable_wind = true;
+uniform bool per_vertex = false;
+
 // Base material properties
 uniform sampler2D texture_albedo : hint_default_white, source_color, filter_linear_mipmap, repeat_enable;
 uniform bool enable_backlight = true;
@@ -21,20 +24,21 @@ uniform float metallic : hint_range(0.0, 1.0, 0.01) = 0.0;
 
 group_uniforms RedBranch;
 uniform float red_branch_gain: hint_range(-1.0, 1.0, 0.01) = 0.0;
-uniform float red_branch_lfo : hint_range(0.0, 10.0, 0.001) = 1.0;
-uniform float red_branch_wavelength : hint_range(0.0, 10.0, 0.001) = 1.0;
-uniform float red_branch_amplitude : hint_range(0.0, 10.0, 0.001) = 1.0;
+uniform float red_branch_lfo : hint_range(0.0, 10.0, 0.001) = 0.5;
+uniform float red_branch_wavelength : hint_range(0.0, 10.0, 0.001) = 10.0;
+uniform float red_branch_amplitude : hint_range(0.0, 10.0, 0.001) = 0.5;
 
 group_uniforms GreenLeaf;
 uniform float green_leaf_gain: hint_range(-1.0, 1.0, 0.01) = 0.0;
-uniform float green_leaf_lfo : hint_range(0.0, 10.0, 0.001) = 1.0;
-uniform float green_leaf_wavelength : hint_range(0.0, 10.0, 0.001) = 1.0;
-uniform float green_leaf_amplitude : hint_range(0.0, 10.0, 0.001) = 1.0;
+uniform float green_leaf_lfo : hint_range(0.0, 10.0, 0.001) = 0.01;
+uniform float green_leaf_wavelength : hint_range(0.0, 10.0, 0.001) = 2.0;
+uniform float green_leaf_amplitude : hint_range(0.0, 10.0, 0.001) = 0.2;
 
 group_uniforms Mask;
 uniform float sphere_mask_radius : hint_range(0.0, 10.0, 0.001) = 0.0;
 uniform float green_cylinder_mask_radius : hint_range(0.0, 10.0, 0.001) = 0.0;
-uniform float red_height_mask_height : hint_range(0.0, 10.0, 0.001) = 0.0;
+uniform float green_linear_mask_depth : hint_range(0.0, 10.0, 0.001) = 1.0;
+uniform float red_linear_mask_height : hint_range(0.0, 10.0, 0.001) = 0.0;
 
 // Distance fade settings
 group_uniforms Fade;
@@ -43,7 +47,6 @@ uniform float fade_start_distance : hint_range(0.0, 200.0) = 50.0; // Distance a
 uniform float fade_length : hint_range(1.0, 50.0) = 20.0; // Distance over which fading occurs
 
 #include "wind.gdshaderinc"
-uniform bool enable_wind = true;
 
 group_uniforms Debug;
 uniform bool debug_color = false;
@@ -63,9 +66,9 @@ void vertex() {
 		vec2 dir_2d = wind_direction();
 		vec3 dir = vec3(dir_2d.x, 0.0, dir_2d.y);
 		dir = (inverse(MODEL_MATRIX) * vec4(dir, 0.0)).xyz;
-		vec3 pos = NODE_POSITION_WORLD + VERTEX;
+		vec3 pos = NODE_POSITION_WORLD + (per_vertex ? VERTEX : vec3(0));
 		float strength = wind_strength(pos);
-		float sway = strength / 1.0;
+		float sway = per_vertex ? strength : 1.0;
 
 		
 #if RED_BRANCH_EFFECT==LINEAR_TRANSLATE
@@ -79,7 +82,9 @@ void vertex() {
 		// Curling: progressive rotation where angle grows with height from base
         vec3 curl_axis = normalize(cross(vec3(0.0, 1.0, 0.0), dir));
         float d = max(VERTEX.y, 0.0);
-        float curl_angle = sin(red_phase) * (COLOR.r + red_branch_gain) * red_branch_amplitude * sway * d;
+		// add up a few sine waves to get a mildly more chaotic disturbance pattern and then offset the phase by the world position so all the plants don't move in sync.
+		float wave_form = sin(red_phase + NODE_POSITION_WORLD.x) * sin(red_phase*1.1 + NODE_POSITION_WORLD.z) * cos(red_phase*1.2 + + NODE_POSITION_WORLD.y);
+        float curl_angle = wave_form * (COLOR.r + red_branch_gain) * red_branch_amplitude * sway * d;
         float rc = cos(curl_angle);
         float rs = sin(curl_angle);
         vec3 red_lfo = VERTEX * rc + cross(curl_axis, VERTEX) * rs + curl_axis * dot(curl_axis, VERTEX) * (1.0 - rc) - VERTEX;
@@ -114,12 +119,13 @@ void vertex() {
 
         float sphere_mask = smoothstep(0.0, sphere_mask_radius, sphere_dist);
         float green_cylinder_mask = smoothstep(0.0, green_cylinder_mask_radius, cylinder_dist);
-        float red_height_mask = smoothstep(0.0, red_height_mask_height, VERTEX.y);
+		float green_linear_mask = 1.0 - smoothstep(0.0, green_linear_mask_depth,  VERTEX.y);
+        float red_height_mask = smoothstep(0.0, red_linear_mask_height, VERTEX.y);
 
-		vec3 lfo = (red_lfo * red_height_mask + green_lfo * green_cylinder_mask) * sphere_mask;
+		vec3 lfo = (red_lfo * red_height_mask + green_lfo * green_cylinder_mask * green_linear_mask) * sphere_mask;
 		VERTEX += lfo;
 
-        COLOR = debug_mask ? vec4(red_height_mask, green_cylinder_mask, sphere_mask,1.0) : COLOR; // Visualize wind effect if debug_color is enabled
+        COLOR = debug_mask ? vec4(red_height_mask, green_cylinder_mask * green_linear_mask, sphere_mask,1.0) : COLOR; // Visualize wind effect if debug_color is enabled
 		COLOR = debug_speed ? vec4(strength, strength, strength, 1.0) : COLOR;
     }
 }
