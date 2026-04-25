@@ -25,6 +25,25 @@
             "preLaunchTask": "build"
         },
         {
+            "name": "Edit Halyard (OSX)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/../../../godot/bin/godot.macos.editor.arm64",
+            "args": [
+                "--editor",
+                "--path",
+                "${workspaceFolder}/../.." // assumed to live in addons
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb",
+            "targetArchitecture": "arm64",
+            "additionalSOLibSearchPath": "${workspaceFolder}/../../../halyard/bin/macos:${workspaceFolder}/../../../adlez/addons/able_bodied/bin/macos:${workspaceFolder}/../../../godot/bin",
+            "preLaunchTask": "build"
+        },
+        {
             "name": "Play Halyard",
             "type": "cppvsdbg",
             "request": "launch",
