@@ -18,12 +18,8 @@ OceanDetailer::OceanDetailer() {
 }
 
 OceanDetailer::~OceanDetailer() {
-	// Cleanup camera if it exists
-	if (_camera != nullptr && _camera->is_inside_tree()) {
-		remove_child(_camera);
-		memdelete(_camera);
-		_camera = nullptr;
-	}
+	// freed for us, don't double free
+	_camera = nullptr;
 }
 
 void OceanDetailer::_notification(int p_what) {
