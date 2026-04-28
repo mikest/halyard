@@ -81,7 +81,8 @@ void vertex() {
 	float dynamicHeightBlend = smoothstep(0.0, BaseWavesMixSharpness, detailEffectsLayerData.b);
 	vec3 BaseCenter = world_pos * vec3(BaseWavesScale, 1.0, BaseWavesScale);
 	//(BaseUV * BaseWavesScale) +
-	vec2 BaseWavesUVAdjustment = (normalize(BaseWavesDirection) * WaveTime * BaseWavesSpeed);
+	//vec2 BaseWavesUVAdjustment = (normalize(BaseWavesDirection) * WaveTime * BaseWavesSpeed);
+	vec2 BaseWavesUVAdjustment = WaveScroll;
 
 	float originalY = VERTEX.y;
 
@@ -201,11 +202,7 @@ void fragment() {
 	vec4 world_pos = INV_PROJECTION_MATRIX * vec4(SCREEN_UV*2.0-1.0,screen_depth,1.0);
 	world_pos.xyz/=world_pos.w;
 
-
-
 	if (FRONT_FACING){
-
-
 		vec3 screen_view_position = get_view_position_from_uv(SCREEN_UV, screen_depth, INV_PROJECTION_MATRIX);
 		vec3 surface_view_position = get_view_position_from_uv(SCREEN_UV, surface_depth, INV_PROJECTION_MATRIX);
 
@@ -288,7 +285,8 @@ void fragment() {
 	}
 
 	// global wind for foam direction
-	vec2 dir_2d = wind_direction(); // BaseWavesDirection
+	//vec2 wind_dir = wind_direction(); // BaseWavesDirection
+	vec2 wind_scroll = WindScroll;	// wind affects foam
 
 	float wavesFoamWeight = pow(foamWeight  * FoamWeight, FoamWavesPower);
 	wavesFoamWeight += clamp(smoothstep(world_pos.z + FoamShorelineFade, world_pos.z, VERTEX.z), 0.0, 1.0);
@@ -299,9 +297,9 @@ void fragment() {
 	//vec3 foamTexureA = texture(FoamTexture, foamPos + (normalize(dir_2d * -1.0) * WaveTime * FoamSpeed)).rgb;
 	//vec3 foamTexureB = texture(FoamTexture, foamPos + (normalize(dir_2d * -0.5 + vec2(0.1, 0.3)) * WaveTime * FoamSpeed)).rgb;
 	
-	vec2 foamUV = foamPos + (-1.0 * FoamSpeed) + WindScroll;
-	vec3 foamTexureA = texture(FoamTexture, foamPos + (-1.0 * FoamSpeed) + WindScroll).rgb;
-	vec3 foamTexureB = texture(FoamTexture, foamPos + (-0.5 * FoamSpeed + vec2(0.1, 0.3)) + WindScroll).rgb;
+	vec2 foamUV = foamPos + (-1.0 * FoamSpeed) + wind_scroll;
+	vec3 foamTexureA = texture(FoamTexture, foamPos + (-1.0 * FoamSpeed) + wind_scroll).rgb;
+	vec3 foamTexureB = texture(FoamTexture, foamPos + (-0.5 * FoamSpeed + vec2(0.1, 0.3)) + wind_scroll).rgb;
 	
 	wavesFoamWeight = max(foamTexureA.r, foamTexureB.r) * wavesFoamWeight;
 

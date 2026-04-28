@@ -10,4 +10,4 @@ cellular_return_type = 4
 [resource]
 noise = SubResource("FastNoiseLite_p08nq")
 seamless = true
-seamless_blend_skirt = 0.2
+seamless_blend_skirt = 0.5
