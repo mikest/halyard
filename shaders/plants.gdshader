@@ -26,7 +26,7 @@ group_uniforms RedBranch;
 uniform float red_branch_gain: hint_range(-1.0, 1.0, 0.01) = 0.0;
 uniform float red_branch_lfo : hint_range(0.0, 10.0, 0.001) = 0.5;
 uniform float red_branch_wavelength : hint_range(0.0, 10.0, 0.001) = 10.0;
-uniform float red_branch_amplitude : hint_range(0.0, 10.0, 0.001) = 0.5;
+uniform float red_branch_amplitude : hint_range(0.0, 10.0, 0.001) = 0.2;
 
 group_uniforms GreenLeaf;
 uniform float green_leaf_gain: hint_range(-1.0, 1.0, 0.01) = 0.0;
@@ -37,7 +37,7 @@ uniform float green_leaf_amplitude : hint_range(0.0, 10.0, 0.001) = 0.2;
 group_uniforms Mask;
 uniform float sphere_mask_radius : hint_range(0.0, 10.0, 0.001) = 0.0;
 uniform float green_cylinder_mask_radius : hint_range(0.0, 10.0, 0.001) = 0.0;
-uniform float green_linear_mask_depth : hint_range(0.0, 10.0, 0.001) = 1.0;
+uniform float green_linear_mask_depth : hint_range(0.0, 10.0, 0.001) = 10.0;
 uniform float red_linear_mask_height : hint_range(0.0, 10.0, 0.001) = 0.0;
 
 // Distance fade settings
