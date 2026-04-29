@@ -47,6 +47,12 @@ var wind_scroll: Vector2 = Vector2.ZERO:
 		wind_scroll = value
 		RenderingServer.global_shader_parameter_set("WindScroll", wind_scroll)
 
+var wave_scroll: Vector2 = Vector2.ZERO:
+	get: return wave_scroll
+	set(value):
+		wave_scroll = value
+		RenderingServer.global_shader_parameter_set("WaveScroll", wave_scroll)
+
 # Retrieve the global wind controller. Assumed to be at root of tree, and cached for speed.
 static var _wind: Wind = null
 static func get_wind() -> Wind:
@@ -70,10 +76,17 @@ func _process(delta: float) -> void:
 		tween.tween_property(self, "wind_angle", new_angle, 1.0)
 	
 	# animate the wind motion based upon the direction
-	var movement := wind_scroll + get_wind_direction() * maxf(wind_speed/4.0, 0.001) * delta
+	var movement := wind_scroll + get_wind_direction() * maxf(wind_speed/10.0, 0.001) * delta
 	movement.x = wrapf(movement.x, 0, 1)
 	movement.y = wrapf(movement.y, 0, 1)
 	wind_scroll = movement
+	
+	# do the same for the waves, but slower
+	# animate the wind motion based upon the direction
+	movement = wave_scroll + get_wind_direction() * maxf(wind_speed/20.0, 0.001) * delta
+	movement.x = wrapf(movement.x, 0, 1)
+	movement.y = wrapf(movement.y, 0, 1)
+	wave_scroll = movement
 		
 
 func get_wind_direction() -> Vector2:

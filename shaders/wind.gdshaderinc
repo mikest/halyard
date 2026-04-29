@@ -19,6 +19,8 @@ global uniform float WindGust : hint_range(0.0, 10.0, 0.1) = 1.0;
 global uniform sampler2D WindMap : hint_default_white;
 // WindScroll is the UV offset for the wind over time. Updated in code.
 global uniform vec2 WindScroll = vec2(0., 0.);
+// WaveScroll is the UV offset for the wave over time. Updated in code. Slower than wind.
+global uniform vec2 WaveScroll = vec2(0., 0.);
 #else
 group_uniforms Wind;
 uniform float WindAngle : hint_range(0.0, 6.283185307179586, 0.1) = 0.0;
