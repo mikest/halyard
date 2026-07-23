@@ -59,6 +59,7 @@ metadata/_edit_group_ = true
 
 [node name="Towing" type="RopeAnchor" parent="Ball" unique_id=102254346]
 behavior = 1
+friction = 0.5
 transform = Transform3D(1, 0, -2.9802322e-08, 0, 1, 0, 2.9802322e-08, 0, 1, 0, 0.75, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Ball" unique_id=285463323]

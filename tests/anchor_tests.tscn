@@ -183,14 +183,17 @@ custom_aabb = AABB(-0.125, -0.63941467, -0.12532735, 2.25, 0.76441467, 0.2508580
 
 [node name="Guided1" type="RopeAnchor" parent="GuidedRope3" unique_id=2035063579]
 behavior = 2
+friction = 0.5
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0, 0)
 
 [node name="Guided2" type="RopeAnchor" parent="GuidedRope3" unique_id=2038820269]
 behavior = 2
+friction = 0.5
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0)
 
 [node name="Guided3" type="RopeAnchor" parent="GuidedRope3" unique_id=994512089]
 behavior = 2
+friction = 0.5
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.5, 0, 0)
 
 [node name="EndAnchor" type="RopeAnchor" parent="GuidedRope3" unique_id=1098004623]

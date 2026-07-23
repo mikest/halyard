@@ -56,6 +56,7 @@ shape = SubResource("SphereShape3D_u0cki")
 
 [node name="Pivot" type="RopeAnchor" parent="Link" unique_id=1265080110]
 behavior = 1
+friction = 0.5
 
 [node name="ShortRopeA" type="Rope" parent="." unique_id=1441601189]
 rope_length = 0.4
@@ -120,6 +121,7 @@ shape = SubResource("SphereShape3D_u0cki")
 
 [node name="Pivot2" type="RopeAnchor" parent="Link2" unique_id=796461868]
 behavior = 1
+friction = 0.5
 
 [node name="ShortRopeA2" type="Rope" parent="." unique_id=135006674]
 rope_length = 0.4
@@ -171,16 +173,20 @@ shape = SubResource("BoxShape3D_ljxrd")
 
 [node name="BoardAnchor" type="RopeAnchor" parent="Plank" unique_id=96128840]
 behavior = 1
+friction = 0.5
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.1, 0.25)
 
 [node name="BoardAnchor2" type="RopeAnchor" parent="Plank" unique_id=1810893255]
 behavior = 1
+friction = 0.5
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5, 0.1, -0.25)
 
 [node name="BoardAnchor3" type="RopeAnchor" parent="Plank" unique_id=490902827]
 behavior = 1
+friction = 0.5
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0.1, 0.25)
 
 [node name="BoardAnchor4" type="RopeAnchor" parent="Plank" unique_id=495718447]
 behavior = 1
+friction = 0.5
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.5, 0.1, -0.25)

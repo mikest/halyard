@@ -3,9 +3,10 @@
 [ext_resource type="PackedScene" uid="uid://cn1vm8lpn0kby" path="res://addons/halyard/tests/base.tscn" id="1_na80j"]
 [ext_resource type="Script" uid="uid://djdaptl7h0yd8" path="res://addons/halyard/tests/character_buoyancy_controller.gd" id="1_obnff"]
 [ext_resource type="PackedScene" uid="uid://n8ovcverwy8g" path="res://addons/halyard/tests/ocean_area.tscn" id="1_swncg"]
+[ext_resource type="Script" uid="uid://dutj22wyqd0ic" path="res://addons/halyard/scripts/wind.gd" id="1_ylavv"]
 [ext_resource type="Script" uid="uid://bpo84j3idh1wu" path="res://addons/halyard/tests/draggable.gd" id="3_pjlk3"]
 [ext_resource type="PackedScene" uid="uid://b2gntvtg86ils" path="res://addons/halyard/tests/example_boat_hull.blend" id="4_5mbyi"]
-[ext_resource type="Texture2D" uid="uid://dlhnxxyov3dea" path="res://addons/halyard/assets/three-ply-rope.png" id="4_pjlk3"]
+[ext_resource type="Texture2D" uid="uid://b2jfviooo7oci" path="res://addons/halyard/assets/three-ply-rope.png" id="4_pjlk3"]
 
 [sub_resource type="BuoyancyMaterial" id="BuoyancyMaterial_pjlk3"]
 
@@ -47,6 +48,12 @@ data = PackedVector3Array(-0.88299996, 0.047199998, -1, -0.8716, 0.2656, -1.4738
 
 [node name="BuoyancyTest" type="Node3D" unique_id=442531547]
 
+[node name="Wind" type="Node" parent="." unique_id=33528560]
+script = ExtResource("1_ylavv")
+wind_angle = 1.5791802904841874
+wind_speed = 0.5
+metadata/_custom_type_script = "uid://dutj22wyqd0ic"
+
 [node name="TestBase" parent="." unique_id=2029226043 instance=ExtResource("1_na80j")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -5, 0)
 
@@ -61,6 +68,7 @@ transform = Transform3D(0.8881044, -0.16795912, -0.42785558, 0.45964187, 0.32452
 
 [node name="Label3D" type="Label3D" parent="." unique_id=1003481240]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.85526, 3, 0)
+visible = false
 text = "Adding a Buoyancy node to a rigid body
 in a scene with a LiquidArea will make it float.
 Make sure you pay attention to the Mass, Center of Mass,
@@ -115,7 +123,7 @@ anchors/0/node_path = NodePath("../Probe/WrapAnchor")
 anchors/1/offset = 5.0
 anchors/1/from = 1
 anchors/1/node_path = NodePath("../Collider/WrapAnchor")
-custom_aabb = AABB(-0.1, -4.7351456, -0.6868094, 8.982367, 4.9616175, 1.3698035)
+custom_aabb = AABB(-0.1, -4.6946034, -0.6829876, 8.982367, 4.921076, 1.3659817)
 
 [node name="Collider" type="RigidBody3D" parent="." unique_id=2110375422]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.220772, 0, 0)
@@ -145,6 +153,7 @@ transform = Transform3D(0.25881907, 0.9659258, 0, -0.9659258, 0.25881907, 0, 0, 
 
 [node name="Label3D2" type="Label3D" parent="." unique_id=668776881]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.972606, 3, 0)
+visible = false
 text = "Adding a CharacterBuoyancy node to a
 CharacterBody3D will make it float.
 
@@ -168,6 +177,7 @@ mesh = SubResource("CapsuleMesh_obnff")
 
 [node name="Label3D3" type="Label3D" parent="." unique_id=660185175]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.9483757, 3, -3.8522077)
+visible = false
 text = "Rope can be made to float as well."
 horizontal_alignment = 0
 
@@ -187,7 +197,7 @@ anchors/1/offset = 0.0
 anchors/1/from = 1
 anchors/1/node_path = NodePath("Marker3D")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.7146287, 1.0919201, -3.9060822)
-custom_aabb = AABB(-0.1875, -3.072497, -0.1875, 3.656139, 3.259997, 0.55605936)
+custom_aabb = AABB(-0.1875, -3.0316823, -0.1875, 3.656139, 3.2191823, 0.61312246)
 
 [node name="Marker3D" type="RopeAnchor" parent="FloatingRope" unique_id=1886146255]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.281139, 0, 0.18105936)

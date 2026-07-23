@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://vhm3rm4lq76t"]
 
 [ext_resource type="PackedScene" uid="uid://cn1vm8lpn0kby" path="res://addons/halyard/tests/base.tscn" id="1_cwica"]
-[ext_resource type="Texture2D" uid="uid://dlhnxxyov3dea" path="res://addons/halyard/assets/three-ply-rope.png" id="2_7h7ie"]
+[ext_resource type="Texture2D" uid="uid://b2jfviooo7oci" path="res://addons/halyard/assets/three-ply-rope.png" id="2_7h7ie"]
 [ext_resource type="Script" uid="uid://bpo84j3idh1wu" path="res://addons/halyard/tests/draggable.gd" id="3_rbjah"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gaj4q"]
@@ -29,9 +29,6 @@ bottom_radius = 0.25
 height = 4.0
 
 [node name="TestBase" unique_id=2029226043 instance=ExtResource("1_cwica")]
-
-[node name="Camera3D" parent="." index="0" unique_id=1498562229]
-pan_speed = 0.005
 
 [node name="Rope" type="Rope" parent="." index="3" unique_id=540035405]
 rope_length = 6.0
@@ -70,6 +67,7 @@ metadata/_edit_group_ = true
 
 [node name="BallRopeAnchor" type="RopeAnchor" parent="Ball_A" index="0" unique_id=72407315]
 behavior = 1
+friction = 0.5
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.151199e-05, 0.008510828, 6.16312e-05)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Ball_A" index="1" unique_id=636553943]
@@ -89,6 +87,7 @@ mesh = SubResource("TorusMesh_3jqx7")
 
 [node name="Guided" type="RopeAnchor" parent="GuidedRing" index="0" unique_id=815460170]
 behavior = 2
+friction = 0.5
 
 [node name="GuidedRing2" type="MeshInstance3D" parent="." index="6" unique_id=1525371827]
 transform = Transform3D(1, 0, 0, 0, -4.371139e-08, -1, 0, 1, -4.371139e-08, 0, 2, 1)
@@ -96,6 +95,7 @@ mesh = SubResource("TorusMesh_3jqx7")
 
 [node name="Guided" type="RopeAnchor" parent="GuidedRing2" index="0" unique_id=909479442]
 behavior = 2
+friction = 0.5
 
 [node name="Ball_B" type="RigidBody3D" parent="." index="7" unique_id=347684372]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.056137323, 0.7866516, 2.1001718)
@@ -110,6 +110,7 @@ metadata/_edit_group_ = true
 
 [node name="BallRopeAnchor" type="RopeAnchor" parent="Ball_B" index="0" unique_id=227397698]
 behavior = 1
+friction = 0.5
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.151199e-05, 0.008510828, 6.16312e-05)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Ball_B" index="1" unique_id=1553646874]

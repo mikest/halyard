@@ -29,7 +29,7 @@ ocean_detailer = NodePath("OceanDetailer")
 show_debug = true
 
 [node name="ClipMapInstance" type="ClipMapInstance" parent="." unique_id=1932321029]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.488229, 0, 15.372006)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.682942, 0, 3.0806046)
 
 [node name="OceanDetailer" type="OceanDetailer" parent="." unique_id=1516782957]
 render_size = 256.0
