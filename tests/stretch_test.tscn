@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://uyxawsqlqrb4"]
 
 [sub_resource type="RopeAppearance" id="RopeAppearance_do1de"]
-rope_width = 0.125
 rope_lod = 10
 
 [node name="Node3D" type="Node3D" unique_id=918674348]
@@ -10,11 +9,10 @@ rope_lod = 10
 rope_length = 1.0
 anchor_count = 5
 stiffness = 0.1
-collision_layer = 0
-collision_mask = 0
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath(".")
+anchors/0/friction = 0.5
 anchors/1/offset = 0.25
 anchors/1/from = 0
 anchors/1/node_path = NodePath("Anchor1")
@@ -44,14 +42,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
 
 [node name="StretchedRope2" type="Rope" parent="." unique_id=83582394]
 rope_length = 1.0
-anchor_count = 2
 appearance = SubResource("RopeAppearance_do1de")
+anchor_count = 2
 stiffness = 0.1
-collision_layer = 0
-collision_mask = 0
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath(".")
+anchors/0/friction = 0.5
 anchors/1/offset = 0.0
 anchors/1/from = 1
 anchors/1/node_path = NodePath("EndAnchor")

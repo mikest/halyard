@@ -14,6 +14,7 @@ uniform bool per_vertex = false;
 
 // Base material properties
 uniform sampler2D texture_albedo : hint_default_white, source_color, filter_linear_mipmap, repeat_enable;
+uniform float alpha_threshold : hint_range(0.0, 1.0, 0.01) = 0.5;
 uniform bool enable_backlight = true;
 uniform bool enable_sss = false;
 uniform sampler2D texture_backlight : hint_default_white, source_color, filter_linear_mipmap, repeat_enable;
@@ -26,7 +27,7 @@ group_uniforms RedBranch;
 uniform float red_branch_gain: hint_range(-1.0, 1.0, 0.01) = 0.0;
 uniform float red_branch_lfo : hint_range(0.0, 10.0, 0.001) = 0.5;
 uniform float red_branch_wavelength : hint_range(0.0, 10.0, 0.001) = 10.0;
-uniform float red_branch_amplitude : hint_range(0.0, 10.0, 0.001) = 0.2;
+uniform float red_branch_amplitude : hint_range(0.0, 10.0, 0.001) = 0.5;
 
 group_uniforms GreenLeaf;
 uniform float green_leaf_gain: hint_range(-1.0, 1.0, 0.01) = 0.0;
@@ -37,7 +38,7 @@ uniform float green_leaf_amplitude : hint_range(0.0, 10.0, 0.001) = 0.2;
 group_uniforms Mask;
 uniform float sphere_mask_radius : hint_range(0.0, 10.0, 0.001) = 0.0;
 uniform float green_cylinder_mask_radius : hint_range(0.0, 10.0, 0.001) = 0.0;
-uniform float green_linear_mask_depth : hint_range(0.0, 10.0, 0.001) = 10.0;
+uniform float green_linear_mask_depth : hint_range(0.0, 10.0, 0.001) = 1.0;
 uniform float red_linear_mask_height : hint_range(0.0, 10.0, 0.001) = 0.0;
 
 // Distance fade settings
@@ -45,6 +46,8 @@ group_uniforms Fade;
 uniform bool enable_fade = false; // Toggle for enabling/disabling fade effect
 uniform float fade_start_distance : hint_range(0.0, 200.0) = 50.0; // Distance at which fading starts
 uniform float fade_length : hint_range(1.0, 50.0) = 20.0; // Distance over which fading occurs
+
+uniform bool billboard = false;	// enable Y-billboarding
 
 #include "wind.gdshaderinc"
 
@@ -62,6 +65,17 @@ uniform bool debug_speed = false;
 #define RED_BRANCH_EFFECT CURLING
 
 void vertex() {
+	if (billboard) {
+		vec4 world_pos = MODEL_MATRIX * vec4(VERTEX, 1.0);
+		vec3 to_camera = CAMERA_POSITION_WORLD - world_pos.xyz;
+		to_camera.y = 0.0;
+		to_camera = normalize(to_camera);
+		vec3 right = normalize(cross(vec3(0.0, 1.0, 0.0), to_camera));
+		vec3 up = vec3(0.0, 1.0, 0.0);
+		mat3 billboard_matrix = mat3(right, up, to_camera);
+		VERTEX = billboard_matrix * VERTEX;
+	}
+	
     if (enable_wind) {
 		vec2 dir_2d = wind_direction();
 		vec3 dir = vec3(dir_2d.x, 0.0, dir_2d.y);
@@ -132,7 +146,7 @@ void vertex() {
 
 void fragment() {
     vec2 base_uv = UV;
-//
+
     // Sample textures
     vec4 albedo_tex = texture(texture_albedo, base_uv);
 
@@ -161,5 +175,8 @@ void fragment() {
 	
     // Apply fading to alpha
     ALPHA = albedo_tex.a * fade;
-	ALPHA_SCISSOR_THRESHOLD = 0.5;
+	ALPHA_SCISSOR_THRESHOLD = alpha_threshold;
+	
+	// Skip fully transparent pixel
+	//if (ALPHA <= alpha_threshold) discard;
 }

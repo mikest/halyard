@@ -81,7 +81,7 @@ turns_per_layer = 6.0
 rope_width = 0.15
 particles_per_meter = 12.0
 clockwise = true
-transform = Transform3D(-1, 6.287307e-08, -1.2261238e-07, -1.2261448e-07, -0.81202495, 0.583593, -6.287421e-08, 0.583593, 0.81202495, -0.25, 0.5, 0)
+transform = Transform3D(-1, 6.287306e-08, -1.2261236e-07, -1.2261448e-07, -0.8120249, 0.5835931, -6.28742e-08, 0.5835931, 0.8120249, -0.25, 0.5, 0)
 
 [node name="Drum" type="RopeAnchor" parent="ChainCoil/CoiledAnchor" unique_id=1088114845]
 transform = Transform3D(-1, -2.1741165e-08, 8.467618e-08, 8.7422784e-08, -0.24868996, 0.9685832, -1.0323297e-14, 0.9685832, 0.24868996, 0, 0, 0)

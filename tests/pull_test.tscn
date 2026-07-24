@@ -9,7 +9,6 @@
 albedo_color = Color(1, 0.7946672, 0.49274683, 1)
 
 [sub_resource type="RopeAppearance" id="RopeAppearance_5q3c7"]
-particles_per_meter = 4.0
 material = SubResource("StandardMaterial3D_4j3bp")
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_4j3bp"]
@@ -94,13 +93,12 @@ shadow_enabled = true
 rope_length = 6.0
 rope_width = 0.25
 particles_per_meter = 4.0
-anchor_count = 3
 appearance = SubResource("RopeAppearance_5q3c7")
+anchor_count = 3
 stiffness_iterations = 20
 stiffness = 1.7
 tension_force_scale = 3.0
 max_tension_force = 10000.0
-collision_layer = 0
 apply_buoyancy = true
 buoyancy_scale = 2.0
 liquid_area = NodePath("../LiquidArea")
@@ -129,6 +127,7 @@ metadata/_edit_group_ = true
 
 [node name="RopeAnchor_A" type="RopeAnchor" parent="RigidBody3D_A" unique_id=589179095]
 behavior = 1
+friction = 0.5
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.151199e-05, 0.008510828, 6.16312e-05)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="RigidBody3D_A" unique_id=116531866]

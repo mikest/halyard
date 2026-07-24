@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://5x0v0fpy5m4g"]
 
-[ext_resource type="Texture2D" uid="uid://dlhnxxyov3dea" path="res://addons/halyard/assets/three-ply-rope.png" id="1_ise2c"]
+[ext_resource type="Texture2D" uid="uid://b2jfviooo7oci" path="res://addons/halyard/assets/three-ply-rope.png" id="1_ise2c"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ooc0l"]
 albedo_texture = ExtResource("1_ise2c")
@@ -29,6 +29,7 @@ anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath("")
 anchors/0/behavior = 0
+anchors/0/friction = 0.5
 anchors/0/position = Vector3(1.1664596, 0, 0.07818252)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.1664596, 0, 0.07818252)
 custom_aabb = AABB(-0.12505066, -4.1721096, -0.12516268, 0.25005066, 4.2971096, 0.25016266)
@@ -41,6 +42,7 @@ anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath("")
 anchors/0/behavior = 0
+anchors/0/friction = 0.5
 anchors/0/position = Vector3(1.1664596, 0, 0.81526095)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.1664596, 0, 0.81526095)
 custom_aabb = AABB(-0.125, -4.1721096, -0.125, 0.25005722, 4.2971096, 0.2500937)
@@ -53,6 +55,7 @@ anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath("")
 anchors/0/behavior = 0
+anchors/0/friction = 0.5
 anchors/0/position = Vector3(1.1664596, 0, -0.87713116)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.1664596, 0, -0.87713116)
 custom_aabb = AABB(-0.1251924, -4.1721096, -0.12507981, 0.2501924, 4.2971096, 0.2500798)

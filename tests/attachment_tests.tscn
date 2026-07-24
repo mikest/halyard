@@ -48,12 +48,13 @@ attachments/4/node_path = NodePath("../EndAttachment")
 
 [node name="RelaxedRope" type="Rope" parent="." unique_id=541709707]
 rope_width = 0.105
-anchor_count = 2
 appearance = SubResource("RopeAppearance_6cjj2")
+anchor_count = 2
 jitter_initial_position = false
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath(".")
+anchors/0/friction = 0.5
 anchors/1/offset = 0.0
 anchors/1/from = 1
 anchors/1/node_path = NodePath("EndAnchor")
@@ -83,14 +84,13 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, 0)
 [node name="StretchedRope" type="Rope" parent="." unique_id=1468877630]
 rope_length = 1.0
 rope_width = 0.105
-anchor_count = 2
 appearance = SubResource("RopeAppearance_6cjj2")
+anchor_count = 2
 stiffness = 0.1
-collision_layer = 0
-collision_mask = 0
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath(".")
+anchors/0/friction = 0.5
 anchors/1/offset = 0.0
 anchors/1/from = 1
 anchors/1/node_path = NodePath("EndAnchor")
@@ -125,12 +125,13 @@ transform = Transform3D(-0.101612456, -0.026455738, -3.659032e-05, -0.026455741,
 
 [node name="RelaxedRope2" type="Rope" parent="Node3D" unique_id=1701640542]
 rope_width = 0.105
-anchor_count = 2
 appearance = SubResource("RopeAppearance_1i6pb")
+anchor_count = 2
 jitter_initial_position = false
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath(".")
+anchors/0/friction = 0.5
 anchors/1/offset = 0.0
 anchors/1/from = 1
 anchors/1/node_path = NodePath("../EndAnchor")
@@ -163,14 +164,13 @@ transform = Transform3D(-0.0011880313, -0.10499328, 2.1612617e-07, -0.10499328, 
 [node name="StretchedRope2" type="Rope" parent="Node3D2" unique_id=1218052859]
 rope_length = 1.0
 rope_width = 0.105
-anchor_count = 2
 appearance = SubResource("RopeAppearance_0ntkr")
+anchor_count = 2
 stiffness = 0.1
-collision_layer = 0
-collision_mask = 0
 anchors/0/offset = 0.0
 anchors/0/from = 0
 anchors/0/node_path = NodePath(".")
+anchors/0/friction = 0.5
 anchors/1/offset = 0.0
 anchors/1/from = 1
 anchors/1/node_path = NodePath("../EndAnchor2")

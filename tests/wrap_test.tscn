@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://xka5tl7mcugg"]
 
 [ext_resource type="PackedScene" uid="uid://cn1vm8lpn0kby" path="res://addons/halyard/tests/base.tscn" id="1_0j5eo"]
-[ext_resource type="Texture2D" uid="uid://dlhnxxyov3dea" path="res://addons/halyard/assets/three-ply-rope.png" id="2_xi8wr"]
+[ext_resource type="Texture2D" uid="uid://b2jfviooo7oci" path="res://addons/halyard/assets/three-ply-rope.png" id="2_xi8wr"]
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_y6xmp"]
 albedo_texture = ExtResource("2_xi8wr")
@@ -63,7 +63,6 @@ metadata/_edit_group_ = true
 
 [node name="WrapAnchor" type="WrapAnchor" parent="StaticBody3D" unique_id=459280541]
 wrap_radius = 1.407
-turns = 4.0
 unevenness = 1.0
 turn_gap = -0.052
 collision_mask = 5
@@ -92,6 +91,5 @@ rope_width = 0.1
 particles_per_meter = 5.0
 unevenness = 1.0
 turn_gap = -0.151
-collision_mask = 1
 debug = true
 transform = Transform3D(0.3653713, -0.9256667, 0.098209925, 0.8873059, 0.31443608, -0.33736888, 0.28141046, 0.21040693, 0.93623567, 0.02105695, -0.25505686, 0.027382493)
