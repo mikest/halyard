@@ -66,7 +66,7 @@ uniform float WaveTime = 0.0;
 varying float foamWeight;
 
 // Global wind parameters
-#include "wind.gdshaderinc"
+#include "ocean_wind.gdshaderinc"
 
 
 void vertex() {
