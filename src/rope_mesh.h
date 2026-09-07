@@ -28,6 +28,7 @@ class RopeMesh : public ArrayMesh {
 	float _rope_length = 0.0f;
 	float _rope_twist = 1.0f;
 
+	// temp buffers used for begin/end update
 	mutable PackedVector3Array _verts;
 	mutable PackedVector3Array _norms;
 	mutable PackedVector2Array _uv1s;
@@ -36,9 +37,6 @@ class RopeMesh : public ArrayMesh {
 
 protected:
 	static void _bind_methods();
-
-	void _emit_tube(const LocalVector<Transform3D> &p_frames, PackedVector3Array &p_vertices, PackedVector3Array &p_normals, PackedVector2Array &p_uv1) const;
-	void _emit_endcap(bool p_front, const Transform3D &p_frame, PackedVector3Array &p_vertices, PackedVector3Array &p_normals, PackedVector2Array &p_uv1) const;
 
 public:
 	RopeMesh() = default;
@@ -56,12 +54,11 @@ public:
 	void set_rope_twist(float p_rope_twist);
 	float get_rope_twist() const;
 
-	// rebuild the mesh with new frames
-	void _update_mesh(const LocalVector<Transform3D> &p_frames, Ref<Material> p_material);
-	GDVIRTUAL2(_update_mesh, TypedArray<Transform3D>, Ref<Material>);
-
-	void _update_mesh_internal(const LocalVector<Transform3D> &p_frames, Ref<Material> p_material);
-	void _update_mesh_internal_bind(const TypedArray<Transform3D> &p_frames, Ref<Material> p_material);
+	void begin_update_mesh();
+	void emit_tube(const LocalVector<Transform3D> &p_frames);
+	void emit_tube_bind(const TypedArray<Transform3D> &p_frames);
+	void emit_endcap(bool p_front, const Transform3D &p_frame);
+	void end_update_mesh(Ref<Material> p_material);
 
 	void clear_mesh();
 };
