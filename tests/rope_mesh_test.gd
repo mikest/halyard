@@ -1,6 +1,6 @@
 @tool
 extends MeshInstance3D
-class_name Pipe
+class_name GDPipe
 
 @export var curve: Curve3D:
 	set(val):
@@ -84,22 +84,26 @@ func _update_mesh():
 	print("rebaking")
 	if rope_mesh and curve:
 		rope_mesh.clear_mesh();
+		rope_mesh.rope_length = curve.get_baked_length()
 		
 		_build_frames()
 		
 		# pipe
 		if _frames.size() >= 2:
 			rope_mesh.begin_update_mesh();
-			var first := _frames[0].rotated_local(Vector3.RIGHT, PI/2).orthonormalized()
+			var first := _frames[0]
 			rope_mesh.emit_endcap(true, first);
 			
-			# emit sections for frames
-			for idx in range(1, _frames.size()):
-				var prev := _frames[idx-1].rotated_local(Vector3.RIGHT, PI/2).orthonormalized()
-				var next := _frames[idx].rotated_local(Vector3.RIGHT, PI/2).orthonormalized()
-				rope_mesh.emit_tube([prev, next]);
+			# convert the frames to orthonormalized versions
+			var tube: Array[Transform3D] = []
+			tube.resize(_frames.size())
+			for idx in range(0, _frames.size()):
+				tube[idx] = (_frames[idx].orthonormalized())
+
+			# emit the tube
+			rope_mesh.emit_tube(tube);
 			
-			var last := _frames[_frames.size()-1].rotated_local(Vector3.RIGHT, PI/2).orthonormalized()
+			var last := _frames[_frames.size()-1]
 			rope_mesh.emit_endcap(false, last);
 			rope_mesh.end_update_mesh(null);
 		
@@ -107,23 +111,37 @@ func _update_mesh():
 		
 		# elbows
 		if _frames.size() >= 2:
-			var prev_elbow := false
-			
+
 			# emit sections for frames
+			var length := 0.0
+			var elbow: Array[Transform3D] = []
 			for idx in range(1, _frames.size()):
-				var prev := _frames[idx-1].rotated_local(Vector3.RIGHT, PI/2)
-				var next := _frames[idx].rotated_local(Vector3.RIGHT, PI/2)
+				var prev := _frames[idx-1]
+				var curr := _frames[idx]
+
+				var prev_is_elbow := not prev.basis.is_orthonormal()
+				var curr_is_elbow := not curr.basis.is_orthonormal()
 				
-				if not prev.basis.is_orthonormal() or not next.basis.is_orthonormal():
-					if prev_elbow == false:
-						rope_mesh.begin_update_mesh();
-					rope_mesh.emit_tube([prev, next]);
-					prev_elbow = true
-				else:
-					if prev_elbow == true:
-						rope_mesh.end_update_mesh(null);
-						rope_mesh.surface_set_material(rope_mesh.get_surface_count()-1, elbow_material)
-					prev_elbow = false
+				# construct elbow begin
+				if not prev_is_elbow and curr_is_elbow:
+					rope_mesh.begin_update_mesh();
+					elbow.clear()
+					length = 0.0
+					elbow.append(prev)
+					elbow.append(curr)
+				
+				# add segements
+				elif prev_is_elbow and curr_is_elbow:
+					elbow.append(curr)
+					length += prev.origin.distance_to(curr.origin)
+
+				# elbow end
+				elif prev_is_elbow and not curr_is_elbow:
+					rope_mesh.rope_length = length
+					elbow.append(curr)
+					rope_mesh.emit_tube(elbow);
+					rope_mesh.end_update_mesh(null);
+					rope_mesh.surface_set_material(rope_mesh.get_surface_count()-1, elbow_material)
 
 
 func _build_frames() -> void:
@@ -248,6 +266,10 @@ func _build_frames() -> void:
 				curve.get_point_tilt(last),
 				basis_prev)
 		_frames.push_back(frame)
+		
+		# now rotate the whole frameset for RopeMesh
+		for idx in _frames.size():
+			_frames[idx] = _frames[idx].rotated_local(Vector3.RIGHT, PI/2)
 	pass
 
 

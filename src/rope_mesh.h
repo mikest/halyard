@@ -23,9 +23,9 @@ class RopeMesh : public ArrayMesh {
 	GDCLASS(RopeMesh, ArrayMesh)
 
 	// LocalVector<Transform3D> _frames;
-	int _sides = 0;
-	float _radius = 0.0f;
-	float _rope_length = 0.0f;
+	int _sides = 3;
+	float _radius = 1.0f;
+	float _rope_length = 1.0f;
 	float _rope_twist = 1.0f;
 
 	// temp buffers used for begin/end update

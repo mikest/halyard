@@ -13,15 +13,15 @@
 void RopeMesh::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_sides", "sides"), &RopeMesh::set_sides);
 	ClassDB::bind_method(D_METHOD("get_sides"), &RopeMesh::get_sides);
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "sides", PROPERTY_HINT_RANGE, "0,128,1,or_greater"), "set_sides", "get_sides");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "sides", PROPERTY_HINT_RANGE, "3,128,1,or_greater"), "set_sides", "get_sides");
 
 	ClassDB::bind_method(D_METHOD("set_radius", "radius"), &RopeMesh::set_radius);
 	ClassDB::bind_method(D_METHOD("get_radius"), &RopeMesh::get_radius);
-	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "radius", PROPERTY_HINT_RANGE, "0,10,0.001,or_greater"), "set_radius", "get_radius");
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "radius", PROPERTY_HINT_RANGE, "0.001,10,0.001,or_greater"), "set_radius", "get_radius");
 
 	ClassDB::bind_method(D_METHOD("set_rope_length", "rope_length"), &RopeMesh::set_rope_length);
 	ClassDB::bind_method(D_METHOD("get_rope_length"), &RopeMesh::get_rope_length);
-	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "rope_length", PROPERTY_HINT_RANGE, "0,1000,0.01,or_greater"), "set_rope_length", "get_rope_length");
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "rope_length", PROPERTY_HINT_RANGE, "0.001,1000,0.001,or_greater"), "set_rope_length", "get_rope_length");
 
 	ClassDB::bind_method(D_METHOD("set_rope_twist", "rope_twist"), &RopeMesh::set_rope_twist);
 	ClassDB::bind_method(D_METHOD("get_rope_twist"), &RopeMesh::get_rope_twist);
@@ -37,7 +37,7 @@ void RopeMesh::_bind_methods() {
 }
 
 void RopeMesh::set_sides(int p_sides) {
-	_sides = Math::max(p_sides, 0);
+	_sides = Math::max(p_sides, 3);
 }
 
 int RopeMesh::get_sides() const {
@@ -45,7 +45,7 @@ int RopeMesh::get_sides() const {
 }
 
 void RopeMesh::set_radius(float p_radius) {
-	_radius = Math::max(p_radius, 0.0f);
+	_radius = Math::max(p_radius, 0.001f);
 }
 
 float RopeMesh::get_radius() const {
@@ -53,7 +53,7 @@ float RopeMesh::get_radius() const {
 }
 
 void RopeMesh::set_rope_length(float p_rope_length) {
-	_rope_length = Math::max(p_rope_length, 0.0f);
+	_rope_length = Math::max(p_rope_length, 0.001f);
 }
 
 float RopeMesh::get_rope_length() const {
