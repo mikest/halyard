@@ -12,6 +12,7 @@
 #include "liquid_area.h"
 #include "ocean_area.h"
 #include "ocean_detailer.h"
+#include "pipe.h"
 #include "rigid_buoyancy.h"
 #include "rope.h"
 #include "rope_anchor.h"
@@ -31,6 +32,7 @@ void initialize_gdextension_types(ModuleInitializationLevel p_level) {
 		} break;
 
 		case MODULE_INITIALIZATION_LEVEL_SCENE: {
+			ClassDB::register_class<Pipe>();
 			ClassDB::register_class<Rope>();
 			ClassDB::register_class<RopeAnchor>();
 			ClassDB::register_class<CoiledAnchor>();

@@ -3,6 +3,7 @@ entry_symbol = "halyard_library_init"
 compatibility_minimum = "4.3"
 
 [icons]
+Pipe = "./icons/Pipe.svg"
 Rope = "./icons/Rope.svg"
 RopeAnchor = "./icons/RopeAnchor.svg"
 RopePositions = "./icons/RopePositions.svg"

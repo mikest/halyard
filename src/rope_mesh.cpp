@@ -13,26 +13,31 @@
 void RopeMesh::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_sides", "sides"), &RopeMesh::set_sides);
 	ClassDB::bind_method(D_METHOD("get_sides"), &RopeMesh::get_sides);
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "sides", PROPERTY_HINT_RANGE, "0,128,1,or_greater"), "set_sides", "get_sides");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "sides", PROPERTY_HINT_RANGE, "3,128,1,or_greater"), "set_sides", "get_sides");
 
 	ClassDB::bind_method(D_METHOD("set_radius", "radius"), &RopeMesh::set_radius);
 	ClassDB::bind_method(D_METHOD("get_radius"), &RopeMesh::get_radius);
-	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "radius", PROPERTY_HINT_RANGE, "0,10,0.001,or_greater"), "set_radius", "get_radius");
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "radius", PROPERTY_HINT_RANGE, "0.001,10,0.001,or_greater"), "set_radius", "get_radius");
 
 	ClassDB::bind_method(D_METHOD("set_rope_length", "rope_length"), &RopeMesh::set_rope_length);
 	ClassDB::bind_method(D_METHOD("get_rope_length"), &RopeMesh::get_rope_length);
-	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "rope_length", PROPERTY_HINT_RANGE, "0,1000,0.01,or_greater"), "set_rope_length", "get_rope_length");
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "rope_length", PROPERTY_HINT_RANGE, "0.001,1000,0.001,or_greater"), "set_rope_length", "get_rope_length");
 
 	ClassDB::bind_method(D_METHOD("set_rope_twist", "rope_twist"), &RopeMesh::set_rope_twist);
 	ClassDB::bind_method(D_METHOD("get_rope_twist"), &RopeMesh::get_rope_twist);
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "rope_twist", PROPERTY_HINT_RANGE, "0,10,0.01,or_greater"), "set_rope_twist", "get_rope_twist");
 
-	ClassDB::bind_method(D_METHOD("_update_mesh_internal", "frames", "material"), &RopeMesh::_update_mesh_internal_bind);
-	GDVIRTUAL_BIND(_update_mesh, "frames", "material")
+	ClassDB::bind_method(D_METHOD("clear_mesh"), &RopeMesh::clear_mesh);
+
+	// Mesh gen
+	ClassDB::bind_method(D_METHOD("begin_update_mesh"), &RopeMesh::begin_update_mesh);
+	ClassDB::bind_method(D_METHOD("emit_tube", "frames"), &RopeMesh::emit_tube_bind);
+	ClassDB::bind_method(D_METHOD("emit_endcap", "front", "frame"), &RopeMesh::emit_endcap);
+	ClassDB::bind_method(D_METHOD("end_update_mesh"), &RopeMesh::end_update_mesh);
 }
 
 void RopeMesh::set_sides(int p_sides) {
-	_sides = Math::max(p_sides, 0);
+	_sides = Math::max(p_sides, 3);
 }
 
 int RopeMesh::get_sides() const {
@@ -40,7 +45,7 @@ int RopeMesh::get_sides() const {
 }
 
 void RopeMesh::set_radius(float p_radius) {
-	_radius = Math::max(p_radius, 0.0f);
+	_radius = Math::max(p_radius, 0.001f);
 }
 
 float RopeMesh::get_radius() const {
@@ -48,7 +53,7 @@ float RopeMesh::get_radius() const {
 }
 
 void RopeMesh::set_rope_length(float p_rope_length) {
-	_rope_length = Math::max(p_rope_length, 0.0f);
+	_rope_length = Math::max(p_rope_length, 0.001f);
 }
 
 float RopeMesh::get_rope_length() const {
@@ -64,16 +69,7 @@ float RopeMesh::get_rope_twist() const {
 }
 
 void RopeMesh::clear_mesh() {
-	_sides = 0;
-	_radius = 0.0f;
-	_rope_length = 0.0f;
-	_rope_twist = 1.0f;
-
-	_verts.clear();
-	_norms.clear();
-	_uv1s.clear();
-	_cum_lengths.clear();
-
+	set_custom_aabb(AABB());
 	clear_surfaces();
 }
 
@@ -81,7 +77,45 @@ void RopeMesh::clear_mesh() {
 #define Y 1
 #define Z 2
 
-void RopeMesh::_emit_tube(const LocalVector<Transform3D> &p_frames, PackedVector3Array &p_V, PackedVector3Array &p_N, PackedVector2Array &p_UV1) const {
+void RopeMesh::begin_update_mesh() {
+	_verts.clear();
+	_norms.clear();
+	_uv1s.clear();
+	_cum_lengths.clear();
+	_aabb = AABB();
+}
+
+
+void RopeMesh::end_update_mesh(Ref<Material> p_material) {
+	// build the mesh from the generated vertex data
+	if ( _verts.size() > 0 && _norms.size() > 0 && _uv1s.size() > 0) {
+		Array arrays;
+		arrays.resize(Mesh::ARRAY_MAX);
+		arrays[Mesh::ARRAY_VERTEX] = _verts;
+		arrays[Mesh::ARRAY_NORMAL] = _norms;
+		arrays[Mesh::ARRAY_TEX_UV] = _uv1s;
+
+		// pad AABB by rope radius to fully enclose mesh
+		_aabb = _aabb.grow(_radius);
+
+		// include existing AABB
+		_aabb = _aabb.merge(get_custom_aabb());
+		set_custom_aabb(_aabb);
+
+		add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLE_STRIP, arrays);
+		surface_set_material(get_surface_count() - 1, p_material);
+	}
+
+	// cleanup
+	_verts.clear();
+	_norms.clear();
+	_uv1s.clear();
+	_cum_lengths.clear();
+	_aabb = AABB();
+}
+
+
+void RopeMesh::emit_tube(const LocalVector<Transform3D> &p_frames) {
 	// build cumulative length along the sampled positions so we can map V smoothly.
 	// rope can be stretchy so we can't just use rope_length here
 	// Reuse cached vector to avoid allocation
@@ -133,18 +167,27 @@ void RopeMesh::_emit_tube(const LocalVector<Transform3D> &p_frames, PackedVector
 			// U goes 0..1 around the tube; use j so the final seam vertex reaches 1.0;
 			const auto u = float(j) * inv_sides;
 
-			p_V.push_back(pos + offset);
-			p_N.push_back(normal);
-			p_UV1.push_back(Vector2(u, v));
+			_verts.push_back(pos + offset);
+			_norms.push_back(normal);
+			_uv1s.push_back(Vector2(u, v));
 
-			p_V.push_back(next_pos + next_offset);
-			p_N.push_back(next_normal);
-			p_UV1.push_back(Vector2(u, next_v));
+			_verts.push_back(next_pos + next_offset);
+			_norms.push_back(next_normal);
+			_uv1s.push_back(Vector2(u, next_v));
 		}
 	}
 }
 
-void RopeMesh::_emit_endcap(bool p_front, const Transform3D &p_frame, PackedVector3Array &p_V, PackedVector3Array &p_N, PackedVector2Array &p_UV1) const {
+void RopeMesh::emit_tube_bind(const TypedArray<Transform3D> &p_frames){
+	LocalVector<Transform3D> frames;
+	frames.resize(p_frames.size());
+	for (int i = 0; i < p_frames.size(); i++)
+		frames[i] = p_frames[i];
+
+	emit_tube(frames);
+}
+
+void RopeMesh::emit_endcap(bool p_front, const Transform3D &p_frame) {
 	Vector3 center = p_frame.origin;
 	Vector3 T = p_frame.basis.get_column(Y);
 	Vector3 N = p_frame.basis.get_column(X);
@@ -167,13 +210,13 @@ void RopeMesh::_emit_endcap(bool p_front, const Transform3D &p_frame, PackedVect
 
 		const auto center_uv = Vector2(j * u_width, 0);
 
-		p_V.push_back(a);
-		p_N.push_back(center_normal);
-		p_UV1.push_back(uv_a);
+		_verts.push_back(a);
+		_norms.push_back(center_normal);
+		_uv1s.push_back(uv_a);
 
-		p_V.push_back(center);
-		p_N.push_back(center_normal);
-		p_UV1.push_back(center_uv);
+		_verts.push_back(center);
+		_norms.push_back(center_normal);
+		_uv1s.push_back(center_uv);
 	};
 
 	// emit triangles for end cap in either CCW or CW order
@@ -187,71 +230,3 @@ void RopeMesh::_emit_endcap(bool p_front, const Transform3D &p_frame, PackedVect
 	}
 }
 
-void RopeMesh::_update_mesh(const LocalVector<Transform3D> &p_frames, Ref<Material> p_material) {
-	if (GDVIRTUAL_IS_OVERRIDDEN(_update_mesh)) {
-		TypedArray<Transform3D> frames;
-		frames.resize(p_frames.size());
-		for (int idx = 0; idx < (int)p_frames.size(); idx++) {
-			frames[idx] = p_frames[idx];
-		}
-		GDVIRTUAL_CALL(_update_mesh, frames, p_material);
-	} else {
-		_update_mesh_internal(p_frames, p_material);
-	}
-}
-
-void RopeMesh::_update_mesh_internal_bind(const TypedArray<Transform3D> &p_frames, Ref<Material> p_material) {
-	LocalVector<Transform3D> frames;
-	frames.resize(p_frames.size());
-	for (int idx = 0; idx < p_frames.size(); idx++) {
-		frames[idx] = p_frames[idx];
-	}
-	_update_mesh_internal(frames, p_material);
-}
-
-void RopeMesh::_update_mesh_internal(const LocalVector<Transform3D> &p_frames, Ref<Material> p_material) {
-	Array mesh;
-	mesh.resize(Mesh::ARRAY_MAX);
-
-	// failure case, return a single vertex to avoid issues with zero-vertex meshes
-	bool has_frames = p_frames.size() >= 2 && _sides >= 3 && _radius > 0.0f;
-	if (has_frames == false) {
-		PackedVector3Array verts;
-		// emit a tiny degenerate triangle to satisfy primitive minimum vertex count
-		verts.push_back(Vector3());
-		verts.push_back(Vector3(0.001f, 0.0f, 0.0f));
-		verts.push_back(Vector3(0.0f, 0.001f, 0.0f));
-
-		PackedVector3Array norms;
-		norms.push_back(Vector3(0, 1, 0));
-		norms.push_back(Vector3(0, 1, 0));
-		norms.push_back(Vector3(0, 1, 0));
-
-		mesh[Mesh::ARRAY_VERTEX] = verts;
-		mesh[Mesh::ARRAY_NORMAL] = norms;
-	} else {
-		_verts.clear();
-		_norms.clear();
-		_uv1s.clear();
-
-		// reset AABB before accumulating
-		_aabb = AABB();
-
-		_emit_endcap(true, p_frames[0], _verts, _norms, _uv1s);
-		_emit_tube(p_frames, _verts, _norms, _uv1s);
-		_emit_endcap(false, p_frames[p_frames.size() - 1], _verts, _norms, _uv1s);
-
-		// pad AABB by rope radius to fully enclose mesh
-		_aabb = _aabb.grow(_radius);
-		const_cast<RopeMesh *>(this)->set_custom_aabb(_aabb);
-
-		mesh[Mesh::ARRAY_VERTEX] = _verts;
-		mesh[Mesh::ARRAY_NORMAL] = _norms;
-		mesh[Mesh::ARRAY_TEX_UV] = _uv1s;
-	}
-
-	clear_surfaces();
-	add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLE_STRIP, mesh);
-	surface_set_material(0, p_material);
-	set_custom_aabb(_aabb);
-}

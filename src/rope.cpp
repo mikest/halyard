@@ -815,7 +815,16 @@ uint64_t Rope::get_particle_count() const {
 
 Ref<ArrayMesh> Rope::get_baked_mesh() const {
 	if (_rope_mesh.is_valid()) {
-		_rope_mesh->_update_mesh(_frames, get_material());
+
+		_rope_mesh->clear_mesh();
+		_rope_mesh->begin_update_mesh();
+		
+		_rope_mesh->emit_endcap(true, _frames[0]);
+		_rope_mesh->emit_tube(_frames);
+		_rope_mesh->emit_endcap(false, _frames[_frames.size() - 1]);
+		
+		_rope_mesh->end_update_mesh(get_material());
+
 		return _rope_mesh;
 	}
 
@@ -1978,7 +1987,7 @@ void Rope::_draw_rope() {
 		_rope_mesh->set_rope_twist(get_rope_twist());
 
 		// rebuild
-		_rope_mesh->_update_mesh(_frames, get_material());
+		get_baked_mesh();
 	}
 
 	// attachments — route through virtual methods so subclasses can override

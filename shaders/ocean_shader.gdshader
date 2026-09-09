@@ -169,7 +169,7 @@ float fresnel(float amount, vec3 normal, vec3 view)
 }
 //
 //vec3 RetrieveGaussianValue(vec2 currentUV, float lastHeight){
-    //
+	//
 	//// GAUSSIAN BLUR SETTINGS {{{
 	//// GAUSSIAN BLUR SETTINGS }}}
 	//
@@ -182,9 +182,9 @@ float fresnel(float amount, vec3 normal, vec3 view)
 	//for( float d=0.0; d<PI; d+=PI/BlurDirections)
 	//{
 		//for(float i=1.0/BlurQuality; i<=1.0; i+=1.0/BlurQuality)
-	    //{
+		//{
 			//Color += texture( screen_texture, currentUV + vec2( cos(d), sin(d)) * Radius * i);
-	    //}
+		//}
 	//}
 //
 	//// Output to screen
