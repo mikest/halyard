@@ -133,18 +133,36 @@ void Pipe::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_pipe_material"), &Pipe::get_pipe_material);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "pipe_material", PROPERTY_HINT_RESOURCE_TYPE, "Material"), "set_pipe_material", "get_pipe_material");
 
-	ClassDB::bind_method(D_METHOD("set_rope_mesh", "rope_mesh"), &Pipe::set_rope_mesh);
-	ClassDB::bind_method(D_METHOD("get_rope_mesh"), &Pipe::get_rope_mesh);
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "rope_mesh", PROPERTY_HINT_RESOURCE_TYPE, "RopeMesh"), "set_rope_mesh", "get_rope_mesh");
+	ClassDB::bind_method(D_METHOD("set_sides", "sides"), &Pipe::set_sides);
+	ClassDB::bind_method(D_METHOD("get_sides"), &Pipe::get_sides);
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "sides", PROPERTY_HINT_RANGE, "3,128,1,or_greater"), "set_sides", "get_sides");
+
+	ClassDB::bind_method(D_METHOD("set_radius", "radius"), &Pipe::set_radius);
+	ClassDB::bind_method(D_METHOD("get_radius"), &Pipe::get_radius);
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "radius", PROPERTY_HINT_RANGE, "0.001,10,0.001,or_greater"), "set_radius", "get_radius");
+
+	ClassDB::bind_method(D_METHOD("set_twist", "twist"), &Pipe::set_twist);
+	ClassDB::bind_method(D_METHOD("get_twist"), &Pipe::get_twist);
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "twist", PROPERTY_HINT_RANGE, "0,10,0.01,or_greater"), "set_twist", "get_twist");
 
 	ClassDB::bind_method(D_METHOD("_on_curve_changed"), &Pipe::_on_curve_changed);
+}
+
+Pipe::Pipe() {
+	_rope_mesh.instantiate();
+	if (_rope_mesh.is_valid()) {
+		_rope_mesh->set_sides(_sides);
+		_rope_mesh->set_radius(_radius);
+		_rope_mesh->set_rope_twist(_twist);
+		set_base(_rope_mesh->get_rid());
+	}
 }
 
 void Pipe::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_READY: {
 			if (_rope_mesh.is_valid()) {
-				set_mesh(_rope_mesh);
+				set_base(_rope_mesh->get_rid());
 			}
 
 			_rebind_curve_changed_signal();
@@ -152,6 +170,9 @@ void Pipe::_notification(int p_what) {
 			if (_rope_mesh.is_valid() && (_rope_mesh->get_surface_count() == 0 || _dirty)) {
 				_update_mesh();
 			}
+		} break;
+		case NOTIFICATION_PREDELETE: {
+			set_base(RID());
 		} break;
 		default:
 			break;
@@ -284,25 +305,71 @@ Ref<Material> Pipe::get_pipe_material() const {
 	return _pipe_material;
 }
 
-void Pipe::set_rope_mesh(const Ref<RopeMesh> &p_rope_mesh) {
-	if (_rope_mesh == p_rope_mesh) {
+void Pipe::set_sides(int p_sides) {
+	int sides = Math::max(p_sides, 3);
+	if (_sides == sides) {
 		return;
 	}
-
-	_rope_mesh = p_rope_mesh;
+	_sides = sides;
 	if (_rope_mesh.is_valid()) {
-		set_mesh(_rope_mesh);
+		_rope_mesh->set_sides(_sides);
 	}
-
 	_request_rebuild();
 }
 
-Ref<RopeMesh> Pipe::get_rope_mesh() const {
-	return _rope_mesh;
+
+int Pipe::get_sides() const {
+	return _sides;
+}
+
+void Pipe::set_radius(float p_radius) {
+	float radius = Math::max(p_radius, 0.001f);
+	if (Math::is_equal_approx(_radius, radius)) {
+		return;
+	}
+	_radius = radius;
+	if (_rope_mesh.is_valid()) {
+		_rope_mesh->set_radius(_radius);
+	}
+	_request_rebuild();
+}
+
+float Pipe::get_radius() const {
+	return _radius;
+}
+
+void Pipe::set_twist(float p_twist) {
+	if (Math::is_equal_approx(_twist, p_twist)) {
+		return;
+	}
+	_twist = p_twist;
+	if (_rope_mesh.is_valid()) {
+		_rope_mesh->set_rope_twist(_twist);
+	}
+	_request_rebuild();
+}
+
+float Pipe::get_twist() const {
+	return _twist;
+}
+
+void Pipe::_update_aabb() {
+	AABB aabb;
+	if (_rope_mesh.is_valid()) {
+		aabb = _rope_mesh->get_custom_aabb();
+	}
+	set_custom_aabb(aabb);
 }
 
 void Pipe::_update_mesh() {
-	if (!_rope_mesh.is_valid() || !_curve.is_valid()) {
+	if (!_rope_mesh.is_valid()) {
+		return;
+	}
+
+	if (!_curve.is_valid()) {
+		_rope_mesh->clear_mesh();
+		_update_aabb();
+		_dirty = false;
 		return;
 	}
 
@@ -371,6 +438,7 @@ void Pipe::_update_mesh() {
 		}
 	}
 
+	_update_aabb();
 	_dirty = false;
 }
 

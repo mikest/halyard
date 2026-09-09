@@ -6,8 +6,8 @@
 #pragma once
 
 #include <godot_cpp/classes/curve3d.hpp>
+#include <godot_cpp/classes/geometry_instance3d.hpp>
 #include <godot_cpp/classes/material.hpp>
-#include <godot_cpp/classes/mesh_instance3d.hpp>
 #include <godot_cpp/templates/local_vector.hpp>
 #include <godot_cpp/variant/basis.hpp>
 #include <godot_cpp/variant/transform3d.hpp>
@@ -16,8 +16,8 @@
 
 using namespace godot;
 
-class Pipe : public MeshInstance3D {
-	GDCLASS(Pipe, MeshInstance3D)
+class Pipe : public GeometryInstance3D {
+	GDCLASS(Pipe, GeometryInstance3D)
 
 private:
 	Ref<Curve3D> _curve;
@@ -28,6 +28,9 @@ private:
 	float _flange_scale = 1.2f;
 	Ref<Material> _elbow_material;
 	Ref<Material> _pipe_material;
+	int _sides = 3;
+	float _radius = 1.0f;
+	float _twist = 1.0f;
 	Ref<RopeMesh> _rope_mesh;
 
 	LocalVector<Transform3D> _frames;
@@ -42,13 +45,14 @@ private:
 	Basis _rotate_to_align(Basis p_basis, const Vector3 &p_start, const Vector3 &p_end) const;
 
 	void _on_curve_changed();
+	void _update_aabb();
 	void _update_mesh();
 
 protected:
 	static void _bind_methods();
 
 public:
-	Pipe() = default;
+	Pipe();
 	virtual ~Pipe() override = default;
 
 	void set_curve(const Ref<Curve3D> &p_curve);
@@ -75,6 +79,12 @@ public:
 	void set_pipe_material(const Ref<Material> &p_pipe_material);
 	Ref<Material> get_pipe_material() const;
 
-	void set_rope_mesh(const Ref<RopeMesh> &p_rope_mesh);
-	Ref<RopeMesh> get_rope_mesh() const;
+	void set_sides(int p_sides);
+	int get_sides() const;
+
+	void set_radius(float p_radius);
+	float get_radius() const;
+
+	void set_twist(float p_twist);
+	float get_twist() const;
 };

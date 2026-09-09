@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="Pipe" inherits="GeometryInstance3D" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Generates a pipe mesh along a [Curve3D].
+	</brief_description>
+	<description>
+		Builds a tube mesh from [member curve], with optional elbow shaping and separate materials for straight and elbow sections.
+
+		Elbows are generated at curve points with no in/out handles. The have a flange length and an elbow length which are adjustable.
+	</description>
+	<tutorials>
+	</tutorials>
+	<members>
+		<member name="curve" type="Curve3D" setter="set_curve" getter="get_curve">
+			The source curve used to generate the pipe path.
+		</member>
+		<member name="sides" type="int" setter="set_sides" getter="get_sides" default="3">
+			Number of sides used for the tube cross-section. Higher values produce a rounder pipe.
+		</member>
+		<member name="radius" type="float" setter="set_radius" getter="get_radius" default="1.0">
+			Radius of the generated pipe tube.
+		</member>
+		<member name="twist" type="float" setter="set_twist" getter="get_twist" default="1.0">
+			UV twist/repeat factor along the pipe length.
+		</member>
+		<member name="elbow_radius" type="float" setter="set_elbow_radius" getter="get_elbow_radius" default="1.0">
+			Radius used to construct elbow bend arcs.
+		</member>
+		<member name="elbow_length" type="float" setter="set_elbow_length" getter="get_elbow_length" default="0.2">
+			Length of the straight transition entering and exiting an elbow section.
+		</member>
+		<member name="elbow_scale" type="float" setter="set_elbow_scale" getter="get_elbow_scale" default="1.1">
+			Scale multiplier applied to the elbow section profile.
+		</member>
+		<member name="flange_length" type="float" setter="set_flange_length" getter="get_flange_length" default="0.2">
+			Length of flange transition segments around elbows.
+		</member>
+		<member name="flange_scale" type="float" setter="set_flange_scale" getter="get_flange_scale" default="1.2">
+			Scale multiplier applied to flange transition segments.
+		</member>
+		<member name="pipe_material" type="Material" setter="set_pipe_material" getter="get_pipe_material">
+			Material assigned to the straight pipe surface.
+		</member>
+		<member name="elbow_material" type="Material" setter="set_elbow_material" getter="get_elbow_material">
+			Material assigned to elbow surfaces.
+		</member>
+	</members>
+</class>
