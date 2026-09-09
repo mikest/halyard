@@ -31,18 +31,18 @@ uniform sampler2D WindMap : hint_default_white, filter_linear, repeat_enable;
 
 // Wind direction as a 2D vector. 0 degrees is global Z+ direction.
 vec2 wind_direction() {
-    return vec2(sin(WindAngle), cos(WindAngle));
+	return vec2(sin(WindAngle), cos(WindAngle));
 }
 
 // Wind strength, acts as a multiplier for gusts over the base WindSpeed
 float wind_strength(vec3 world_pos) {
-    float gust = WindGust * texture(WindMap, WindScroll + world_pos.xz/128.0).r;
-    return WindSpeed + gust;
+	float gust = WindGust * texture(WindMap, WindScroll + world_pos.xz/128.0).r;
+	return WindSpeed + gust;
 }
 
 // Wind speed and direction as a vector.
 vec3 wind_vector(vec3 world_pos) {
-    vec2 wind_dir = wind_direction();
-    vec2 wind = wind_dir * wind_strength(world_pos);
-    return vec3(wind.x, 0.0, wind.y);
+	vec2 wind_dir = wind_direction();
+	vec2 wind = wind_dir * wind_strength(world_pos);
+	return vec3(wind.x, 0.0, wind.y);
 }
