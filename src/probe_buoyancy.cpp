@@ -191,6 +191,9 @@ void ProbeBuoyancy::update_forces(const Transform3D &body_transform, const Vecto
 		return;
 	}
 
+	// recalc
+	_update_derived_properties();
+
 	// Pre-calculate constants
 	const float probe_ratio = 1.0f / probe_count;
 	const float fluid_density = liquid_area->get_density();

@@ -11,11 +11,7 @@ I always want to hear about bugs!
 
 
 ### Did you vibe code this library?
-Claude is not very good at physics/computer graphics/complex algorithms and so unfortunately, _all the garbage code you find in here has been lovelingly hand-crafted by me_. I appologize in advance for it.
-
-However, because I value my time, I still use Claude for rote boilerplate and roughing out classes.
-
-If this is a problem for you, know that I am not interested in hearing your opinions on "why AI is evil." I probably already agree with you on most points anyway.
+Some of it started out machine generated, but Claude is not very good at physics/computer graphics/complex algorithms and so un/fortunately, _all the garbage code you now find in here has been lovelingly hand-crafted by me_. I appologize in advance for it.
 
 All the art assets in Halyard are made by humans, and will always be made by humans.
 
